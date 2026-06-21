@@ -1,0 +1,154 @@
+{
+  "name": "kidareh",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "کی داره - ببین کی داره؟ حضوری بگیر",
+  "author": {
+    "name": "Kidareh Team",
+    "email": "info@kidareh.com"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://kidareh.com",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kidareh/kidareh.git"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently \"npm:dev:client\" \"npm:dev:server\" --names \"CLIENT,SERVER\" --kill-others",
+    "dev:client": "vite --host",
+    "dev:server": "tsx watch --clear-screen=false server/server.ts",
+    "dev:debug": "NODE_DEBUG=* npm run dev:server",
+
+    "clean": "rimraf dist coverage .vite node_modules/.vite",
+    "clean:all": "npm run clean && rimraf node_modules",
+
+    "prebuild": "npm run clean",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "vite build --mode production --outDir dist/public",
+    "build:server": "esbuild server/server.ts --bundle --platform=node --format=esm --packages=external --sourcemap --outfile=dist/server.js --target=node20",
+    "postbuild": "node -e \"console.log('✅ Build completed successfully')\"",
+
+    "preview": "vite preview",
+    "start": "NODE_ENV=production node dist/server.js",
+    "start:dev": "NODE_ENV=development node dist/server.js",
+    "start:prod": "NODE_ENV=production node dist/server.js",
+
+    "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\" \"server/**/*.{ts,json}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css}\" \"server/**/*.{ts,json}\"",
+
+    "typecheck": "tsc --noEmit",
+    "type-check": "npm run typecheck",
+
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:wallet": "vitest run src/pages/Wallet/__tests__/Wallet.test.tsx src/pages/Wallet/__tests__/WithdrawalForm.test.tsx",
+    "test:coverage": "vitest run --coverage",
+
+    "validate": "npm run typecheck && npm run lint && npm run test",
+    "validate:strict": "npm run clean && npm run validate && npm run build",
+
+    "health": "curl -s http://localhost:3000/api/health || echo '❌ Server not running'",
+    "health:prod": "curl -s https://kidareh.liara.run/api/health || echo '❌ Server not accessible'",
+
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "backup": "node scripts/backup.js"
+  },
+  "dependencies": {
+    "@fontsource/vazirmatn": "^5.1.0",
+    "@google/generative-ai": "^0.21.0",
+    "@hookform/resolvers": "^3.9.1",
+    "@tanstack/react-query": "^5.62.3",
+    "axios": "^1.7.9",
+    "better-sqlite3": "^12.2.0",
+    "clsx": "^2.1.1",
+    "compression": "^1.8.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-async-errors": "^3.1.1",
+    "express-rate-limit": "^8.5.2",
+    "helmet": "^8.2.0",
+    "jsonwebtoken": "^9.0.3",
+    "kavenegar": "^1.1.4",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.468.0",
+    "melipayamak": "^1.0.5",
+    "morgan": "^1.11.0",
+    "motion": "^12.23.24",
+    "multer": "^1.4.5-lts.2",
+    "qrcode": "^1.5.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-error-boundary": "^4.1.2",
+    "react-helmet-async": "^2.0.5",
+    "react-hook-form": "^7.54.2",
+    "react-hot-toast": "^2.4.1",
+    "react-is": "^18.3.1",
+    "react-leaflet": "^5.0.0",
+    "react-router-dom": "^6.28.1",
+    "react-virtuoso": "^4.12.0",
+    "recharts": "^3.8.1",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^2.6.0",
+    "winston": "^3.19.0",
+    "workbox-window": "^7.3.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@tanstack/react-query-devtools": "^5.62.3",
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/compression": "^1.7.5",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/kavenegar": "^1.0.0",
+    "@types/leaflet": "^1.9.12",
+    "@types/morgan": "^1.9.9",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^22.14.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@typescript-eslint/eslint-plugin": "^8.20.0",
+    "@typescript-eslint/parser": "^8.20.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^2.1.8",
+    "babel-plugin-transform-remove-console": "^6.9.4",
+    "concurrently": "^9.1.2",
+    "esbuild": "^0.24.0",
+    "eslint": "^9.18.0",
+    "prettier": "^3.4.2",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^4.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0",
+    "vite-plugin-pwa": "^0.21.2",
+    "vitest": "^2.1.8"
+  },
+  "optionalDependencies": {},
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}

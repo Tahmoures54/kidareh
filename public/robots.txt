@@ -1,0 +1,11 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Disallow admin and private pages
+Disallow: /admin/
+Disallow: /seller/
+Disallow: /wallet/
+
+# Sitemap
+Sitemap: https://kidareh.com/sitemap.xml

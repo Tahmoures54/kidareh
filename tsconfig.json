@@ -1,0 +1,89 @@
+{
+  "compilerOptions": {
+    /* ================================================================
+       Base Configuration
+       ================================================================ */
+    "target": "ES2020",
+    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable", "WebWorker"],
+    "skipLibCheck": true,
+    "allowJs": true,
+
+    /* ================================================================
+       Module Resolution
+       ================================================================ */
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    /* ================================================================
+       React & JSX
+       ================================================================ */
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+
+    /* ================================================================
+       Type Checking (Balanced for Production)
+       ================================================================ */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+
+    /* ================================================================
+       Path Aliases
+       ================================================================ */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@components/*": ["./src/components/*"],
+      "@pages/*": ["./src/pages/*"],
+      "@hooks/*": ["./src/hooks/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@context/*": ["./src/context/*"],
+      "@data/*": ["./src/data/*"],
+      "@types/*": ["./src/types/*"],
+      "@services/*": ["./src/services/*"]
+    },
+
+    /* ================================================================
+       Environment & Types
+       ================================================================ */
+    "types": ["vite/client", "node", "vitest/globals"]
+  },
+
+  /* ================================================================
+     File Inclusion & Exclusion
+     ================================================================ */
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.d.ts",
+    "server/**/*.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
+  ],
+
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ]
+}

@@ -1,0 +1,145 @@
+﻿{
+  "id": "/",
+  "name": "کی‌داره؟ | ببین کی داره؟ برو بگیر",
+  "short_name": "کی‌داره",
+  "description": "کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن، قیمت‌ها را مقایسه کن و سریع تصمیم بگیر.",
+  "start_url": "/?utm_source=homescreen&utm_medium=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "window-controls-overlay"],
+  "background_color": "#f9fafb",
+  "theme_color": "#0f766e",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "fa-IR",
+  "categories": ["shopping", "business", "lifestyle"],
+
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+
+  "shortcuts": [
+    {
+      "name": "جست‌وجوی کالا",
+      "short_name": "جست‌وجو",
+      "description": "پیدا کردن کالای موردنیاز در اطراف شما",
+      "url": "/search?utm_source=shortcut&utm_medium=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-search.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "کیف پول من",
+      "short_name": "کیف پول",
+      "description": "مشاهده موجودی و تراکنش‌ها",
+      "url": "/wallet?utm_source=shortcut&utm_medium=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-wallet.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "ثبت کالای جدید",
+      "short_name": "ثبت کالا",
+      "description": "افزودن کالا به ویترین فروشگاه",
+      "url": "/add-product?utm_source=shortcut&utm_medium=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-add.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "ذخیره‌شده‌ها",
+      "short_name": "ذخیره‌شده",
+      "description": "کالاهای ذخیره‌شده شما",
+      "url": "/saved?utm_source=shortcut&utm_medium=pwa",
+      "icons": [
+        {
+          "src": "/icons/shortcut-saved.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-1.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "جست‌وجوی هوشمند کالا در اطراف شما"
+    },
+    {
+      "src": "/screenshots/mobile-2.jpg",
+      "sizes": "1080x2400",
+      "type": "image/jpeg",
+      "form_factor": "narrow",
+      "label": "ارتباط مستقیم و چت با فروشنده"
+    }
+  ]
+}

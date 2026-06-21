@@ -1,0 +1,12 @@
+﻿{
+  "name": "کی داره؟ | سوپراپلیکیشن خرید محلی",
+  "description": "جستجوی لحظه‌ای کالا در فروشگاه‌های اطراف، چت مستقیم با فروشنده و خرید امن.",
+  "tags": ["react", "vite", "pwa", "ecommerce", "geolocation"],
+  "requestFramePermissions": [
+    "geolocation",
+    "camera",
+    "microphone",
+    "clipboard-read",
+    "clipboard-write"
+  ]
+}
