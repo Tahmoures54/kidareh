@@ -23,40 +23,31 @@
     "dev:client": "vite --host",
     "dev:server": "tsx watch --clear-screen=false server/server.ts",
     "dev:debug": "NODE_DEBUG=* npm run dev:server",
-
     "clean": "rimraf dist coverage .vite node_modules/.vite",
     "clean:all": "npm run clean && rimraf node_modules",
-
     "prebuild": "npm run clean",
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build --mode production --outDir dist/public",
     "build:server": "esbuild server/server.ts --bundle --platform=node --format=esm --packages=external --sourcemap --outfile=dist/server.js --target=node20",
     "postbuild": "node -e \"console.log('✅ Build completed successfully')\"",
-
     "preview": "vite preview",
     "start": "NODE_ENV=production node dist/server.js",
     "start:dev": "NODE_ENV=development node dist/server.js",
     "start:prod": "NODE_ENV=production node dist/server.js",
-
     "lint": "eslint . --ext .ts,.tsx --max-warnings 0",
     "lint:fix": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,json,css}\" \"server/**/*.{ts,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,json,css}\" \"server/**/*.{ts,json}\"",
-
     "typecheck": "tsc --noEmit",
     "type-check": "npm run typecheck",
-
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:wallet": "vitest run src/pages/Wallet/__tests__/Wallet.test.tsx src/pages/Wallet/__tests__/WithdrawalForm.test.tsx",
     "test:coverage": "vitest run --coverage",
-
     "validate": "npm run typecheck && npm run lint && npm run test",
     "validate:strict": "npm run clean && npm run validate && npm run build",
-
     "health": "curl -s http://localhost:3000/api/health || echo '❌ Server not running'",
     "health:prod": "curl -s https://kidareh.liara.run/api/health || echo '❌ Server not accessible'",
-
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
     "backup": "node scripts/backup.js"
@@ -129,6 +120,8 @@
     "concurrently": "^9.1.2",
     "esbuild": "^0.24.0",
     "eslint": "^9.18.0",
+    "husky": "9.1.7",
+    "lint-staged": "17.0.8",
     "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
     "tailwindcss": "^4.1.14",
@@ -138,7 +131,6 @@
     "vite-plugin-pwa": "^0.21.2",
     "vitest": "^2.1.8"
   },
-  "optionalDependencies": {},
   "browserslist": {
     "production": [
       ">0.2%",
@@ -149,6 +141,15 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "npx eslint --fix",
+      "npx prettier --write"
+    ],
+    "*.{json,css,md}": [
+      "npx prettier --write"
     ]
   }
 }
