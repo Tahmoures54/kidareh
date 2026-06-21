@@ -13,3 +13,5 @@ logs/
 .env.*.local
 liara.json
 metadata.json
+s.txt
+fix-typescript-errors.bat.txt
