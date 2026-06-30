@@ -11,9 +11,6 @@ const APP_SHELL = [
   "/manifest.json",
 ];
 
-// اگر خواستی بعداً آفلاین واقعی‌تر شود، این را هم اضافه کن
-// const OFFLINE_FALLBACK_PAGE = "/index.html";
-
 /**
  * تشخیص درخواست API
  */
@@ -38,9 +35,7 @@ function isImageRequest(request, url) {
  */
 function shouldIgnoreRequest(request, url) {
   return (
-    request.method !== "GET" &&
-    !isApiRequest(url)
-  ) || (
+    (request.method !== "GET" && !isApiRequest(url)) ||
     url.protocol === "chrome-extension:" ||
     url.protocol === "moz-extension:" ||
     url.pathname.includes("/@vite/") ||
@@ -56,7 +51,6 @@ function shouldIgnoreRequest(request, url) {
 async function putInCache(cacheName, request, response) {
   if (!response) return;
 
-  // فقط پاسخ‌های معتبر را کش کن
   if (response.status === 200 || response.status === 0) {
     const cache = await caches.open(cacheName);
     await cache.put(request, response.clone());
@@ -109,9 +103,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ---------------------------------------------------------
   // 1) API GET -> Network First, Fallback to Cache
-  // ---------------------------------------------------------
   if (isApiRequest(url)) {
     if (request.method === "GET") {
       event.respondWith(
@@ -139,15 +131,12 @@ self.addEventListener("fetch", (event) => {
           })
       );
     } else {
-      // POST / PUT / DELETE و ... مستقیم به شبکه بروند
       event.respondWith(fetch(request));
     }
     return;
   }
 
-  // ---------------------------------------------------------
   // 2) Images -> Cache First, Fallback to Network
-  // ---------------------------------------------------------
   if (isImageRequest(request, url)) {
     event.respondWith(
       caches.match(request).then(async (cachedResponse) => {
@@ -161,10 +150,6 @@ self.addEventListener("fetch", (event) => {
           return networkResponse;
         } catch (error) {
           console.log("[Service Worker] Image fetch failed:", request.url, error);
-
-          // اگر بعداً تصویر fallback داشتی:
-          // return caches.match('/offline-image.png');
-
           return new Response("", { status: 504, statusText: "Image fetch failed" });
         }
       })
@@ -172,9 +157,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ---------------------------------------------------------
   // 3) Navigation requests (React SPA)
-  // ---------------------------------------------------------
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request).catch(async () => {
@@ -185,9 +168,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // ---------------------------------------------------------
   // 4) Static assets -> Stale While Revalidate
-  // ---------------------------------------------------------
   event.respondWith(
     caches.match(request).then(async (cachedResponse) => {
       const networkFetch = fetch(request)

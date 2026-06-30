@@ -4,9 +4,9 @@
 export interface CompressOptions {
   maxWidth?: number;
   maxHeight?: number;
-  quality?: number; // Èíä 0 ÊÇ 1
+  quality?: number; // Ø¨ÛŒÙ† 0 ØªØ§ 1
   outputFormat?: 'image/jpeg' | 'image/webp' | 'image/png' | 'auto';
-  fillWhiteBackground?: boolean; // Òíäå ÈÑÇí ÍÐÝ ÔÝÇÝíÊ (Transparency)
+  fillWhiteBackground?: boolean; // Ù¾Ø± Ú©Ø±Ø¯Ù† Ù¾Ø³â€ŒØ²Ù…ÛŒÙ†Ù‡ Ø³ÙÛŒØ¯ (Transparency)
 }
 
 // ==========================================
@@ -31,9 +31,8 @@ export async function compressImage(
   const quality = Math.max(0, Math.min(1, options.quality ?? 0.8));
 
   return new Promise((resolve, reject) => {
-    // ÈåíäåÓÇÒí: ÇÓÊÝÇÏå ÇÒ startsWith ÓÑíÚÊÑ ÇÓÊ
     if (!file.type.startsWith('image/')) {
-      reject(new Error('ÝÇíá ÇäÊÎÇÈ ÔÏå ÊÕæíÑ äíÓÊ.'));
+      reject(new Error('ÙØ§ÛŒÙ„ Ø§Ù†ØªØ®Ø§Ø¨ Ø´Ø¯Ù‡ ØªØµÙˆÛŒØ± Ù†ÛŒØ³Øª.'));
       return;
     }
 
@@ -46,7 +45,6 @@ export async function compressImage(
       let width = img.width;
       let height = img.height;
 
-      // ãÍÇÓÈå ÇÈÚÇÏ ÌÏíÏ ÈÇ ÍÝÙ äÓÈÊ ÊÕæíÑ
       if (width > maxWidth || height > maxHeight) {
         if (width / height > maxWidth / maxHeight) {
           height = Math.round((height * maxWidth) / width);
@@ -57,7 +55,6 @@ export async function compressImage(
         }
       }
 
-      // ˜äÊÑá ãÍÏæÏíÊ ÓÎÊÇÝÒÇÑí Canvas
       const MAX_CANVAS_SIZE = 8192;
       if (width > MAX_CANVAS_SIZE || height > MAX_CANVAS_SIZE) {
         const ratio = Math.min(MAX_CANVAS_SIZE / width, MAX_CANVAS_SIZE / height);
@@ -71,17 +68,15 @@ export async function compressImage(
       const ctx = canvas.getContext('2d');
 
       if (!ctx) {
-        reject(new Error('ãÑæÑÑ ÔãÇ ÇÒ ÑÏÇÒÔ ÊÕæíÑ ÔÊíÈÇäí äãí˜äÏ.'));
+        reject(new Error('Ù…Ø±ÙˆØ±Ú¯Ø± Ø´Ù…Ø§ Ø§Ø² Canvas Ù¾Ø´ØªÛŒØ¨Ø§Ù†ÛŒ Ù†Ù…ÛŒâ€ŒÚ©Ù†Ø¯.'));
         return;
       }
 
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
 
-      // ÊÔÎíÕ åæÔãäÏ ÝÑãÊ ÎÑæÌí
       let finalFormat = outputFormat;
       if (finalFormat === 'auto') {
-        // ÈåíäåÓÇÒí: ÊÓÊ WebP ÈÇ í˜ Èæã 1 í˜Óáí ÈÑÇí ÌáæíÑí ÇÒ ÇÝÊ ÑÝæÑãäÓ
         const isWebpSupported = (() => {
           const testCanvas = document.createElement('canvas');
           testCanvas.width = 1;
@@ -96,16 +91,13 @@ export async function compressImage(
         }
       }
 
-      // ÈåíäåÓÇÒí: ÝÞØ ˜ ãí˜äíã ÝÑãÊ äåÇíí jpeg ÈÇÔÏ¡ ãåã äíÓÊ æÑæÏí íÓÊ (ÔÇíÏ WebP ÊÑÇäÓÑäÊ ÈæÏå ÈÇÔÏ)
       if (fillWhiteBackground && finalFormat === 'image/jpeg') {
         ctx.fillStyle = '#FFFFFF';
         ctx.fillRect(0, 0, width, height);
       }
 
-      // ÑÓã ÊÕæíÑ Ñæí Èæã
       ctx.drawImage(img, 0, 0, width, height);
 
-      // ÊæáíÏ ÎÑæÌí
       if (outputType === 'base64') {
         const dataUrl = canvas.toDataURL(finalFormat, quality);
         cleanup(canvas, img);
@@ -114,7 +106,7 @@ export async function compressImage(
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new Error('ÎØÇ ÏÑ ÝÔÑÏåÓÇÒí ÊÕæíÑ.'));
+              reject(new Error('Ø®Ø·Ø§ Ø¯Ø± ÙØ´Ø±Ø¯Ù‡â€ŒØ³Ø§Ø²ÛŒ ØªØµÙˆÛŒØ±.'));
               return;
             }
             
@@ -140,14 +132,13 @@ export async function compressImage(
 
     img.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      reject(new Error('ÝÇíá ÊÕæíÑ ÎÑÇÈ ÇÓÊ íÇ ÞÇÈá ÎæÇäÏä äíÓÊ.'));
+      reject(new Error('Ø§Ù…Ú©Ø§Ù† Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ ØªØµÙˆÛŒØ± ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯.'));
     };
 
     img.src = objectUrl;
   });
 }
 
-// Ç˜ÓÇÒí ÏÓÊí ÍÇÝÙå
 const cleanup = (canvas: HTMLCanvasElement, img: HTMLImageElement) => {
   canvas.width = 0;
   canvas.height = 0;

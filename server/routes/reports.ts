@@ -1,87 +1,85 @@
+// server/routes/reports.ts
 import { Router, Response, NextFunction } from "express";
 import db from "../db.js";
-import { requireAuth, requireRole, requireAdmin, AuthRequest } from "../middleware/auth.js";
+import { requireAuth, requireRole, AuthRequest } from "../middleware/auth.js";
 import logger from "../logger.js";
 import { z } from "zod";
 
 const router = Router();
 
-// ==========================================
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // Validation Schemas
-// ==========================================
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const createReportSchema = z.object({
-  productId: z.number().positive('ÔäÇÓå ãÍÕæá äÇãÚÊÈÑ ÇÓÊ'),
+  productId: z.number().positive("Ø´Ù†Ø§Ø³Ù‡ Ù…Ø­ØµÙˆÙ„ Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø³Øª"),
   reason: z.string()
-    .min(5, 'Ïáíá ÒÇÑÔ ÈÇíÏ ÍÏÇŞá ? ˜ÇÑÇ˜ÊÑ ÈÇÔÏ')
-    .max(100, 'Ïáíá ÒÇÑÔ ÈíÔ ÇÒ ÍÏ ØæáÇäí ÇÓÊ'),
+    .min(5, "Ø¯Ù„ÛŒÙ„ Ú¯Ø²Ø§Ø±Ø´ Ø¨Ø§ÛŒØ¯ Ø­Ø¯Ø§Ù‚Ù„ Ûµ Ú©Ø§Ø±Ø§Ú©ØªØ± Ø¨Ø§Ø´Ø¯")
+    .max(100, "Ø¯Ù„ÛŒÙ„ Ú¯Ø²Ø§Ø±Ø´ Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ø¨ÛŒØ´ØªØ± Ø§Ø² Û±Û°Û° Ú©Ø§Ø±Ø§Ú©ØªØ± Ø¨Ø§Ø´Ø¯"),
   description: z.string()
-    .max(500, 'ÊæÖíÍÇÊ ÈíÔ ÇÒ ÍÏ ØæáÇäí ÇÓÊ')
+    .max(500, "ØªÙˆØ¶ÛŒØ­Ø§Øª Ù†Ù…ÛŒâ€ŒØªÙˆØ§Ù†Ø¯ Ø¨ÛŒØ´ØªØ± Ø§Ø² ÛµÛ°Û° Ú©Ø§Ø±Ø§Ú©ØªØ± Ø¨Ø§Ø´Ø¯")
     .optional()
 });
 
-// ==========================================
+const updateStatusSchema = z.object({
+  status: z.enum(['pending', 'reviewing', 'resolved', 'dismissed'], {
+    errorMap: () => ({ message: 'ÙˆØ¶Ø¹ÛŒØª Ø§Ù†ØªØ®Ø§Ø¨ Ø´Ø¯Ù‡ Ù…Ø¹ØªØ¨Ø± Ù†ÛŒØ³Øª' })
+  }),
+  admin_note: z.string().max(500).optional()
+});
+
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 1. Submit Report (User)
-// ==========================================
-router.post("/", requireAuth, (req: AuthRequest, res: Response): void => {
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+router.post("/", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const validatedData = createReportSchema.parse(req.body);
     const { productId, reason, description } = validatedData;
-    const userId = req.user?.id;
+    const userId = req.user!.id;
 
-    // ÈÑÑÓí æÌæÏ ˜ÇáÇ
-    const product = db.prepare(
-      "SELECT id, name FROM products WHERE id = ?"
-    ).get(productId) as any;
-
+    // Ø¨Ø±Ø±Ø³ÛŒ ÙˆØ¬ÙˆØ¯ Ù…Ø­ØµÙˆÙ„
+    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(productId) as any;
     if (!product) {
-      res.status(404).json({ error: "˜ÇáÇí ãæÑÏ äÙÑ íÇİÊ äÔÏ." });
-      return;
+      return res.status(404).json({ error: "Ù…Ø­ØµÙˆÙ„ Ù…ÙˆØ±Ø¯ Ù†Ø¸Ø± ÛŒØ§ÙØª Ù†Ø´Ø¯." });
     }
 
-    // ÌáæíÑí ÇÒ ÒÇÑÔ Ê˜ÑÇÑí
-    const existingReport = db.prepare(`
-      SELECT id FROM reports 
-      WHERE user_id = ? AND product_id = ? AND status = 'pending'
-    `).get(userId, productId);
+    // Ø¬Ù„ÙˆÚ¯ÛŒØ±ÛŒ Ø§Ø² Ú¯Ø²Ø§Ø±Ø´ ØªÚ©Ø±Ø§Ø±ÛŒ (pending)
+    const existing = db.prepare(
+      "SELECT id FROM reports WHERE user_id = ? AND product_id = ? AND status = 'pending'"
+    ).get(userId, productId);
 
-    if (existingReport) {
-      res.status(429).json({ 
-        error: "ÔãÇ ŞÈáÇğ í˜ ÒÇÑÔ ÏÑ ÍÇá ÈÑÑÓí ÈÑÇí Çíä ˜ÇáÇ ËÈÊ ˜ÑÏåÇíÏ." 
+    if (existing) {
+      return res.status(429).json({
+        error: "Ø´Ù…Ø§ Ù‚Ø¨Ù„Ø§Ù‹ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ù…Ø­ØµÙˆÙ„ ÛŒÚ© Ú¯Ø²Ø§Ø±Ø´ Ø«Ø¨Øª Ú©Ø±Ø¯Ù‡â€ŒØ§ÛŒØ¯ Ú©Ù‡ Ø¯Ø± Ø­Ø§Ù„ Ø¨Ø±Ø±Ø³ÛŒ Ø§Ø³Øª."
       });
-      return;
     }
 
-    // ÇíÌÇÏ ÒÇÑÔ
-    const result = db.prepare(`
-      INSERT INTO reports (
-        user_id, product_id, reason, description, 
-        status, created_at
-      ) VALUES (?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)
-    `).run(userId, productId, reason, description || '');
+    const result = db.prepare(
+      "INSERT INTO reports (user_id, product_id, reason, description, status, created_at) VALUES (?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)"
+    ).run(userId, productId, reason, description || '');
 
-    logger.info(`?? Report created: ${result.lastInsertRowid} for product ${productId} by user ${userId}`);
+    logger.info(`Ú¯Ø²Ø§Ø±Ø´ Ø¬Ø¯ÛŒØ¯: ${result.lastInsertRowid} Ø¨Ø±Ø§ÛŒ Ù…Ø­ØµÙˆÙ„ ${productId} ØªÙˆØ³Ø· Ú©Ø§Ø±Ø¨Ø± ${userId}`);
 
-    res.status(201).json({ 
-      success: true, 
-      message: "ÒÇÑÔ ÔãÇ ÈÇ ãæİŞíÊ ËÈÊ ÔÏ æ ÊæÓØ ˜ÇÑÔäÇÓÇä ÈÑÑÓí ÎæÇåÏ ÔÏ.",
+    return res.status(201).json({
+      success: true,
+      message: "Ú¯Ø²Ø§Ø±Ø´ Ø´Ù…Ø§ Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø«Ø¨Øª Ø´Ø¯ Ùˆ Ø¯Ø± ØµÙ Ø¨Ø±Ø±Ø³ÛŒ Ù‚Ø±Ø§Ø± Ú¯Ø±ÙØª.",
       reportId: result.lastInsertRowid
     });
 
   } catch (error: any) {
     if (error.name === 'ZodError') {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: error.errors[0].message,
         field: error.errors[0].path[0]
       });
     }
     logger.error("Submit Report Error:", error);
-    res.status(500).json({ error: "ÎØÇ ÏÑ ËÈÊ ÒÇÑÔ ÊÎáİ." });
+    return res.status(500).json({ error: "Ø®Ø·Ø§ Ø¯Ø± Ø«Ø¨Øª Ú¯Ø²Ø§Ø±Ø´." });
   }
 });
 
-// ==========================================
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 // 2. Get My Reports (User)
-// ==========================================
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 router.get("/my", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -98,100 +96,59 @@ router.get("/my", requireAuth, (req: AuthRequest, res: Response) => {
       ORDER BY r.created_at DESC
     `).all(userId);
 
-    res.json(reports);
-
+    return res.json(reports);
   } catch (error) {
     logger.error('Get my reports error:', error);
-    res.status(500).json({ error: 'ÎØÇ ÏÑ ÏÑíÇİÊ ÒÇÑÔÇÊ' });
+    return res.status(500).json({ error: 'Ø®Ø·Ø§ Ø¯Ø± Ø¯Ø±ÛŒØ§ÙØª Ú¯Ø²Ø§Ø±Ø´â€ŒÙ‡Ø§ÛŒ Ø´Ù…Ø§' });
   }
 });
 
-// ==========================================
-// 3. Master Admin Middleware
-// ==========================================
-const isMasterAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
-  try {
-    const userId = req.user?.id;
-    
-    if (!userId) {
-      logger.warn('Unauthorized reports access attempt');
-      res.status(401).json({ error: "ÇÍÑÇÒ åæíÊ äÇãæİŞ." });
-      return;
-    }
-
-    const user = db.prepare(
-      "SELECT phone FROM users WHERE id = ?"
-    ).get(userId) as any;
-    
-    const MASTER_ADMIN_PHONE = process.env.ADMIN_PHONE || '09160684552';
-    
-    if (!user || user.phone !== MASTER_ADMIN_PHONE) {
-      logger.warn(`Unauthorized reports access by user ${userId}`);
-      res.status(403).json({ 
-        error: "ÏÓÊÑÓí ÛíÑãÌÇÒ. İŞØ ãÏíÑ ˜á Çã˜Çä ãÔÇåÏå ÒÇÑÔåÇ ÑÇ ÏÇÑÏ." 
-      });
-      return;
-    }
-    
-    next();
-  } catch (error) {
-    logger.error("Admin Check Error:", error);
-    res.status(500).json({ error: "ÎØÇí ÓÑæÑ ÏÑ ÈÑÑÓí ÏÓÊÑÓí." });
-  }
-};
-
-// ==========================================
-// 4. Admin Routes
-// ==========================================
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// 3. Admin Routes (protected, nested)
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const adminRouter = Router();
 
-// ÇÚãÇá 3 áÇíå ÇãäíÊí
+// Middleware Ù…Ø®ØµÙˆØµ Ø§Ø¯Ù…ÛŒÙ† (Ø³Ù‡ Ù„Ø§ÛŒÙ‡ Ø§Ù…Ù†ÛŒØªÛŒ)
 adminRouter.use(requireAuth);
 adminRouter.use(requireRole(['admin']));
-adminRouter.use(isMasterAdmin);
+
+// Ú†Ú© Ø§Ø¶Ø§ÙÛŒ Ø¨Ø±Ø§ÛŒ Ø§Ø¯Ù…ÛŒÙ† Ø§ØµÙ„ÛŒ (Ø´Ù…Ø§Ø±Ù‡ Ø®Ø§Øµ)
+adminRouter.use((req: AuthRequest, res: Response, next: NextFunction) => {
+  const MASTER_ADMIN_PHONE = process.env.ADMIN_PHONE || '09160684552';
+  const user = db.prepare("SELECT phone FROM users WHERE id = ?").get(req.user!.id) as any;
+  if (!user || user.phone !== MASTER_ADMIN_PHONE) {
+    return res.status(403).json({ error: "Ø¯Ø³ØªØ±Ø³ÛŒ ØºÛŒØ±Ù…Ø¬Ø§Ø². Ø§ÛŒÙ† Ø¨Ø®Ø´ ÙÙ‚Ø· Ø¨Ø±Ø§ÛŒ Ù…Ø¯ÛŒØ±ÛŒØª Ú©Ù„ Ø³Ø§Ù…Ø§Ù†Ù‡ Ø¯Ø± Ø¯Ø³ØªØ±Ø³ Ø§Ø³Øª." });
+  }
+  next();
+});
 
 /** Get All Reports with Filters */
 adminRouter.get("/", (req: AuthRequest, res: Response) => {
   try {
-    const { 
-      status = '', 
-      page = '1', 
-      limit = '50' 
-    } = req.query;
-
-    const pageNum = Math.max(1, parseInt(page as string));
-    const limitNum = Math.min(100, parseInt(limit as string));
+    const { status = '', page = '1', limit = '50' } = req.query;
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, parseInt(limit as string) || 50);
     const offset = (pageNum - 1) * limitNum;
 
-    let query = `
+    let where = "1=1";
+    const params: any[] = [];
+    if (status) {
+      where += " AND r.status = ?";
+      params.push(status);
+    }
+
+    const reports = db.prepare(`
       SELECT 
-        r.id, r.reason, r.description, r.status, 
-        r.created_at, r.updated_at,
-        u.id as reporter_id,
-        u.phone as reporter_phone, 
-        u.name as reporter_name,
-        p.id as product_id, 
-        p.name as product_name, 
-        p.price,
+        r.id, r.reason, r.description, r.status, r.created_at, r.updated_at,
+        u.id as reporter_id, u.phone as reporter_phone, u.name as reporter_name,
+        p.id as product_id, p.name as product_name, p.price,
         p.moderation_status as product_status,
-        s.id as store_id, 
-        s.name as store_name, 
-        s.phone as store_phone
+        s.id as store_id, s.name as store_name, s.phone as store_phone
       FROM reports r
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN products p ON r.product_id = p.id
       LEFT JOIN stores s ON p.store_id = s.id
-      WHERE 1=1
-    `;
-    const params: any[] = [];
-
-    // Filter by status
-    if (status) {
-      query += " AND r.status = ?";
-      params.push(status);
-    }
-
-    query += `
+      WHERE ${where}
       ORDER BY 
         CASE r.status 
           WHEN 'pending' THEN 1 
@@ -200,23 +157,12 @@ adminRouter.get("/", (req: AuthRequest, res: Response) => {
         END, 
         r.created_at DESC
       LIMIT ? OFFSET ?
-    `;
-    params.push(limitNum, offset);
+    `).all(...params, limitNum, offset);
 
-    const reports = db.prepare(query).all(...params);
+    const countResult = db.prepare(`SELECT COUNT(*) as total FROM reports r WHERE ${where}`).get(...params) as any;
+    const total = countResult?.total || 0;
 
-    // Count total
-    let countQuery = "SELECT COUNT(*) as total FROM reports WHERE 1=1";
-    const countParams: any[] = [];
-    
-    if (status) {
-      countQuery += " AND status = ?";
-      countParams.push(status);
-    }
-
-    const { total } = db.prepare(countQuery).get(...countParams) as any;
-
-    res.json({
+    return res.json({
       reports,
       pagination: {
         page: pageNum,
@@ -225,158 +171,110 @@ adminRouter.get("/", (req: AuthRequest, res: Response) => {
         totalPages: Math.ceil(total / limitNum)
       }
     });
-
   } catch (error) {
     logger.error("Fetch Reports Error:", error);
-    res.status(500).json({ error: "ÎØÇ ÏÑ ÏÑíÇİÊ áíÓÊ ÒÇÑÔÇÊ." });
+    return res.status(500).json({ error: "Ø®Ø·Ø§ Ø¯Ø± Ø¯Ø±ÛŒØ§ÙØª Ù„ÛŒØ³Øª Ú¯Ø²Ø§Ø±Ø´â€ŒÙ‡Ø§." });
   }
 });
 
 /** Update Report Status */
-const updateStatusSchema = z.object({
-  status: z.enum(['pending', 'reviewing', 'resolved', 'dismissed'], {
-    errorMap: () => ({ message: 'æÖÚíÊ ÇÑÓÇá ÔÏå äÇãÚÊÈÑ ÇÓÊ' })
-  }),
-  admin_note: z.string().max(500).optional()
-});
-
-adminRouter.put("/:id/status", (req: AuthRequest, res: Response): void => {
+adminRouter.put("/:id/status", (req: AuthRequest, res: Response) => {
   try {
     const reportId = req.params.id;
     const validatedData = updateStatusSchema.parse(req.body);
     const { status, admin_note } = validatedData;
 
-    const result = db.prepare(`
-      UPDATE reports 
-      SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP 
-      WHERE id = ?
-    `).run(status, admin_note || null, reportId);
+    const result = db.prepare(
+      "UPDATE reports SET status = ?, admin_note = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+    ).run(status, admin_note || null, reportId);
 
     if (result.changes === 0) {
-      res.status(404).json({ error: "ÒÇÑÔí ÈÇ Çíä ÔäÇÓå íÇİÊ äÔÏ." });
-      return;
+      return res.status(404).json({ error: "Ú¯Ø²Ø§Ø±Ø´ÛŒ Ø¨Ø§ Ø§ÛŒÙ† Ø´Ù†Ø§Ø³Ù‡ ÛŒØ§ÙØª Ù†Ø´Ø¯." });
     }
 
-    logger.info(`?? Report ${reportId} status changed to '${status}' by admin ${req.user?.id}`);
-
-    res.json({ 
-      success: true, 
-      message: `æÖÚíÊ ÒÇÑÔ Èå '${status}' ÊÛííÑ íÇİÊ.` 
-    });
-
+    logger.info(`Ú¯Ø²Ø§Ø±Ø´ ${reportId} Ø¨Ù‡ ÙˆØ¶Ø¹ÛŒØª '${status}' ØªØºÛŒÛŒØ± ÛŒØ§ÙØª ØªÙˆØ³Ø· Ø§Ø¯Ù…ÛŒÙ† ${req.user?.id}`);
+    return res.json({ success: true, message: `ÙˆØ¶Ø¹ÛŒØª Ú¯Ø²Ø§Ø±Ø´ Ø¨Ù‡ "${status}" ØªØºÛŒÛŒØ± ÛŒØ§ÙØª.` });
   } catch (error: any) {
     if (error.name === 'ZodError') {
       return res.status(400).json({ error: error.errors[0].message });
     }
     logger.error("Update Report Status Error:", error);
-    res.status(500).json({ error: "ÎØÇ ÏÑ ÊÛííÑ æÖÚíÊ ÒÇÑÔ." });
+    return res.status(500).json({ error: "Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ ÙˆØ¶Ø¹ÛŒØª Ú¯Ø²Ø§Ø±Ø´." });
   }
 });
 
 /** Delete Report */
-adminRouter.delete("/:id", (req: AuthRequest, res: Response): void => {
+adminRouter.delete("/:id", (req: AuthRequest, res: Response) => {
   try {
-    const reportId = req.params.id;
-    
-    const result = db.prepare(
-      "DELETE FROM reports WHERE id = ?"
-    ).run(reportId);
-
+    const result = db.prepare("DELETE FROM reports WHERE id = ?").run(req.params.id);
     if (result.changes === 0) {
-      res.status(404).json({ error: "ÒÇÑÔ íÇİÊ äÔÏ." });
-      return;
+      return res.status(404).json({ error: "Ú¯Ø²Ø§Ø±Ø´ ÛŒØ§ÙØª Ù†Ø´Ø¯." });
     }
-
-    logger.info(`???  Report ${reportId} deleted by admin ${req.user?.id}`);
-
-    res.json({ 
-      success: true, 
-      message: "ÒÇÑÔ ÈÇ ãæİŞíÊ ÇÒ ÓíÓÊã ÍĞİ ÔÏ." 
-    });
-
+    logger.info(`Ú¯Ø²Ø§Ø±Ø´ ${req.params.id} ØªÙˆØ³Ø· Ø§Ø¯Ù…ÛŒÙ† ${req.user?.id} Ø­Ø°Ù Ø´Ø¯`);
+    return res.json({ success: true, message: "Ú¯Ø²Ø§Ø±Ø´ Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø­Ø°Ù Ø´Ø¯." });
   } catch (error) {
     logger.error("Delete Report Error:", error);
-    res.status(500).json({ error: "ÎØÇ ÏÑ ÍĞİ ÒÇÑÔ." });
+    return res.status(500).json({ error: "Ø®Ø·Ø§ Ø¯Ø± Ø­Ø°Ù Ú¯Ø²Ø§Ø±Ø´." });
   }
 });
 
 /** Get Report Details */
-adminRouter.get("/:id", (req: AuthRequest, res: Response): void => {
+adminRouter.get("/:id", (req: AuthRequest, res: Response) => {
   try {
-    const reportId = req.params.id;
-
     const report = db.prepare(`
-      SELECT 
-        r.*,
-        u.phone as reporter_phone,
-        u.name as reporter_name,
-        p.name as product_name,
-        p.price,
-        p.image_url,
-        s.name as store_name,
-        s.phone as store_phone
+      SELECT r.*,
+             u.phone as reporter_phone, u.name as reporter_name,
+             p.name as product_name, p.price, p.image_url,
+             s.name as store_name, s.phone as store_phone
       FROM reports r
       LEFT JOIN users u ON r.user_id = u.id
       LEFT JOIN products p ON r.product_id = p.id
       LEFT JOIN stores s ON p.store_id = s.id
       WHERE r.id = ?
-    `).get(reportId);
+    `).get(req.params.id);
 
     if (!report) {
-      res.status(404).json({ error: "ÒÇÑÔ íÇİÊ äÔÏ" });
-      return;
+      return res.status(404).json({ error: "Ú¯Ø²Ø§Ø±Ø´ ÛŒØ§ÙØª Ù†Ø´Ø¯" });
     }
-
-    res.json(report);
-
+    return res.json(report);
   } catch (error) {
     logger.error('Get report details error:', error);
-    res.status(500).json({ error: 'ÎØÇ ÏÑ ÏÑíÇİÊ ÌÒÆíÇÊ ÒÇÑÔ' });
+    return res.status(500).json({ error: 'Ø®Ø·Ø§ Ø¯Ø± Ø¯Ø±ÛŒØ§ÙØª Ø¬Ø²Ø¦ÛŒØ§Øª Ú¯Ø²Ø§Ø±Ø´' });
   }
 });
 
 /** Bulk Update Reports */
-adminRouter.post("/bulk-update", (req: AuthRequest, res: Response): void => {
+adminRouter.post("/bulk-update", (req: AuthRequest, res: Response) => {
   try {
     const { reportIds, status } = req.body;
 
     if (!Array.isArray(reportIds) || reportIds.length === 0) {
-      res.status(400).json({ error: 'áíÓÊ ÒÇÑÔÇÊ äÇãÚÊÈÑ ÇÓÊ' });
-      return;
+      return res.status(400).json({ error: 'Ù„ÛŒØ³Øª Ú¯Ø²Ø§Ø±Ø´â€ŒÙ‡Ø§ Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø³Øª' });
     }
 
     const validStatuses = ['pending', 'reviewing', 'resolved', 'dismissed'];
     if (!validStatuses.includes(status)) {
-      res.status(400).json({ error: 'æÖÚíÊ äÇãÚÊÈÑ ÇÓÊ' });
-      return;
+      return res.status(400).json({ error: 'ÙˆØ¶Ø¹ÛŒØª Ù†Ø§Ù…Ø¹ØªØ¨Ø± Ø§Ø³Øª' });
     }
 
-    const transaction = db.transaction(() => {
-      const stmt = db.prepare(
-        "UPDATE reports SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
-      );
-      
-      reportIds.forEach(id => {
+    const updateMany = db.transaction(() => {
+      const stmt = db.prepare("UPDATE reports SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+      for (const id of reportIds) {
         stmt.run(status, id);
-      });
+      }
     });
 
-    transaction();
+    updateMany();
 
-    logger.info(`?? Bulk update: ${reportIds.length} reports changed to '${status}' by admin ${req.user?.id}`);
-
-    res.json({ 
-      success: true, 
-      message: `${reportIds.length} ÒÇÑÔ ÈÑæÒÑÓÇäí ÔÏ` 
-    });
-
+    logger.info(`Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ú¯Ø±ÙˆÙ‡ÛŒ ${reportIds.length} Ú¯Ø²Ø§Ø±Ø´ Ø¨Ù‡ ÙˆØ¶Ø¹ÛŒØª '${status}' ØªÙˆØ³Ø· Ø§Ø¯Ù…ÛŒÙ† ${req.user?.id}`);
+    return res.json({ success: true, message: `${reportIds.length} Ú¯Ø²Ø§Ø±Ø´ Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ø´Ø¯` });
   } catch (error) {
     logger.error('Bulk update error:', error);
-    res.status(500).json({ error: 'ÎØÇ ÏÑ ÈÑæÒÑÓÇäí ÏÓÊåÌãÚí' });
+    return res.status(500).json({ error: 'Ø®Ø·Ø§ Ø¯Ø± Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ú¯Ø±ÙˆÙ‡ÛŒ' });
   }
 });
 
-// ãÊÕá ˜ÑÏä ÑæÊ ãÏíÑíÊ Èå ÑæÊ ÇÕáí
+// Ø§ØªØµØ§Ù„ Ù…Ø³ÛŒØ±Ù‡Ø§ÛŒ Ø§Ø¯Ù…ÛŒÙ† Ø¨Ù‡ Ù…Ø³ÛŒØ± /admin
 router.use("/admin", adminRouter);
 
 export default router;

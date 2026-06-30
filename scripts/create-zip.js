@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import { execSync } from 'child_process';
 
-const version = require('../package.json').version;
+const version = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url))).version;
 const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
 const zipName = `kidareh-v${version}-${timestamp}.zip`;
 
-console.log(`\n?? ÇíÌÇÏ İÇíá: ${zipName}\n`);
+console.log(`\nğŸ“¦ Ø§ÛŒØ¬Ø§Ø¯ ÙØ§ÛŒÙ„ Ø²ÛŒÙ¾: ${zipName}\n`);
 
 const filesToZip = [
   'server',
@@ -21,31 +20,28 @@ const filesToZip = [
   'server.ts',
   'liara.json',
   '.liaraignore',
-  '.env.example'
+  '.env.example',
 ];
 
 try {
-  // Try 7zip first
   try {
     execSync('7z --help', { stdio: 'ignore' });
     execSync(`7z a -tzip "${zipName}" ${filesToZip.join(' ')} -mx=9`, {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
   } catch {
-    // Fallback to zip
     execSync(`zip -r -9 "${zipName}" ${filesToZip.join(' ')}`, {
-      stdio: 'inherit'
+      stdio: 'inherit',
     });
   }
 
   const stats = fs.statSync(zipName);
   const sizeMB = (stats.size / 1024 / 1024).toFixed(2);
 
-  console.log(`\n? İÇíá Òí ÇíÌÇÏ ÔÏ!`);
-  console.log(`?? ${zipName}`);
-  console.log(`?? ${sizeMB} MB\n`);
-  
+  console.log(`\nâœ… ÙØ§ÛŒÙ„ Ø²ÛŒÙ¾ Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø§ÛŒØ¬Ø§Ø¯ Ø´Ø¯!`);
+  console.log(`ğŸ“ ${zipName}`);
+  console.log(`ğŸ“Š ${sizeMB} MB\n`);
 } catch (err) {
-  console.error('\n? ÎØÇ ÏÑ ÇíÌÇÏ Òí:', err.message);
+  console.error('\nâŒ Ø®Ø·Ø§ Ø¯Ø± Ø§ÛŒØ¬Ø§Ø¯ Ø²ÛŒÙ¾:', err.message);
   process.exit(1);
 }

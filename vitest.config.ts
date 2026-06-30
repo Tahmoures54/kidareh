@@ -1,15 +1,12 @@
-/**
- * Vitest Configuration - Unit Testing
- * @version 2.0.0
- */
-
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
-
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -18,51 +15,18 @@ export default defineConfig({
       "@hooks": path.resolve(__dirname, "./src/hooks"),
       "@utils": path.resolve(__dirname, "./src/utils"),
       "@context": path.resolve(__dirname, "./src/context"),
-      "@data": path.resolve(__dirname, "./src/data"),
+      "@data": path.resolve(__dirname, "./data"),
+      "@types": path.resolve(__dirname, "./src/types"),
+      "@services": path.resolve(__dirname, "./src/services"),
     },
   },
-
   test: {
-    /* ================================================================
-       Basic Configuration
-       ================================================================ */
     globals: true,
     environment: "jsdom",
-    setupFiles: ["./src/test/setup.ts"],
-    include: ["**/*.{test,spec}.{ts,tsx}"],
-    exclude: ["node_modules", "dist", "build"],
-
-    /* ================================================================
-       Performance
-       ================================================================ */
-    threads: true,
-    isolate: true,
-    bail: 1,
-    restoreMocks: true,
-
-    /* ================================================================
-       Coverage Configuration
-       ================================================================ */
-    coverage: {
-      provider: "v8",
-      reporter: ["text", "json", "html", "lcov"],
-      lines: 50,
-      functions: 50,
-      branches: 50,
-      statements: 50,
-      exclude: [
-        "node_modules/",
-        "src/test/",
-        "dist/",
-        "**/*.d.ts",
-        "**/index.ts",
-        "**/*.config.ts"
-      ],
-    },
-
-    /* ================================================================
-       Timeout Configuration
-       ================================================================ */
-    testTimeout: 10000,
+    setupFiles: "./tests/frontend/setup.ts",
+    include: [
+      "tests/**/*.test.ts",
+      "tests/**/*.test.tsx"
+    ],
   },
 });

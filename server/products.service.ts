@@ -22,8 +22,11 @@ export interface FetchProductsParams {
   lng?: number;
 }
 
-const clean = (obj: Record<string, unknown>) =>
-  Object.fromEntries(
+/**
+ * حذف پارامترهای undefined/null/تهی از یک شیء
+ */
+function cleanParams(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
     Object.entries(obj).filter(
       ([, v]) =>
         v !== undefined &&
@@ -32,17 +35,27 @@ const clean = (obj: Record<string, unknown>) =>
         !(typeof v === "number" && Number.isNaN(v))
     )
   );
+}
 
-const qs = (params: Record<string, unknown>) => {
-  const sp = new URLSearchParams();
-  Object.entries(clean(params)).forEach(([k, v]) => sp.set(k, String(v)));
-  return sp.toString();
-};
+/**
+ * ساخت query string از یک شیء (با رمزنگاری خودکار)
+ */
+function buildQueryString(params: Record<string, unknown>): string {
+  const searchParams = new URLSearchParams();
+  const cleaned = cleanParams(params);
+  for (const [key, value] of Object.entries(cleaned)) {
+    searchParams.set(key, String(value));
+  }
+  return searchParams.toString();
+}
 
+/**
+ * دریافت یک صفحه از محصولات با پارامترهای جستجو
+ */
 export async function fetchProductsPage(
   params: FetchProductsParams
 ): Promise<ProductsPageResponse> {
-  const query = qs({
+  const query = buildQueryString({
     limit: params.limit ?? 20,
     cursor: params.cursor ?? undefined,
     q: params.q,
@@ -60,7 +73,7 @@ export async function fetchProductsPage(
   });
 
   const data = await apiRequest<ProductsPageResponse>(
-    `/api/products/search?${query}`,
+    `/api/products/search${query ? `?${query}` : ""}`,
     {
       method: "GET",
       auth: false,

@@ -4,9 +4,10 @@ import jwt from "jsonwebtoken";
 import db from "../db.js";
 import logger from "../logger.js";
 
-/**
- * نوع کاربر احراز شده
- */
+// ══════════════════════════════════════════════
+// Types
+// ══════════════════════════════════════════════
+
 export interface AuthUser {
   id: number;
   phone: string;
@@ -15,17 +16,18 @@ export interface AuthUser {
   email?: string;
 }
 
-/**
- * Request با اطلاعات کاربر
- */
 export interface AuthRequest extends Request {
   user?: AuthUser;
 }
 
+// ══════════════════════════════════════════════
+// Environment & Secret
+// ══════════════════════════════════════════════
+
 const isProduction = process.env.NODE_ENV === "production";
 const JWT_SECRET = process.env.JWT_SECRET;
 
-if ((!JWT_SECRET || JWT_SECRET.length < 32) && isProduction) {
+if (isProduction && (!JWT_SECRET || JWT_SECRET.length < 32)) {
   logger.error("FATAL: JWT_SECRET is missing or too short in production.");
   process.exit(1);
 }
@@ -33,65 +35,112 @@ if ((!JWT_SECRET || JWT_SECRET.length < 32) && isProduction) {
 const SAFE_JWT_SECRET =
   JWT_SECRET || "dev-only-unsafe-jwt-secret-change-this-in-production";
 
-/**
- * میدل‌ور احراز هویت
- */
-export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
+// ══════════════════════════════════════════════
+// Helpers
+// ══════════════════════════════════════════════
+
+function extractToken(req: Request): string | null {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    return authHeader.slice(7).trim();
+  }
+
+  if ("cookies" in req && (req as any).cookies?.token) {
+    return (req as any).cookies.token as string;
+  }
+
+  return null;
+}
+
+function fetchUserById(id: number): AuthUser | null {
+  const row = db
+    .prepare(
+      "SELECT id, phone, role, is_banned, ban_reason, name, email FROM users WHERE id = ?"
+    )
+    .get(id) as any;
+
+  if (!row) return null;
+  if (row.is_banned) return null;
+
+  return {
+    id: row.id,
+    phone: row.phone,
+    role: row.role,
+    name: row.name ?? undefined,
+    email: row.email ?? undefined,
+  };
+}
+
+// ══════════════════════════════════════════════
+// Core Middleware
+// ══════════════════════════════════════════════
+
+export function requireAuth(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void {
   try {
-    const authHeader = req.headers.authorization;
-    const bearerToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7)
-      : null;
-
-    const cookieToken = (req as any).cookies?.token as string | undefined;
-    const token = bearerToken || cookieToken;
-
+    const token = extractToken(req);
     if (!token) {
       res.status(401).json({ error: "نیاز به ورود به حساب کاربری دارید" });
       return;
     }
 
-    const payload = jwt.verify(token, SAFE_JWT_SECRET) as AuthUser;
+    let decoded: AuthUser;
+    try {
+      decoded = jwt.verify(token, SAFE_JWT_SECRET) as AuthUser;
+    } catch (jwtError: any) {
+      // تشخیص دقیق نوع خطای JWT با استفاده از خود شیء jwt
+      if (jwtError instanceof jwt.TokenExpiredError) {
+        res.status(401).json({
+          error: "نشست شما منقضی شده است. لطفاً دوباره وارد شوید",
+        });
+        return;
+      }
+      if (
+        jwtError instanceof jwt.JsonWebTokenError ||
+        jwtError instanceof jwt.NotBeforeError
+      ) {
+        res.status(401).json({
+          error: "توکن نامعتبر است. لطفاً دوباره وارد شوید",
+        });
+        return;
+      }
+      throw jwtError;
+    }
 
-    const user = db
-      .prepare("SELECT id, phone, role, is_banned, ban_reason, name, email FROM users WHERE id = ?")
-      .get(payload.id) as any;
-
+    const user = fetchUserById(decoded.id);
     if (!user) {
+      const bannedCheck = db
+        .prepare("SELECT is_banned, ban_reason FROM users WHERE id = ?")
+        .get(decoded.id) as any;
+
+      if (bannedCheck?.is_banned) {
+        res.status(403).json({
+          error: "حساب کاربری شما مسدود شده است",
+          reason: bannedCheck.ban_reason || "نامشخص",
+        });
+        return;
+      }
       res.status(401).json({ error: "کاربر یافت نشد" });
       return;
     }
 
-    if (user.is_banned) {
-      res.status(403).json({
-        error: "حساب کاربری شما مسدود شده است",
-        reason: user.ban_reason || "نامشخص",
-      });
-      return;
-    }
-
-    req.user = {
-      id: user.id,
-      phone: user.phone,
-      role: user.role,
-      name: user.name,
-      email: user.email,
-    };
-
+    req.user = user;
     next();
   } catch (error: any) {
-    logger.warn("Auth failed", { message: error?.message });
-    res.status(401).json({ error: "نشست شما منقضی شده است. دوباره وارد شوید" });
+    logger.error("Auth middleware error:", error);
+    res.status(500).json({ error: "خطای داخلی سرور" });
   }
 }
 
-/**
- * میدل‌ور بررسی نقش
- */
-export function requireRole(roles: AuthUser["role"][]) {
+export function requireRole(
+  roles: AuthUser["role"][]
+): (req: AuthRequest, res: Response, next: NextFunction) => void {
   return (req: AuthRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
-      res.status(401).json({ error: "Unauthorized" });
+      res.status(401).json({ error: "احراز هویت نشده‌اید" });
       return;
     }
 
@@ -104,9 +153,6 @@ export function requireRole(roles: AuthUser["role"][]) {
   };
 }
 
-/**
- * فقط فروشنده‌ای که فروشگاه واقعی دارد
- */
 export function requireSellerWithStore(
   req: AuthRequest,
   res: Response,
@@ -118,7 +164,9 @@ export function requireSellerWithStore(
   }
 
   if (req.user.role !== "seller") {
-    res.status(403).json({ error: "این قابلیت فقط برای فروشگاه‌ها فعال است" });
+    res.status(403).json({
+      error: "این قابلیت فقط برای فروشگاه‌ها فعال است",
+    });
     return;
   }
 
@@ -136,34 +184,40 @@ export function requireSellerWithStore(
   next();
 }
 
-/**
- * تنها Admin
- */
-export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction): void {
+export function requireAdmin(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void {
   if (!req.user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "احراز هویت نشده‌اید" });
     return;
   }
 
   if (req.user.role !== "admin") {
-    res.status(403).json({ error: "دسترسی رد شد. فقط ادمین‌ها می‌توانند از این بخش استفاده کنند" });
+    res.status(403).json({
+      error: "دسترسی رد شد. فقط ادمین‌ها می‌توانند از این بخش استفاده کنند",
+    });
     return;
   }
 
   next();
 }
 
-/**
- * تنها Support یا Admin
- */
-export function requireSupport(req: AuthRequest, res: Response, next: NextFunction): void {
+export function requireSupport(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void {
   if (!req.user) {
-    res.status(401).json({ error: "Unauthorized" });
+    res.status(401).json({ error: "احراز هویت نشده‌اید" });
     return;
   }
 
   if (!["admin", "support"].includes(req.user.role)) {
-    res.status(403).json({ error: "دسترسی رد شد. فقط تیم پشتیبانی می‌تواند از این بخش استفاده کند" });
+    res.status(403).json({
+      error: "دسترسی رد شد. فقط تیم پشتیبانی می‌تواند از این بخش استفاده کند",
+    });
     return;
   }
 

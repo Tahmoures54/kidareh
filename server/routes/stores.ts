@@ -1,4 +1,5 @@
-﻿import { Router, type Response } from "express";
+﻿// server/routes/stores.ts
+import { Router, type Response } from "express";
 import { z } from "zod";
 import db from "../db.js";
 import logger from "../logger.js";
@@ -50,7 +51,7 @@ function normalizeStoreForDetail(store: any, products: any[]) {
     phone: store.phone ?? "",
     rating: Number(store.avg_rating ?? store.rating ?? 0),
     reviews: Number(store.review_count ?? store.reviews_count ?? 0),
-    joined: store.joined ?? "", // e.g. 2026/06
+    joined: store.joined ?? "",
     image: store.image_url ?? null,
     verified: Boolean(store.is_verified || store.has_business_license),
     description: store.description ?? "",
@@ -58,6 +59,7 @@ function normalizeStoreForDetail(store: any, products: any[]) {
     province: store.province ?? "",
     latitude: toNumberOrNull(store.lat),
     longitude: toNumberOrNull(store.lng),
+    blue_tick_expires_at: store.blue_tick_expires_at ?? null,
     products: products.map((p) => ({
       id: Number(p.id),
       name: p.name,
@@ -71,56 +73,81 @@ function normalizeStoreForDetail(store: any, products: any[]) {
 }
 
 /* =========================================================
- * 1) Get My Store (Seller/Admin)  <-- MUST BE BEFORE /:id
+ * 0) آمار عمومی فروشگاه‌ها (Public)
  * =======================================================*/
-router.get(
-  "/my/store",
-  requireAuth,
-  requireRole(["seller", "admin"]),
-  (req: AuthRequest, res: Response): void => {
-    try {
-      const userId = req.user!.id;
+router.get("/stats", (_req, res: Response): void => {
+  try {
+    const storesRow = db
+      .prepare("SELECT COUNT(*) as count FROM stores")
+      .get() as { count: number } | undefined;
 
-      const store = db
-        .prepare(
-          `
-        SELECT
-          s.*,
-          u.phone as owner_phone,
-          u.name as owner_name,
-          COUNT(DISTINCT p.id) as total_products
-        FROM stores s
-        JOIN users u ON s.user_id = u.id
-        LEFT JOIN products p ON s.id = p.store_id
-        WHERE s.user_id = ?
-        GROUP BY s.id
-      `
-        )
-        .get(userId) as any;
+    const productsRow = db
+      .prepare(
+        "SELECT COUNT(*) as count FROM products WHERE moderation_status = 'approved'"
+      )
+      .get() as { count: number } | undefined;
 
-      if (!store) {
-        res.status(404).json({
-          error: "شما هنوز فروشگاهی ثبت نکرده‌اید.",
-          action: "complete_profile",
-        });
-        return;
-      }
+    const citiesRow = db
+      .prepare(
+        "SELECT COUNT(DISTINCT city) as count FROM stores WHERE city IS NOT NULL AND city != ''"
+      )
+      .get() as { count: number } | undefined;
 
-      res.json({
-        ...store,
-        total_products: Number(store.total_products ?? 0),
-        lat: toNumberOrNull(store.lat),
-        lng: toNumberOrNull(store.lng),
-      });
-    } catch (err) {
-      logger.error("My Store Error:", err);
-      res.status(500).json({ error: "خطا در دریافت اطلاعات فروشگاه شما." });
-    }
+    const verifiedRow = db
+      .prepare(
+        "SELECT COUNT(*) as count FROM stores WHERE COALESCE(is_verified, 0) = 1 OR COALESCE(has_business_license, 0) = 1"
+      )
+      .get() as { count: number } | undefined;
+
+    res.json({
+      storesCount: Number(storesRow?.count ?? 0),
+      productsCount: Number(productsRow?.count ?? 0),
+      citiesCount: Number(citiesRow?.count ?? 0),
+      verifiedCount: Number(verifiedRow?.count ?? 0),
+    });
+  } catch (err) {
+    logger.error("Store Stats Error:", err);
+    res.status(500).json({ error: "خطا در دریافت آمار فروشگاه‌ها" });
   }
-);
+});
 
 /* =========================================================
- * 2) Get Store Details (Public) - for StoreDetail.tsx
+ * 1) Get My Store (Seller/Admin)
+ *    ✅ حتماً باید قبل از روت /:id باشد
+ * =======================================================*/
+router.get("/my/store", requireAuth, (req: AuthRequest, res: Response): void => {
+  try {
+    const userId = req.user!.id;
+    
+    // گرفتن اطلاعات فروشگاه
+    const store = db.prepare(`
+      SELECT * FROM stores WHERE user_id = ?
+    `).get(userId) as any;
+
+    if (!store) {
+      // استفاده از return برای جلوگیری از ادامه اجرای کد
+      res.status(404).json({ error: "شما هنوز فروشگاهی ثبت نکرده‌اید", action: "complete_profile" });
+      return;
+    }
+
+    // گرفتن تعداد کالاها برای دشبورد
+    const countRow = db.prepare("SELECT COUNT(*) as total FROM products WHERE store_id = ?").get(store.id) as any;
+    
+    // فرستادن جواب به فرانت‌اند
+    res.json({
+      ...store,
+      total_products: countRow ? Number(countRow.total) : 0,
+      lat: toNumberOrNull(store.lat),
+      lng: toNumberOrNull(store.lng)
+    });
+  } catch (error: any) {
+    logger.error("Error fetching my store:", error.message);
+    res.status(500).json({ error: "خطا در دریافت اطلاعات فروشگاه" });
+  }
+});
+
+/* =========================================================
+ * 2) Get Store Details (Public)
  * =======================================================*/
 router.get("/:id(\\d+)", (req: AuthRequest, res: Response): void => {
   try {
@@ -145,8 +172,7 @@ router.get("/:id(\\d+)", (req: AuthRequest, res: Response): void => {
       JOIN users u ON s.user_id = u.id
       LEFT JOIN products p
         ON s.id = p.store_id
-       AND (p.moderation_status = 'approved' OR p.is_approved = 1)
-       AND COALESCE(p.is_public, 1) = 1
+       AND p.moderation_status = 'approved'
       LEFT JOIN reviews r
         ON p.id = r.product_id
        AND r.status = 'approved'
@@ -169,8 +195,7 @@ router.get("/:id(\\d+)", (req: AuthRequest, res: Response): void => {
         p.badge, p.views, p.image_url, p.created_at
       FROM products p
       WHERE p.store_id = ?
-        AND (p.moderation_status = 'approved' OR p.is_approved = 1)
-        AND COALESCE(p.is_public, 1) = 1
+        AND p.moderation_status = 'approved'
       ORDER BY
         CASE WHEN p.badge IS NOT NULL AND p.badge <> '' THEN 0 ELSE 1 END,
         p.created_at DESC,
@@ -197,19 +222,44 @@ router.get("/", (req: AuthRequest, res: Response): void => {
     const { q, category, city, province, verified, page, limit } = parsed;
     const offset = (page - 1) * limit;
 
+    let countSql = "SELECT COUNT(DISTINCT s.id) as total FROM stores s WHERE 1=1";
+    const countParams: any[] = [];
+
+    if (q) {
+      countSql += " AND s.name LIKE ?";
+      countParams.push(`%${q}%`);
+    }
+    if (category) {
+      countSql += " AND s.category = ?";
+      countParams.push(category);
+    }
+    if (city) {
+      countSql += " AND s.city = ?";
+      countParams.push(city);
+    }
+    if (province) {
+      countSql += " AND s.province = ?";
+      countParams.push(province);
+    }
+    if (verified === "true") {
+      countSql += " AND (COALESCE(s.has_business_license, 0) = 1 OR COALESCE(s.is_verified, 0) = 1)";
+    }
+
+    const totalRow = db.prepare(countSql).get(...countParams) as { total: number } | undefined;
+    const total = Number(totalRow?.total ?? 0);
+
     let sql = `
       SELECT
         s.id, s.name, s.category, s.image_url,
         s.address, s.lat, s.lng,
         s.has_business_license, s.is_verified,
-        s.city, s.province,
+        s.city, s.province, s.blue_tick_expires_at,
         COUNT(DISTINCT p.id) as product_count,
         AVG(r.rating) as avg_rating
       FROM stores s
       LEFT JOIN products p
         ON s.id = p.store_id
-       AND (p.moderation_status = 'approved' OR p.is_approved = 1)
-       AND COALESCE(p.is_public, 1) = 1
+       AND p.moderation_status = 'approved'
       LEFT JOIN reviews r
         ON p.id = r.product_id
        AND r.status = 'approved'
@@ -251,10 +301,14 @@ router.get("/", (req: AuthRequest, res: Response): void => {
         avg_rating: s.avg_rating != null ? Number(s.avg_rating).toFixed(1) : null,
         lat: toNumberOrNull(s.lat),
         lng: toNumberOrNull(s.lng),
+        blue_tick_expires_at: s.blue_tick_expires_at ?? null,
       })),
+      total,
       pagination: {
         page,
         limit,
+        total,
+        totalPages: Math.ceil(total / limit),
         hasMore: stores.length === limit,
       },
     });
@@ -279,7 +333,6 @@ router.post(
     try {
       const userId = req.user!.id;
 
-      // تبدیل lat/lng که ممکنه از فرانت string بیاد
       const payload = {
         ...req.body,
         lat:
@@ -421,6 +474,89 @@ router.delete("/:id(\\d+)", requireAuth, (req: AuthRequest, res: Response): void
   } catch (err) {
     logger.error("Delete Store Error:", err);
     res.status(500).json({ error: "خطا در حذف فروشگاه" });
+  }
+});
+
+/* =========================================================
+ * 6) Follow / Unfollow Store
+ * =======================================================*/
+router.post("/:id(\\d+)/follow", requireAuth, (req: AuthRequest, res: Response) => {
+  try {
+    const storeId = Number(req.params.id);
+    const userId = req.user!.id;
+
+    const store = db.prepare("SELECT id FROM stores WHERE id = ?").get(storeId) as any;
+    if (!store) {
+      return res.status(404).json({ error: "فروشگاه یافت نشد" });
+    }
+
+    const existing = db.prepare(
+      "SELECT id FROM store_followers WHERE user_id = ? AND store_id = ?"
+    ).get(userId, storeId) as any;
+
+    if (existing) {
+      db.prepare("DELETE FROM store_followers WHERE id = ?").run(existing.id);
+      return res.json({ following: false, message: "دیگر دنبال نمی‌کنید" });
+    } else {
+      db.prepare(
+        "INSERT INTO store_followers (user_id, store_id) VALUES (?, ?)"
+      ).run(userId, storeId);
+      return res.json({ following: true, message: "فروشگاه دنبال شد" });
+    }
+  } catch (error) {
+    logger.error("Follow error:", error);
+    return res.status(500).json({ error: "خطا در انجام عملیات" });
+  }
+});
+
+/* =========================================================
+ * 7) Follow Status
+ * =======================================================*/
+router.get("/:id(\\d+)/follow-status", requireAuth, (req: AuthRequest, res: Response) => {
+  const storeId = Number(req.params.id);
+  const userId = req.user!.id;
+
+  const follow = db.prepare(
+    "SELECT id FROM store_followers WHERE user_id = ? AND store_id = ?"
+  ).get(userId, storeId);
+
+  return res.json({ following: !!follow });
+});
+
+/* =========================================================
+ * 8) Followers Count
+ * =======================================================*/
+router.get("/:id(\\d+)/followers/count", (req, res) => {
+  const storeId = Number(req.params.id);
+  const row = db.prepare(
+    "SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?"
+  ).get(storeId) as any;
+
+  return res.json({ count: Number(row?.count ?? 0) });
+});
+
+/* =========================================================
+ * 9) My Followers List
+ * =======================================================*/
+router.get("/my/followers", requireAuth, requireRole(["seller", "admin"]), (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    const store = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(userId) as any;
+    if (!store) return res.status(404).json({ error: "فروشگاهی یافت نشد" });
+
+    const followers = db.prepare(`
+      SELECT u.id, u.name, u.phone, sf.created_at as followed_at
+      FROM store_followers sf
+      JOIN users u ON u.id = sf.user_id
+      WHERE sf.store_id = ?
+      ORDER BY sf.created_at DESC
+      LIMIT 50
+    `).all(store.id);
+
+    return res.json(followers);
+  } catch (error) {
+    logger.error("Get followers error:", error);
+    return res.status(500).json({ error: "خطا در دریافت لیست فالوورها" });
   }
 });
 

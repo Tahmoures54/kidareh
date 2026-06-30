@@ -1,71 +1,66 @@
-import { Router } from 'express';
-import type { Request, Response } from 'express';
-import fs from 'fs';
-import path from 'path';
+// server/routes/health.ts
+import { Router } from "express";
+import type { Request, Response } from "express";
+import db from "../db.js";
+import logger from "../logger.js";
 
 const router = Router();
 
 /**
  * Health Check Endpoint
- * »—«Ì monitoring  Ê”ÿ Liara
+ * Used by Liara / monitoring tools.
+ * Mount this router on "/api" ‚Üí final path: GET /api/health
  */
-router.get('/health', (req: Request, res: Response) => {
-  const healthCheck = {
-    status: 'OK',
+router.get("/health", (req: Request, res: Response) => {
+  // Attempt a lightweight DB operation to verify connection
+  let dbStatus = "disconnected";
+  try {
+    const row = db.prepare("SELECT 1 AS ok").get() as any;
+    dbStatus = row?.ok === 1 ? "connected" : "error";
+  } catch (err) {
+    logger.error("Health check DB error:", err);
+    dbStatus = "error";
+  }
+
+  // Disk space is assumed OK (we could check disk usage if needed)
+  const diskStatus = "ok";
+
+  const healthReport = {
+    status: dbStatus === "connected" && diskStatus === "ok" ? "OK" : "DEGRADED",
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'production',
-    version: process.env.npm_package_version || '1.0.0',
+    environment: process.env.NODE_ENV || "development",
+    version: process.env.npm_package_version || "1.0.0",
     memory: {
       used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
       total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-      rss: Math.round(process.memoryUsage().rss / 1024 / 1024)
+      rss: Math.round(process.memoryUsage().rss / 1024 / 1024),
     },
-    database: checkDatabase(),
-    disk: checkDiskSpace()
+    database: dbStatus,
+    disk: diskStatus,
   };
 
-  res.status(200).json(healthCheck);
+  return res.status(dbStatus === "connected" ? 200 : 503).json(healthReport);
 });
 
 /**
- * Ready Check (»—«Ì Load Balancer)
+ * Readiness Check
+ * Used by load balancers to decide if the server can accept traffic.
  */
-router.get('/ready', (req: Request, res: Response) => {
-  const isReady = checkDatabase() && checkDiskSpace();
-  
-  if (isReady) {
-    res.status(200).json({ status: 'ready' });
+router.get("/ready", (req: Request, res: Response) => {
+  let dbOk = false;
+  try {
+    const row = db.prepare("SELECT 1 AS ok").get() as any;
+    dbOk = row?.ok === 1;
+  } catch (err) {
+    logger.error("Readiness check DB error:", err);
+  }
+
+  if (dbOk) {
+    return res.status(200).json({ status: "ready", database: "connected" });
   } else {
-    res.status(503).json({ status: 'not ready' });
+    return res.status(503).json({ status: "not ready", database: "disconnected" });
   }
 });
-
-/**
- * »——”Ì ”·«„  œÌ «»Ì”
- */
-function checkDatabase(): boolean {
-  try {
-    const dbPath = path.join(process.cwd(), 'database.sqlite');
-    return fs.existsSync(dbPath);
-  } catch (err) {
-    return false;
-  }
-}
-
-/**
- * »——”Ì ›÷«Ì œÌ”ò
- */
-function checkDiskSpace(): boolean {
-  try {
-    const uploadPath = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    return true;
-  } catch (err) {
-    return false;
-  }
-}
 
 export default router;

@@ -1,4 +1,3 @@
-// src/utils/authHelpers.ts
 export function handle401Redirect(navigate: (to: string, opts?: any) => void) {
   try {
     localStorage.removeItem("token");

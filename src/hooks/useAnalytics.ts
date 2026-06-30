@@ -14,10 +14,9 @@ export function useAnalytics() {
       (window as any).gtag('event', eventName, properties);
     }
 
-    // Custom Analytics (if any)
+    // Custom Analytics (log + backend)
     console.log('[Analytics]', eventName, properties);
 
-    // Send to your backend
     if (process.env.NODE_ENV === 'production') {
       fetch('/api/analytics/track', {
         method: 'POST',

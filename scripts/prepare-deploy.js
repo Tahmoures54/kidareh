@@ -1,26 +1,26 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import { execSync } from 'child_process';
 
-console.log('\n?? ÂãÇÏåÓÇÒí Ñæå ÈÑÇí Liara...\n');
+console.log('\nğŸ” Ø¨Ø±Ø±Ø³ÛŒ Ø¢Ù…Ø§Ø¯Ú¯ÛŒ Ù¾Ø±ÙˆÚ˜Ù‡ Ø¨Ø±Ø§ÛŒ Liara...\n');
 
 // Check Node version
 const requiredNodeVersion = 20;
 const currentNodeVersion = parseInt(process.version.slice(1));
 
 if (currentNodeVersion < requiredNodeVersion) {
-  console.error(`? Node.js ${requiredNodeVersion}+ ãæÑÏ äíÇÒ ÇÓÊ`);
+  console.error(`âŒ Node.js ${requiredNodeVersion}+ Ù†ÛŒØ§Ø² Ø§Ø³Øª`);
   process.exit(1);
 }
 
 // Check required files
 const requiredFiles = ['liara.json', 'package.json', 'server.ts'];
-const missingFiles = requiredFiles.filter(f => !fs.existsSync(f));
+const missingFiles = requiredFiles.filter((f) => !fs.existsSync(f));
 
 if (missingFiles.length > 0) {
-  console.error('? İÇíáåÇí ÖÑæÑí íÇİÊ äÔÏ:', missingFiles.join(', '));
+  console.error('âŒ ÙØ§ÛŒÙ„â€ŒÙ‡Ø§ÛŒ Ø¶Ø±ÙˆØ±ÛŒ Ù…ÙˆØ¬ÙˆØ¯ Ù†ÛŒØ³ØªÙ†Ø¯:', missingFiles.join(', '));
   process.exit(1);
 }
 
-console.log('? ÂãÇÏåÓÇÒí ãæİŞ\n');
+console.log('âœ… Ù¾Ø±ÙˆÚ˜Ù‡ Ø¨Ø±Ø§ÛŒ Ø§Ø³ØªÙ‚Ø±Ø§Ø± Ø¢Ù…Ø§Ø¯Ù‡ Ø§Ø³Øª\n');

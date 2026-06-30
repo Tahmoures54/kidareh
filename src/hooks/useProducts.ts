@@ -74,7 +74,7 @@ export function useProducts({ scope, city, enabled = true }: UseProductsOptions)
       }
     };
 
-    // Debounce ÈÇ setTimeout
+    // Debounce
     const timeoutId = setTimeout(fetchProducts, 300);
 
     return () => {

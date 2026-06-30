@@ -19,16 +19,23 @@ export interface FetchProductsParams {
   lng?: number;
 }
 
+/**
+ * Convert FetchProductsParams to URL query string.
+ * Only non‑empty values are included.
+ */
 function buildQueryString(params: FetchProductsParams): string {
   const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([key, value]) => {
+  for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== null && value !== "") {
       searchParams.set(key, String(value));
     }
-  });
+  }
   return searchParams.toString();
 }
 
+/**
+ * Fetch a single page of products from the search API.
+ */
 export async function fetchProductsPage(
   params: FetchProductsParams
 ): Promise<ProductsPageResponse> {

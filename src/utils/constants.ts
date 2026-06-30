@@ -1,4 +1,2 @@
-// src/utils/constants.ts
-
-export const MIN_WITHDRAWAL = 50000; // ÍÏÇÞá ãÈáÛ ÞÇÈá ÈÑÏÇÔÊ (ÊæãÇä)
-export const REFERRAL_PERCENTAGE = 5; // ÏÑÕÏ æÑÓÇäÊ ãÚÑÝí
+export const MIN_WITHDRAWAL = 50000;           // Ø­Ø¯Ø§Ù‚Ù„ Ù…Ø¨Ù„Øº Ø¨Ø±Ø¯Ø§Ø´Øª (ØªÙˆÙ…Ø§Ù†)
+export const REFERRAL_PERCENTAGE = 5;         // Ø¯Ø±ØµØ¯ Ù¾ÙˆØ±Ø³Ø§Ù†Øª Ù…Ø¹Ø±Ù

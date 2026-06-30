@@ -30,6 +30,9 @@ const getBaseUrl = () => {
   return envBase || window.location.origin;
 };
 
+const normalizeBaseUrl = (base: string) => base.replace(/\/+$/, "");
+const normalizePath = (p: string) => (p.startsWith("/") ? p : `/${p}`);
+
 const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
   new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error("Request timeout")), timeoutMs);
@@ -43,6 +46,14 @@ const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number): Promise<T> =>
         reject(e);
       });
   });
+
+function readToken(): string {
+  return (
+    localStorage.getItem("kidareh_token_v1") ||
+    localStorage.getItem("token") ||
+    ""
+  );
+}
 
 export async function apiRequest<TResponse = any, TBody = unknown>(
   path: string,
@@ -58,8 +69,10 @@ export async function apiRequest<TResponse = any, TBody = unknown>(
     auth = true,
   } = options;
 
-  const url = `${getBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
-  const token = localStorage.getItem("token") || "";
+  const base = normalizeBaseUrl(getBaseUrl());
+  const url = `${base}${normalizePath(path)}`;
+
+  const token = readToken();
 
   const mergedHeaders: Record<string, string> = {
     "Content-Type": "application/json",
@@ -70,22 +83,38 @@ export async function apiRequest<TResponse = any, TBody = unknown>(
     mergedHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const res = await withTimeout(
-    fetch(url, {
-      method,
-      credentials,
-      headers: mergedHeaders,
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal,
-    }),
-    timeoutMs
-  );
+  let res: Response;
 
-  let data: any = null;
   try {
-    data = await res.json();
-  } catch {
-    // non-json
+    res = await withTimeout(
+      fetch(url, {
+        method,
+        credentials,
+        headers: mergedHeaders,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal,
+        cache: "no-store", // ✅ جلوگیری از کش 304 برای دیتای داینامیک مثل نشان‌ها و کیف پول
+      }),
+      timeoutMs
+    );
+  } catch (e: any) {
+    throw e;
+  }
+
+  // ✅ مدیریت ایمن خواندن بدنه پاسخ (جلوگیری از ارور بدنه خالی در 204 یا 304)
+  let data: any = null;
+  const status = res.status;
+  
+  // اگر پاسخ 204 (No Content) یا 304 باشد، بدنه‌ای برای خواندن وجود ندارد
+  if (status !== 204 && status !== 304) {
+    try {
+      const text = await res.text();
+      if (text) {
+        data = JSON.parse(text);
+      }
+    } catch {
+      // پاسخ غیر JSON
+    }
   }
 
   if (!res.ok) {
@@ -96,19 +125,28 @@ export async function apiRequest<TResponse = any, TBody = unknown>(
   return data as TResponse;
 }
 
-// ✅ شیء api برای سازگاری با کدهای قدیمی
+// ✅ شیء api برای سازگاری با کدهای قدیمی و هوک‌ها
 export const api = {
   get: <T>(path: string, options?: Omit<ApiRequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...options, method: "GET" }),
 
-  post: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) =>
-    apiRequest<T>(path, { ...options, method: "POST", body }),
+  post: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<ApiRequestOptions, "method" | "body">
+  ) => apiRequest<T>(path, { ...options, method: "POST", body }),
 
-  put: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) =>
-    apiRequest<T>(path, { ...options, method: "PUT", body }),
+  put: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<ApiRequestOptions, "method" | "body">
+  ) => apiRequest<T>(path, { ...options, method: "PUT", body }),
 
-  patch: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) =>
-    apiRequest<T>(path, { ...options, method: "PATCH", body }),
+  patch: <T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<ApiRequestOptions, "method" | "body">
+  ) => apiRequest<T>(path, { ...options, method: "PATCH", body }),
 
   delete: <T>(path: string, options?: Omit<ApiRequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...options, method: "DELETE" }),

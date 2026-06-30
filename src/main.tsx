@@ -1,4 +1,4 @@
-import "@fontsource/vazirmatn";
+// src/main.tsx
 import "@fontsource/vazirmatn/400.css";
 import "@fontsource/vazirmatn/500.css";
 import "@fontsource/vazirmatn/700.css";
@@ -11,16 +11,20 @@ import {
   onlineManager,
 } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { HelmetProvider } from "react-helmet-async";
 
 import App from "./App";
+import ErrorBoundary from "./components/ui/ErrorBoundary";
 import "./index.css";
 
-// RTL Settings
+/* ====================== SETUP ====================== */
+
+// RTL / Language / Theme
 document.documentElement.dir = "rtl";
 document.documentElement.lang = "fa-IR";
 document.documentElement.setAttribute("data-theme", "light");
 
-// React Query
+// React Query Client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -35,37 +39,55 @@ const queryClient = new QueryClient({
   },
 });
 
-// Error logging
-window.addEventListener("error", (e) => console.error("Window Error:", e.error));
-window.addEventListener("unhandledrejection", (e) =>
-  console.error("Unhandled Promise:", e.reason)
-);
+// Global Error Logging
+window.addEventListener("error", (e) => {
+  console.error("Window Error:", e.error);
+});
 
-// Network status
+window.addEventListener("unhandledrejection", (e) => {
+  console.error("Unhandled Promise Rejection:", e.reason);
+});
+
+// Network Status
 onlineManager.setEventListener((setOnline) => {
   const handleOnline = () => {
     setOnline(true);
     queryClient.refetchQueries({ type: "active" });
   };
-  const handleOffline = () => setOnline(false);
+
+  const handleOffline = () => {
+    setOnline(false);
+  };
 
   window.addEventListener("online", handleOnline);
   window.addEventListener("offline", handleOffline);
+
   return () => {
     window.removeEventListener("online", handleOnline);
     window.removeEventListener("offline", handleOffline);
   };
 });
 
-// Render App
+/* ====================== MOUNT ====================== */
+
 const rootElement = document.getElementById("root");
-if (!rootElement) throw new Error("Root element not found");
+
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
 
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+
+        {import.meta.env.DEV && (
+          <ReactQueryDevtools initialIsOpen={false} />
+        )}
+      </QueryClientProvider>
+    </HelmetProvider>
   </StrictMode>
 );

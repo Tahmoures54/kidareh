@@ -1,5 +1,8 @@
-import { useEffect, useState } from "react";
-import { iranCities, type IranCity } from "../data/iranCities";
+// src/hooks/useGeolocation.ts
+import { useEffect, useState, useCallback, useRef } from "react";
+import { iranCities, type IranCity } from "@data/processed/iranCities";
+
+/* ====================== TYPES ====================== */
 
 interface UseGeolocationReturn {
   city: string;
@@ -8,6 +11,8 @@ interface UseGeolocationReturn {
   gpsEnabled: boolean;
   loading: boolean;
   error: string | null;
+  requestLocationPermission: () => void;
+  clearCache: () => void;
 }
 
 type CachedGeo = {
@@ -18,12 +23,25 @@ type CachedGeo = {
   timestamp: number;
 };
 
-const GEO_CACHE_KEY = "kidareh_geo_cache_v1";
-const GEO_CACHE_TTL = 5 * 60 * 1000; // 5 دقیقه
+/* ====================== CONSTANTS ====================== */
 
-// محاسبه فاصله بین دو نقطه جغرافیایی (Haversine)
-function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // کیلومتر
+const GEO_CACHE_KEY = "kidareh_geo_cache_v2";
+const GEO_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const GEO_TIMEOUT = 8000; // 8 seconds
+const GEO_REQUEST_TIMEOUT = 10000; // 10 seconds fallback
+
+/* ====================== UTILITY FUNCTIONS ====================== */
+
+/**
+ * محاسبه فاصله بین دو نقطه جغرافیایی (Haversine Formula)
+ */
+function getDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const R = 6371; // شعاع زمین به کیلومتر
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
@@ -38,7 +56,9 @@ function getDistance(lat1: number, lon1: number, lat2: number, lon2: number): nu
   return R * c;
 }
 
-// نزدیک‌ترین شهر از دیتاست داخلی
+/**
+ * یافتن نزدیک‌ترین شهر به مختصات
+ */
 function findNearestCity(lat: number, lng: number): IranCity | null {
   let nearest: IranCity | null = null;
   let minDistance = Infinity;
@@ -54,154 +74,251 @@ function findNearestCity(lat: number, lng: number): IranCity | null {
   return nearest;
 }
 
+/**
+ * خواندن کش از sessionStorage
+ */
 function readGeoCache(): CachedGeo | null {
+  if (typeof sessionStorage === "undefined") return null;
+
   try {
     const raw = sessionStorage.getItem(GEO_CACHE_KEY);
     if (!raw) return null;
+
     const parsed = JSON.parse(raw) as CachedGeo;
     if (!parsed?.timestamp) return null;
 
+    // بررسی اینکه کش منقضی نشده باشد
     const isFresh = Date.now() - parsed.timestamp < GEO_CACHE_TTL;
     return isFresh ? parsed : null;
-  } catch {
+  } catch (error) {
+    console.warn("Failed to read geo cache:", error);
     return null;
   }
 }
 
-function writeGeoCache(data: Omit<CachedGeo, "timestamp">) {
+/**
+ * ذخیره کش در sessionStorage
+ */
+function writeGeoCache(data: Omit<CachedGeo, "timestamp">): void {
+  if (typeof sessionStorage === "undefined") return;
+
   try {
     const payload: CachedGeo = { ...data, timestamp: Date.now() };
     sessionStorage.setItem(GEO_CACHE_KEY, JSON.stringify(payload));
-  } catch {
-    // ignore
+  } catch (error) {
+    console.warn("Failed to write geo cache:", error);
   }
 }
 
-export function useGeolocation(fallbackCity = "تهران"): UseGeolocationReturn {
+/**
+ * حذف کش
+ */
+function clearGeoCache(): void {
+  if (typeof sessionStorage !== "undefined") {
+    sessionStorage.removeItem(GEO_CACHE_KEY);
+  }
+}
+
+/**
+ * ترجمه خطاهای Geolocation API
+ */
+function getErrorMessage(code: number): string {
+  switch (code) {
+    case 1: // PERMISSION_DENIED
+      return "دسترسی به موقعیت مکانی رد شد";
+    case 2: // POSITION_UNAVAILABLE
+      return "موقعیت مکانی در دسترس نیست";
+    case 3: // TIMEOUT
+      return "زمان دریافت موقعیت به پایان رسید";
+    default:
+      return "خطای نامشخص در دریافت موقعیت";
+  }
+}
+
+/* ====================== HOOK ====================== */
+
+export function useGeolocation(
+  fallbackCity: string = "تهران"
+): UseGeolocationReturn {
+  // Fallback City Info
   const fallbackMatched = iranCities.find((c) => c.name === fallbackCity);
   const fallbackProvince = fallbackMatched?.province || "تهران";
 
+  // State
   const [city, setCity] = useState<string>(fallbackCity);
   const [province, setProvince] = useState<string>(fallbackProvince);
-  const [displayLocation, setDisplayLocation] = useState<string>("در حال یافتن موقعیت...");
+  const [displayLocation, setDisplayLocation] = useState<string>(
+    `${fallbackCity}، ${fallbackProvince}`
+  );
   const [gpsEnabled, setGpsEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Refs برای جلوگیری از تنظیمات مکرر
+  const isMountedRef = useRef<boolean>(true);
+  const timeoutIdRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup on unmount
   useEffect(() => {
-    // 1) اول cache سریع
-    const cached = readGeoCache();
-    if (cached) {
-      setCity(cached.city);
-      setProvince(cached.province);
-      setDisplayLocation(cached.displayLocation);
-      setGpsEnabled(cached.gpsEnabled);
-      setLoading(false);
-      setError(null);
-      return;
-    }
-
-    // 2) اگر مرورگر geolocation نداشت
-    if (!("geolocation" in navigator)) {
-      setCity(fallbackCity);
-      setProvince(fallbackProvince);
-      setDisplayLocation(`${fallbackCity}، ${fallbackProvince}`);
-      setGpsEnabled(false);
-      setLoading(false);
-      setError("موقعیت‌یاب در مرورگر شما پشتیبانی نمی‌شود");
-      return;
-    }
-
-    let finished = false;
-    const finishSafely = (fn: () => void) => {
-      if (finished) return;
-      finished = true;
-      fn();
+    return () => {
+      isMountedRef.current = false;
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
     };
+  }, []);
 
-    const timeoutId = window.setTimeout(() => {
-      finishSafely(() => {
-        setCity(fallbackCity);
-        setProvince(fallbackProvince);
-        setDisplayLocation(`${fallbackCity}، ${fallbackProvince}`);
-        setGpsEnabled(false);
-        setLoading(false);
-        setError("زمان دریافت موقعیت به پایان رسید");
+  // تابع برای تنظیم state به صورت ایمن
+  const updateState = useCallback(
+    (newState: Partial<UseGeolocationReturn>) => {
+      if (!isMountedRef.current) return;
+
+      setCity((prev) => newState.city ?? prev);
+      setProvince((prev) => newState.province ?? prev);
+      setDisplayLocation((prev) => newState.displayLocation ?? prev);
+      setGpsEnabled((prev) => newState.gpsEnabled ?? prev);
+      setLoading((prev) => newState.loading ?? prev);
+      setError((prev) => newState.error ?? prev);
+    },
+    []
+  );
+
+  // درخواست مجدد Location Permission
+  const requestLocationPermission = useCallback(() => {
+    clearGeoCache();
+    setLoading(true);
+    setError(null);
+  }, []);
+
+  // درخواست موقعیت
+  const requestGeolocation = useCallback(() => {
+    // بررسی کش
+    const cached = readGeoCache();
+    if (cached && isMountedRef.current) {
+      updateState({
+        city: cached.city,
+        province: cached.province,
+        displayLocation: cached.displayLocation,
+        gpsEnabled: cached.gpsEnabled,
+        loading: false,
+        error: null,
       });
-    }, 10000);
+      return;
+    }
 
+    // بررسی پشتیبانی Geolocation
+    if (!("geolocation" in navigator)) {
+      updateState({
+        city: fallbackCity,
+        province: fallbackProvince,
+        displayLocation: `${fallbackCity}، ${fallbackProvince}`,
+        gpsEnabled: false,
+        loading: false,
+        error: "موقعیت‌یاب در مرورگر شما پشتیبانی نمی‌شود",
+      });
+      return;
+    }
+
+    // تایمر فیلبک
+    timeoutIdRef.current = setTimeout(() => {
+      if (!isMountedRef.current) return;
+
+      updateState({
+        city: fallbackCity,
+        province: fallbackProvince,
+        displayLocation: `${fallbackCity}، ${fallbackProvince}`,
+        gpsEnabled: false,
+        loading: false,
+        error: "زمان دریافت موقعیت به پایان رسید",
+      });
+    }, GEO_REQUEST_TIMEOUT);
+
+    // درخواست موقعیت
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        window.clearTimeout(timeoutId);
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+        }
 
-        finishSafely(() => {
-          const { latitude, longitude } = position.coords;
-          const nearest = findNearestCity(latitude, longitude);
+        if (!isMountedRef.current) return;
 
-          if (nearest) {
-            const finalCity = nearest.name;
-            const finalProvince = nearest.province;
-            const finalDisplay = `${finalCity}، ${finalProvince}`;
+        const { latitude, longitude } = position.coords;
+        const nearest = findNearestCity(latitude, longitude);
 
-            setCity(finalCity);
-            setProvince(finalProvince);
-            setDisplayLocation(finalDisplay);
-            setGpsEnabled(true);
-            setError(null);
-            setLoading(false);
+        if (nearest) {
+          const finalCity = nearest.name;
+          const finalProvince = nearest.province;
+          const finalDisplay = `${finalCity}، ${finalProvince}`;
 
-            writeGeoCache({
-              city: finalCity,
-              province: finalProvince,
-              displayLocation: finalDisplay,
-              gpsEnabled: true,
-            });
-          } else {
-            setCity(fallbackCity);
-            setProvince(fallbackProvince);
-            setDisplayLocation(`${fallbackCity}، ${fallbackProvince}`);
-            setGpsEnabled(false);
-            setError("شهر نزدیک پیدا نشد");
-            setLoading(false);
-          }
-        });
+          updateState({
+            city: finalCity,
+            province: finalProvince,
+            displayLocation: finalDisplay,
+            gpsEnabled: true,
+            loading: false,
+            error: null,
+          });
+
+          writeGeoCache({
+            city: finalCity,
+            province: finalProvince,
+            displayLocation: finalDisplay,
+            gpsEnabled: true,
+          });
+        } else {
+          updateState({
+            city: fallbackCity,
+            province: fallbackProvince,
+            displayLocation: `${fallbackCity}، ${fallbackProvince}`,
+            gpsEnabled: false,
+            loading: false,
+            error: "شهر نزدیک پیدا نشد",
+          });
+        }
       },
       (err) => {
-        window.clearTimeout(timeoutId);
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+        }
 
-        finishSafely(() => {
-          setCity(fallbackCity);
-          setProvince(fallbackProvince);
-          setDisplayLocation(`${fallbackCity}، ${fallbackProvince}`);
-          setGpsEnabled(false);
-          setLoading(false);
+        if (!isMountedRef.current) return;
 
-          switch (err.code) {
-            case err.PERMISSION_DENIED:
-              setError("دسترسی به موقعیت مکانی رد شد");
-              break;
-            case err.POSITION_UNAVAILABLE:
-              setError("موقعیت مکانی در دسترس نیست");
-              break;
-            case err.TIMEOUT:
-              setError("زمان دریافت موقعیت به پایان رسید");
-              break;
-            default:
-              setError("خطای نامشخص در دریافت موقعیت");
-          }
+        updateState({
+          city: fallbackCity,
+          province: fallbackProvince,
+          displayLocation: `${fallbackCity}، ${fallbackProvince}`,
+          gpsEnabled: false,
+          loading: false,
+          error: getErrorMessage(err.code),
         });
       },
       {
         enableHighAccuracy: true,
-        timeout: 8000,
+        timeout: GEO_TIMEOUT,
         maximumAge: GEO_CACHE_TTL,
       }
     );
+  }, [fallbackCity, fallbackProvince, updateState]);
+
+  // اجرا درخواست موقعیت
+  useEffect(() => {
+    requestGeolocation();
 
     return () => {
-      window.clearTimeout(timeoutId);
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
     };
-  }, [fallbackCity, fallbackProvince]);
+  }, [requestGeolocation]);
 
-  return { city, province, displayLocation, gpsEnabled, loading, error };
+  return {
+    city,
+    province,
+    displayLocation,
+    gpsEnabled,
+    loading,
+    error,
+    requestLocationPermission,
+    clearCache: clearGeoCache,
+  };
 }

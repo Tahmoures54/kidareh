@@ -1,7 +1,13 @@
+/**
+ * Support Tickets API
+ * @version 2.1.0 — Enterprise Grade (Secure Uploads, Anti-Spam, Unified Responses)
+ */
+
 import { Router, type Response } from "express";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import crypto from "crypto"; // 🔵 اضافه‌شده برای امنیت رمزنگاری فایل‌ها
 import { z } from "zod";
 import db from "../db.js";
 import logger from "../logger.js";
@@ -10,7 +16,24 @@ import { requireAuth, requireRole, type AuthRequest } from "../middleware/auth.j
 const router = Router();
 
 /* =========================================================
- * Upload config
+ * 0. Safe DB Patching (Idempotent)
+ * =======================================================*/
+const safeAddColumn = (sql: string, label: string) => {
+  try {
+    db.exec(sql);
+    logger.info(`✅ Support migration: ${label}`);
+  } catch (err: any) {
+    if (!err.message?.includes("duplicate column name")) {
+      logger.error(`❌ Support migration (${label}):`, err.message);
+    }
+  }
+};
+
+safeAddColumn(`ALTER TABLE support_tickets ADD COLUMN attachments TEXT`, "support_tickets.attachments");
+safeAddColumn(`ALTER TABLE support_tickets ADD COLUMN answer TEXT`, "support_tickets.answer");
+
+/* =========================================================
+ * 1. Upload Config (Cryptographically Secure)
  * =======================================================*/
 const uploadDir = path.join(process.cwd(), "public", "uploads", "support");
 if (!fs.existsSync(uploadDir)) {
@@ -21,100 +44,113 @@ const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
   filename: (_req, file, cb) => {
     const ext = path.extname(file.originalname || "").toLowerCase();
-    const safeExt = ext && ext.length <= 10 ? ext : "";
-    cb(null, `support_${Date.now()}_${Math.floor(Math.random() * 1e6)}${safeExt}`);
+    const safeExt = /^\.\w{1,10}$/.test(ext) ? ext : ""; 
+    // 🔵 استفاده از crypto برای جلوگیری از حدس زدن نام فایل‌ها توسط هکرها
+    const uniqueId = crypto.randomBytes(16).toString("hex");
+    cb(null, `support_${uniqueId}${safeExt}`);
   },
 });
 
-const allowedMimes = new Set([
+const ALLOWED_MIMES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
+  "image/gif",
   "application/pdf",
   "application/zip",
   "text/plain",
 ]);
 
+const MAX_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
+
 const upload = multer({
   storage,
-  limits: {
-    fileSize: 8 * 1024 * 1024, // 8MB
-    files: 1,
-  },
+  limits: { fileSize: MAX_FILE_SIZE, files: 1 },
   fileFilter: (_req, file, cb) => {
-    if (allowedMimes.has(file.mimetype)) cb(null, true);
-    else cb(new Error("فرمت فایل مجاز نیست"));
+    if (ALLOWED_MIMES.has(file.mimetype)) cb(null, true);
+    else cb(new Error("فرمت فایل مجاز نیست. فقط تصاویر، PDF و ZIP پشتیبانی می‌شوند."));
   },
 });
 
 /* =========================================================
- * Schemas
+ * 2. Strict Zod Schemas
  * =======================================================*/
 const createTicketSchema = z.object({
-  department: z.string().trim().min(1, "دپارتمان الزامی است").max(100),
-  subject: z.string().trim().min(5, "موضوع باید حداقل ۵ کاراکتر باشد").max(100),
-  message: z.string().trim().min(20, "پیام باید حداقل ۲۰ کاراکتر باشد").max(1000),
-  attachments: z.array(z.string().url()).max(3).optional().default([]),
-  userId: z.union([z.number(), z.string()]).optional(), // از فرانت میاد، اما مبنا req.user است
+  department: z.string().trim().min(1, "انتخاب دپارتمان الزامی است").max(100),
+  subject: z.string().trim().min(3, "موضوع باید حداقل ۳ کاراکتر باشد").max(150),
+  message: z.string().trim().min(10, "پیام باید حداقل ۱۰ کاراکتر باشد").max(2000),
+  priority: z.enum(["low", "normal", "high"]).optional().default("normal"),
+  attachments: z.array(z.string().url()).max(3, "حداکثر ۳ فایل مجاز است").optional().default([]),
 });
 
 const updateStatusSchema = z.object({
-  status: z.enum(["open", "pending", "closed"]),
-  answer: z.string().trim().max(2000).optional().nullable(),
+  status: z
+    .enum(["open", "in_progress", "pending", "closed"])
+    .transform((s) => (s === "pending" ? "in_progress" : s)),
+  answer: z.string().trim().max(5000).optional().nullable(),
+  priority: z.enum(["low", "normal", "high"]).optional().nullable(),
 });
 
 /* =========================================================
- * Ensure table exists (safe bootstrap)
+ * 3. Anti-Spam Guard (Rate Limiter)
  * =======================================================*/
-try {
-  db.prepare(`
-    CREATE TABLE IF NOT EXISTS support_tickets (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER NOT NULL,
-      department TEXT NOT NULL,
-      subject TEXT NOT NULL,
-      message TEXT NOT NULL,
-      attachments TEXT,
-      status TEXT NOT NULL DEFAULT 'open',
-      answer TEXT,
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    )
-  `).run();
+// 🔵 جلوگیری از ثبت تیکت رگباری توسط یک کاربر
+const ticketSpamGuard = new Map<number, number>();
+const SPAM_COOLDOWN_MS = 60 * 1000; // 1 Minute
 
-  db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id
-    ON support_tickets(user_id)
-  `).run();
+// پاکسازی حافظه گارد هر ساعت
+setInterval(() => {
+  const now = Date.now();
+  for (const [userId, timestamp] of ticketSpamGuard.entries()) {
+    if (now - timestamp > SPAM_COOLDOWN_MS) ticketSpamGuard.delete(userId);
+  }
+}, 60 * 60 * 1000);
 
-  db.prepare(`
-    CREATE INDEX IF NOT EXISTS idx_support_tickets_status
-    ON support_tickets(status)
-  `).run();
-} catch (e) {
-  logger.error("Support table bootstrap error:", e);
+/* =========================================================
+ * 4. Helper: Normalize DB Row to API Format
+ * =======================================================*/
+function normaliseTicket(row: any) {
+  let attachments: string[] = [];
+  if (row.attachments) {
+    try {
+      const parsed = JSON.parse(row.attachments);
+      attachments = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      attachments = [];
+    }
+  }
+
+  return {
+    ...row,
+    status: row.status === "in_progress" ? "pending" : row.status,
+    attachments,
+  };
 }
 
 /* =========================================================
- * 1) Upload attachment (auth)
- * POST /api/support/upload
+ * 5. Routes
  * =======================================================*/
+
+/**
+ * POST /api/support/upload
+ */
 router.post("/upload", requireAuth, (req: AuthRequest, res: Response) => {
   upload.single("file")(req as any, res as any, (err: any) => {
+    if (err instanceof multer.MulterError) {
+      const msg = err.code === "LIMIT_FILE_SIZE" ? "حجم فایل بیشتر از ۸ مگابایت است" : "خطا در آپلود فایل";
+      return res.status(400).json({ error: msg });
+    }
     if (err) {
-      logger.warn("Support upload failed:", err?.message || err);
-      return res.status(400).json({ error: err?.message || "آپلود فایل ناموفق بود" });
+      return res.status(400).json({ error: err.message || "آپلود فایل ناموفق بود" });
     }
 
     const file = (req as any).file as Express.Multer.File | undefined;
-    if (!file) {
-      return res.status(400).json({ error: "فایلی ارسال نشده است" });
-    }
+    if (!file) return res.status(400).json({ error: "فایلی ارسال نشده است" });
 
-    const publicUrl = `/uploads/support/${file.filename}`;
+    logger.info(`📎 Support file uploaded: ${file.filename} (${(file.size / 1024).toFixed(1)} KB)`);
     return res.status(201).json({
       success: true,
-      url: publicUrl,
+      url: `/uploads/support/${file.filename}`,
       fileName: file.originalname,
       size: file.size,
       mimeType: file.mimetype,
@@ -122,69 +158,57 @@ router.post("/upload", requireAuth, (req: AuthRequest, res: Response) => {
   });
 });
 
-/* =========================================================
- * 2) Get tickets
- * GET /api/support/tickets?mine=1&page=1&limit=20
- * - mine=1 => فقط تیکت‌های کاربر
- * - admin => همه تیکت‌ها
- * =======================================================*/
+/**
+ * GET /api/support/tickets
+ */
 router.get("/tickets", requireAuth, (req: AuthRequest, res: Response): void => {
   try {
     const user = req.user!;
+    const isStaff = user.role === "admin" || user.role === "support";
     const mine = String(req.query.mine || "0") === "1";
-    const page = Math.max(1, Number(req.query.page || 1));
-    const limit = Math.min(50, Math.max(1, Number(req.query.limit || 20)));
+    const statusFilter = req.query.status as string | undefined;
+    
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 20));
     const offset = (page - 1) * limit;
 
-    let sql = `
-      SELECT
-        t.id,
-        t.user_id as userId,
-        t.department,
-        t.subject,
-        t.message,
-        t.attachments,
-        t.status,
-        t.answer,
-        t.created_at as createdAt,
-        t.updated_at as updatedAt
-      FROM support_tickets t
-      WHERE 1=1
-    `;
+    const conditions: string[] = ["1=1"];
     const params: any[] = [];
 
-    if (mine || user.role !== "admin") {
-      sql += " AND t.user_id = ?";
+    if (mine || !isStaff) {
+      conditions.push("t.user_id = ?");
       params.push(user.id);
     }
 
-    sql += " ORDER BY t.id DESC LIMIT ? OFFSET ?";
-    params.push(limit, offset);
+    if (statusFilter && ["open", "in_progress", "closed"].includes(statusFilter)) {
+      conditions.push("t.status = ?");
+      params.push(statusFilter);
+    }
 
-    const rows = db.prepare(sql).all(...params) as any[];
+    const whereClause = conditions.join(" AND ");
 
-    const tickets = rows.map((r) => {
-      let attachments: string[] = [];
-      if (r.attachments) {
-        try {
-          const parsed = JSON.parse(r.attachments);
-          attachments = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          attachments = [];
-        }
-      }
-      return {
-        ...r,
-        attachments,
-      };
-    });
+    const totalRow = db.prepare(`SELECT COUNT(*) AS total FROM support_tickets t WHERE ${whereClause}`).get(...params) as any;
+    const totalCount = totalRow?.total || 0;
+
+    const rows = db.prepare(`
+      SELECT
+        t.id, t.user_id AS userId, t.category AS department, t.title AS subject,
+        t.description AS message, t.priority, t.attachments, t.status, t.answer,
+        t.assigned_to AS assignedTo, t.created_at AS createdAt, t.updated_at AS updatedAt,
+        u.name AS userName, u.phone AS userPhone
+      FROM support_tickets t
+      LEFT JOIN users u ON u.id = t.user_id
+      WHERE ${whereClause}
+      ORDER BY 
+        CASE t.status WHEN 'open' THEN 0 WHEN 'in_progress' THEN 1 ELSE 2 END,
+        t.created_at DESC
+      LIMIT ? OFFSET ?
+    `).all(...params, limit, offset) as any[];
 
     res.json({
-      tickets,
+      tickets: rows.map(normaliseTicket),
       pagination: {
-        page,
-        limit,
-        hasMore: tickets.length === limit,
+        page, limit, totalCount, totalPages: Math.ceil(totalCount / limit), hasMore: page * limit < totalCount,
       },
     });
   } catch (err) {
@@ -193,170 +217,204 @@ router.get("/tickets", requireAuth, (req: AuthRequest, res: Response): void => {
   }
 });
 
-/* =========================================================
- * 3) Create ticket
- * POST /api/support/tickets
- * =======================================================*/
-router.post("/tickets", requireAuth, (req: AuthRequest, res: Response): void => {
+/**
+ * GET /api/support/tickets/:id
+ */
+router.get("/tickets/:id(\\d+)", requireAuth, (req: AuthRequest, res: Response): void => {
   try {
-    const userId = req.user!.id;
-    const parsed = createTicketSchema.parse(req.body);
+    const id = Number(req.params.id);
+    const user = req.user!;
+    const isStaff = user.role === "admin" || user.role === "support";
 
-    const attachments = Array.isArray(parsed.attachments) ? parsed.attachments.slice(0, 3) : [];
-    const result = db.prepare(`
-      INSERT INTO support_tickets (
-        user_id, department, subject, message, attachments, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, 'open', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-    `).run(
-      userId,
-      parsed.department,
-      parsed.subject,
-      parsed.message,
-      JSON.stringify(attachments)
-    );
-
-    const created = db.prepare(`
+    const row = db.prepare(`
       SELECT
-        id,
-        user_id as userId,
-        department,
-        subject,
-        message,
-        attachments,
-        status,
-        answer,
-        created_at as createdAt,
-        updated_at as updatedAt
-      FROM support_tickets
-      WHERE id = ?
-      LIMIT 1
-    `).get(result.lastInsertRowid) as any;
+        t.id, t.user_id AS userId, t.category AS department, t.title AS subject,
+        t.description AS message, t.priority, t.attachments, t.status, t.answer,
+        t.created_at AS createdAt, t.updated_at AS updatedAt, u.name AS userName, u.phone AS userPhone
+      FROM support_tickets t
+      LEFT JOIN users u ON u.id = t.user_id
+      WHERE t.id = ?
+    `).get(id) as any;
 
-    const ticket = {
-      ...created,
-      attachments: created?.attachments ? JSON.parse(created.attachments) : [],
-    };
-
-    logger.info(`🎫 Support ticket created: ${ticket.id} by user ${userId}`);
-    res.status(201).json({ success: true, ticket });
-  } catch (err: any) {
-    if (err?.name === "ZodError") {
-      const first = err.issues?.[0];
-      res.status(400).json({
-        error: first?.message || "داده‌های ارسالی نامعتبر است",
-        field: first?.path?.[0],
-        details: err.issues,
-      });
+    if (!row) {
+      res.status(404).json({ error: "تیکت یافت نشد" });
       return;
     }
 
-    logger.error("Create support ticket error:", err);
+    if (!isStaff && Number(row.userId) !== Number(user.id)) {
+      res.status(403).json({ error: "دسترسی غیرمجاز" });
+      return;
+    }
+
+    res.json({ ticket: normaliseTicket(row) });
+  } catch (err) {
+    logger.error("Get single ticket error:", err);
+    res.status(500).json({ error: "خطا در دریافت تیکت" });
+  }
+});
+
+/**
+ * POST /api/support/tickets
+ */
+router.post("/tickets", requireAuth, (req: AuthRequest, res: Response): void => {
+  try {
+    const userId = req.user!.id;
+    
+    // 🔵 Anti-Spam Check
+    const lastTime = ticketSpamGuard.get(userId);
+    if (lastTime && Date.now() - lastTime < SPAM_COOLDOWN_MS) {
+      res.status(429).json({ error: "لطفاً برای ثبت تیکت جدید ۱ دقیقه صبر کنید." });
+      return;
+    }
+
+    const parsed = createTicketSchema.parse(req.body);
+    const attachmentsJson = JSON.stringify(parsed.attachments);
+
+    // DB Transaction for safety
+    const result = db.transaction(() => {
+      const insertInfo = db.prepare(`
+        INSERT INTO support_tickets 
+          (user_id, category, title, description, priority, attachments, status, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, 'open', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `).run(userId, parsed.department, parsed.subject, parsed.message, parsed.priority, attachmentsJson);
+
+      // 🔵 Unified Response: Fetching immediately with User Data (JOIN)
+      return db.prepare(`
+        SELECT t.id, t.user_id AS userId, t.category AS department, t.title AS subject,
+               t.description AS message, t.priority, t.attachments, t.status, t.answer,
+               t.created_at AS createdAt, t.updated_at AS updatedAt, u.name AS userName, u.phone AS userPhone
+        FROM support_tickets t
+        LEFT JOIN users u ON u.id = t.user_id
+        WHERE t.id = ?
+      `).get(insertInfo.lastInsertRowid) as any;
+    })();
+
+    // Update Spam Guard
+    ticketSpamGuard.set(userId, Date.now());
+
+    const ticket = normaliseTicket(result);
+    logger.info(`🎫 Ticket #${ticket.id} created by user ${userId} [${parsed.department}]`);
+    res.status(201).json({ success: true, ticket });
+  } catch (err: any) {
+    if (err?.name === "ZodError") {
+      res.status(400).json({ error: err.issues[0]?.message || "داده نامعتبر است", field: err.issues[0]?.path[0] });
+      return;
+    }
+    logger.error("Create ticket error:", err);
     res.status(500).json({ error: "خطا در ثبت تیکت" });
   }
 });
 
-/* =========================================================
- * 4) Update ticket status (admin)
+/**
  * PATCH /api/support/tickets/:id
- * =======================================================*/
-router.patch(
-  "/tickets/:id(\\d+)",
-  requireAuth,
-  requireRole(["admin"]),
-  (req: AuthRequest, res: Response): void => {
-    try {
-      const id = Number(req.params.id);
-      if (!Number.isInteger(id) || id <= 0) {
-        res.status(400).json({ error: "شناسه تیکت نامعتبر است" });
-        return;
-      }
+ */
+router.patch("/tickets/:id(\\d+)", requireAuth, requireRole(["admin", "support"]), (req: AuthRequest, res: Response): void => {
+  try {
+    const id = Number(req.params.id);
+    const parsed = updateStatusSchema.parse(req.body);
 
-      const parsed = updateStatusSchema.parse(req.body);
-
-      const exists = db.prepare("SELECT id FROM support_tickets WHERE id = ?").get(id) as any;
-      if (!exists) {
-        res.status(404).json({ error: "تیکت یافت نشد" });
-        return;
-      }
-
-      db.prepare(`
-        UPDATE support_tickets
-        SET status = ?, answer = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(parsed.status, parsed.answer ?? null, id);
-
-      const updated = db.prepare(`
-        SELECT
-          id,
-          user_id as userId,
-          department,
-          subject,
-          message,
-          attachments,
-          status,
-          answer,
-          created_at as createdAt,
-          updated_at as updatedAt
-        FROM support_tickets
-        WHERE id = ?
-      `).get(id) as any;
-
-      const ticket = {
-        ...updated,
-        attachments: updated?.attachments ? JSON.parse(updated.attachments) : [],
-      };
-
-      res.json({ success: true, ticket });
-    } catch (err: any) {
-      if (err?.name === "ZodError") {
-        const first = err.issues?.[0];
-        res.status(400).json({
-          error: first?.message || "داده‌های ارسالی نامعتبر است",
-          field: first?.path?.[0],
-          details: err.issues,
-        });
-        return;
-      }
-
-      logger.error("Update support ticket error:", err);
-      res.status(500).json({ error: "خطا در بروزرسانی تیکت" });
+    const exists = db.prepare("SELECT id FROM support_tickets WHERE id = ?").get(id);
+    if (!exists) {
+      res.status(404).json({ error: "تیکت یافت نشد" });
+      return;
     }
-  }
-);
 
-/* =========================================================
- * 5) Delete ticket (owner/admin)
+    const sets = ["status = ?", "updated_at = CURRENT_TIMESTAMP"];
+    const values: any[] = [parsed.status];
+
+    if (parsed.answer !== undefined) {
+      sets.push("answer = ?");
+      values.push(parsed.answer ?? null);
+    }
+    if (parsed.priority) {
+      sets.push("priority = ?");
+      values.push(parsed.priority);
+    }
+    values.push(id);
+
+    db.transaction(() => {
+      db.prepare(`UPDATE support_tickets SET ${sets.join(", ")} WHERE id = ?`).run(...values);
+    })();
+
+    const updated = db.prepare(`
+      SELECT t.id, t.user_id AS userId, t.category AS department, t.title AS subject,
+             t.description AS message, t.priority, t.attachments, t.status, t.answer,
+             t.created_at AS createdAt, t.updated_at AS updatedAt, u.name AS userName, u.phone AS userPhone
+      FROM support_tickets t
+      LEFT JOIN users u ON u.id = t.user_id
+      WHERE t.id = ?
+    `).get(id) as any;
+
+    res.json({ success: true, ticket: normaliseTicket(updated) });
+  } catch (err: any) {
+    if (err?.name === "ZodError") {
+      res.status(400).json({ error: err.issues[0]?.message });
+      return;
+    }
+    logger.error("Update ticket error:", err);
+    res.status(500).json({ error: "خطا در بروزرسانی تیکت" });
+  }
+});
+
+/**
  * DELETE /api/support/tickets/:id
- * =======================================================*/
+ */
 router.delete("/tickets/:id(\\d+)", requireAuth, (req: AuthRequest, res: Response): void => {
   try {
     const id = Number(req.params.id);
     const user = req.user!;
 
-    if (!Number.isInteger(id) || id <= 0) {
-      res.status(400).json({ error: "شناسه تیکت نامعتبر است" });
-      return;
-    }
-
-    const ticket = db.prepare("SELECT id, user_id FROM support_tickets WHERE id = ?").get(id) as any;
+    const ticket = db.prepare("SELECT user_id, attachments FROM support_tickets WHERE id = ?").get(id) as any;
     if (!ticket) {
       res.status(404).json({ error: "تیکت یافت نشد" });
       return;
     }
 
-    const isOwner = Number(ticket.user_id) === Number(user.id);
-    const isAdmin = user.role === "admin";
-
-    if (!isOwner && !isAdmin) {
-      res.status(403).json({ error: "شما مجاز به حذف این تیکت نیستید" });
+    if (Number(ticket.user_id) !== Number(user.id) && user.role !== "admin") {
+      res.status(403).json({ error: "عدم دسترسی" });
       return;
     }
 
+    if (ticket.attachments) {
+      try {
+        const files: string[] = JSON.parse(ticket.attachments);
+        for (const fileUrl of files) {
+          // 🔵 Security: prevent path traversal (../)
+          const fileName = path.basename(fileUrl);
+          const filePath = path.join(uploadDir, fileName);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+            logger.info(`🗑️ Deleted attachment securely: ${fileName}`);
+          }
+        }
+      } catch {}
+    }
+
     db.prepare("DELETE FROM support_tickets WHERE id = ?").run(id);
-    res.json({ success: true, message: "تیکت حذف شد" });
+    res.json({ success: true, message: "تیکت و فایل‌های پیوست با موفقیت حذف شدند" });
   } catch (err) {
-    logger.error("Delete support ticket error:", err);
+    logger.error("Delete ticket error:", err);
     res.status(500).json({ error: "خطا در حذف تیکت" });
+  }
+});
+
+/**
+ * GET /api/support/stats
+ */
+router.get("/stats", requireAuth, requireRole(["admin", "support"]), (_req: AuthRequest, res: Response): void => {
+  try {
+    const stats = db.prepare(`
+      SELECT
+        COUNT(*) AS total,
+        SUM(CASE WHEN status = 'open' THEN 1 ELSE 0 END) AS open,
+        SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) AS inProgress,
+        SUM(CASE WHEN status = 'closed' THEN 1 ELSE 0 END) AS closed
+      FROM support_tickets
+    `).get() as any;
+
+    res.json({ success: true, stats });
+  } catch (err) {
+    res.status(500).json({ error: "خطا در دریافت آمار" });
   }
 });
 
