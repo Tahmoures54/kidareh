@@ -10,26 +10,34 @@ RUN npm config set registry https://package-mirror.liara.ir/repository/npm/
 
 COPY package*.json ./
 
-RUN npm install --legacy-peer-deps --no-audit --no-fund
+# نصب تمام پکیج‌ها (شامل devDependencies برای بیلد)
+RUN npm ci --legacy-peer-deps --no-audit --no-fund
 
 COPY . .
 RUN npm run build
+
+# حذف پکیج‌های توسعه قبل از کپی به مرحله بعد
+RUN npm prune --omit=dev
 
 # Stage 2: Production Runtime
 FROM docker.arvancloud.ir/node:20-bookworm-slim
 
 WORKDIR /app
 
+# ایجاد کاربر امن
 RUN groupadd -r -g 1001 kidareh && \
     useradd -r -u 1001 -g kidareh -s /bin/false kidareh
 
+# ایجاد پوشه‌های لازم و انتقال مالکیت به کاربر امن
 RUN mkdir -p /app/uploads/products /app/uploads/avatars /app/uploads/stores /app/logs /app/backup /data && \
-    chown -R kidareh:kidareh /app /data && \
-    chmod -R 755 /app /data
+    chown -R kidareh:kidareh /app /data
 
-COPY --from=builder --chown=kidareh:kidareh /app/package*.json ./
+# کپی فقط پکیج‌های اجرایی (پس از prune)
 COPY --from=builder --chown=kidareh:kidareh /app/node_modules ./node_modules
+# کپی فایل‌های بیلد شده
 COPY --from=builder --chown=kidareh:kidareh /app/dist ./dist
+# کپی پکیج‌های جیسون برای رفرنس
+COPY --from=builder --chown=kidareh:kidareh /app/package*.json ./
 
 ENV NODE_ENV=production \
     PORT=3000 \

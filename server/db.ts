@@ -1,26 +1,35 @@
 ﻿/**
  * SQLite Database Configuration & Management
- * @version 3.1.0
+ * @version 3.2.0 (Phase 1 & 2 Compatible)
  */
 
 import Database from "better-sqlite3";
 import path     from "path";
 import fs       from "fs";
 import logger   from "./logger.js";
+import { env }  from "./config/env.js"; // 🟢 اصلاح شد: مسیر صحیح به پوشه کانفیگ داخل سرور
 
 // ============================================================================
 // 1. Configuration & Paths
 // ============================================================================
 
+// 🟢 اصلاح شده: استفاده از DATABASE_URL هماهنگ با Docker و env.ts
 const defaultDir = fs.existsSync("/data") ? "/data" : process.cwd();
-const dataDir    = process.env.DB_DIR  || defaultDir;
+const fallbackDbPath = path.join(defaultDir, "app.db");
+
+// مسیر دیتابیس اولویت‌بندی می‌شود: 1. ولیدیتور امن، 2. متغیرهای قدیمی، 3. مسیر پیش‌فرض
+const dbPath = env.DATABASE_URL 
+  ? (path.isAbsolute(env.DATABASE_URL) ? env.DATABASE_URL : path.resolve(process.cwd(), env.DATABASE_URL))
+  : (process.env.DB_PATH || fallbackDbPath);
+
+const dataDir = path.dirname(dbPath);
 
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
   logger.info(`📁 Created data directory: ${dataDir}`);
 }
 
-const dbPath    = process.env.DB_PATH || path.join(dataDir, "app.db");
+// پوشه بکاپ حالا در کنار دیتابیس ساخته می‌شود (در داکر داخل /data قرار می‌گیرد تا پاک نشود)
 const backupDir = path.join(dataDir, "backups");
 
 if (!fs.existsSync(backupDir)) {

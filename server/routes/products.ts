@@ -5,14 +5,28 @@ import { requireAuth, requireRole, type AuthRequest } from "../middleware/auth.j
 import { z } from "zod";
 import logger from "../logger.js";
 import { iranCities } from "../../data/processed/iranCities.js";
+import multer from "multer";
+import { uploadFile } from "../services/storage.js"; // 🟢 اضافه شده: سرویس آپلود ابری
 
 const router = Router();
+
+// 🟢 اضافه شده: تنظیمات Multer برای نگهداری فایل در حافظه موقت (Memory) قبل از ارسال به S3
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // محدودیت حجم فایل: 5 مگابایت
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("فقط فایل تصویری مجاز است"));
+    }
+  }
+});
 
 // ════════════════════════════════════════
 // 0. بررسی دیتابیس و Map شهر -> استان
 // ════════════════════════════════════════
 try {
-  // اطمینان از وجود جدول نشان‌شده‌ها
   db.exec(`
     CREATE TABLE IF NOT EXISTS saved_products (
       user_id INTEGER NOT NULL,
@@ -94,7 +108,6 @@ router.get("/", (req, res) => {
       }
     }
 
-    // Count total
     const countQuery = `SELECT COUNT(*) as total FROM products p LEFT JOIN stores s ON p.store_id = s.id WHERE ${baseConditions}`;
     const { total } = db.prepare(countQuery).get(...countParams) as { total: number };
 
@@ -105,7 +118,6 @@ router.get("/", (req, res) => {
       });
     }
 
-    // Fetch products
     const productsQuery = `
       SELECT 
         p.*,
@@ -169,7 +181,6 @@ router.get("/seller", requireAuth, (req: AuthRequest, res: Response) => {
 // 3. مدیریت نشان‌ها (Saved Products)
 // ════════════════════════════════════════
 
-// دریافت لیست کالاهای نشان‌شده کاربر
 router.get("/saved", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -192,7 +203,6 @@ router.get("/saved", requireAuth, (req: AuthRequest, res: Response) => {
   }
 });
 
-// افزودن یا حذف یک کالا از نشان‌شده‌ها
 router.post("/save", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -225,7 +235,6 @@ router.post("/save", requireAuth, (req: AuthRequest, res: Response) => {
 // 4. عملیات روی یک کالای مشخص
 // ════════════════════════════════════════
 
-// تغییر وضعیت کالا
 router.put("/:id/status", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -253,7 +262,6 @@ router.put("/:id/status", requireAuth, (req: AuthRequest, res: Response) => {
   }
 });
 
-// حذف کالا
 router.delete("/:id", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -276,7 +284,6 @@ router.delete("/:id", requireAuth, (req: AuthRequest, res: Response) => {
   }
 });
 
-// جزئیات کالا (با افزایش view)
 router.get("/:id", (req, res) => {
   try {
     const { id } = req.params;
@@ -284,7 +291,6 @@ router.get("/:id", (req, res) => {
       return res.status(400).json({ error: "شناسه نامعتبر است" });
     }
 
-    // افزایش بازدید (async)
     setImmediate(() => {
       try {
         db.prepare("UPDATE products SET views = views + 1 WHERE id = ?").run(id);
@@ -322,7 +328,7 @@ router.get("/:id", (req, res) => {
 });
 
 // ════════════════════════════════════════
-// 5. پنل ادمین (نیازمند ادمین بودن)
+// 5. پنل ادمین
 // ════════════════════════════════════════
 router.get("/admin/pending", requireAuth, requireRole(["admin"]), (req: AuthRequest, res: Response) => {
   try {
@@ -372,14 +378,16 @@ const createProductSchema = z.object({
   status: z.enum(["موجود", "فقط ۱ عدد", "ناموجود", "به زودی"]).optional(),
   description: z.string().max(2000).optional().nullable(),
   category: z.string().max(100).optional().nullable(),
-  image: z.string().url("لینک تصویر نامعتبر است").optional().nullable().or(z.literal("")),
+  // 🟢 حذف شد: دیگر لینک عکس را به صورت متنی نمی‌گیریم، بلکه فایل می‌گیریم
   badge: z.string().max(50).optional().nullable(),
 });
 
-router.post("/", requireAuth, (req: AuthRequest, res: Response) => {
+// 🟢 اصلاح شد: اضافه شدن middleware آپلود (upload.single) و تبدیل به async
+router.post("/", requireAuth, upload.single("image"), async (req: AuthRequest & { file?: Express.Multer.File }, res: Response) => {
   try {
+    // اعتبارسنجی فیلدهای متنی
     const validatedData = createProductSchema.parse(req.body);
-    const { name, price, status, description, category, image, badge } = validatedData;
+    const { name, price, status, description, category, badge } = validatedData;
 
     const storeInfo = db.prepare("SELECT id, city, province FROM stores WHERE user_id = ?").get(req.user!.id) as any;
     if (!storeInfo) {
@@ -389,6 +397,17 @@ router.post("/", requireAuth, (req: AuthRequest, res: Response) => {
     const parsedPrice = typeof price === "string" ? parseInt(price.replace(/\D/g, ""), 10) : price;
     if (isNaN(parsedPrice)) {
       return res.status(400).json({ error: "قیمت نامعتبر است" });
+    }
+
+    // 🟢 اضافه شد: آپلود عکس در فضای ابری (یا لوکال) و دریافت آدرس
+    let imageUrl = null;
+    if (req.file) {
+      try {
+        imageUrl = await uploadFile(req.file, "products");
+      } catch (uploadError) {
+        logger.error("Image upload failed:", uploadError);
+        return res.status(500).json({ error: "خطا در آپلود تصویر محصول" });
+      }
     }
 
     const stmt = db.prepare(`
@@ -402,7 +421,7 @@ router.post("/", requireAuth, (req: AuthRequest, res: Response) => {
       parsedPrice,
       status || "موجود",
       badge || null,
-      image || null,
+      imageUrl, // 🟢 ذخیره آدرس URL برگشتی از فضای ابری
       description || null,
       category || null,
       storeInfo.city || null,
