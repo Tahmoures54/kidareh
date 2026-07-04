@@ -33,6 +33,5 @@ export const getActiveFilterCount = (filters: SearchFilters) => {
   if (filters.selectedRadius !== "all") count++;
   if (filters.onlyAvailable) count++;
   if (filters.sortBy !== "newest") count++;
-  // scope را حساب نمی‌کنیم چون همیشه مقدار دارد
   return count;
 };

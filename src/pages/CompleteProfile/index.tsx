@@ -1,161 +1,313 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+﻿import React, { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react"; // فریمورک یکپارچه شد
+import {
+  LogOut, Loader2, AlertCircle, ShoppingBag, 
+  Megaphone, Map as MapIcon, ChevronRight, Sparkles, Store, Gift
+} from "lucide-react";
+
 import { useAuth } from "../../context/AuthContext";
-import { User, Store, LogOut, Loader2, AlertCircle, ShoppingBag, Megaphone, Map as MapIcon, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { iranCities } from "@data/processed/iranCities";
 import { apiRequest } from "../../utils/api";
-
-// کامپوننت‌های خُرد شده
 import CategorySelect from "./components/CategorySelect";
+
 const MapModal = lazy(() => import("./components/MapModal"));
 
 const ROLES = [
-  { role: "seller", label: "فروشگاه دارم", desc: "ثبت رایگان کالا و فروش سریع‌تر", icon: Store, gradient: "from-cyan-500 to-teal-500" },
-  { role: "buyer", label: "خریدار هستم", desc: "جستجو و خرید از فروشگاه‌های اطراف", icon: ShoppingBag, gradient: "from-violet-500 to-purple-500" },
-  { role: "marketer", label: "بازاریاب", desc: "کسب درآمد از معرفی فروشندگان", icon: Megaphone, gradient: "from-orange-400 to-rose-500" },
-] as const;
+  { role: "seller" as const, label: "فروشگاه دارم", desc: "ثبت رایگان کالا و فروش سریع‌تر", icon: Store },
+  { role: "buyer" as const, label: "خریدار هستم", desc: "جستجو و خرید از فروشگاه‌های اطراف", icon: ShoppingBag },
+  { role: "marketer" as const, label: "بازاریاب", desc: "کسب درآمد از معرفی فروشندگان", icon: Megaphone },
+];
+
+const stepVariants = {
+  hidden: { opacity: 0, x: 50 }, // در RTL حرکت از راست به چپ با عدد مثبت
+  visible: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -50 }
+};
 
 export default function CompleteProfile() {
   const { user, isLoading, logout, setUser } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [role, setRole] = useState<"buyer" | "seller" | "marketer">("seller");
+  const [selectedRole, setSelectedRole] = useState<"seller" | "buyer" | "marketer">("seller");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Form State
+  // nationalCode حذف شد چون UI نداشت (کد مرده بود)
   const [formData, setFormData] = useState({
-    name: "", nationalCode: "", province: "", city: "",
-    storeName: "", storeCategory: "", address: "", referral: ""
+    name: "",
+    province: "",
+    city: "",
+    storeName: "",
+    storeCategory: "",
+    address: "",
+    referral: ""
   });
-  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+  
+  const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [showMap, setShowMap] = useState(false);
 
   const provinces = [...new Set(iranCities.map((c) => c.province))].sort();
   const cities = iranCities.filter((c) => c.province === formData.province);
 
   const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    if (field === "province") setFormData((prev) => ({ ...prev, city: "" }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (role === "seller" && (!formData.storeName || !formData.storeCategory || !location)) {
-      return setError("لطفاً فیلدهای ضروری و نقشه را تکمیل کنید.");
+    setError("");
+
+    if (selectedRole === "seller" && (!formData.storeName || !formData.storeCategory || !location)) {
+      return setError("لطفاً نام فروشگاه، صنف فعالیت و موقعیت مکانی را تکمیل کنید.");
+    }
+    if (!formData.province || !formData.city) {
+      return setError("لطفاً استان و شهر خود را انتخاب کنید.");
     }
 
     setSubmitting(true);
     try {
-      const payload = {
-        role,
-        name: role === "seller" ? formData.storeName : formData.name,
-        store_name: role === "seller" ? formData.storeName : undefined,
-        store_category: role === "seller" ? formData.storeCategory : undefined,
-        address: role === "seller" ? formData.address : undefined,
-        province: formData.province, city: formData.city,
-        lat: location?.lat, lng: location?.lng,
+      const payload: Record<string, unknown> = {
+        role: selectedRole,
+        name: selectedRole === "seller" ? formData.storeName : formData.name,
+        store_name: selectedRole === "seller" ? formData.storeName : undefined,
+        store_category: selectedRole === "seller" ? formData.storeCategory : undefined,
+        address: selectedRole === "seller" ? formData.address : undefined,
+        province: formData.province,
+        city: formData.city,
+        lat: location?.lat,
+        lng: location?.lng,
         referral_code: formData.referral || undefined,
       };
 
-      const res = await apiRequest<any>("/api/auth/complete-profile", { method: "POST", auth: true, body: payload });
+      const res = await apiRequest<{ user: any }>("/api/auth/complete-profile", {
+        method: "POST",
+        auth: true,
+        body: payload,
+      });
+
       if (res?.user) setUser(res.user);
-      navigate(role === "seller" ? "/seller" : "/");
-    } catch (err: any) {
-      setError(err.message || "خطا در ارتباط با سرور");
+      navigate(selectedRole === "seller" ? "/seller" : "/");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "خطا در ارتباط با سرور";
+      setError(message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (isLoading) return <div className="h-screen flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-cyan-500" /></div>;
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <Loader2 className="w-10 h-10 animate-spin text-[var(--brand-primary)]" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-[100dvh] bg-[#F8FAFC] dark:bg-[#0B0F19] flex flex-col font-sans" dir="rtl">
+    <div className="min-h-[100dvh] bg-[var(--bg-primary)] flex flex-col font-sans" dir="rtl">
       
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-2xl px-5 py-4 flex items-center justify-between shadow-sm">
-        <button onClick={() => step === 2 ? setStep(1) : navigate(-1)} className="flex items-center text-[13px] font-black"><ChevronRight className="w-5 h-5"/> {step === 2 ? "بازگشت" : "خروج"}</button>
-        <h1 className="text-[15px] font-black">پروفایل کاربری</h1>
-        <button onClick={logout} className="text-rose-500"><LogOut className="w-5 h-5" /></button>
+      {/* Header با ایندیکاتور مراحل */}
+      <header className="sticky top-0 z-50 bg-white/80 dark:bg-[#0B0F19]/80 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 px-5 py-4 flex items-center justify-between">
+        <button
+          onClick={() => (step === 2 ? setStep(1) : navigate(-1))}
+          className="flex items-center gap-1 text-sm font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
+        >
+          <ChevronRight className="w-5 h-5" />
+          {step === 2 ? "مرحله قبل" : "بازگشت"}
+        </button>
+
+        <div className="flex items-center gap-2">
+          {[1, 2].map((s) => (
+            <div
+              key={s}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                step >= s ? "w-6 bg-[var(--brand-primary)]" : "w-4 bg-slate-200 dark:bg-slate-700"
+              }`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={logout}
+          className="text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 p-2 rounded-xl transition-colors"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
       </header>
 
-      <main className="flex-1 px-5 pt-8 max-w-md mx-auto w-full">
-        {error && <div className="mb-6 bg-rose-50 border border-rose-200 rounded-[20px] p-4 text-rose-700 text-[13px] font-bold flex gap-2"><AlertCircle className="w-5 h-5"/> {error}</div>}
+      <main className="flex-1 px-5 pt-8 max-w-md mx-auto w-full overflow-hidden">
+        <AnimatePresence mode="wait">
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 text-rose-600 dark:text-rose-400 text-sm font-bold flex gap-2"
+            >
+              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </motion.div>
+          )}
 
-        {step === 1 && (
-          <div className="space-y-4">
-            <h2 className="text-[26px] font-black text-center mb-8">قصد شما چیست؟</h2>
-            {ROLES.map(r => (
-              <button key={r.role} onClick={() => { setRole(r.role); setStep(2); }} className={`w-full flex items-center gap-4 p-5 rounded-[28px] border text-right transition-all ${role === r.role ? `bg-gradient-to-r ${r.gradient} text-white shadow-lg` : 'bg-white'}`}>
-                <r.icon className={`w-8 h-8 ${role === r.role ? 'text-white' : 'text-slate-400'}`} />
-                <div>
-                  <p className="font-black text-[16px]">{r.label}</p>
-                  <p className="text-[12px] opacity-80">{r.desc}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
-
-        {step === 2 && (
-          <form onSubmit={handleSubmit} className="space-y-5 pb-10">
-            <h2 className="text-[24px] font-black text-center mb-6">{role === "seller" ? "اطلاعات فروشگاه" : "اطلاعات هویتی"}</h2>
-            
-            {role === "seller" ? (
-              <>
-                <div>
-                  <label className="block text-[12px] font-black mb-2">نام فروشگاه *</label>
-                  <input type="text" value={formData.storeName} onChange={e => handleChange('storeName', e.target.value)} className="w-full bg-white border border-slate-200 rounded-[20px] px-4 h-14 font-bold" />
-                </div>
-                
-                {/* کامپوننت هوشمند جستجوی دسته بندی */}
-                <CategorySelect value={formData.storeCategory} onChange={v => handleChange('storeCategory', v)} storeName={formData.storeName} />
-                
-                <div>
-                  <label className="block text-[12px] font-black mb-2">آدرس *</label>
-                  <input type="text" value={formData.address} onChange={e => handleChange('address', e.target.value)} className="w-full bg-white border border-slate-200 rounded-[20px] px-4 h-14 font-bold" />
-                </div>
-
-                <button type="button" onClick={() => setShowMap(true)} className={`w-full flex items-center justify-between h-14 px-5 rounded-[20px] font-black border ${location ? "bg-cyan-50 border-cyan-200 text-cyan-600" : "bg-slate-100 border-slate-200 text-slate-900"}`}>
-                  <span className="flex items-center gap-2"><MapIcon className="w-5 h-5"/> {location ? "مکان ثبت شد" : "انتخاب روی نقشه *"}</span>
-                </button>
-              </>
-            ) : (
-              <div>
-                <label className="block text-[12px] font-black mb-2">نام شما *</label>
-                <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} className="w-full bg-white border border-slate-200 rounded-[20px] px-4 h-14 font-bold" />
+          {/* مرحله اول: انتخاب نقش */}
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              variants={stepVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={{ duration: 0.3 }}
+              className="space-y-4 h-full flex flex-col"
+            >
+              <div className="text-center mb-8">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
+                  className="w-16 h-16 rounded-2xl bg-[var(--brand-primary)]/10 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-[var(--brand-glow)]"
+                >
+                  <Sparkles className="w-8 h-8 text-[var(--brand-primary)]" />
+                </motion.div>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white">قصد شما چیست؟</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">انتخاب شما را به مقصد سریع‌تر می‌رساند</p>
               </div>
-            )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-[12px] font-black mb-2">استان *</label>
-                <select value={formData.province} onChange={e => handleChange('province', e.target.value)} className="w-full bg-white border border-slate-200 rounded-[20px] px-4 h-14 font-bold appearance-none">
-                  <option value="">انتخاب...</option>
-                  {provinces.map(p => <option key={p} value={p}>{p}</option>)}
-                </select>
+              <div className="space-y-3 flex-1">
+                {ROLES.map((r, i) => (
+                  <motion.button
+                    key={r.role}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    onClick={() => {
+                      setSelectedRole(r.role);
+                      setStep(2);
+                      setError("");
+                    }}
+                    className={`w-full flex items-center gap-4 p-5 rounded-2xl border-2 text-right transition-all duration-300 group ${
+                      selectedRole === r.role
+                        ? "border-transparent shadow-xl scale-[0.98]"
+                        : "bg-white dark:bg-slate-800/50 border-slate-200 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md"
+                    }`}
+                    style={
+                      selectedRole === r.role
+                        ? { backgroundImage: `linear-gradient(to left, var(--brand-secondary), var(--brand-primary))`, color: "white" }
+                        : {}
+                    }
+                  >
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+                      selectedRole === r.role ? "bg-white/20" : "bg-slate-100 dark:bg-slate-700 group-hover:bg-[var(--brand-primary)]/10"
+                    }`}>
+                      <r.icon className={`w-6 h-6 ${selectedRole === r.role ? "text-white" : "text-slate-500 dark:text-slate-400 group-hover:text-[var(--brand-primary)]"}`} />
+                    </div>
+                    <div>
+                      <p className="font-black text-base">{r.label}</p>
+                      <p className={`text-xs mt-1 ${selectedRole === r.role ? "text-white/80" : "text-slate-400 dark:text-slate-500"}`}>
+                        {r.desc}
+                      </p>
+                    </div>
+                  </motion.button>
+                ))}
               </div>
-              <div>
-                <label className="block text-[12px] font-black mb-2">شهر *</label>
-                <select value={formData.city} onChange={e => handleChange('city', e.target.value)} disabled={!formData.province} className="w-full bg-white border border-slate-200 rounded-[20px] px-4 h-14 font-bold appearance-none">
-                  <option value="">انتخاب...</option>
-                  {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
-                </select>
-              </div>
-            </div>
+            </motion.div>
+          )}
 
-            <button type="submit" disabled={submitting} className="w-full h-14 bg-cyan-500 text-white rounded-[20px] font-black mt-8 flex items-center justify-center">
-              {submitting ? <Loader2 className="w-6 h-6 animate-spin"/> : "ثبت اطلاعات و ورود"}
-            </button>
-          </form>
-        )}
+          {/* مرحله دوم: فرم اطلاعات */}
+          {step === 2 && (
+            <motion.form
+              key="step2"
+              variants={stepVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={{ duration: 0.3 }}
+              onSubmit={handleSubmit}
+              className="space-y-5 pb-10"
+            >
+              <div className="text-center mb-4">
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                  {selectedRole === "seller" ? "اطلاعات فروشگاه" : "اطلاعات هویتی"}
+                </h2>
+              </div>
+              
+              {selectedRole === "seller" ? (
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-xs font-bold mb-2 text-slate-500 dark:text-slate-400 px-1">نام فروشگاه <span className="text-rose-500">*</span></label>
+                    <input type="text" value={formData.storeName} onChange={e => handleChange('storeName', e.target.value)} placeholder="مثال: کی داره؟ مارکت" className="input-base w-full h-14" />
+                  </div>
+                  
+                  <CategorySelect value={formData.storeCategory} onChange={v => handleChange('storeCategory', v)} storeName={formData.storeName} />
+                  
+                  <div>
+                    <label className="block text-xs font-bold mb-2 text-slate-500 dark:text-slate-400 px-1">آدرس دقیق</label>
+                    <input type="text" value={formData.address} onChange={e => handleChange('address', e.target.value)} placeholder="خیابان، کوچه، پلاک..." className="input-base w-full h-14" />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold mb-2 text-slate-500 dark:text-slate-400 px-1">موقعیت روی نقشه <span className="text-rose-500">*</span></label>
+                    <button type="button" onClick={() => setShowMap(true)} className={`w-full flex items-center justify-between h-14 px-5 rounded-2xl font-bold border-2 transition-all input-base ${
+                      location ? "bg-emerald-50 dark:bg-emerald-500/10 !border-emerald-200 dark:!border-emerald-500/30 text-emerald-700 dark:text-emerald-400" : "!text-slate-600 dark:!text-slate-300 hover:!border-[var(--brand-primary)]"
+                    }`}>
+                      <span className="flex items-center gap-2">
+                        <MapIcon className="w-5 h-5"/> {location ? "مکان روی نقشه ثبت شد ✓" : "انتخاب موقعیت مکانی"}
+                      </span>
+                      {location && <span className="text-xs opacity-70">تغییر</span>}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-xs font-bold mb-2 text-slate-500 dark:text-slate-400 px-1">نام و نام خانوادگی <span className="text-rose-500">*</span></label>
+                  <input type="text" value={formData.name} onChange={e => handleChange('name', e.target.value)} placeholder="نام خود را وارد کنید" className="input-base w-full h-14" />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold mb-2 text-slate-500 dark:text-slate-400 px-1">استان <span className="text-rose-500">*</span></label>
+                  <select value={formData.province} onChange={e => handleChange('province', e.target.value)} className="input-base w-full h-14 appearance-none">
+                    <option value="">انتخاب استان...</option>
+                    {provinces.map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-2 text-slate-500 dark:text-slate-400 px-1">شهر <span className="text-rose-500">*</span></label>
+                  <select value={formData.city} onChange={e => handleChange('city', e.target.value)} disabled={!formData.province} className="input-base w-full h-14 appearance-none disabled:opacity-50">
+                    <option value="">انتخاب شهر...</option>
+                    {cities.map(c => <option key={c.name} value={c.name}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              {/* فیلد کد دعوت که قبلاً استیت داشت اما UI نداشت */}
+              <div>
+                <label className="block text-xs font-bold mb-2 text-slate-500 dark:text-slate-400 px-1 flex items-center gap-1.5">
+                  <Gift className="w-3.5 h-3.5" /> کد دعوت (اختیاری)
+                </label>
+                <input type="text" value={formData.referral} onChange={e => handleChange('referral', e.target.value)} placeholder="اگر کد دعوتی دارید وارد کنید" className="input-base w-full h-14" />
+              </div>
+
+              <motion.button 
+                type="submit" 
+                disabled={submitting} 
+                whileTap={{ scale: 0.97 }}
+                className="w-full h-14 bg-gradient-to-l from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white rounded-2xl font-black text-base mt-4 flex items-center justify-center shadow-lg shadow-[var(--brand-glow)] disabled:opacity-70 transition-all"
+              >
+                {submitting ? <Loader2 className="w-6 h-6 animate-spin"/> : "ورود به کی‌داره"}
+              </motion.button>
+            </motion.form>
+          )}
+        </AnimatePresence>
       </main>
 
-      <Suspense fallback={null}>
+      <Suspense fallback={<div className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center backdrop-blur-sm"><Loader2 className="w-8 h-8 text-white animate-spin" /></div>}>
         <MapModal isOpen={showMap} onClose={() => setShowMap(false)} location={location} setLocation={setLocation} />
       </Suspense>
-
     </div>
   );
 }

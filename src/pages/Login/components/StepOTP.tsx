@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useRef } from "react";
-import { motion } from "framer-motion"; // اگر پکیج شما motion/react است، تغییر دهید
-import { Clock, RefreshCw, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
+import { Clock, RefreshCw, Loader2, CheckCircle2 } from "lucide-react"; // 🟢 CheckCircle2 اضافه شد
 
 import { CONFIG } from "../utils";
 import { ErrorToast } from "./Shared";
@@ -16,27 +16,33 @@ interface StepOTPProps {
   timer: number;
   loading: boolean;
   error: string;
+  isSuccess: boolean; // 🟢 اضافه شد
   onChangePhone: () => void;
 }
 
 const StepOTP = memo(({ 
   phone, otp, onOtpChange, onOtpKey, onOtpPaste, 
-  onSubmit, onResend, timer, loading, error, onChangePhone 
+  onSubmit, onResend, timer, loading, error, isSuccess, onChangePhone 
 }: StepOTPProps) => {
   const otpRefs = useRef<HTMLInputElement[]>([]);
 
-  // فوکوس خودکار روی اینپوت خالی بعدی
+  // فوکوس خودکار
   useEffect(() => {
+    if (isSuccess) return;
     const nextEmptyIndex = otp.length < CONFIG.OTP_LENGTH ? otp.length : CONFIG.OTP_LENGTH - 1;
     otpRefs.current[nextEmptyIndex]?.focus();
+  }, [otp, isSuccess]);
+
+  // 🟢 ارسال خودکار وقتی کد کامل شد
+  useEffect(() => {
+    if (otp.length === CONFIG.OTP_LENGTH && !loading && !isSuccess) {
+      onSubmit();
+    }
   }, [otp]);
 
   return (
     <motion.form 
-      onSubmit={(e) => { 
-        e.preventDefault(); 
-        if (!loading && otp.length >= CONFIG.OTP_LENGTH) onSubmit(); 
-      }}
+      onSubmit={(e) => { e.preventDefault(); if (!loading && !isSuccess && otp.length >= CONFIG.OTP_LENGTH) onSubmit(); }}
       initial={{ opacity: 0, x: 20 }} 
       animate={{ opacity: 1, x: 0 }} 
       exit={{ opacity: 0, x: -20 }}
@@ -48,7 +54,8 @@ const StepOTP = memo(({
           <button 
             type="button" 
             onClick={onChangePhone} 
-            className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 border-r border-slate-300 dark:border-slate-600 pr-2 mr-1 transition-colors hover:text-violet-500"
+            disabled={isSuccess || loading}
+            className="text-[10px] font-black text-cyan-600 dark:text-cyan-400 border-r border-slate-300 dark:border-slate-600 pr-2 mr-1 transition-colors hover:text-violet-500 disabled:opacity-50"
           >
             تغییر
           </button>
@@ -59,8 +66,17 @@ const StepOTP = memo(({
         {Array.from({ length: CONFIG.OTP_LENGTH }).map((_, i) => (
           <motion.div
             key={i}
-            animate={{ scale: otp[i] ? [1, 1.1, 1] : 1 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+            // 🟢 انیمیشن موج سبز تلگرامی
+            animate={isSuccess ? "success" : otp[i] ? "filled" : "empty"}
+            variants={{
+              empty: { scale: 1 },
+              filled: { scale: [1, 1.1, 1] },
+              success: { 
+                scale: [1, 1.2, 1], 
+                transition: { delay: i * 0.1 } // تاخیر阶梯ای برای هر باکس
+              }
+            }}
+            transition={{ duration: 0.4 }}
           >
             <input
               ref={el => { if(el) otpRefs.current[i] = el; }}
@@ -70,10 +86,13 @@ const StepOTP = memo(({
               onChange={e => onOtpChange(i, e.target.value, otpRefs)}
               onKeyDown={e => onOtpKey(i, e, otpRefs)}
               onPaste={i === 0 ? e => onOtpPaste(e, otpRefs) : undefined}
-              className={`w-14 h-20 text-center text-2xl font-black rounded-[22px] transition-all duration-200 border-2 outline-none
-                ${otp[i] 
-                  ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 shadow-lg shadow-cyan-500/10" 
-                  : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-cyan-400"}`}
+              disabled={isSuccess || loading}
+              className={`w-14 h-20 text-center text-2xl font-black rounded-[22px] transition-all duration-300 border-2 outline-none
+                ${isSuccess 
+                  ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-lg shadow-emerald-500/20" 
+                  : otp[i] 
+                    ? "border-cyan-500 bg-cyan-50 dark:bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 shadow-lg shadow-cyan-500/10" 
+                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-cyan-400"}`}
             />
           </motion.div>
         ))}
@@ -84,11 +103,18 @@ const StepOTP = memo(({
       <div className="flex flex-col gap-4">
         <motion.button
           type="submit"
-          whileTap={{ scale: 0.97 }} 
-          disabled={loading || otp.length < CONFIG.OTP_LENGTH}
-          className="w-full h-16 bg-gradient-to-r from-cyan-500 via-teal-400 to-violet-500 text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:shadow-none"
+          whileTap={!isSuccess ? { scale: 0.97 } : {}}
+          disabled={loading || otp.length < CONFIG.OTP_LENGTH || isSuccess}
+          className={`w-full h-16 rounded-[22px] font-black text-base shadow-xl transition-all flex items-center justify-center gap-2 
+            ${isSuccess 
+              ? "bg-emerald-500 text-white shadow-emerald-500/30" 
+              : "bg-gradient-to-r from-cyan-500 via-teal-400 to-violet-500 text-white shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none"}`}
         >
-          {loading ? (
+          {isSuccess ? (
+            <motion.div initial={{scale:0}} animate={{scale:1}} className="flex items-center gap-2">
+              <CheckCircle2 className="w-6 h-6" /> ورود موفق بود
+            </motion.div>
+          ) : loading ? (
             <motion.div layoutId="btn-loader-otp" className="flex items-center gap-2">
               <Loader2 className="w-5 h-5 animate-spin" /> <span>در حال بررسی...</span>
             </motion.div>
@@ -98,12 +124,12 @@ const StepOTP = memo(({
         </motion.button>
 
         <div className="flex flex-col items-center gap-4">
-          {timer > 0 ? (
+          {timer > 0 && !isSuccess ? (
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
               <Clock className="w-3.5 h-3.5" /> 
               <span>ارسال مجدد کد در {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}</span>
             </div>
-          ) : (
+          ) : !isSuccess && (
             <button 
               type="button" 
               onClick={onResend} 

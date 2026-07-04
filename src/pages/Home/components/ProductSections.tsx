@@ -1,101 +1,100 @@
-import React, { memo, useState } from "react";
+﻿import React, { memo, useState } from "react";
 import { Link } from "react-router-dom";
+import { MapPin, Heart, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
-import { MapPin, ShoppingBag, Heart } from "lucide-react";
 import { formatPrice } from "../../../utils";
 import { Product } from "../../../hooks/useInfiniteProducts";
-import { SPRING_TRANSITION } from "../constants";
 
-// ============================================================
-// ProductCardSkeleton — اسکلت لودینگ کارت محصول
-// ============================================================
 export const ProductCardSkeleton = memo(() => (
-  <div className="product-card overflow-hidden">
-    <div className="relative aspect-square skeleton">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[var(--bg-tertiary)]/50" />
-    </div>
-    <div className="p-3.5 space-y-3">
-      <div className="space-y-2">
-        <div className="skeleton h-3.5 w-full rounded-lg" />
-        <div className="skeleton h-3.5 w-2/3 rounded-lg" />
-      </div>
-      <div className="flex justify-between items-end pt-1">
-        <div className="space-y-1.5">
-          <div className="skeleton h-2.5 w-12 rounded-md" />
-          <div className="skeleton h-4 w-20 rounded-lg" />
-        </div>
-        <div className="skeleton h-6 w-6 rounded-full" />
-      </div>
+  <div className="space-y-2">
+    <div className="aspect-[4/5] w-full rounded-2xl bg-gray-200 dark:bg-gray-800 animate-pulse" />
+    <div className="h-4 w-3/4 rounded bg-gray-200 dark:bg-gray-800 animate-pulse" />
+    <div className="flex justify-between items-center mt-2">
+      <div className="h-4 w-1/3 rounded bg-gray-200 dark:bg-gray-800 animate-pulse" />
+      <div className="h-3 w-1/4 rounded bg-gray-200 dark:bg-gray-800 animate-pulse" />
     </div>
   </div>
 ));
 
-// ============================================================
-// PremiumProductCard — کارت اصلی محصول
-// ============================================================
-export const PremiumProductCard = memo(({ product, isFavorite, onToggleFavorite }: { product: Product; isFavorite: boolean; onToggleFavorite: (id: string) => void }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const hasDiscount = !!product.badge;
+interface PremiumProductCardProps {
+  product: Product;
+  isFavorite: boolean;
+  onToggleFavorite: (id: string) => void;
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+};
+
+export const PremiumProductCard = memo(({ product, isFavorite, onToggleFavorite }: PremiumProductCardProps) => {
+  const [imgError, setImgError] = useState(false);
+  const isFree = !product.price;
 
   return (
-    <Link to={`/product/${product.id}`} className="product-card group">
-      {/* ── بخش تصویر ── */}
-      <div className="product-img-wrapper">
-        {product.image_url ? (
-          <>
-            <div className={`absolute inset-0 skeleton transition-opacity duration-500 ${imageLoaded ? "opacity-0" : "opacity-100"}`} />
-            <img src={product.image_url} alt={product.name} className={`product-img transition-opacity duration-500 ${imageLoaded ? "opacity-100" : "opacity-0"}`} loading="lazy" onLoad={() => setImageLoaded(true)} />
-          </>
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-[var(--bg-tertiary)]">
-            <ShoppingBag className="w-10 h-10 text-[var(--text-muted)]/50" />
-          </div>
-        )}
-
-        <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-
-        {hasDiscount && <div className="product-discount-badge">{product.badge}</div>}
-
-        <button 
-          className="absolute top-2.5 left-2.5 w-9 h-9 rounded-full flex items-center justify-center z-10 active:scale-90 transition-all duration-200 bg-black/20 backdrop-blur-md border border-white/20 hover:bg-black/30"
-          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(product.id); }}
-        >
-          <Heart className={`w-4 h-4 transition-all duration-300 ${isFavorite ? "fill-rose-500 text-rose-500 scale-110" : "text-white drop-shadow"}`} />
-        </button>
-
-        <div className="absolute bottom-2.5 right-2.5">
-          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-black/25 backdrop-blur-md text-white text-[10px] font-bold border border-white/10">
-            <MapPin className="w-2.5 h-2.5 opacity-80" /> {product.city}
-          </span>
-        </div>
-      </div>
-
-      {/* ── بخش اطلاعات ── */}
-      <div className="product-info">
-        <h4 className="product-title">{product.name}</h4>
-        <div className="product-price-row">
-          <div className="flex flex-col gap-0.5">
-            <span className="text-[10px] text-[var(--text-muted)] font-semibold leading-none">قیمت</span>
-            <span className="product-price">{product.price ? formatPrice(product.price) : "توافقی"}</span>
-          </div>
-          {product.status === "موجود" ? (
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[var(--brand-primary)] animate-pulse" />
-              <span className="text-[10px] font-bold text-[var(--brand-primary)]">موجود</span>
-            </span>
+    <motion.div variants={itemVariants} className="group">
+      <Link to={`/product/${product.id}`} className="block">
+        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-gray-100 dark:bg-gray-800">
+          {!imgError && product.image_url ? (
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              loading="lazy"
+              onError={() => setImgError(true)}
+            />
           ) : (
-            <span className="badge badge-soft-danger">ناموجود</span>
+            <div className="w-full h-full flex items-center justify-center">
+              <ShoppingBag className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+            </div>
+          )}
+
+          {/* گرادیانت نازک پایین عکس برای خوانایی بهتر آیکون‌ها در حالت هاور */}
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+
+          <button
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavorite(product.id); }}
+            aria-label={isFavorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
+            className="absolute top-2.5 left-2.5 w-8 h-8 rounded-full bg-white/80 dark:bg-black/40 backdrop-blur-md flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 active:scale-90"
+          >
+            <Heart className={`w-4 h-4 transition-colors ${isFavorite ? "fill-rose-500 text-rose-500" : "text-slate-700 dark:text-white"}`} />
+          </button>
+
+          {product.badge && (
+            <span className="absolute top-2.5 right-2.5 px-2 py-1 bg-rose-500 text-white text-[10px] font-bold rounded-lg shadow-sm">
+              {product.badge}
+            </span>
           )}
         </div>
-      </div>
-    </Link>
+
+        <div className="pt-2.5 px-0.5 pb-2">
+          <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100 line-clamp-2 leading-5 mb-1.5 min-h-[2.5rem]">
+            {product.name}
+          </h3>
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-gray-900 dark:text-white">
+              {isFree ? "رایگان" : formatPrice(product.price)}
+              {!isFree && <span className="text-[10px] font-normal text-gray-500 mr-1">تومان</span>}
+            </span>
+            <span className="text-[11px] text-gray-400 flex items-center gap-1 truncate max-w-[40%]">
+              <MapPin className="w-3 h-3 shrink-0" /> 
+              <span className="truncate">{product.city}</span>
+            </span>
+          </div>
+        </div>
+      </Link>
+    </motion.div>
   );
 });
 
-// ============================================================
-// SegmentedScope — سوئیچ شهر / استان / سراسری
-// ============================================================
-export const SegmentedScope = memo(({ scope, onScopeChange, city, province }: any) => {
+interface SegmentedScopeProps {
+  scope: "city" | "province" | "all";
+  onScopeChange: (scope: "city" | "province" | "all") => void;
+  city: string;
+  province: string;
+}
+
+export const SegmentedScope = memo(({ scope, onScopeChange, city, province }: SegmentedScopeProps) => {
   const tabs = [
     { key: "city" as const, label: city || "شهر من" },
     { key: "province" as const, label: province || "استان" },
@@ -103,16 +102,27 @@ export const SegmentedScope = memo(({ scope, onScopeChange, city, province }: an
   ];
 
   return (
-    <motion.div variants={{ hidden: { opacity: 0, y: 6 }, visible: { opacity: 1, y: 0 } }} className="bg-[var(--bg-tertiary)] p-1.5 rounded-[20px] flex relative">
-      {tabs.map((tab) => {
-        const isActive = scope === tab.key;
-        return (
-          <button key={tab.key} onClick={() => onScopeChange(tab.key)} className={`relative flex-1 py-2.5 text-xs font-black z-10 transition-colors duration-200 ${isActive ? "text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"}`}>
-            {isActive && <motion.div layoutId="activeTabIndicator" transition={SPRING_TRANSITION} className="absolute inset-0 bg-[var(--bg-secondary)] rounded-[16px] shadow-sm border border-[var(--border-light)]/40 -z-10" />}
-            <span className="block truncate px-1">{tab.label}</span>
-          </button>
-        );
-      })}
-    </motion.div>
+    <div className="flex p-1 bg-gray-100 dark:bg-gray-800/50 rounded-xl gap-1">
+      {tabs.map(tab => (
+        <button
+          key={tab.key}
+          onClick={() => onScopeChange(tab.key)}
+          className={`relative flex-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors duration-200 ${
+            scope === tab.key 
+              ? "text-gray-900 dark:text-white" 
+              : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          }`}
+        >
+          {scope === tab.key && (
+            <motion.div
+              layoutId="activeScopePill"
+              className="absolute inset-0 bg-white dark:bg-gray-900 rounded-lg shadow-sm"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            />
+          )}
+          <span className="relative z-10 truncate">{tab.label}</span>
+        </button>
+      ))}
+    </div>
   );
 });

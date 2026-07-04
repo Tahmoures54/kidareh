@@ -1,11 +1,12 @@
 # Stage 1: Builder
-FROM docker.arvancloud.ir/node:20-bookworm AS builder
+FROM docker.arvancloud.ir/node:22-bookworm AS builder
 
 WORKDIR /app
 
 # جلوگیری از دانلود مرورگر Playwright
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
+# تنظیم registry داخلی برای سرعت
 RUN npm config set registry https://package-mirror.liara.ir/repository/npm/
 
 COPY package*.json ./
@@ -16,11 +17,11 @@ RUN npm ci --legacy-peer-deps --no-audit --no-fund
 COPY . .
 RUN npm run build
 
-# حذف پکیج‌های توسعه قبل از کپی به مرحله بعد
+# حذف پکیج‌های توسعه قبل از کپی به مرحلهٔ بعد
 RUN npm prune --omit=dev
 
 # Stage 2: Production Runtime
-FROM docker.arvancloud.ir/node:20-bookworm-slim
+FROM docker.arvancloud.ir/node:22-bookworm-slim
 
 WORKDIR /app
 
@@ -28,15 +29,16 @@ WORKDIR /app
 RUN groupadd -r -g 1001 kidareh && \
     useradd -r -u 1001 -g kidareh -s /bin/false kidareh
 
-# ایجاد پوشه‌های لازم و انتقال مالکیت به کاربر امن
-RUN mkdir -p /app/uploads/products /app/uploads/avatars /app/uploads/stores /app/logs /app/backup /data && \
+# ایجاد پوشه‌های لازم (هماهنگ با کد: backups نه backup)
+RUN mkdir -p /app/uploads/products /app/uploads/avatars /app/uploads/stores \
+    /app/logs /data/backups && \
     chown -R kidareh:kidareh /app /data
 
 # کپی فقط پکیج‌های اجرایی (پس از prune)
 COPY --from=builder --chown=kidareh:kidareh /app/node_modules ./node_modules
 # کپی فایل‌های بیلد شده
 COPY --from=builder --chown=kidareh:kidareh /app/dist ./dist
-# کپی پکیج‌های جیسون برای رفرنس
+# کپی فایل‌های package.json برای مرجع
 COPY --from=builder --chown=kidareh:kidareh /app/package*.json ./
 
 ENV NODE_ENV=production \

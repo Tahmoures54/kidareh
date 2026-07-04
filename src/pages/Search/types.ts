@@ -30,5 +30,5 @@ export interface SearchFilters {
   selectedRadius: string;
   onlyAvailable: boolean;
   sortBy: SortType;
-  scope: LocationScope; // اضافه شدن اسکوپ به فیلترها
+  scope: LocationScope;
 }

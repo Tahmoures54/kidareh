@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from "react";
+﻿import React, { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion } from "motion/react"; // فریمورک یکپارچه شد
 import { ArrowRight, RefreshCw, AlertCircle, Wallet2, Trophy, Send } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
@@ -10,8 +10,11 @@ import ErrorBoundary from "../../components/ui/ErrorBoundary";
 import { MIN_WITHDRAWAL } from "../../utils/constants";
 import type { User, Transaction } from "./types";
 
+// مسیر Toast اصلاح شد
+import { Toast } from "../../components/ui/Toast"; 
+
+// Toast از اینجا حذف شد چون دیگر در این پوشه نیست
 import {
-  Toast,
   BalanceCard,
   StatsGrid,
   ReferralSection,
@@ -78,8 +81,9 @@ export default function ReferralPage() {
       try {
         await submitWithdrawal(data);
         showToast("درخواست برداشت ثبت شد");
-      } catch (err: any) {
-        showToast(err?.message || "خطا در ثبت درخواست برداشت", "error");
+      } catch (err: unknown) { // بهینه سازی تایپ
+        const errorMessage = err instanceof Error ? err.message : "خطا در ثبت درخواست برداشت";
+        showToast(errorMessage, "error");
       } finally {
         setSubmitting(false);
       }
@@ -154,7 +158,6 @@ export default function ReferralPage() {
             </motion.div>
           ) : stats ? (
             <>
-              {/* ✅ کارت قهرمان: پاسخ فوری به "چطور درآمد کسب کنم؟" */}
               <motion.div {...sectionAnimation} transition={{ delay: 0.05 }}>
                 <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-teal-600 p-5 text-white shadow-lg shadow-emerald-500/20">
                   <div className="absolute -top-6 -left-6 w-28 h-28 bg-white/10 rounded-full blur-2xl" />

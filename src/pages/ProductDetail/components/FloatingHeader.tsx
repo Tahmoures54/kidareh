@@ -18,7 +18,7 @@ export const FloatingHeader = memo(({ saved, saveLoading, onShare, onSave }: Pro
       <motion.button 
         whileTap={{ scale: 0.9 }} 
         onClick={() => navigate(-1)} 
-        className="pointer-events-auto w-12 h-12 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 rounded-[20px] shadow-sm flex items-center justify-center text-slate-800 dark:text-slate-200"
+        className="pointer-events-auto w-12 h-12 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 rounded-2xl shadow-sm flex items-center justify-center text-slate-800 dark:text-slate-200"
       >
         <ArrowRight className="w-6 h-6" />
       </motion.button>
@@ -26,20 +26,22 @@ export const FloatingHeader = memo(({ saved, saveLoading, onShare, onSave }: Pro
         <motion.button 
           whileTap={{ scale: 0.9 }} 
           onClick={onShare} 
-          className="w-12 h-12 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 rounded-[20px] shadow-sm flex items-center justify-center text-slate-800 dark:text-slate-200"
+          className="w-12 h-12 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 rounded-2xl shadow-sm flex items-center justify-center text-slate-800 dark:text-slate-200"
         >
           <Share2 className="w-5 h-5" />
         </motion.button>
         <motion.button 
-          whileTap={{ scale: 0.9 }} 
+          whileTap={{ scale: 0.8 }} 
           onClick={onSave} 
           disabled={saveLoading} 
-          className="w-12 h-12 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 rounded-[20px] shadow-sm flex items-center justify-center"
+          className="w-12 h-12 bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 rounded-2xl shadow-sm flex items-center justify-center"
         >
           {saveLoading ? (
             <Loader2 className="w-5 h-5 animate-spin text-slate-500" />
           ) : (
-            <Heart className={`w-5 h-5 transition-colors ${saved ? "fill-rose-500 text-rose-500 drop-shadow-md" : "text-slate-800 dark:text-slate-200"}`} />
+            <motion.div animate={saved ? { scale: [1, 1.3, 1] } : { scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 10 }}>
+              <Heart className={`w-5 h-5 transition-colors ${saved ? "fill-rose-500 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.6)]" : "text-slate-800 dark:text-slate-200"}`} />
+            </motion.div>
           )}
         </motion.button>
       </div>

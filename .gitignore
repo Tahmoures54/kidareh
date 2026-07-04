@@ -10,7 +10,6 @@ dist/
 build/
 .vite/
 .turbo/
-coverage/
 *.zip
 *.tar.gz
 
@@ -21,7 +20,7 @@ coverage/
 .env.production
 .env.*.local
 
-# Databases & persistence (اصلاح شد: *.db اضافه شد و data/ حذف شد)
+# Databases & persistence
 *.db
 *.db-shm
 *.db-wal
@@ -31,7 +30,8 @@ coverage/
 database.backup.sqlite
 uploads/
 logs/
-backup/
+backup/          # پوشه‌ی اضافی قدیمی (حذف‌شده)
+backups/         # پوشه‌ی اصلی بکاپ که در کد استفاده می‌شود
 temp/
 
 # IDE & editors
@@ -43,12 +43,8 @@ temp/
 .DS_Store
 Thumbs.db
 
-# Git hooks
-.husky/_
+# Git hooks (در صورت عدم نیاز به کامیت هوک‌ها، خط زیر را فعال کنید)
+# .husky/_
 
-# Testing & docs (docs/ را ایگنور نکنید، معمولاً مستندات پروژه در آن است)
+# Testing & coverage
 coverage/
-
-# Temporary files
-s.txt
-fix-typescript-errors.bat.txt

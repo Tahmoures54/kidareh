@@ -29,7 +29,7 @@ import reportsRoutes from "./routes/reports.js";
 import adminRoutes from "./routes/admin.js";
 import paymentRoutes from "./routes/payment.js";
 import storesRoutes from "./routes/stores.js";
-import referralRoutes from "./routes/referral.js"; // جایگزین ترکیبی Referral + Wallet
+import referralRoutes from "./routes/referral.js";
 import messagesRoutes from "./routes/messages.js";
 import supportRoutes from "./routes/support.js";
 
@@ -44,7 +44,6 @@ const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const NODE_ENV = process.env.NODE_ENV || "development";
 const isProd = NODE_ENV === "production";
-// دریافت داینامیک ورژن از package.json
 const APP_VERSION = process.env.npm_package_version || "1.2.0";
 
 /* ═══════════════════════════════════════════
@@ -238,7 +237,6 @@ function setupSocket(io: Server) {
     const userData = (socket.data as SocketData).user;
     logger.info(`🔌 Socket connected: ${socket.id} (user: ${userData.id})`);
 
-    // Helper Wrapper to DRY up socket logic
     const handleWithAuth = async (roomId: string, handler: Function, ack?: Function) => {
       const hasAccess = await checkRoomAccess(userData.id, roomId);
       if (!hasAccess) {
@@ -367,16 +365,17 @@ async function startServer() {
     app.use(cors(CORS_OPTIONS));
     app.options("*", cors(CORS_OPTIONS));
 
+    // ⚠️ اصلاح‌شده: اضافه‌کردن منابع خارجی برای فونت‌ها و استایل‌ها
     app.use(
       helmet({
         contentSecurityPolicy: isProd ? {
           directives: {
             defaultSrc: ["'self'"],
             scriptSrc: ["'self'", "'unsafe-inline'"],
-            styleSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdn.jsdelivr.net"],
             imgSrc: ["'self'", "data:", "https:", "blob:"],
             connectSrc: ["'self'", ...getAllowedOrigins()],
-            fontSrc: ["'self'", "data:"],
+            fontSrc: ["'self'", "data:", "https://fonts.gstatic.com", "https://cdn.jsdelivr.net"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
             frameSrc: ["'none'"],
@@ -441,7 +440,7 @@ async function startServer() {
     app.use("/api/admin", adminRoutes);
     app.use("/api/stores", storesRoutes);
     app.use("/api/payment", paymentRoutes);
-    app.use("/api/referral", referralRoutes); // روت کیف پول و رفرال یکپارچه شد
+    app.use("/api/referral", referralRoutes);
     app.use("/api/messages", messagesRoutes);
     app.use("/api/support", supportRoutes);
 

@@ -32,7 +32,6 @@ export interface ChartData {
   views: number;
 }
 
-// Zod Schema for Store Validation
 export const storeFormSchema = z.object({
   name: z.string().min(2, "نام فروشگاه باید حداقل ۲ حرف باشد"),
   phone: z.string().regex(/^09\d{9}$/, "شماره موبایل نامعتبر است (مثال: 0912...)"),

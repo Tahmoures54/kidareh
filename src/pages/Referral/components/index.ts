@@ -1,4 +1,3 @@
-export { default as Toast } from './Toast';
 export { default as BalanceCard } from './BalanceCard';
 export { default as StatsGrid } from './StatsGrid';
 export { default as ReferralSection } from './ReferralSection';

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
-import { apiRequest } from "../../utils/api";
+import { apiRequest } from "../../../utils/api";   // ✅ اصلاح: ../../../ به جای ../../
 import { Msg, MsgStatus } from "./types";
 
 export function useChatRoom(id: string | undefined, productId: string | null, user: any) {

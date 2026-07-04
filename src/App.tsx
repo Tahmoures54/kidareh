@@ -1,5 +1,4 @@
-// src/App.tsx
-import React, { lazy, Suspense, useEffect } from "react";
+﻿import React, { lazy, Suspense, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -39,15 +38,16 @@ const AIPage = lazy(() => import("./pages/AI"));
 const SupportPage = lazy(() => import("./pages/Support"));
 const TermsAndGuidePage = lazy(() => import("./pages/TermsAndGuide"));
 const Privacy = lazy(() => import("./pages/Privacy"));
+const BecomeSeller = lazy(() => import("./pages/BecomeSeller")); // صفحه ارتقا به فروشنده
 
 /* ====================== COMPONENTS ====================== */
 function PageLoader() {
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center bg-gray-50 gap-3"
+      className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 gap-3"
       dir="rtl"
     >
-      <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-200">
+      <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-200 dark:shadow-none">
         <Loader2 className="w-6 h-6 text-white animate-spin" />
       </div>
       <p className="text-xs font-bold text-gray-400">در حال بارگذاری...</p>
@@ -66,19 +66,19 @@ function ScrollToTop() {
 function NotFound() {
   return (
     <div
-      className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6 text-center"
+      className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-6 text-center"
       dir="rtl"
     >
-      <div className="w-20 h-20 bg-red-50 border border-red-100 rounded-3xl flex items-center justify-center mb-6">
+      <div className="w-20 h-20 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-3xl flex items-center justify-center mb-6">
         <AlertTriangle className="w-10 h-10 text-red-400" />
       </div>
-      <h1 className="text-2xl font-black text-gray-900 mb-2">صفحه پیدا نشد</h1>
+      <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">صفحه پیدا نشد</h1>
       <p className="text-sm text-gray-500 mb-8 max-w-xs leading-relaxed">
         آدرسی که وارد کردید معتبر نیست یا این صفحه حذف شده است.
       </p>
       <Link
         to="/"
-        className="flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-lg shadow-teal-200 hover:bg-teal-700"
+        className="flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-lg shadow-teal-200 hover:bg-teal-700 dark:shadow-none"
       >
         <HomeIcon className="w-4 h-4" /> بازگشت به خانه
       </Link>
@@ -86,34 +86,42 @@ function NotFound() {
   );
 }
 
-/* ====================== AUTH ROUTES (SYNC WITH BACKEND) ====================== */
-/**
- * نکته مهم:
- * بک‌اند شما (middleware/auth.ts) توکن را هم از Bearer و هم از cookie.token می‌خواند.
- * بنابراین در فرانت بهتره برای محافظت مسیرها به جای چک localStorage، از state احراز هویت (AuthContext) استفاده کنیم
- * تا اگر کاربر با cookie لاگین است ولی localStorage خالی است، بی‌دلیل redirect نشود.
- */
+/* ====================== AUTH ROUTES ====================== */
 
+// مسیر محافظت شده عمومی (فقط لاگین کرده باشد)
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { isAuthenticated, loading, refreshing } = useAuth();
 
-  // تا وقتی وضعیت کاربر از /api/auth/me مشخص نشده، ریدایرکت نکن
   if (loading || refreshing) return <PageLoader />;
 
   if (!isAuthenticated) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ from: location.pathname }}
-      />
-    );
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
   return <>{children}</>;
 }
 
+// مسیر محافظت شده فروشنده (لاگین کرده و نقش فروشنده/ادمین را داشته باشد)
+function SellerProtectedRoute({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const { isAuthenticated, isSeller, loading, refreshing } = useAuth();
+
+  if (loading || refreshing) return <PageLoader />;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  // اگر کاربر است اما فروشنده نیست -> هدایت به صفحه ارتقا حساب
+  if (!isSeller) {
+    return <Navigate to="/become-seller" replace state={{ from: location.pathname }} />;
+  }
+
+  return <>{children}</>;
+}
+
+// مسیر مهمان (فقط برای کاربرانی که لاگین نکرده‌اند)
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading, refreshing } = useAuth();
 
@@ -147,106 +155,64 @@ export default function App() {
                   {/* مسیرهای نیازمند لاگین (Protected) */}
                   <Route
                     path="profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
+                    element={<ProtectedRoute><Profile /></ProtectedRoute>}
                   />
                   <Route
                     path="complete-profile"
-                    element={
-                      <ProtectedRoute>
-                        <CompleteProfile />
-                      </ProtectedRoute>
-                    }
+                    element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>}
                   />
                   <Route
                     path="saved"
-                    element={
-                      <ProtectedRoute>
-                        <Saved />
-                      </ProtectedRoute>
-                    }
+                    element={<ProtectedRoute><Saved /></ProtectedRoute>}
                   />
                   <Route
                     path="messages"
-                    element={
-                      <ProtectedRoute>
-                        <Messages />
-                      </ProtectedRoute>
-                    }
+                    element={<ProtectedRoute><Messages /></ProtectedRoute>}
                   />
                   <Route
                     path="referral"
-                    element={
-                      <ProtectedRoute>
-                        <ReferralPage />
-                      </ProtectedRoute>
-                    }
+                    element={<ProtectedRoute><ReferralPage /></ProtectedRoute>}
+                  />
+                  
+                  {/* صفحه ارتقا به فروشنده (نیاز به لاگین دارد اما نیاز به نقش فروشنده ندارد) */}
+                  <Route
+                    path="become-seller"
+                    element={<ProtectedRoute><BecomeSeller /></ProtectedRoute>}
                   />
 
-                  {/* پنل فروشنده */}
+                  {/* پنل فروشنده (نیازمند نقش فروشنده) */}
                   <Route
                     path="seller"
-                    element={
-                      <ProtectedRoute>
-                        <SellerPanel />
-                      </ProtectedRoute>
-                    }
+                    element={<SellerProtectedRoute><SellerPanel /></SellerProtectedRoute>}
                   />
                   <Route
                     path="dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <SellerPanel />
-                      </ProtectedRoute>
-                    }
+                    element={<SellerProtectedRoute><SellerPanel /></SellerProtectedRoute>}
                   />
                   <Route
                     path="add-product"
-                    element={
-                      <ProtectedRoute>
-                        <AddProduct />
-                      </ProtectedRoute>
-                    }
+                    element={<SellerProtectedRoute><AddProduct /></SellerProtectedRoute>}
                   />
                   <Route
                     path="buy-badge"
-                    element={
-                      <ProtectedRoute>
-                        <BuyBadge />
-                      </ProtectedRoute>
-                    }
+                    element={<SellerProtectedRoute><BuyBadge /></SellerProtectedRoute>}
                   />
 
                   {/* پنل ادمین */}
                   <Route
                     path="admin"
-                    element={
-                      <ProtectedRoute>
-                        <AdminPanel />
-                      </ProtectedRoute>
-                    }
+                    element={<ProtectedRoute><AdminPanel /></ProtectedRoute>}
                   />
                   <Route
                     path="admin/stats"
-                    element={
-                      <ProtectedRoute>
-                        <AdminPanel />
-                      </ProtectedRoute>
-                    }
+                    element={<ProtectedRoute><AdminPanel /></ProtectedRoute>}
                   />
                 </Route>
 
                 {/* مسیرهای مستقل (بدون Layout اصلی) */}
                 <Route
                   path="/login"
-                  element={
-                    <GuestRoute>
-                      <Login />
-                    </GuestRoute>
-                  }
+                  element={<GuestRoute><Login /></GuestRoute>}
                 />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
@@ -254,51 +220,27 @@ export default function App() {
                 <Route path="/stores/:id" element={<StoreDetail />} />
                 <Route
                   path="/chat/:id"
-                  element={
-                    <ProtectedRoute>
-                      <ChatRoom />
-                    </ProtectedRoute>
-                  }
+                  element={<ProtectedRoute><ChatRoom /></ProtectedRoute>}
                 />
                 <Route
                   path="/chat/:conversationId/:userId"
-                  element={
-                    <ProtectedRoute>
-                      <ChatRoom />
-                    </ProtectedRoute>
-                  }
+                  element={<ProtectedRoute><ChatRoom /></ProtectedRoute>}
                 />
                 <Route
                   path="/payment-callback"
-                  element={
-                    <ProtectedRoute>
-                      <PaymentCallback />
-                    </ProtectedRoute>
-                  }
+                  element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>}
                 />
                 <Route
                   path="/payment/callback"
-                  element={
-                    <ProtectedRoute>
-                      <PaymentCallback />
-                    </ProtectedRoute>
-                  }
+                  element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>}
                 />
                 <Route
                   path="/seller/add-product"
-                  element={
-                    <ProtectedRoute>
-                      <AddProduct />
-                    </ProtectedRoute>
-                  }
+                  element={<SellerProtectedRoute><AddProduct /></SellerProtectedRoute>}
                 />
                 <Route
                   path="/seller/buy-badge"
-                  element={
-                    <ProtectedRoute>
-                      <BuyBadge />
-                    </ProtectedRoute>
-                  }
+                  element={<SellerProtectedRoute><BuyBadge /></SellerProtectedRoute>}
                 />
 
                 {/* ریدایرکت‌ها */}
@@ -306,8 +248,6 @@ export default function App() {
                 <Route path="/saved-products" element={<Navigate to="/saved" replace />} />
                 <Route path="/dashboard/products" element={<Navigate to="/seller" replace />} />
                 <Route path="/products" element={<Navigate to="/search" replace />} />
-
-                {/* ریدایرکت /wallet قدیمی به /referral */}
                 <Route path="/wallet" element={<Navigate to="/referral" replace />} />
 
                 {/* 404 */}

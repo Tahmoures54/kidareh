@@ -2,12 +2,12 @@ import React, { useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ArrowRight, Send, Phone, ArrowDown, 
+  ArrowRight, Send, Phone, ArrowDown,
   Loader2, MoreVertical, Store, ShieldCheck, Paperclip
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
-import { useChatRoom } from "./hooks";
+import { useChatRoom } from "./components/hooks";  // ✅ اصلاح مسیر import
 import MessageBubble from "./components/MessageBubble";
 import TypingIndicator from "./components/TypingIndicator";
 

@@ -26,7 +26,7 @@ export const GalleryModal = memo(({ images, index, name, onClose, onPrev, onNext
   }, [onClose, onPrev, onNext]);
 
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/95 backdrop-blur-lg z-[100] flex items-center justify-center touch-none" onClick={onClose}>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center touch-none" onClick={onClose}>
       <button onClick={onClose} className="absolute top-[max(24px,env(safe-area-inset-top))] right-6 w-12 h-12 bg-white/10 rounded-full flex items-center justify-center text-white z-10 hover:bg-white/20 transition">
         <X className="w-6 h-6" />
       </button>
@@ -50,17 +50,17 @@ export const GalleryModal = memo(({ images, index, name, onClose, onPrev, onNext
 
 export const ImageCarousel = memo(({ images, name, imgIndex, setImgIndex, setGalleryOpen }: any) => {
   return (
-    <div className="relative h-[48vh] bg-slate-100 dark:bg-slate-900 overflow-hidden cursor-pointer" onClick={() => setGalleryOpen(true)}>
+    <div className="relative h-[50vh] bg-[var(--bg-tertiary)] overflow-hidden cursor-pointer" onClick={() => setGalleryOpen(true)}>
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent z-10 pointer-events-none" />
       
-      <div className="flex h-full overflow-x-auto snap-x snap-mandatory hide-scrollbar" onScroll={e => setImgIndex(Math.round((e.currentTarget.scrollLeft) / e.currentTarget.clientWidth))}>
+      <div className="flex h-full overflow-x-auto snap-x snap-mandatory no-scrollbar" onScroll={e => setImgIndex(Math.round((e.currentTarget.scrollLeft) / e.currentTarget.clientWidth))}>
         {images.map((img: string, i: number) => (
           <img key={i} src={img} alt={name} className="w-full h-full object-cover snap-center flex-shrink-0" loading={i === 0 ? "eager" : "lazy"} onError={e => (e.currentTarget as HTMLImageElement).src = FALLBACK} />
         ))}
       </div>
 
       {images.length > 1 && (
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/30 backdrop-blur-md px-3 py-2 rounded-full">
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/30 backdrop-blur-md px-3 py-2 rounded-full">
           {images.map((_, i) => (
             <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === imgIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"}`} />
           ))}

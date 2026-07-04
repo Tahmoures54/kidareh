@@ -109,6 +109,20 @@
     align-items: center;
     justify-content: center;
   }
+
+  /* بریدن متن‌های طولانی - پرکاربرد در کارت محصولات */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
 
 /* ====================== BASE ====================== */
@@ -168,13 +182,49 @@ h1, h2, h3, h4, h5, h6, .heading {
 
 /* ====================== GLASS MORPHISM ====================== */
 .glass {
-  background: color-mix(in srgb, var(--bg-secondary) 85%, transparent);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in srgb, var(--bg-secondary) 80%, transparent);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
   border-bottom: 1px solid var(--border-light);
 }
 
-/* ====================== SKELETON ====================== */
+/* ====================== PREMIUM SKELETON SHIMMER ====================== */
+/* افکت درخشش اسکلت لودینگ (مخصوص اپلیکیشن‌های مدرن) */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-tertiary);
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 100%
+  );
+  animation: shimmer-animation 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(-100%);
+}
+
+.dark .shimmer::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes shimmer-animation {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* نگه داشتن کلاس قدیمی در صورت استفاده جاهای دیگر */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -385,21 +435,22 @@ input:-webkit-autofill:focus {
   flex-direction: column;
   background: var(--bg-secondary);
   border: 1px solid var(--border-light);
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
-  transition: all 0.25s ease;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   text-decoration: none;
   color: inherit;
 }
 
 .product-card:hover {
-  box-shadow: 0 8px 24px var(--shadow-color);
+  box-shadow: 0 12px 28px var(--shadow-color);
   border-color: var(--border-medium);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
 }
 
 .product-card:active {
-  transform: scale(0.97);
+  transform: scale(0.97) translateY(0);
+  transition-duration: 0.1s;
 }
 
 .product-img-wrapper {
@@ -414,36 +465,37 @@ input:-webkit-autofill:focus {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: opacity 0.3s ease, transform 0.5s ease;
+  transition: opacity 0.3s ease, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 .product-card:hover .product-img {
-  transform: scale(1.05);
+  transform: scale(1.08);
 }
 
 .product-discount-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 4px 10px;
+  top: 12px;
+  right: 12px;
+  padding: 5px 12px;
   background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
-  border-radius: 10px;
-  font-size: 10px;
-  font-weight: 800;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
   z-index: 10;
+  backdrop-filter: blur(4px);
 }
 
 .product-info {
-  padding: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .product-title {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   font-family: var(--font-display);
   color: var(--text-primary);
@@ -462,7 +514,7 @@ input:-webkit-autofill:focus {
 }
 
 .product-price {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 900;
   font-family: var(--font-display);
   color: var(--brand-primary); 
@@ -503,22 +555,23 @@ input:-webkit-autofill:focus {
   display: flex;
   align-items: flex-end;
   justify-content: space-around;
-  background: color-mix(in srgb, var(--bg-secondary) 82%, transparent);
-  backdrop-filter: blur(24px) saturate(200%);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  background: color-mix(in srgb, var(--bg-secondary) 78%, transparent);
+  backdrop-filter: blur(28px) saturate(200%);
+  -webkit-backdrop-filter: blur(28px) saturate(200%);
   border: 1px solid var(--border-light);
   border-radius: 28px;
   padding: 6px 4px 8px;
   box-shadow:
-    0 -2px 20px rgba(0, 0, 0, 0.04),
-    0 4px 32px rgba(0, 0, 0, 0.06);
+    0 -4px 24px rgba(0, 0, 0, 0.04),
+    0 8px 40px rgba(0, 0, 0, 0.08);
   pointer-events: auto;
 }
 
 .dark .bottom-nav-inner {
   box-shadow:
-    0 -2px 20px rgba(0, 0, 0, 0.2),
-    0 4px 32px rgba(0, 0, 0, 0.3);
+    0 -4px 24px rgba(0, 0, 0, 0.3),
+    0 8px 40px rgba(0, 0, 0, 0.5);
+  border-color: var(--border-medium);
 }
 
 .bottom-nav-item {
@@ -536,6 +589,7 @@ input:-webkit-autofill:focus {
   transition: all 0.2s ease;
   border-radius: 16px;
   font-family: var(--font-body);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bottom-nav-item:active {
@@ -587,6 +641,7 @@ input:-webkit-autofill:focus {
   outline: none;
   padding: 0;
   margin-top: -22px;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .bottom-nav-center-icon {
@@ -601,13 +656,14 @@ input:-webkit-autofill:focus {
     0 6px 20px var(--brand-glow),
     0 2px 6px rgba(0, 0, 0, 0.1);
   border: 3px solid var(--bg-secondary);
-  transition: box-shadow 0.3s ease;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
 }
 
 .bottom-nav-center-btn:active .bottom-nav-center-icon {
   box-shadow:
     0 2px 10px var(--brand-glow),
     0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: scale(0.92);
 }
 
 /* ====================== UTILITIES ====================== */
@@ -622,7 +678,7 @@ a {
 
 @keyframes pulse-glow {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(20, 184, 166, 0.4); }
-  50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(20, 184, 166, 0); }
+  50% { opacity: 0.8; box-shadow: 0 0 0 8px rgba(20, 184, 166, 0); }
 }
 
 /* اسکرول‌بار مرورگرهای ویندوزی/دسکتاپ */
@@ -638,6 +694,10 @@ a {
 ::-webkit-scrollbar-thumb {
   background: var(--border-light);
   border-radius: 100px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
 }
 
 /* Safe area handling (iOS Notch Support) */
