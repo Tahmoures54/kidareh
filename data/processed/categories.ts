@@ -355,4 +355,3 @@ if (import.meta.env.DEV) {
 
 export const TOTAL_CATEGORIES = categoriesData.length;
 export const TOTAL_SUBCATEGORIES = getAllFlatCategories().length;
-     
