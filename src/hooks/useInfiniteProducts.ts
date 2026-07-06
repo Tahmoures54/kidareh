@@ -13,8 +13,8 @@ export interface Product {
   store_name?: string;
   status?: "موجود" | "ناموجود";
   city?: string;
-  views?: number; // اضافه شده بر اساس کدهای قبلی شما
-  // Pro Tip: بجای any، از unknown یا Record استفاده کنید تا Type Safety حفظ شود
+  views?: number; 
+  // Pro Tip: استفاده از Record بجای any برای حفظ ایمنی تایپ‌ها
   metadata?: Record<string, unknown>; 
 }
 
@@ -52,7 +52,8 @@ const CACHE_TIME = 10 * 60 * 1000; // ۱۰ دقیقه - ماندگاری در م
 const RETRY_ATTEMPTS = 2;
 
 /* ====================== QUERY KEYS FACTORY ====================== */
-// Pro Tip: معماری متمرکز کلیدهای کش. برای Invalidate کردن در زمان لایک یا ویرایش بسیار مفید است.
+
+// مدیریت متمرکز کلیدهای کش برای استفاده در کل پروژه
 export const productKeys = {
   all: ["products"] as const,
   lists: () => [...productKeys.all, "list"] as const,
@@ -82,6 +83,7 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     userId,
   } = input;
 
+  // نرمال‌سازی پارامترها برای جلوگیری از رندرهای بیهوده در React Query
   const normalizedParams = useMemo<Omit<FetchProductsParams, "cursor">>(() => {
     return {
       limit,
@@ -112,13 +114,16 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     readonly unknown[],
     string | null
   >({
-    queryKey: productKeys.infinite(normalizedParams), // استفاده از Factory
-    queryFn: async ({ pageParam }) => {
+    queryKey: productKeys.infinite(normalizedParams),
+    
+    // دریافت سیگنال از React Query برای لغو درخواست‌های تکراری
+    queryFn: async ({ pageParam, signal }) => {
       return fetchProductsPage({
         ...normalizedParams,
         cursor: pageParam ?? null,
-      });
+      }, signal); // ارسال سیگنال به سرویس
     },
+    
     initialPageParam: null,
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore && lastPage.nextCursor ? lastPage.nextCursor : undefined;
@@ -131,8 +136,7 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     refetchOnMount: false,
   });
 
-  // Pro Tip: انجام محاسبات سنگین در داخل هوک با useMemo
-  // این کار باعث می‌شود کامپوننت Home نیازی به محاسبه مجدد flatMap نداشته باشد
+  // محاسبه یک‌باره لیست آگهی‌ها برای سبک شدن لایه UI
   const flatProducts = useMemo(() => {
     return query.data?.pages.flatMap((page) => page.products) ?? [];
   }, [query.data]);
@@ -141,7 +145,6 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     return query.data?.pages[0]?.total ?? 0;
   }, [query.data]);
 
-  // برگرداندن شیء غنی‌تر به کامپوننت
   return {
     ...query,
     flatProducts,
