@@ -4,7 +4,7 @@ import { MapPin, Heart, ShoppingBag, Store, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatPrice } from "../../../utils";
 import { Product } from "../../../hooks/useInfiniteProducts";
-import { getCategoryTextByValue } from "../../../data/processed/categories";
+import { getCategoryTextByValue } from "../../../data/processed/categories.ts";
 
 // -------------------- Skeleton --------------------
 export const ProductCardSkeleton = memo(() => (
