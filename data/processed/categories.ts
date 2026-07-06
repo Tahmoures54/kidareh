@@ -259,4 +259,100 @@ export const categoriesData: CategoryGroup[] = [
   }
 ];
 
-// ... بقیه توابع بدون تغییر
+// Helper functions (unchanged)
+const categoryCache = new Map<string, { text: string; groupInfo: any }>();
+
+export const getCategoryTextByValue = (value: string): string => {
+  if (categoryCache.has(value)) {
+    return categoryCache.get(value)!.text;
+  }
+  for (const group of categoriesData) {
+    const found = group.types.find(type => type.value === value);
+    if (found) {
+      categoryCache.set(value, { text: found.text, groupInfo: null });
+      return found.text;
+    }
+  }
+  return value;
+};
+
+export const getCategoryGroupInfo = (value: string) => {
+  const cached = categoryCache.get(value);
+  if (cached?.groupInfo) {
+    return cached.groupInfo;
+  }
+  for (const group of categoriesData) {
+    const found = group.types.find(type => type.value === value);
+    if (found) {
+      const info = {
+        icon: group.icon,
+        color: group.color,
+        groupName: group.group,
+        slug: group.slug
+      };
+      categoryCache.set(value, { text: found.text, groupInfo: info });
+      return info;
+    }
+  }
+  return {
+    icon: "LayoutGrid",
+    color: "bg-gray-500 text-gray-50",
+    groupName: "نامشخص",
+    slug: "others"
+  };
+};
+
+export const getAllFlatCategories = (): SubCategory[] => {
+  return categoriesData.flatMap(group => group.types);
+};
+
+export const searchCategories = (query: string): SubCategory[] => {
+  const lowerQuery = query.toLowerCase();
+  return getAllFlatCategories().filter(cat =>
+    cat.text.toLowerCase().includes(lowerQuery) ||
+    cat.value.toLowerCase().includes(lowerQuery)
+  );
+};
+
+export const getCategoryGroupBySlug = (slug: string): CategoryGroup | null => {
+  return categoriesData.find(group => group.slug === slug) || null;
+};
+
+export const getPopularCategories = (): SubCategory[] => {
+  return [
+    { value: "electronics", text: "موبایل و تبلت" },
+    { value: "cars", text: "خودرو" },
+    { value: "property_sales", text: "خرید و فروش ملک" },
+    { value: "home_appliances", text: "لوازم خانگی" },
+    { value: "clothing", text: "پوشاک" }
+  ];
+};
+
+if (import.meta.env.DEV) {
+  const allIds = new Set<string>();
+  const allValues = new Set<string>();
+  const allSlugs = new Set<string>();
+
+  categoriesData.forEach(group => {
+    if (allIds.has(group.id)) {
+      console.error(`🔴 Duplicate category group ID: "${group.id}"`);
+    }
+    allIds.add(group.id);
+    if (allSlugs.has(group.slug)) {
+      console.error(`🔴 Duplicate category group slug: "${group.slug}"`);
+    }
+    allSlugs.add(group.slug);
+    group.types.forEach(type => {
+      if (allValues.has(type.value)) {
+        console.error(`🔴 Duplicate category value: "${type.value}"`);
+      }
+      allValues.add(type.value);
+    });
+  });
+
+  console.log(`✅ Categories validated: ${categoriesData.length} groups, ${allValues.size} subcategories`);
+}
+
+export const TOTAL_CATEGORIES = categoriesData.length;
+export const TOTAL_SUBCATEGORIES = getAllFlatCategories().length;
+     
