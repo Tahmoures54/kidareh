@@ -4,6 +4,7 @@ import { MapPin, Heart, ShoppingBag, Store, Eye } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatPrice } from "../../../utils";
 import { Product } from "../../../hooks/useInfiniteProducts";
+import { getCategoryTextByValue } from "../../../data/processed/categories";
 
 // -------------------- Skeleton --------------------
 export const ProductCardSkeleton = memo(() => (
@@ -84,8 +85,8 @@ export const PremiumProductCard = memo(({ product, isFavorite, onToggleFavorite 
 
           {/* Badge */}
           {product.badge && (
-            <span className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-lg shadow-md uppercase tracking-wide">
-              {product.badge}
+            <span className="absolute top-2.5 right-2.5 px-2.5 py-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-lg shadow-md tracking-wide">
+              {getCategoryTextByValue(product.badge)}
             </span>
           )}
 
