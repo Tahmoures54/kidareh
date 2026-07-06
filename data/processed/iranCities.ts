@@ -1,4 +1,4 @@
-// data/processed/iranCities.ts
+// src/data/processed/iranCities.ts
 import rawIranCities from "../raw/iranCities.json";
 
 export interface IranCity {
@@ -35,47 +35,18 @@ function slugifyFa(value: string): string {
 }
 
 function makeCity(input: AnyRecord, fallbackProvinceFa = "", fallbackProvinceEn = ""): IranCity | null {
-  const name = normalizeText(
-    input["city-fa"] ??
-      input.name ??
-      input.city ??
-      input.title ??
-      input.label ??
-      input.cityName
-  );
-
-  const province = normalizeText(
-    input["province-fa"] ??
-      input.province ??
-      input.state ??
-      input.provinceName ??
-      fallbackProvinceFa
-  );
-
+  const name = normalizeText(input["city-fa"] ?? input.name ?? input.city ?? input.title);
   if (!name) return null;
 
-  const cityEn = String(
-    input["city-en"] ??
-      input.cityEn ??
-      input.slug ??
-      ""
-  ).trim();
-
-  const provinceEn = String(
-    input["province-en"] ??
-      input.provinceEn ??
-      fallbackProvinceEn ??
-      ""
-  ).trim();
+  const province = normalizeText(input["province-fa"] ?? input.province ?? fallbackProvinceFa);
+  const cityEn = String(input["city-en"] ?? input.slug ?? "").trim();
+  const provinceEn = String(input["province-en"] ?? fallbackProvinceEn ?? "").trim();
 
   return {
-    id: input.id,
     name,
     province,
     display: province ? `${name}، ${province}` : name,
     slug: cityEn || slugifyFa(name),
-    lat: typeof input.lat === "number" ? input.lat : undefined,
-    lng: typeof input.lng === "number" ? input.lng : undefined,
     cityEn: cityEn || undefined,
     provinceEn: provinceEn || undefined,
   };
@@ -84,37 +55,25 @@ function makeCity(input: AnyRecord, fallbackProvinceFa = "", fallbackProvinceEn 
 function normalizeIranCities(raw: unknown): IranCity[] {
   const result: IranCity[] = [];
 
-  // ساختار فعلی فایل تو: آرایه استان‌ها
   if (Array.isArray(raw)) {
     for (const provinceItem of raw) {
       if (!provinceItem || typeof provinceItem !== "object") continue;
-
       const provinceObj = provinceItem as AnyRecord;
 
-      const provinceFa = normalizeText(
-        provinceObj["province-fa"] ??
-          provinceObj.province ??
-          provinceObj.name ??
-          provinceObj.title
-      );
-
-      const provinceEn = String(
-        provinceObj["province-en"] ??
-          provinceObj.provinceEn ??
-          ""
-      ).trim();
+      const provinceFa = normalizeText(provinceObj["province-fa"] ?? provinceObj.province ?? "");
+      const provinceEn = String(provinceObj["province-en"] ?? "").trim();
 
       const cities = Array.isArray(provinceObj.cities) ? provinceObj.cities : [];
 
       for (const cityItem of cities) {
         if (!cityItem || typeof cityItem !== "object") continue;
-
         const city = makeCity(cityItem as AnyRecord, provinceFa, provinceEn);
         if (city) result.push(city);
       }
     }
   }
 
+  // حذف تکراری‌ها بر اساس نام و استان
   const seen = new Set<string>();
   const unique = result.filter((city) => {
     const key = `${city.name}__${city.province}`;
