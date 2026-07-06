@@ -1,6 +1,6 @@
 import React, { memo, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { categoriesData } from "../../../data/processed/categories";
+import { categoriesData } from "../../../data/processed/categories.ts";
 import { HOME_CONFIG } from "../constants";
 
 interface CategorySliderProps {
