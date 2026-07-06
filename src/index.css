@@ -57,18 +57,21 @@
   --font-display: 'Estedad', 'Vazirmatn', 'IRANSans', 'Tahoma', system-ui, sans-serif;
   --font-mono: 'Vazir Code', 'Fira Code', 'JetBrains Mono', monospace;
 
-  /* Brand Colors - هارمونی یکپارچه فیروزه‌ای برای کل اپ */
-  --brand-primary: #0d9488; /* Teal 600 */
-  --brand-secondary: #14b8a6; /* Teal 500 */
-  --brand-glow: rgba(20, 184, 166, 0.3);
+  /* Brand Colors - Turquoise Iranian Sky theme */
+  --brand-primary: #00A693; /* Deep vivid turquoise (header, tab bar) */
+  --brand-primary-dark: #009688; /* Slightly darker shade */
+  --brand-secondary: #4DB6AC; /* Supporting turquoise */
+  --brand-light: #B2EBE0; /* Light turquoise backgrounds */
+  --brand-accent: #7B4B94; /* Accent purple */
+  --brand-glow: rgba(0, 166, 147, 0.18);
 
   /* Colors Light Mode */
-  --bg-primary: #f8fafc; 
+  --bg-primary: #E0F2F1; 
   --bg-secondary: #ffffff;
   --bg-tertiary: #f1f5f9; 
-  --text-primary: #0f172a; 
-  --text-secondary: #475569; 
-  --text-muted: #94a3b8; 
+  --text-primary: #05282b; 
+  --text-secondary: #274746; 
+  --text-muted: #6b7f7d; 
   --border-light: #e2e8f0; 
   --border-medium: #cbd5e1; 
   --shadow-color: rgba(15, 23, 42, 0.06);
@@ -76,17 +79,20 @@
 
 .dark {
   /* Brand Colors Dark Mode */
-  --brand-primary: #2dd4bf; /* Teal 400 */
-  --brand-secondary: #14b8a6; /* Teal 500 */
-  --brand-glow: rgba(45, 212, 191, 0.2);
+  --brand-primary: #00A693;
+  --brand-primary-dark: #009688;
+  --brand-secondary: #4DB6AC;
+  --brand-light: #B2EBE0;
+  --brand-accent: #7B4B94;
+  --brand-glow: rgba(0, 166, 147, 0.12);
 
   /* Colors Dark Mode */
-  --bg-primary: #0B0F19;
-  --bg-secondary: #11151f; 
-  --bg-tertiary: #1a1f2e;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --bg-primary: #071717;
+  --bg-secondary: #0b1a19; 
+  --bg-tertiary: #102a29;
+  --text-primary: #f1f8f6;
+  --text-secondary: #9bd1c8;
+  --text-muted: #7aa79f;
   --border-light: #1e2433;
   --border-medium: #2d3548;
   --shadow-color: rgba(0, 0, 0, 0.4);

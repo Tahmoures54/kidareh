@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { compressImage } from "../../../utils/imageCompression";
 import { apiRequest } from "../../../utils/api";
+import { getProductCategoryFromStoreCategory } from "../../../utils/categoryMapping";
 
 export function useAddProduct(user: any) {
   const navigate = useNavigate();
@@ -16,7 +17,11 @@ export function useAddProduct(user: any) {
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [desc, setDesc] = useState("");
-  const [category, setCategory] = useState(() => localStorage.getItem("lastCategory") || "");
+  // Auto-assign category from user's store_category, fallback to localStorage
+  const [category, setCategory] = useState(() => {
+    const autoAssigned = getProductCategoryFromStoreCategory(user?.store_category);
+    return autoAssigned !== "General" ? autoAssigned : localStorage.getItem("lastCategory") || "";
+  });
   const [status, setStatus] = useState<"موجود" | "ناموجود">("موجود");
   const [badge, setBadge] = useState<string | null>(null);
   
@@ -42,6 +47,16 @@ export function useAddProduct(user: any) {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
     toastTimeoutRef.current = setTimeout(() => setToast(null), 3000);
   }, []);
+
+  // ── Auto-assign category from store_category ──
+  useEffect(() => {
+    if (user?.store_category) {
+      const autoAssigned = getProductCategoryFromStoreCategory(user.store_category);
+      if (autoAssigned && autoAssigned !== "General") {
+        setCategory(autoAssigned);
+      }
+    }
+  }, [user?.store_category]);
 
   // ── Fetch Inventory ──
   useEffect(() => {
@@ -139,8 +154,10 @@ export function useAddProduct(user: any) {
     if (!name.trim() || name.trim().length < 3) {
       return showToast("نام کالا باید حداقل ۳ حرف باشد.");
     }
+    // Category is now auto-assigned, no need to validate it
     if (!category) {
-      return showToast("دسته‌بندی را مشخص کنید.");
+      // If category couldn't be auto-assigned and no fallback, use "General"
+      return showToast("خطا در تعیین دسته‌بندی. لطفاً دوباره تلاش کنید.");
     }
     
     setSubmitting(true);

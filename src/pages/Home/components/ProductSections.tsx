@@ -88,16 +88,14 @@ export const PremiumProductCard = memo(({ product, isFavorite, onToggleFavorite 
 });
 
 interface SegmentedScopeProps {
-  scope: "city" | "province" | "all";
-  onScopeChange: (scope: "city" | "province" | "all") => void;
+  scope: "city" | "all";
+  onScopeChange: (scope: "city" | "all") => void;
   city: string;
-  province: string;
 }
 
-export const SegmentedScope = memo(({ scope, onScopeChange, city, province }: SegmentedScopeProps) => {
+export const SegmentedScope = memo(({ scope, onScopeChange, city }: SegmentedScopeProps) => {
   const tabs = [
     { key: "city" as const, label: city || "شهر من" },
-    { key: "province" as const, label: province || "استان" },
     { key: "all" as const, label: "سراسری" },
   ];
 

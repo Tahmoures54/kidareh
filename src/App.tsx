@@ -39,6 +39,7 @@ const SupportPage = lazy(() => import("./pages/Support"));
 const TermsAndGuidePage = lazy(() => import("./pages/TermsAndGuide"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const BecomeSeller = lazy(() => import("./pages/BecomeSeller")); // صفحه ارتقا به فروشنده
+const OnboardingFlow = lazy(() => import("./pages/Onboarding")); // صفحه ثبت‌نام برای کاربران جدید
 
 /* ====================== COMPONENTS ====================== */
 function PageLoader() {
@@ -213,6 +214,10 @@ export default function App() {
                 <Route
                   path="/login"
                   element={<GuestRoute><Login /></GuestRoute>}
+                />
+                <Route
+                  path="/onboarding"
+                  element={<GuestRoute><OnboardingFlow /></GuestRoute>}
                 />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/products/:id" element={<ProductDetail />} />

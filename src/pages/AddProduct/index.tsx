@@ -3,12 +3,11 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
   ArrowRight, UploadCloud, Image as ImageIcon, X, Package,
-  CheckCircle2, Camera, Plus, Sparkles, AlignRight, List,
-  Loader2, TrendingUp, ChevronDown, Check
+  CheckCircle2, Camera, Plus, Sparkles, AlignRight,
+  Loader2, TrendingUp, Check
 } from "lucide-react";
 
 import { useAuth } from "../../context/AuthContext";
-import { categoriesData } from "@data/processed/categories";
 import { BADGES_LIST } from "../../components/badges"; 
 import { fmtPrice } from "./utils";
 import { useAddProduct } from "./components/hooks"; 
@@ -73,26 +72,12 @@ export default function AddProduct() {
           </AnimatePresence>
         </div>
 
-        {/* 2. نام و دسته‌بندی */}
-        <div className="space-y-4">
-          <div>
-            <label className="text-xs font-bold text-slate-500 mb-1.5 block">نام کالا <span className="text-rose-500">*</span></label>
-            <div className="relative">
-              <Package className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input type="text" value={state.name} onChange={(e) => setters.setName(e.target.value)} placeholder="مثلاً: گوشی موبایل سامسونگ" className="w-full h-12 pr-10 pl-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors" />
-            </div>
-          </div>
-
-          <div>
-            <label className="text-xs font-bold text-slate-500 mb-1.5 block">دسته‌بندی <span className="text-rose-500">*</span></label>
-            <div className="relative">
-              <List className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <select value={state.category} onChange={(e) => setters.setCategory(e.target.value)} className="w-full h-12 pr-10 pl-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 appearance-none transition-colors">
-                <option value="" disabled>انتخاب دسته‌بندی...</option>
-                {categoriesData?.map((cat) => <option key={cat.id || cat.name} value={cat.name}>{cat.name}</option>)}
-              </select>
-              <ChevronDown className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-            </div>
+        {/* 2. نام */}
+        <div>
+          <label className="text-xs font-bold text-slate-500 mb-1.5 block">نام کالا <span className="text-rose-500">*</span></label>
+          <div className="relative">
+            <Package className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input type="text" value={state.name} onChange={(e) => setters.setName(e.target.value)} placeholder="مثلاً: گوشی موبایل سامسونگ" className="w-full h-12 pr-10 pl-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors" />
           </div>
         </div>
 

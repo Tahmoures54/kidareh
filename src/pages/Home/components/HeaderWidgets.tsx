@@ -29,14 +29,15 @@ export const Header = memo(({
         <button 
           onClick={onOpenLocationModal}
           aria-label="انتخاب شهر"
-          className="flex items-center gap-1.5 text-sm font-bold text-gray-800 dark:text-white min-w-0 active:scale-95 transition-transform"
+          className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-primary)] min-w-0 active:scale-95 transition-transform"
+          style={{ color: 'var(--text-primary)' }}
         >
-          <MapPin className="w-5 h-5 text-indigo-500 shrink-0" />
+          <MapPin className="w-5 h-5 text-[var(--brand-primary)] shrink-0" />
           <span className="truncate max-w-[100px]">{effectiveCity}</span>
-          <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />
+          <ChevronDown className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
         </button>
 
-        <Link to="/" className="text-lg font-black text-gray-900 dark:text-white">
+        <Link to="/" className="text-lg font-black text-[var(--text-primary)]">
           کی‌داره؟
         </Link>
 
@@ -45,7 +46,7 @@ export const Header = memo(({
             <Link 
               to="/seller" 
               aria-label="پنل فروشنده"
-              className="text-gray-600 dark:text-gray-300 hover:text-indigo-500 transition-colors active:scale-90"
+              className="text-[var(--text-secondary)] hover:text-[var(--brand-primary-dark)] transition-colors active:scale-90"
             >
               <StoreIcon className="w-6 h-6" />
             </Link>
@@ -54,7 +55,7 @@ export const Header = memo(({
           <button 
             onClick={() => navigate("/messages")} 
             aria-label="پیام‌ها"
-            className="relative text-gray-600 dark:text-gray-300 hover:text-indigo-500 transition-colors active:scale-90"
+            className="relative text-[var(--text-secondary)] hover:text-[var(--brand-primary-dark)] transition-colors active:scale-90"
           >
             <Bell className="w-6 h-6" />
           </button>
@@ -62,9 +63,9 @@ export const Header = memo(({
           <button 
             onClick={() => navigate(user ? "/profile" : "/login")} 
             aria-label={user ? "پروفایل" : "ورود"}
-            className="text-gray-600 dark:text-gray-300 hover:text-indigo-500 transition-colors active:scale-90"
+            className="text-[var(--text-secondary)] hover:text-[var(--brand-primary-dark)] transition-colors active:scale-90"
           >
-            {user ? <User className="w-6 h-6" /> : <Plus className="w-6 h-6 text-indigo-500" />}
+            {user ? <User className="w-6 h-6" /> : <Plus className="w-6 h-6 text-[var(--brand-primary)]" />}
           </button>
         </div>
       </div>

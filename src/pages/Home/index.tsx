@@ -13,11 +13,13 @@ import { PremiumProductCard, ProductCardSkeleton, SegmentedScope } from "./compo
 import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
 import { LocationModal } from "./components/LocationModal";
+import CategoryComboBox from '../../components/ui/CategoryComboBox';
+import CitySearchComboBox from '../../components/ui/CitySearchComboBox';
 
 export default function Home() {
   const { user } = useAuth() as { user: AppUser | null };
 
-  const [scope, setScope] = useState<"city" | "province" | "all">("city");
+  const [scope, setScope] = useState<"city" | "all">("city");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [manualLocation, setManualLocation] = useLocalStorage<any>("manual-location", null);
   const [favorites, setFavorites] = useLocalStorage<string[]>("favorites", []);
@@ -43,14 +45,13 @@ export default function Home() {
 
   const { city: realCity, province: realProvince, displayLocation, gpsEnabled } = useGeolocation("تهران");
   const effectiveCity = manualLocation?.city || realCity || "تهران";
-  const effectiveProvince = manualLocation?.province || realProvince || "";
   const effectiveDisplay = manualLocation?.display || displayLocation || "انتخاب شهر";
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
     useInfiniteProducts({
       scope,
       city: scope === "city" ? effectiveCity : undefined,
-      province: scope === "province" ? effectiveProvince : undefined,
+      // province-based scope removed — only city or all
       category: activeCategory || undefined,
       limit: HOME_CONFIG.PRODUCTS_PER_PAGE,
       sort: "newest",
@@ -99,8 +100,15 @@ export default function Home() {
         <main className="flex-1 pb-24">
           <CategorySlider activeCategory={activeCategory} onSelectCategory={setActiveCategory} />
 
-          <div className="px-4 pb-3">
-            <SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} province={effectiveProvince} />
+          <div className="px-4 pb-3 space-y-3">
+            <div className="flex gap-3">
+              <CategoryComboBox className="flex-1" onChange={(val) => setActiveCategory(val)} />
+              <div style={{ width: 12 }} />
+              <CitySearchComboBox onChange={(city, display, province) => handleCityChange(city, display, province)} />
+            </div>
+            <div>
+              <SegmentedScope scope={scope as any} onScopeChange={(s: any) => setScope(s)} city={effectiveCity} province={''} />
+            </div>
           </div>
 
           <AnimatePresence>

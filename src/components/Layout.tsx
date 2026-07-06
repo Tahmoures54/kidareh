@@ -469,9 +469,14 @@ export default function Layout() {
   );
 
   const handleMagicToggle = useCallback(() => {
+    if (!user) {
+      // Non-authenticated users: navigate to onboarding instead of opening menu
+      navigate("/onboarding");
+      return;
+    }
     setMagicOpen((prev) => !prev);
     setSheetOpen(false);
-  }, []);
+  }, [user, navigate]);
 
   const handleLogout = useCallback(async () => {
     try {
