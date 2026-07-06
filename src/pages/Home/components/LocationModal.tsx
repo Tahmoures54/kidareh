@@ -1,7 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, X, Check, Search, ChevronRight } from "lucide-react";
-import { iranCities } from "../../../data/processed/iranCities";
+// 🔴 این خط اصلاح شد (یک ../ اضافه شد)
+import { iranCities } from "../../../../data/processed/iranCities";
 
 function groupByProvince(cities: typeof iranCities) {
   const map = new Map<string, string[]>();
