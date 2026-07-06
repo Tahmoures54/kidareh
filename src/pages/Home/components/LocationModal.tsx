@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, X, Check, Search, ChevronRight } from "lucide-react";
-// 🔴 این خط اصلاح شد (یک ../ اضافه شد)
 import { iranCities } from "../../../../data/processed/iranCities";
 
 function groupByProvince(cities: typeof iranCities) {
@@ -49,9 +48,19 @@ export const LocationModal: React.FC<LocationModalProps> = ({
 
   const locations = useMemo(() => groupByProvince(iranCities), []);
 
+  // ➕ لیست شهرهای فیلترشده بر اساس جستجو (مستقیم)
+  const filteredCities = useMemo(() => {
+    if (!searchQuery) return [];
+    const q = searchQuery.trim();
+    return iranCities.filter(
+      (c) =>
+        c.name.includes(q) ||
+        c.province.includes(q)
+    );
+  }, [searchQuery]);
+
   const filteredProvinces = useMemo(() => {
     if (!searchQuery) return locations;
-    
     return locations.filter(
       (p) =>
         p.province.includes(searchQuery) ||
@@ -126,7 +135,11 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                   type="text"
                   placeholder="جستجوی استان یا شهر..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    // وقتی کاربر شروع به تایپ می‌کند، استان انتخاب‌شده را پاک کن
+                    if (e.target.value && selProvince) setSelProvince(null);
+                  }}
                   className="w-full pl-4 pr-10 py-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-light)] text-sm text-[var(--text-primary)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500"
                 />
               </div>
@@ -135,6 +148,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
             {/* Content */}
             <div className="px-4 pb-6 overflow-y-auto flex-1 space-y-2">
               {selProvince && activeProvinceData ? (
+                /* نمایش شهرهای یک استان انتخاب‌شده */
                 <div>
                   <button
                     onClick={() => setSelProvince(null)}
@@ -165,7 +179,32 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                     })}
                   </div>
                 </div>
+              ) : searchQuery && filteredCities.length > 0 ? (
+                /* ➕ جستجوی مستقیم شهرها */
+                <div className="space-y-2">
+                  {filteredCities.map((city) => {
+                    const isSelected = city.name === selectedCity && city.province === selectedProvince;
+                    return (
+                      <button
+                        key={`${city.name}-${city.province}`}
+                        onClick={() => handleSelectCity(city.name, city.province)}
+                        className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all active:scale-[0.98] text-sm font-bold ${
+                          isSelected
+                            ? "bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400"
+                            : "bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border-[var(--border-light)]"
+                        }`}
+                      >
+                        <div className="flex flex-col items-start gap-0.5">
+                          <span className="text-[var(--text-primary)]">{city.name}</span>
+                          <span className="text-[10px] font-normal text-[var(--text-muted)]">{city.province}</span>
+                        </div>
+                        {isSelected && <Check className="w-4 h-4" />}
+                      </button>
+                    );
+                  })}
+                </div>
               ) : (
+                /* لیست استان‌ها (بدون جستجو) */
                 <div className="space-y-2">
                   {filteredProvinces.map((item) => {
                     const isCurrentProvince = item.province === selectedProvince;
@@ -189,7 +228,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                       </button>
                     );
                   })}
-                  {filteredProvinces.length === 0 && (
+                  {filteredProvinces.length === 0 && searchQuery && (
                     <p className="text-center text-sm text-[var(--text-muted)] py-12">
                       نتیجه‌ای یافت نشد
                     </p>
