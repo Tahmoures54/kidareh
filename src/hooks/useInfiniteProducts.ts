@@ -1,12 +1,9 @@
-// src/hooks/useInfiniteProducts.ts
 import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchProductsPage, type FetchProductsParams } from "../services/products.service";
 
 /* ====================== TYPES ====================== */
 
-// توجه: ایمپورت Product حذف شد تا با این اینترفیس تداخل نداشته باشد.
-// اگر در پروژه تایپ مرجع دارید، می‌توانید این را پاک کنید و فقط ایمپورت کنید.
 export interface Product {
   id: string;
   name: string;
@@ -16,7 +13,9 @@ export interface Product {
   store_name?: string;
   status?: "موجود" | "ناموجود";
   city?: string;
-  [key: string]: any;
+  views?: number; // اضافه شده بر اساس کدهای قبلی شما
+  // Pro Tip: بجای any، از unknown یا Record استفاده کنید تا Type Safety حفظ شود
+  metadata?: Record<string, unknown>; 
 }
 
 export interface ProductsPageResponse {
@@ -30,7 +29,7 @@ export interface UseInfiniteProductsInput {
   enabled?: boolean;
   limit?: number;
   q?: string;
-  category?: string | null; // اجازه دادن به null برای حالت "همه آگهی‌ها"
+  category?: string | null;
   city?: string;
   province?: string;
   scope?: "all" | "city" | "province";
@@ -48,9 +47,18 @@ export interface UseInfiniteProductsInput {
 /* ====================== CONSTANTS ====================== */
 
 const DEFAULT_LIMIT = 20;
-const STALE_TIME = 2 * 60 * 1000; // ۲ دقیقه - برای فروشگاه زمان بهتری است
-const CACHE_TIME = 10 * 60 * 1000; // ۱0 دقیقه
-const RETRY_ATTEMPTS = 2; // در صورت قطعی لحظه‌ای اینترنت، ۲ بار تلاش کند
+const STALE_TIME = 2 * 60 * 1000; // ۲ دقیقه - دیتای تازه
+const CACHE_TIME = 10 * 60 * 1000; // ۱۰ دقیقه - ماندگاری در مموری
+const RETRY_ATTEMPTS = 2;
+
+/* ====================== QUERY KEYS FACTORY ====================== */
+// Pro Tip: معماری متمرکز کلیدهای کش. برای Invalidate کردن در زمان لایک یا ویرایش بسیار مفید است.
+export const productKeys = {
+  all: ["products"] as const,
+  lists: () => [...productKeys.all, "list"] as const,
+  infinite: (filters: Omit<FetchProductsParams, "cursor">) => 
+    [...productKeys.lists(), "infinite", filters] as const,
+};
 
 /* ====================== HOOK ====================== */
 
@@ -74,13 +82,11 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     userId,
   } = input;
 
-  // نرمال‌سازی پارامترها و پایدار کردن آن‌ها با useMemo
-  // این کار باعث می‌شود React Query دسته‌بندی‌ها را دقیقاً رصد کند
   const normalizedParams = useMemo<Omit<FetchProductsParams, "cursor">>(() => {
     return {
       limit,
       q: q?.trim() || undefined,
-      category: category || undefined, // اگر null یا خالی باشد، undefined می‌فرستد
+      category: category || undefined,
       city: scope === "city" && city ? city : undefined,
       province: scope === "province" && province ? province : undefined,
       scope,
@@ -99,14 +105,14 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     minPrice, maxPrice, radiusKm, lat, lng, storeId, userId
   ]);
 
-  return useInfiniteQuery<
+  const query = useInfiniteQuery<
     ProductsPageResponse,
     Error,
     InfiniteData<ProductsPageResponse>,
-    readonly [string, Omit<FetchProductsParams, "cursor">],
+    readonly unknown[],
     string | null
   >({
-    queryKey: ["products-infinite", normalizedParams] as const,
+    queryKey: productKeys.infinite(normalizedParams), // استفاده از Factory
     queryFn: async ({ pageParam }) => {
       return fetchProductsPage({
         ...normalizedParams,
@@ -115,14 +121,30 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     },
     initialPageParam: null,
     getNextPageParam: (lastPage) => {
-      // اگر صفحه بعدی وجود داشت، کرسر آن را بده، در غیر این صورت undefined
       return lastPage.hasMore && lastPage.nextCursor ? lastPage.nextCursor : undefined;
     },
     enabled,
     staleTime: STALE_TIME,
-    gcTime: CACHE_TIME, // gcTime جایگزین cacheTime در نسخه‌های جدید React Query است
+    gcTime: CACHE_TIME,
     retry: RETRY_ATTEMPTS,
-    refetchOnWindowFocus: false, // جلوگیری از رفرش بی‌دلیل وقتی کاربر بین تب‌ها جابجا می‌شود
+    refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
+
+  // Pro Tip: انجام محاسبات سنگین در داخل هوک با useMemo
+  // این کار باعث می‌شود کامپوننت Home نیازی به محاسبه مجدد flatMap نداشته باشد
+  const flatProducts = useMemo(() => {
+    return query.data?.pages.flatMap((page) => page.products) ?? [];
+  }, [query.data]);
+
+  const totalCount = useMemo(() => {
+    return query.data?.pages[0]?.total ?? 0;
+  }, [query.data]);
+
+  // برگرداندن شیء غنی‌تر به کامپوننت
+  return {
+    ...query,
+    flatProducts,
+    totalCount
+  };
 }
