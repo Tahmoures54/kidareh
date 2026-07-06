@@ -5,13 +5,15 @@ interface UseInfiniteScrollProps {
   isFetchingNextPage: boolean;
   fetchNextPage: () => void;
   rootMargin?: string;
+  threshold?: number;
 }
 
 export const useInfiniteScroll = ({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
-  rootMargin = "300px 0px"
+  rootMargin = "200px 0px",
+  threshold = 0.1,
 }: UseInfiniteScrollProps) => {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -23,7 +25,7 @@ export const useInfiniteScroll = ({
           fetchNextPage();
         }
       },
-      { rootMargin }
+      { rootMargin, threshold }
     );
 
     const currentRef = loadMoreRef.current;
@@ -36,7 +38,7 @@ export const useInfiniteScroll = ({
         observer.unobserve(currentRef);
       }
     };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, rootMargin]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, rootMargin, threshold]);
 
   return loadMoreRef;
 };
