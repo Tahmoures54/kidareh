@@ -1,12 +1,4 @@
-export type SortType = "newest" | "nearest" | "cheapest";
-export type ViewMode = "list" | "map";
-export type LocationScopeType = "city" | "province" | "country";
-
-export interface LocationScope {
-  type: LocationScopeType;
-  id?: string;
-  name?: string;
-}
+export type { SortType, ViewMode, LocationScopeType, LocationScope } from "../../types/common";
 
 export interface ProductResult {
   id: number | string;
