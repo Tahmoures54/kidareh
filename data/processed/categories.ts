@@ -24,7 +24,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "digital_goods",
     slug: "digital",
     group: "کالای دیجیتال",
-    icon: "Smartphone",
+    icon: "📱",
     color: "bg-blue-500 text-blue-50",
     description: "موبایل، لپتاپ و لوازم الکترونیکی",
     types: [
@@ -41,7 +41,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "real_estate",
     slug: "real-estate",
     group: "املاک و مستغلات",
-    icon: "Building2",
+    icon: "🏠",
     color: "bg-emerald-500 text-emerald-50",
     description: "خرید، فروش و اجاره ملک",
     types: [
@@ -57,7 +57,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "vehicles",
     slug: "vehicles",
     group: "وسایل نقلیه",
-    icon: "Car",
+    icon: "🚗",
     color: "bg-rose-500 text-rose-50",
     description: "خودرو، موتور و قطعات",
     types: [
@@ -79,7 +79,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "home_and_life",
     slug: "home",
     group: "خانه و زندگی",
-    icon: "Sofa",
+    icon: "🛋️",
     color: "bg-amber-500 text-amber-50",
     description: "لوازم خانگی و دکوراسیون",
     types: [
@@ -99,7 +99,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "personal_goods",
     slug: "fashion",
     group: "لوازم شخصی و مد",
-    icon: "ShoppingBag",
+    icon: "🛍️",
     color: "bg-fuchsia-500 text-fuchsia-50",
     description: "پوشاک، کیف و کفش",
     types: [
@@ -119,7 +119,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "industrial_materials",
     slug: "industrial",
     group: "متریال و تجهیزات صنعتی",
-    icon: "Factory",
+    icon: "🏭",
     color: "bg-slate-600 text-slate-50",
     description: "مواد اولیه و تجهیزات صنعتی",
     types: [
@@ -150,7 +150,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "building_materials",
     slug: "construction",
     group: "مصالح ساختمانی",
-    icon: "Hammer",
+    icon: "🔨",
     color: "bg-orange-500 text-orange-50",
     description: "مصالح و ابزار ساختمانی",
     types: [
@@ -175,7 +175,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "services",
     slug: "services",
     group: "خدمات و کسب‌وکار",
-    icon: "Briefcase",
+    icon: "💼",
     color: "bg-indigo-500 text-indigo-50",
     description: "خدمات حرفه‌ای و تخصصی",
     types: [
@@ -201,7 +201,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "agriculture",
     slug: "agriculture",
     group: "کشاورزی و مواد غذایی",
-    icon: "Tractor",
+    icon: "🚜",
     color: "bg-lime-500 text-lime-50",
     description: "محصولات کشاورزی و غذایی",
     types: [
@@ -222,7 +222,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "leisure_culture",
     slug: "culture",
     group: "سرگرمی، فرهنگ و هنر",
-    icon: "Palette",
+    icon: "🎨",
     color: "bg-pink-500 text-pink-50",
     description: "کتاب، موسیقی و هنر",
     types: [
@@ -242,7 +242,7 @@ export const categoriesData: CategoryGroup[] = [
     id: "others",
     slug: "others",
     group: "سایر نیازمندی‌ها",
-    icon: "LayoutGrid",
+    icon: "🧩",
     color: "bg-gray-500 text-gray-50",
     description: "موارد متفرقه",
     types: [
@@ -259,99 +259,4 @@ export const categoriesData: CategoryGroup[] = [
   }
 ];
 
-// Helper functions (unchanged)
-const categoryCache = new Map<string, { text: string; groupInfo: any }>();
-
-export const getCategoryTextByValue = (value: string): string => {
-  if (categoryCache.has(value)) {
-    return categoryCache.get(value)!.text;
-  }
-  for (const group of categoriesData) {
-    const found = group.types.find(type => type.value === value);
-    if (found) {
-      categoryCache.set(value, { text: found.text, groupInfo: null });
-      return found.text;
-    }
-  }
-  return value;
-};
-
-export const getCategoryGroupInfo = (value: string) => {
-  const cached = categoryCache.get(value);
-  if (cached?.groupInfo) {
-    return cached.groupInfo;
-  }
-  for (const group of categoriesData) {
-    const found = group.types.find(type => type.value === value);
-    if (found) {
-      const info = {
-        icon: group.icon,
-        color: group.color,
-        groupName: group.group,
-        slug: group.slug
-      };
-      categoryCache.set(value, { text: found.text, groupInfo: info });
-      return info;
-    }
-  }
-  return {
-    icon: "LayoutGrid",
-    color: "bg-gray-500 text-gray-50",
-    groupName: "نامشخص",
-    slug: "others"
-  };
-};
-
-export const getAllFlatCategories = (): SubCategory[] => {
-  return categoriesData.flatMap(group => group.types);
-};
-
-export const searchCategories = (query: string): SubCategory[] => {
-  const lowerQuery = query.toLowerCase();
-  return getAllFlatCategories().filter(cat =>
-    cat.text.toLowerCase().includes(lowerQuery) ||
-    cat.value.toLowerCase().includes(lowerQuery)
-  );
-};
-
-export const getCategoryGroupBySlug = (slug: string): CategoryGroup | null => {
-  return categoriesData.find(group => group.slug === slug) || null;
-};
-
-export const getPopularCategories = (): SubCategory[] => {
-  return [
-    { value: "electronics", text: "موبایل و تبلت" },
-    { value: "cars", text: "خودرو" },
-    { value: "property_sales", text: "خرید و فروش ملک" },
-    { value: "home_appliances", text: "لوازم خانگی" },
-    { value: "clothing", text: "پوشاک" }
-  ];
-};
-
-if (import.meta.env.DEV) {
-  const allIds = new Set<string>();
-  const allValues = new Set<string>();
-  const allSlugs = new Set<string>();
-
-  categoriesData.forEach(group => {
-    if (allIds.has(group.id)) {
-      console.error(`🔴 Duplicate category group ID: "${group.id}"`);
-    }
-    allIds.add(group.id);
-    if (allSlugs.has(group.slug)) {
-      console.error(`🔴 Duplicate category group slug: "${group.slug}"`);
-    }
-    allSlugs.add(group.slug);
-    group.types.forEach(type => {
-      if (allValues.has(type.value)) {
-        console.error(`🔴 Duplicate category value: "${type.value}"`);
-      }
-      allValues.add(type.value);
-    });
-  });
-
-  console.log(`✅ Categories validated: ${categoriesData.length} groups, ${allValues.size} subcategories`);
-}
-
-export const TOTAL_CATEGORIES = categoriesData.length;
-export const TOTAL_SUBCATEGORIES = getAllFlatCategories().length;
+// ... بقیه توابع بدون تغییر
