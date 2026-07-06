@@ -10,7 +10,7 @@ import { HOME_CONFIG, AppUser, SortType } from "./constants";
 export const useHomeLogic = () => {
   const { user } = useAuth() as { user: AppUser | null };
 
-  // --- States ---
+  // -------------------- States --------------------
   const [scope, setScope] = useState<"city" | "all">("city");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [manualLocation, setManualLocation] = useLocalStorage<any>("manual-location", null);
@@ -21,27 +21,35 @@ export const useHomeLogic = () => {
 
   const debouncedSearch = useDebounce(search, HOME_CONFIG.SEARCH_DEBOUNCE_MS);
 
-  // --- Location Logic ---
+  // -------------------- Location Logic --------------------
   const { city: realCity, province: realProvince, displayLocation, gpsEnabled } = useGeolocation("تهران");
   const effectiveCity = manualLocation?.city || realCity || "تهران";
   const effectiveDisplay = manualLocation?.display || displayLocation || "انتخاب شهر";
   const effectiveProvince = manualLocation?.province || realProvince || "";
 
-  // --- Data Fetching ---
-  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
-    useInfiniteProducts({
-      scope,
-      city: scope === "city" ? effectiveCity : undefined,
-      category: activeCategory || undefined,
-      search: debouncedSearch || undefined,
-      limit: HOME_CONFIG.PRODUCTS_PER_PAGE,
-      sort,
-    });
+  // -------------------- Data Fetching --------------------
+  // در اینجا flatProducts را مستقیماً از هوک بهینه‌شده دریافت می‌کنیم
+  const { 
+    flatProducts: allProducts, // تغییر نام برای استفاده راحت در UI
+    isLoading, 
+    isFetchingNextPage, 
+    hasNextPage, 
+    fetchNextPage, 
+    error, 
+    refetch 
+  } = useInfiniteProducts({
+    scope,
+    city: scope === "city" ? effectiveCity : undefined,
+    category: activeCategory || undefined,
+    search: debouncedSearch || undefined,
+    limit: HOME_CONFIG.PRODUCTS_PER_PAGE,
+    sort,
+  });
 
-  const allProducts = useMemo(() => data?.pages.flatMap(p => p.products) ?? [], [data]);
+  // تبدیل آرایه به Set برای جستجوی فوق‌سریع در زمان رندر علاقه‌مندی‌ها (O(1))
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
 
-  // --- Infinite Scroll ---
+  // -------------------- Infinite Scroll --------------------
   const loadMoreRef = useInfiniteScroll({
     hasNextPage,
     isFetchingNextPage,
@@ -49,7 +57,7 @@ export const useHomeLogic = () => {
     rootMargin: "300px 0px"
   });
 
-  // --- Handlers ---
+  // -------------------- Handlers --------------------
   const toggleFavorite = useCallback((productId: string) => {
     setFavorites((prev: string[]) =>
       prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
@@ -66,7 +74,7 @@ export const useHomeLogic = () => {
     setSort("newest");
   }, []);
 
-  // --- Computed Values ---
+  // -------------------- Computed Values --------------------
   const hasActiveFilters = !!(activeCategory || debouncedSearch || sort !== "newest");
   const filterCount = [activeCategory, debouncedSearch, sort !== "newest"].filter(Boolean).length;
 
