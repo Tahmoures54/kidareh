@@ -1,7 +1,6 @@
 import React, { memo, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-// مسیر اصلاح شد: چهار بار به عقب برمی‌گردد تا به پوشه اصلی (Root) برسد
-import { categoriesData } from "../../../../data/processed/categories";
+import { categoriesData } from "../../../data/processed/categories";
 import { HOME_CONFIG } from "../constants";
 
 interface CategorySliderProps {
