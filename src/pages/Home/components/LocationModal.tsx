@@ -1,19 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, X, Check, Search, ChevronRight } from "lucide-react";
+import { MapPin, X, Check, Search } from "lucide-react";
 import { iranCities } from "../../../../data/processed/iranCities";
-
-function groupByProvince(cities: typeof iranCities) {
-  const map = new Map<string, string[]>();
-  cities.forEach((city) => {
-    if (!map.has(city.province)) map.set(city.province, []);
-    map.get(city.province)!.push(city.name);
-  });
-  return Array.from(map.entries()).map(([province, cities]) => ({
-    province,
-    cities: cities.sort((a, b) => a.localeCompare(b, 'fa')),
-  }));
-}
 
 interface LocationModalProps {
   isOpen: boolean;
@@ -30,53 +18,39 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   selectedProvince,
   onSelect,
 }) => {
-  const [selProvince, setSelProvince] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       setSearchQuery("");
-      setSelProvince(null);
     } else {
       document.body.style.overflow = 'unset';
     }
-    return () => { 
-      document.body.style.overflow = 'unset'; 
+    return () => {
+      document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
 
-  const locations = useMemo(() => groupByProvince(iranCities), []);
+  // لیست الفبایی همه شهرها (بدون گروه‌بندی)
+  const sortedCities = useMemo(() => {
+    return [...iranCities].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  }, []);
 
-  // ➕ لیست شهرهای فیلترشده بر اساس جستجو (مستقیم)
+  // فیلتر مستقیم شهرها بر اساس جستجو
   const filteredCities = useMemo(() => {
-    if (!searchQuery) return [];
+    if (!searchQuery.trim()) return sortedCities;
     const q = searchQuery.trim();
-    return iranCities.filter(
-      (c) =>
-        c.name.includes(q) ||
-        c.province.includes(q)
+    return sortedCities.filter(
+      (city) =>
+        city.name.includes(q) ||
+        city.province.includes(q)
     );
-  }, [searchQuery]);
+  }, [searchQuery, sortedCities]);
 
-  const filteredProvinces = useMemo(() => {
-    if (!searchQuery) return locations;
-    return locations.filter(
-      (p) =>
-        p.province.includes(searchQuery) ||
-        p.cities.some((c) => c.includes(searchQuery))
-    );
-  }, [locations, searchQuery]);
-
-  const activeProvinceData = useMemo(() => 
-    locations.find((p) => p.province === selProvince),
-    [locations, selProvince]
-  );
-
-  const handleSelectCity = (cName: string, pName: string) => {
-    onSelect(cName, `${cName}`, pName);
+  const handleSelectCity = (cityName: string, provinceName: string) => {
+    onSelect(cityName, cityName, provinceName);
     onClose();
-    setSelProvince(null);
     setSearchQuery("");
   };
 
@@ -102,8 +76,8 @@ export const LocationModal: React.FC<LocationModalProps> = ({
             drag="y"
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.5 }}
-            onDragEnd={(e, info) => { 
-              if (info.offset.y > 120) onClose(); 
+            onDragEnd={(e, info) => {
+              if (info.offset.y > 120) onClose();
             }}
             className="relative w-full max-w-lg bg-[var(--bg-primary)] border-t border-[var(--border-light)] rounded-t-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
           >
@@ -133,106 +107,45 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                 <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                 <input
                   type="text"
-                  placeholder="جستجوی استان یا شهر..."
+                  placeholder="جستجوی شهر..."
                   value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    // وقتی کاربر شروع به تایپ می‌کند، استان انتخاب‌شده را پاک کن
-                    if (e.target.value && selProvince) setSelProvince(null);
-                  }}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-4 pr-10 py-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-light)] text-sm text-[var(--text-primary)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500"
                 />
               </div>
             </div>
 
-            {/* Content */}
-            <div className="px-4 pb-6 overflow-y-auto flex-1 space-y-2">
-              {selProvince && activeProvinceData ? (
-                /* نمایش شهرهای یک استان انتخاب‌شده */
-                <div>
-                  <button
-                    onClick={() => setSelProvince(null)}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-rose-500 hover:underline mb-3"
-                  >
-                    <ChevronRight className="w-4 h-4" /> بازگشت به لیست استان‌ها
-                  </button>
-                  <div className="font-bold text-sm mb-3 text-[var(--text-muted)]">
-                    شهرهای {activeProvinceData.province}:
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    {activeProvinceData.cities.map((cName) => {
-                      const isSelected = cName === selectedCity && activeProvinceData.province === selectedProvince;
-                      return (
-                        <button
-                          key={cName}
-                          onClick={() => handleSelectCity(cName, activeProvinceData.province)}
-                          className={`flex items-center justify-between p-3 rounded-xl border text-sm font-bold transition-all active:scale-95 ${
-                            isSelected
-                              ? "bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/30"
-                              : "bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border-[var(--border-light)]"
-                          }`}
-                        >
-                          <span>{cName}</span>
-                          {isSelected && <Check className="w-4 h-4" />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : searchQuery && filteredCities.length > 0 ? (
-                /* ➕ جستجوی مستقیم شهرها */
-                <div className="space-y-2">
+            {/* Cities List */}
+            <div className="px-4 pb-6 overflow-y-auto flex-1">
+              {filteredCities.length === 0 ? (
+                <p className="text-center text-sm text-[var(--text-muted)] py-12">
+                  نتیجه‌ای یافت نشد
+                </p>
+              ) : (
+                <div className="space-y-1">
                   {filteredCities.map((city) => {
-                    const isSelected = city.name === selectedCity && city.province === selectedProvince;
+                    const isSelected =
+                      city.name === selectedCity && city.province === selectedProvince;
                     return (
                       <button
                         key={`${city.name}-${city.province}`}
                         onClick={() => handleSelectCity(city.name, city.province)}
-                        className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all active:scale-[0.98] text-sm font-bold ${
+                        className={`w-full flex items-center justify-between p-3 rounded-xl transition-all active:scale-[0.98] text-sm font-bold ${
                           isSelected
-                            ? "bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400"
-                            : "bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border-[var(--border-light)]"
+                            ? "bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400"
+                            : "hover:bg-[var(--bg-tertiary)] border border-transparent"
                         }`}
                       >
                         <div className="flex flex-col items-start gap-0.5">
                           <span className="text-[var(--text-primary)]">{city.name}</span>
-                          <span className="text-[10px] font-normal text-[var(--text-muted)]">{city.province}</span>
-                        </div>
-                        {isSelected && <Check className="w-4 h-4" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : (
-                /* لیست استان‌ها (بدون جستجو) */
-                <div className="space-y-2">
-                  {filteredProvinces.map((item) => {
-                    const isCurrentProvince = item.province === selectedProvince;
-                    return (
-                      <button
-                        key={item.province}
-                        onClick={() => setSelProvince(item.province)}
-                        className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all active:scale-[0.98] text-sm font-bold ${
-                          isCurrentProvince
-                            ? "bg-rose-50 dark:bg-rose-950/30 border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400"
-                            : "bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] border-[var(--border-light)]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-[var(--text-primary)]">{item.province}</span>
                           <span className="text-[10px] font-normal text-[var(--text-muted)]">
-                            ({item.cities.length} شهر)
+                            {city.province}
                           </span>
                         </div>
-                        <ChevronRight className="w-4 h-4 rotate-180 text-[var(--text-muted)]" />
+                        {isSelected && <Check className="w-4 h-4 shrink-0" />}
                       </button>
                     );
                   })}
-                  {filteredProvinces.length === 0 && searchQuery && (
-                    <p className="text-center text-sm text-[var(--text-muted)] py-12">
-                      نتیجه‌ای یافت نشد
-                    </p>
-                  )}
                 </div>
               )}
             </div>
