@@ -1,4 +1,4 @@
-﻿import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "../../context/AuthContext";
@@ -46,6 +46,7 @@ export default function Home() {
   const { city: realCity, province: realProvince, displayLocation, gpsEnabled } = useGeolocation("تهران");
   const effectiveCity = manualLocation?.city || realCity || "تهران";
   const effectiveDisplay = manualLocation?.display || displayLocation || "انتخاب شهر";
+  const effectiveProvince = manualLocation?.province || realProvince || ""; // ← اضافه شد
 
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, error, refetch } =
     useInfiniteProducts({
@@ -93,7 +94,7 @@ export default function Home() {
           isOpen={isLocationModalOpen}
           onClose={() => setIsLocationModalOpen(false)}
           selectedCity={effectiveCity}
-          selectedProvince={effectiveProvince}
+          selectedProvince={effectiveProvince}  // اکنون تعریف شده است
           onSelect={handleCityChange}
         />
 
