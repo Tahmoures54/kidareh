@@ -1,26 +1,30 @@
-﻿/**
+/**
  * SQLite Database Configuration & Management
- * @version 3.2.0 (Phase 1 & 2 Compatible)
+ * ☁️ Liara & Docker Optimized
  */
 
 import Database from "better-sqlite3";
 import path     from "path";
 import fs       from "fs";
 import logger   from "./logger.js";
-import { env }  from "./config/env.js"; // 🟢 اصلاح شد: مسیر صحیح به پوشه کانفیگ داخل سرور
+import { env }  from "./config/env.js";
 
 // ============================================================================
-// 1. Configuration & Paths
+// 1. Configuration & Paths (☁️ Docker / Liara Safe)
 // ============================================================================
 
-// 🟢 اصلاح شده: استفاده از DATABASE_URL هماهنگ با Docker و env.ts
-const defaultDir = fs.existsSync("/data") ? "/data" : process.cwd();
-const fallbackDbPath = path.join(defaultDir, "app.db");
+const isProd = process.env.NODE_ENV === "production";
+const defaultDir = isProd ? "/data" : process.cwd(); 
 
-// مسیر دیتابیس اولویت‌بندی می‌شود: 1. ولیدیتور امن، 2. متغیرهای قدیمی، 3. مسیر پیش‌فرض
-const dbPath = env.DATABASE_URL 
-  ? (path.isAbsolute(env.DATABASE_URL) ? env.DATABASE_URL : path.resolve(process.cwd(), env.DATABASE_URL))
-  : (process.env.DB_PATH || fallbackDbPath);
+let dbPath = "";
+
+if (env.DATABASE_URL) {
+  dbPath = path.isAbsolute(env.DATABASE_URL) ? env.DATABASE_URL : path.resolve(process.cwd(), env.DATABASE_URL);
+} else if (process.env.DB_PATH) {
+  dbPath = process.env.DB_PATH;
+} else {
+  dbPath = path.join(defaultDir, isProd ? "database/app.db" : "app.db");
+}
 
 const dataDir = path.dirname(dbPath);
 
@@ -29,14 +33,13 @@ if (!fs.existsSync(dataDir)) {
   logger.info(`📁 Created data directory: ${dataDir}`);
 }
 
-// پوشه بکاپ حالا در کنار دیتابیس ساخته می‌شود (در داکر داخل /data قرار می‌گیرد تا پاک نشود)
 const backupDir = path.join(dataDir, "backups");
 
 if (!fs.existsSync(backupDir)) {
   fs.mkdirSync(backupDir, { recursive: true });
 }
 
-logger.info(`📂 Database: ${dbPath}`);
+logger.info(`📂 Database Path: ${dbPath}`);
 
 // ============================================================================
 // 2. Connection
@@ -53,20 +56,20 @@ try {
 }
 
 // ============================================================================
-// 3. Pragmas
+// 3. Pragmas (🚀 Enterprise Performance)
 // ============================================================================
 
 try {
   db.pragma("journal_mode  = WAL");
   db.pragma("synchronous   = NORMAL");
-  db.pragma("busy_timeout  = 5000");
-  db.pragma("cache_size    = -64000");
+  db.pragma("busy_timeout  = 5000"); 
+  db.pragma("cache_size    = -64000"); 
   db.pragma("foreign_keys  = ON");
   db.pragma("temp_store    = MEMORY");
   db.pragma("mmap_size     = 30000000000");
   db.pragma("page_size     = 4096");
   db.pragma("auto_vacuum   = INCREMENTAL");
-  logger.info("✅ Pragmas configured");
+  logger.info("✅ Pragmas configured (WAL Mode Active)");
 } catch (err) {
   logger.error("❌ Pragma config failed", err);
 }
@@ -75,10 +78,7 @@ try {
 // 4. Schema Version
 // ============================================================================
 
-/**
- * هر بار که migration جدید اضافه می‌شود این عدد +1 شود
- */
-const SCHEMA_VERSION = 10; // 🔵 ارتقا به نسخه 10 برای فیلدهای جدید کاربران
+const SCHEMA_VERSION = 10; 
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -89,9 +89,7 @@ db.exec(`
 
 const getCurrentVersion = (): number => {
   try {
-    const r = db
-      .prepare("SELECT MAX(version) AS v FROM schema_migrations")
-      .get() as any;
+    const r = db.prepare("SELECT MAX(version) AS v FROM schema_migrations").get() as any;
     return r?.v || 0;
   } catch { return 0; }
 };
@@ -109,12 +107,9 @@ const createTables = () => {
       role                TEXT    DEFAULT 'buyer'
                                   CHECK(role IN ('admin','support','seller','buyer','marketer')),
       name                TEXT,
-      
-      /* 🔵 اضافه شدن 3 فیلد جدید */
       national_code       TEXT,       
       province            TEXT,       
       city                TEXT,       
-
       email               TEXT    UNIQUE,
       referral_code       TEXT    UNIQUE,
       wallet_balance      INTEGER DEFAULT 0,
@@ -380,7 +375,6 @@ const createTables = () => {
       updated_at  TEXT    DEFAULT CURRENT_TIMESTAMP
     );
   `);
-
   logger.info("✅ Tables created");
 };
 
@@ -439,7 +433,6 @@ const createIndexes = () => {
 
     CREATE INDEX IF NOT EXISTS idx_analytics_event ON analytics(event_type, created_at DESC);
   `);
-
   logger.info("✅ Indexes created");
 };
 
@@ -502,7 +495,6 @@ const createTriggers = () => {
       WHERE id = OLD.store_id;
     END;
   `);
-
   logger.info("✅ Triggers created");
 };
 
@@ -528,7 +520,6 @@ const insertDefaultSettings = () => {
   for (const [key, value, description] of defaults) {
     stmt.run(key, value, description);
   }
-
   logger.info("✅ Default settings inserted");
 };
 
@@ -664,7 +655,6 @@ const runMigrations = () => {
     db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(9);
   }
 
-  /* 🔵 اضافه کردن Migration نسخه 10 برای فیلدهای جدید کاربران */
   if (current < 10) {
     safeAlter(`ALTER TABLE users ADD COLUMN national_code TEXT`, "users.national_code");
     safeAlter(`ALTER TABLE users ADD COLUMN province TEXT`, "users.province");
@@ -743,27 +733,20 @@ export const getStats = () => {
 };
 
 // ============================================================================
-// 13. Graceful Shutdown
+// 13. Safe Exporter (❌ Removed process.exit)
 // ============================================================================
 
-const closeDatabase = () => {
-  logger.info("🔒 Closing database...");
+// 🛡️ Pro Tip: حالا فایل server.ts این متد را برای بسته شدن ایمن صدا می‌زند
+export const closeDatabaseSafely = () => {
+  logger.info("🔒 Closing database securely...");
   try {
     if (process.env.BACKUP_ON_SHUTDOWN === "true") createBackup();
     db.close();
-    logger.info("✅ Database closed");
+    logger.info("✅ Database closed without killing process");
   } catch (err) {
-    logger.error("❌ Close error:", err);
+    logger.error("❌ Database Close error:", err);
   }
-  process.exit(0);
 };
-
-process.on("SIGINT",  closeDatabase);
-process.on("SIGTERM", closeDatabase);
-
-// ============================================================================
-// 14. Export
-// ============================================================================
 
 export default db;
 export type { Database as DatabaseType };
