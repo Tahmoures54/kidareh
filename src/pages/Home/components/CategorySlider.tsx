@@ -16,7 +16,7 @@ export const CategorySlider = memo(
       { slug: null, name: "همه", icon: "🏪" },
       ...categoriesData.slice(0, HOME_CONFIG.CATEGORIES_DISPLAY_COUNT).map((cat) => ({
         slug: cat.slug,
-        name: cat.name,
+        name: cat.group,            // ✅ استفاده از group به‌جای name برای نمایش نام فارسی
         icon: cat.icon || "📦",
       })),
     ];
