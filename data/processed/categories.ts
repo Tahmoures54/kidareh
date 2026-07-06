@@ -1,11 +1,8 @@
-﻿/**
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
-// ==========================================
-// 1. TypeScript Interfaces
-// ==========================================
 export interface SubCategory {
   value: string;
   text: string;
@@ -14,7 +11,7 @@ export interface SubCategory {
 
 export interface CategoryGroup {
   id: string;
-  slug: string; // برای URL
+  slug: string;
   group: string;
   icon: string;
   color: string;
@@ -22,9 +19,6 @@ export interface CategoryGroup {
   description?: string;
 }
 
-// ==========================================
-// 2. Categories Data
-// ==========================================
 export const categoriesData: CategoryGroup[] = [
   {
     id: "digital_goods",
@@ -174,7 +168,7 @@ export const categoriesData: CategoryGroup[] = [
       { value: "roofing", text: "پوشش سقف و بام" },
       { value: "paints", text: "رنگ و رزین ساختمانی" },
       { value: "wires_cables", text: "سیم، کابل و تجهیزات الکتریکی" },
-      { value: "plumbing", text: "لوله‌کشی و شیرآلات" } // نگه داشته شد
+      { value: "plumbing", text: "لوله‌کشی و شیرآلات" }
     ]
   },
   {
@@ -186,7 +180,7 @@ export const categoriesData: CategoryGroup[] = [
     description: "خدمات حرفه‌ای و تخصصی",
     types: [
       { value: "repairs", text: "تعمیرات لوازم خانگی و دیجیتال" },
-      { value: "plumbing_services", text: "لوله‌کشی و تاسیسات" }, // ✅ اصلاح شد: plumbing_services
+      { value: "plumbing_services", text: "لوله‌کشی و تاسیسات" },
       { value: "electrical", text: "برق‌کاری و خدمات الکتریکی" },
       { value: "cleaning", text: "نظافت و قالیشویی" },
       { value: "transportation", text: "حمل‌ونقل، باربری و اتوبار" },
@@ -265,17 +259,13 @@ export const categoriesData: CategoryGroup[] = [
   }
 ];
 
-// ==========================================
-// 3. Helper Functions
-// ==========================================
-
+// Helper functions (unchanged)
 const categoryCache = new Map<string, { text: string; groupInfo: any }>();
 
 export const getCategoryTextByValue = (value: string): string => {
   if (categoryCache.has(value)) {
     return categoryCache.get(value)!.text;
   }
-
   for (const group of categoriesData) {
     const found = group.types.find(type => type.value === value);
     if (found) {
@@ -283,7 +273,6 @@ export const getCategoryTextByValue = (value: string): string => {
       return found.text;
     }
   }
-  
   return value;
 };
 
@@ -292,7 +281,6 @@ export const getCategoryGroupInfo = (value: string) => {
   if (cached?.groupInfo) {
     return cached.groupInfo;
   }
-
   for (const group of categoriesData) {
     const found = group.types.find(type => type.value === value);
     if (found) {
@@ -306,7 +294,6 @@ export const getCategoryGroupInfo = (value: string) => {
       return info;
     }
   }
-
   return {
     icon: "LayoutGrid",
     color: "bg-gray-500 text-gray-50",
@@ -341,9 +328,6 @@ export const getPopularCategories = (): SubCategory[] => {
   ];
 };
 
-// ==========================================
-// 4. Data Integrity Validation
-// ==========================================
 if (import.meta.env.DEV) {
   const allIds = new Set<string>();
   const allValues = new Set<string>();
@@ -354,12 +338,10 @@ if (import.meta.env.DEV) {
       console.error(`🔴 Duplicate category group ID: "${group.id}"`);
     }
     allIds.add(group.id);
-
     if (allSlugs.has(group.slug)) {
       console.error(`🔴 Duplicate category group slug: "${group.slug}"`);
     }
     allSlugs.add(group.slug);
-
     group.types.forEach(type => {
       if (allValues.has(type.value)) {
         console.error(`🔴 Duplicate category value: "${type.value}"`);
@@ -371,8 +353,5 @@ if (import.meta.env.DEV) {
   console.log(`✅ Categories validated: ${categoriesData.length} groups, ${allValues.size} subcategories`);
 }
 
-// ==========================================
-// 5. Export Constants
-// ==========================================
 export const TOTAL_CATEGORIES = categoriesData.length;
 export const TOTAL_SUBCATEGORIES = getAllFlatCategories().length;
