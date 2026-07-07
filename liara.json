@@ -2,19 +2,10 @@
   "app": "kidareh-back",
   "platform": "docker",
   "port": 3000,
-  "disks": [
-    {
-      "name": "sqlite-data",
-      "mountTo": "/data"
-    },
-    {
-      "name": "uploads",
-      "mountTo": "/app/uploads"
-    }
-  ],
-  "healthCheck": {
-    "path": "/api/health",
-    "interval": 30
-  },
-  "region": "iran"
+  "disks": [...],
+  "healthCheck": {...},
+  "region": "iran",
+  "node": {
+    "mirror": false
+  }
 }
