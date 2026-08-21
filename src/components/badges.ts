@@ -1,31 +1,115 @@
-import { 
-  Flame, Sparkles, Gift, ShoppingBag, 
-  TrendingUp, Tag, Zap, Crown, Store 
+/**
+ * پکیج‌های دیده شدن — هماهنگ با سرور /api/promotions/catalog
+ * زبان ساده برای فروشنده غیرحرفه‌ای
+ */
+import {
+  Sparkles,
+  TrendingUp,
+  Megaphone,
+  Package,
+  BadgeCheck,
+  Zap,
+  type LucideIcon,
 } from "lucide-react";
 
 export interface BadgeType {
   id: string;
   name: string;
-  category: "vip" | "store" | "regular";
+  category: "trial" | "boost" | "banner" | "trust";
   price: number;
-  icon: any;
+  days: number;
+  icon: LucideIcon;
   gradient: string;
-  darkGradient?: string;
+  simpleDesc: string; // یک جمله ساده
+  benefit: string; // فایده ملموس
+  recommended?: boolean;
 }
 
 export const BADGES_LIST: BadgeType[] = [
-  // 🏆 دسته رویدادها (VIP)
-  { id: "بلک فرایدی", name: "بلک فرایدی", category: "vip", price: 50000, icon: Flame, gradient: "from-gray-800 to-black", darkGradient: "dark:from-gray-100 dark:to-gray-300" },
-  { id: "جشنواره نوروزی", name: "جشنواره نوروزی", category: "vip", price: 45000, icon: Sparkles, gradient: "from-emerald-400 to-teal-500", darkGradient: "dark:from-emerald-500 dark:to-teal-600" },
-  { id: "جشنواره بهاری", name: "جشنواره بهاری", category: "vip", price: 40000, icon: Gift, gradient: "from-pink-400 to-rose-500", darkGradient: "dark:from-pink-500 dark:to-rose-600" },
-  { id: "جشنواره یلدا", name: "جشنواره یلدا", category: "vip", price: 40000, icon: ShoppingBag, gradient: "from-red-500 to-rose-700", darkGradient: "dark:from-red-600 dark:to-rose-800" },
-
-  // ✨ دسته اعتبار فروشگاه (Store)
-  { id: "پرفروش‌ترین", name: "پرفروش‌ترین", category: "store", price: 30000, icon: TrendingUp, gradient: "from-amber-400 to-orange-500", darkGradient: "dark:from-amber-500 dark:to-orange-600" },
-  { id: "پیشنهاد ویژه", name: "پیشنهاد ویژه", category: "store", price: 25000, icon: Crown, gradient: "from-fuchsia-400 to-purple-600", darkGradient: "dark:from-fuchsia-500 dark:to-purple-700" },
-
-  // 🛍️ دسته روزمره (Regular)
-  { id: "حراج", name: "حراج", category: "regular", price: 15000, icon: Zap, gradient: "from-purple-400 to-indigo-500", darkGradient: "dark:from-purple-500 dark:to-indigo-600" },
-  { id: "تخفیف ویژه", name: "تخفیف ویژه", category: "regular", price: 10000, icon: Tag, gradient: "from-rose-400 to-red-500", darkGradient: "dark:from-rose-500 dark:to-red-600" },
-  { id: "جدید", name: "جدید", category: "regular", price: 12000, icon: Sparkles, gradient: "from-cyan-400 to-blue-500", darkGradient: "dark:from-cyan-500 dark:to-blue-600" },
+  {
+    id: "trial_boost_3d",
+    name: "آزمایش ۳ روزه",
+    category: "trial",
+    price: 9000,
+    days: 3,
+    icon: Zap,
+    gradient: "from-emerald-400 to-teal-500",
+    simpleDesc: "اول امتحان کنید؛ بعداً ادامه دهید",
+    benefit: "کالاهای شما ۳ روز بالاتر دیده می‌شوند",
+  },
+  {
+    id: "search_boost_7d",
+    name: "بالا آمدن در جستجو (۷ روز)",
+    category: "boost",
+    price: 49000,
+    days: 7,
+    icon: TrendingUp,
+    gradient: "from-indigo-500 to-violet-600",
+    simpleDesc: "وقتی مشتری جستجو می‌کند، شما جلوترید",
+    benefit: "اولویت در نتایج همان شهر",
+    recommended: true,
+  },
+  {
+    id: "search_boost_30d",
+    name: "بالا آمدن در جستجو (۳۰ روز)",
+    category: "boost",
+    price: 149000,
+    days: 30,
+    icon: Sparkles,
+    gradient: "from-violet-500 to-purple-700",
+    simpleDesc: "یک ماه دیده شدن بیشتر — به‌صرفه‌تر از هفتگی",
+    benefit: "اولویت ماهانه در جستجو",
+  },
+  {
+    id: "homepage_banner_7d",
+    name: "بنر صفحه اول (۷ روز)",
+    category: "banner",
+    price: 99000,
+    days: 7,
+    icon: Megaphone,
+    gradient: "from-amber-400 to-orange-500",
+    simpleDesc: "عکس فروشگاه‌تان بالای صفحه اصلی اپ",
+    benefit: "مثل ویترین مغازه، فقط داخل اپ",
+  },
+  {
+    id: "homepage_banner_30d",
+    name: "بنر صفحه اول (۳۰ روز)",
+    category: "banner",
+    price: 299000,
+    days: 30,
+    icon: Megaphone,
+    gradient: "from-orange-500 to-rose-500",
+    simpleDesc: "یک ماه بنر در صفحه اول برای شهر شما",
+    benefit: "حضور مداوم بالای صفحه",
+  },
+  {
+    id: "visibility_bundle_7d",
+    name: "بسته کامل دیده شدن (۷ روز)",
+    category: "boost",
+    price: 129000,
+    days: 7,
+    icon: Package,
+    gradient: "from-fuchsia-500 to-pink-600",
+    simpleDesc: "بنر + بالا آمدن در جستجو با هم",
+    benefit: "بهترین انتخاب برای هفته شلوغ",
+    recommended: true,
+  },
+  {
+    id: "blue_tick_30d",
+    name: "تیک آبی اعتماد (۳۰ روز)",
+    category: "trust",
+    price: 79000,
+    days: 30,
+    icon: BadgeCheck,
+    gradient: "from-sky-400 to-blue-600",
+    simpleDesc: "علامت اعتماد کنار اسم فروشگاه",
+    benefit: "مشتری راحت‌تر به مغازه می‌آید",
+  },
 ];
+
+export const CATEGORY_LABELS: Record<BadgeType["category"], string> = {
+  trial: "شروع آسان",
+  boost: "دیده شدن در جستجو",
+  banner: "تبلیغ صفحه اول",
+  trust: "اعتماد مشتری",
+};
