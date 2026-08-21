@@ -14,6 +14,7 @@ import {
   invalidateProductCache,
   invalidateSearchCache,
 } from "../services/products.cached.js";
+import { applyProductTextSearch } from "../services/textSearch.js";
 
 const router = Router();
 
@@ -67,10 +68,9 @@ router.get("/", async (req, res) => {
 
     if (category) { baseConditions += " AND p.category = ?"; params.push(category); countParams.push(category); }
     if (q) {
-      baseConditions += " AND (p.name LIKE ? OR p.description LIKE ? OR s.name LIKE ?)";
-      const searchTerm = `%${q}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
-      countParams.push(searchTerm, searchTerm, searchTerm);
+      const r = applyProductTextSearch(String(q), baseConditions, params, countParams);
+      baseConditions = r.baseConditions;
+      res.setHeader("X-Search-Engine", r.engine);
     }
     if (minPrice) { const n = Number(minPrice); baseConditions += " AND p.price >= ?"; params.push(n); countParams.push(n); }
     if (maxPrice) { const n = Number(maxPrice); baseConditions += " AND p.price <= ?"; params.push(n); countParams.push(n); }
