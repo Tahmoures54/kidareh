@@ -1,6 +1,6 @@
 /**
- * Products Search Service (SQLite / better-sqlite3)
- * با کش Redis / memory
+ * Products Search Service
+ * FTS5 (Persian) + filters + Redis cache
  */
 
 import db from "../db.js";
@@ -11,6 +11,8 @@ import {
   CacheKeys,
   CacheTTL,
 } from "./cache.js";
+import { searchProductIdsFts, isFtsReady } from "./fts.js";
+import { buildLikePattern, normalizePersian } from "./persianText.js";
 
 export interface SearchCursor {
   id: number;
@@ -24,7 +26,7 @@ export interface SearchParams {
   city?: string;
   province?: string;
   scope?: "all" | "city" | "province";
-  sort?: "newest" | "cheapest" | "nearest";
+  sort?: "newest" | "cheapest" | "nearest" | "relevance";
   onlyAvailable?: boolean;
   minPrice?: number | null;
   maxPrice?: number | null;
@@ -62,6 +64,7 @@ export interface SearchResult {
   rows: ProductRow[];
   total: number | null;
   cached?: boolean;
+  engine?: "fts5" | "like" | "none";
 }
 
 export async function searchProductsService(
@@ -71,7 +74,7 @@ export async function searchProductsService(
     hashParams({
       limit: params.limit,
       cursor: params.cursor?.id ?? "",
-      q: params.q ?? "",
+      q: normalizePersian(params.q ?? ""),
       category: params.category ?? "",
       city: params.city ?? "",
       province: params.province ?? "",
@@ -83,6 +86,7 @@ export async function searchProductsService(
       radiusKm: params.radiusKm ?? "",
       lat: params.lat != null ? Math.round(params.lat * 1000) / 1000 : "",
       lng: params.lng != null ? Math.round(params.lng * 1000) / 1000 : "",
+      v: "fts1",
     })
   );
 
@@ -91,12 +95,12 @@ export async function searchProductsService(
     return { ...cached, cached: true };
   }
 
-  const result = await searchProductsFromDb(params);
+  const result = searchProductsFromDb(params);
   await cacheSet(cacheKey, result, CacheTTL.SEARCH);
   return { ...result, cached: false };
 }
 
-async function searchProductsFromDb(params: SearchParams): Promise<SearchResult> {
+function searchProductsFromDb(params: SearchParams): SearchResult {
   const {
     limit,
     cursor,
@@ -116,15 +120,38 @@ async function searchProductsFromDb(params: SearchParams): Promise<SearchResult>
 
   const where: string[] = [];
   const whereValues: unknown[] = [];
+  let engine: SearchResult["engine"] = "none";
 
   where.push(`p.moderation_status = 'approved'`);
 
-  if (q) {
-    const like = `%${q}%`;
-    whereValues.push(like, like, like);
-    where.push(
-      `(p.name LIKE ? COLLATE NOCASE OR p.description LIKE ? COLLATE NOCASE OR s.name LIKE ? COLLATE NOCASE)`
-    );
+  // ── Text: FTS5 first, LIKE fallback ──
+  if (q && q.trim()) {
+    let usedFts = false;
+    if (isFtsReady()) {
+      const ids = searchProductIdsFts(q, 1000);
+      if (ids.length > 0) {
+        const placeholders = ids.map(() => "?").join(",");
+        where.push(`p.id IN (${placeholders})`);
+        whereValues.push(...ids);
+        engine = "fts5";
+        usedFts = true;
+
+        // preserve FTS rank when sort is relevance/newest default with q
+        if (!sort || sort === "relevance" || sort === "newest") {
+          // rank order via CASE id position
+          // built later in orderBy
+        }
+      }
+    }
+
+    if (!usedFts) {
+      const like = buildLikePattern(q);
+      whereValues.push(like, like, like);
+      where.push(
+        `(p.name LIKE ? ESCAPE '\\' OR p.description LIKE ? ESCAPE '\\' OR s.name LIKE ? ESCAPE '\\')`
+      );
+      engine = "like";
+    }
   }
 
   if (category) {
@@ -183,26 +210,28 @@ async function searchProductsFromDb(params: SearchParams): Promise<SearchResult>
   const radiusValues: number[] = [];
   if (radiusKm != null && hasCoords) {
     radiusClause = `${distanceExpr} <= ?`;
-    radiusValues.push(
-      lat as number,
-      lng as number,
-      lat as number,
-      radiusKm * 1000
-    );
+    radiusValues.push(lat as number, lng as number, lat as number, radiusKm * 1000);
   }
 
+  // ORDER BY
   let orderBy = `CASE WHEN p.badge IS NOT NULL THEN 0 ELSE 1 END, p.created_at DESC`;
   if (sort === "cheapest") {
     orderBy = `p.price ASC, p.created_at DESC`;
   } else if (sort === "nearest" && hasCoords) {
     orderBy = `(distance IS NULL), distance ASC, p.created_at DESC`;
+  } else if (engine === "fts5" && (sort === "relevance" || !sort)) {
+    // FTS ids order preserved via FIELD-like CASE
+    // ids were pushed into whereValues after fixed filters — reconstruct from query
+    const ids = searchProductIdsFts(q!, 1000);
+    if (ids.length) {
+      orderBy =
+        `CASE p.id ${ids.map((id, i) => `WHEN ${id} THEN ${i}`).join(" ")} ELSE 9999 END, p.created_at DESC`;
+    }
   }
 
   const finalWhere = [...where];
   if (radiusClause) finalWhere.push(radiusClause);
-  const whereClause = finalWhere.length
-    ? `WHERE ${finalWhere.join(" AND ")}`
-    : "";
+  const whereClause = finalWhere.length ? `WHERE ${finalWhere.join(" AND ")}` : "";
 
   const sqlParams: unknown[] = [
     ...selectDistanceValues,
@@ -214,28 +243,11 @@ async function searchProductsFromDb(params: SearchParams): Promise<SearchResult>
 
   const sql = `
     SELECT
-      p.id,
-      p.name,
-      p.price,
-      p.status,
-      p.badge,
-      p.image_url,
-      p.created_at,
-      p.updated_at,
-      p.store_id,
-      s.lat,
-      s.lng,
-      p.category,
-      p.views,
-      p.city,
-      p.province,
-      p.description,
-      p.moderation_status,
-      p.rejection_reason,
-      p.clicks,
-      p.saves,
-      p.is_featured,
-      p.featured_until,
+      p.id, p.name, p.price, p.status, p.badge, p.image_url,
+      p.created_at, p.updated_at, p.store_id,
+      s.lat, s.lng, p.category, p.views, p.city, p.province,
+      p.description, p.moderation_status, p.rejection_reason,
+      p.clicks, p.saves, p.is_featured, p.featured_until,
       s.name AS store_name,
       s.city AS store_city,
       s.province AS store_province,
@@ -263,13 +275,11 @@ async function searchProductsFromDb(params: SearchParams): Promise<SearchResult>
       LEFT JOIN stores s ON s.id = p.store_id
       ${whereClause}
     `;
-    const c = db.prepare(countSql).get(...countValues) as
-      | { total: number }
-      | undefined;
+    const c = db.prepare(countSql).get(...countValues) as { total: number } | undefined;
     total = c?.total ?? null;
   } catch {
     total = null;
   }
 
-  return { rows, total };
+  return { rows, total, engine };
 }
