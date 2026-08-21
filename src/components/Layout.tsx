@@ -1,4 +1,4 @@
-﻿// src/components/Layout.tsx
+// src/components/Layout.tsx
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -27,8 +27,6 @@ import AIAssistant from "./AIAssistant";
 import InstallPrompt from "./InstallPrompt";
 import MagicMenu, { type MagicAction } from "./Home/MagicMenu";
 
-/* ====================== CONSTANTS ====================== */
-
 const BOTTOM_NAV_HEIGHT = "pb-[max(0.75rem,env(safe-area-inset-bottom))]";
 
 const NAV_ITEMS = [
@@ -47,8 +45,8 @@ const PROFILE_MENU_ITEMS = [
   },
   {
     icon: TrendingUp,
-    label: "کسب درآمد (بازاریابی)",
-    path: "/referral", // جایگزین شد
+    label: "دعوت از دوستان",
+    path: "/referral",
     color: "text-amber-600",
     bg: "bg-amber-50",
     requiresAuth: true,
@@ -68,8 +66,6 @@ const PROFILE_MENU_ITEMS = [
     bg: "bg-gray-50",
   },
 ];
-
-/* ====================== TYPES ====================== */
 
 interface NavTabProps {
   item: {
@@ -91,11 +87,8 @@ interface SheetItemProps {
   bg?: string;
 }
 
-/* ====================== COMPONENTS ====================== */
-
 function NavTab({ item, isActive, onClick }: NavTabProps) {
   const Icon = item.icon;
-
   const content = (
     <>
       <AnimatePresence>
@@ -107,45 +100,21 @@ function NavTab({ item, isActive, onClick }: NavTabProps) {
           />
         )}
       </AnimatePresence>
-
       <div className="relative flex flex-col items-center gap-1">
-        <Icon
-          className={cn(
-            "w-5 h-5 transition-colors duration-200",
-            isActive ? "text-teal-600" : "text-gray-400"
-          )}
-        />
-
+        <Icon className={cn("w-5 h-5 transition-colors duration-200", isActive ? "text-teal-600" : "text-gray-400")} />
         {item.badge && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white"
-          />
+          <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -top-1 -right-1 w-2 h-2 bg-rose-500 rounded-full border border-white" />
         )}
-
-        <span
-          className={cn(
-            "text-[9px] font-black transition-colors",
-            isActive ? "text-teal-600" : "text-gray-400"
-          )}
-        >
+        <span className={cn("text-[9px] font-black transition-colors", isActive ? "text-teal-600" : "text-gray-400")}>
           {item.label}
         </span>
       </div>
     </>
   );
-
   const className =
     "relative flex-1 flex flex-col items-center justify-center py-2 px-1 active:scale-90 transition-transform rounded-2xl";
-
   return onClick ? (
-    <motion.button
-      whileTap={{ scale: 0.9 }}
-      onClick={onClick}
-      className={className}
-      aria-label={item.label}
-    >
+    <motion.button whileTap={{ scale: 0.9 }} onClick={onClick} className={className} aria-label={item.label}>
       {content}
     </motion.button>
   ) : (
@@ -155,34 +124,19 @@ function NavTab({ item, isActive, onClick }: NavTabProps) {
   );
 }
 
-function SheetItem({
-  icon: Icon,
-  label,
-  path,
-  onClick,
-  color = "text-gray-500",
-  bg = "bg-gray-50",
-}: SheetItemProps) {
-  
-  const handleClick = (e: React.MouseEvent) => {
+function SheetItem({ icon: Icon, label, path, onClick, color = "text-gray-500", bg = "bg-gray-50" }: SheetItemProps) {
+  const handleClick = () => {
     if (onClick) onClick();
   };
-
   const Content = (
     <div className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 rounded-2xl transition-all">
-      <div
-        className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center border border-gray-100 flex-shrink-0",
-          bg
-        )}
-      >
+      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border border-gray-100 flex-shrink-0", bg)}>
         <Icon className={cn("w-5 h-5", color)} />
       </div>
       <span className="flex-1 text-sm font-bold text-gray-700">{label}</span>
       <ChevronLeft className="w-4 h-4 text-gray-300 flex-shrink-0" />
     </div>
   );
-
   return (
     <motion.div whileHover={{ x: -4 }} whileTap={{ scale: 0.98 }}>
       {path ? (
@@ -190,7 +144,7 @@ function SheetItem({
           {Content}
         </Link>
       ) : (
-        <button className="w-full text-right" onClick={handleClick}>
+        <button type="button" className="w-full text-right" onClick={handleClick}>
           {Content}
         </button>
       )}
@@ -198,7 +152,7 @@ function SheetItem({
   );
 }
 
-function UserCard({ user, onClose }: { user: any; onClose: () => void; }) {
+function UserCard({ user, onClose }: { user: any; onClose: () => void }) {
   const getRoleLabel = (role: string) => {
     const roleMap: Record<string, { emoji: string; label: string }> = {
       admin: { emoji: "👑", label: "مدیر" },
@@ -208,9 +162,7 @@ function UserCard({ user, onClose }: { user: any; onClose: () => void; }) {
     };
     return roleMap[role] || { emoji: "👤", label: "کاربر" };
   };
-
   const roleInfo = getRoleLabel(user.role);
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -226,33 +178,18 @@ function UserCard({ user, onClose }: { user: any; onClose: () => void; }) {
           <User className="w-7 h-7" />
         )}
       </div>
-
       <div className="flex-1 min-w-0">
-        <h3 className="font-black text-gray-900 truncate text-base">
-          {user.name || "کاربر عزیز"}
-        </h3>
+        <h3 className="font-black text-gray-900 truncate text-base">{user.name || "دوست عزیز"}</h3>
         <p className="text-xs text-gray-500 font-bold mt-0.5">{user.phone}</p>
-
         {user.role !== "buyer" && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="inline-block mt-2 text-[9px] bg-teal-600 text-white px-2.5 py-1 rounded-full font-bold"
-          >
+          <span className="inline-block mt-2 text-[9px] bg-teal-600 text-white px-2.5 py-1 rounded-full font-bold">
             {roleInfo.emoji} {roleInfo.label}
-          </motion.span>
+          </span>
         )}
       </div>
-
-      <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
-        onClick={onClose}
-        className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-400 shadow-sm flex-shrink-0 hover:text-gray-600"
-        aria-label="بستن"
-      >
+      <button type="button" onClick={onClose} className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-gray-400 shadow-sm" aria-label="بستن">
         <X className="w-5 h-5" />
-      </motion.button>
+      </button>
     </motion.div>
   );
 }
@@ -267,21 +204,19 @@ function GuestCard({ onClose }: { onClose: () => void }) {
       <div className="w-16 h-16 bg-teal-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
         <User className="w-8 h-8 text-teal-600" />
       </div>
-      <p className="text-sm font-bold text-gray-700 mb-4">
-        برای دسترسی به تمام امکانات ورود کنید
+      <p className="text-sm font-bold text-gray-700 mb-4 leading-relaxed">
+        برای ذخیره علاقه‌مندی و چت با فروشنده، وارد شو 😊
       </p>
       <Link
         to="/login"
         onClick={onClose}
-        className="inline-block bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg shadow-teal-200 hover:shadow-xl hover:shadow-teal-300 active:scale-95 transition-all"
+        className="inline-block bg-gradient-to-r from-teal-600 to-cyan-600 text-white px-8 py-3 rounded-xl text-sm font-bold shadow-lg shadow-teal-200 active:scale-95 transition-all"
       >
-        ورود / ثبت‌نام
+        ورود سریع
       </Link>
     </motion.div>
   );
 }
-
-/* ====================== MAIN LAYOUT ====================== */
 
 export default function Layout() {
   const location = useLocation();
@@ -302,46 +237,39 @@ export default function Layout() {
 
   useEffect(() => {
     if (!magicOpen && !sheetOpen) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         setMagicOpen(false);
         setSheetOpen(false);
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [magicOpen, sheetOpen]);
 
   const handleShareApp = async () => {
-    setSheetOpen(false); 
-    
+    setSheetOpen(false);
     const appUrl = window.location.origin;
-    const shareMessage = `ببین کی داره؟ حضوری بگیر! 🚀\n\nبا «کی‌داره» می‌تونی کالای مورد نیازت رو تو فروشگاه‌های اطراف خودت پیدا کنی و مستقیم و سریع خرید کنی.\n\nهمین الان روی لینک زیر کلیک کن 👇\n${appUrl}`;
+    const shareMessage = `سلام 👋\nبا «کی‌داره» ببین دور و برت کی چی داره، حضوری بگیر.\nبدون دردسر، از مغازه‌های همون محله.\n\nلینک اپ:\n${appUrl}`;
 
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: "اپلیکیشن کی‌داره 🛍️",
-          text: shareMessage,
-        });
-      } catch (error) {
-        console.log("اشتراک‌گذاری لغو شد.");
+        await navigator.share({ title: "کی‌داره", text: shareMessage });
+      } catch {
+        /* cancelled */
       }
     } else {
       try {
         await navigator.clipboard.writeText(shareMessage);
-        alert("متن معرفی و لینک کی‌داره در حافظه کپی شد. می‌توانید آن را برای دوستانتان بفرستید! 🎉");
-      } catch (err) {
-        console.error("خطا در کپی پیام");
+        alert("لینک کی‌داره کپی شد — برای دوستات بفرست 💚");
+      } catch {
+        /* ignore */
       }
     }
   };
 
   const magicActions = useMemo<MagicAction[]>(() => {
     const actions: MagicAction[] = [];
-    
     const go = (path: string) => {
       setMagicOpen(false);
       navigate(path);
@@ -375,21 +303,18 @@ export default function Layout() {
       color: "bg-gradient-to-br from-cyan-500 to-sky-600",
       onClick: () => go("/categories"),
     });
-
     actions.push({
       icon: Store,
       label: "فروشگاه‌ها",
       color: "bg-gradient-to-br from-orange-400 to-amber-500",
       onClick: () => go("/stores"),
     });
-
     actions.push({
       icon: Sparkles,
       label: "دستیار هوشمند",
       color: "bg-gradient-to-br from-violet-500 to-purple-600",
       onClick: () => go("/ai"),
     });
-
     if (user) {
       actions.push({
         icon: Heart,
@@ -398,21 +323,18 @@ export default function Layout() {
         onClick: () => go("/saved"),
       });
     }
-
     actions.push({
       icon: TrendingUp,
-      label: "کسب درآمد",
+      label: "دعوت دوستان",
       color: "bg-gradient-to-br from-fuchsia-500 to-pink-600",
-      onClick: () => go("/referral"), // جایگزین شد
+      onClick: () => go("/referral"),
     });
-
     actions.push({
       icon: Headset,
       label: "پشتیبانی",
       color: "bg-gradient-to-br from-slate-500 to-gray-700",
       onClick: () => go("/support"),
     });
-
     if (isAdmin) {
       actions.push({
         icon: ShieldCheck,
@@ -421,18 +343,16 @@ export default function Layout() {
         onClick: () => go("/admin"),
       });
     }
-
     return actions;
   }, [user, isSeller, isAdmin, navigate]);
 
   const profileMenuItems = useMemo(() => {
     let items = [...PROFILE_MENU_ITEMS];
-
     if (isSeller && user) {
       items = [
         {
           icon: LayoutDashboard,
-          label: "پنل مدیریت فروشگاه",
+          label: "فروشگاه من",
           path: "/seller",
           color: "text-emerald-600",
           bg: "bg-emerald-50",
@@ -441,7 +361,6 @@ export default function Layout() {
         ...items,
       ];
     }
-
     if (isAdmin && user) {
       items = [
         ...items.slice(0, -1),
@@ -456,7 +375,6 @@ export default function Layout() {
         ...items.slice(-1),
       ];
     }
-
     return items.filter((item) => !item.requiresAuth || user);
   }, [user, isSeller, isAdmin]);
 
@@ -470,7 +388,6 @@ export default function Layout() {
 
   const handleMagicToggle = useCallback(() => {
     if (!user) {
-      // Non-authenticated users: navigate to onboarding instead of opening menu
       navigate("/onboarding");
       return;
     }
@@ -498,18 +415,12 @@ export default function Layout() {
   }, [user, navigate]);
 
   return (
-    <div
-      className="flex flex-col h-[100dvh] w-full max-w-md bg-gray-50 font-sans overflow-hidden relative shadow-2xl"
-      dir="rtl"
-    >
+    <div className="flex flex-col h-[100dvh] w-full max-w-md bg-gray-50 font-sans overflow-hidden relative shadow-2xl" dir="rtl">
       <InstallPrompt />
-
       <main className="flex-1 overflow-y-auto hide-scrollbar">
         <Outlet />
       </main>
-
       <MagicMenu actions={magicActions} isOpen={magicOpen} onToggle={handleMagicToggle} />
-
       <nav
         className={cn(
           "relative z-40 bg-white/95 backdrop-blur-xl",
@@ -523,16 +434,10 @@ export default function Layout() {
           {NAV_ITEMS.map((item) => (
             <NavTab key={item.path} item={item} isActive={isActive(item.path)} />
           ))}
-
           <div className="flex-1 flex justify-center">
             <div className="w-14" />
           </div>
-
-          <NavTab
-            item={{ icon: MessageCircle, label: "پیام‌ها", path: "/messages", badge: true }}
-            isActive={isActive("/messages")}
-          />
-
+          <NavTab item={{ icon: MessageCircle, label: "پیام‌ها", path: "/messages" }} isActive={isActive("/messages")} />
           <NavTab
             item={{ icon: User, label: user ? "پروفایل" : "ورود" }}
             isActive={sheetOpen || isActive("/profile")}
@@ -552,7 +457,6 @@ export default function Layout() {
               onClick={() => setSheetOpen(false)}
               className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
             />
-
             <motion.div
               key="sheet-content"
               initial={{ y: "100%" }}
@@ -564,65 +468,39 @@ export default function Layout() {
               aria-modal="true"
               aria-label="منوی پروفایل"
             >
-              <motion.div
-                whileHover={{ opacity: 0.7 }}
-                className="flex justify-center py-4 cursor-pointer"
-                onClick={() => setSheetOpen(false)}
-              >
+              <div className="flex justify-center py-4 cursor-pointer" onClick={() => setSheetOpen(false)}>
                 <div className="w-12 h-1.5 bg-gray-200 rounded-full" />
-              </motion.div>
-
+              </div>
               <div className="overflow-y-auto hide-scrollbar px-6 flex-1 pb-4">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                      className="w-8 h-8 border-2 border-teal-200 border-t-teal-600 rounded-full"
-                    />
+                    <div className="w-8 h-8 border-2 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
                   </div>
                 ) : user ? (
                   <UserCard user={user} onClose={() => setSheetOpen(false)} />
                 ) : (
                   <GuestCard onClose={() => setSheetOpen(false)} />
                 )}
-
                 {profileMenuItems.length > 0 && (
                   <div className="space-y-1.5 mb-2">
                     {profileMenuItems.map((item) => (
-                      <SheetItem
-                        key={item.label}
-                        icon={item.icon}
-                        label={item.label}
-                        path={item.path}
-                        color={item.color}
-                        bg={item.bg}
-                      />
+                      <SheetItem key={item.label} icon={item.icon} label={item.label} path={item.path} color={item.color} bg={item.bg} />
                     ))}
                   </div>
                 )}
-                
                 <div className="space-y-1.5 mb-6">
-                  <SheetItem
-                    icon={Share2}
-                    label="معرفی به دوستان"
-                    color="text-blue-500"
-                    bg="bg-blue-50"
-                    onClick={handleShareApp}
-                  />
+                  <SheetItem icon={Share2} label="معرفی به دوستان" color="text-blue-500" bg="bg-blue-50" onClick={handleShareApp} />
                 </div>
-
                 {user && (
                   <div className="border-t border-gray-100 pt-4">
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                    <button
+                      type="button"
                       onClick={handleLogout}
-                      className="w-full flex items-center justify-center gap-2.5 py-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm font-bold hover:bg-rose-100 transition-all"
+                      className="w-full flex items-center justify-center gap-2.5 py-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm font-bold"
                     >
                       <LogOut className="w-4 h-4" />
-                      خروج از حساب کاربری
-                    </motion.button>
+                      خروج
+                    </button>
                   </div>
                 )}
               </div>
