@@ -13,7 +13,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HelmetProvider } from "react-helmet-async";
 
 import App from "./App";
-import ErrorBoundary from "./components/ui/ErrorBoundary";
+import GlobalErrorBoundary from "./components/ui/GlobalErrorBoundary";
 import "./index.css";
 
 /* ====================== SETUP ====================== */
@@ -79,9 +79,9 @@ createRoot(rootElement).render(
   <StrictMode>
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <ErrorBoundary>
+        <GlobalErrorBoundary>
           <App />
-        </ErrorBoundary>
+        </GlobalErrorBoundary>
 
         {import.meta.env.DEV && (
           <ReactQueryDevtools initialIsOpen={false} />
