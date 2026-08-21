@@ -12,6 +12,7 @@ import {
   CacheTTL,
   invalidateStoreCache,
 } from "../services/cache.js";
+import { applyStoreTextSearch } from "../services/textSearch.js";
 
 const router = Router();
 
@@ -161,9 +162,11 @@ router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
     }
     res.setHeader("X-Cache", "MISS");
 
-    let countSql = "SELECT COUNT(DISTINCT s.id) as total FROM stores s WHERE 1=1";
-    const countParams: any[] = [];
-    if (q) { countSql += " AND s.name LIKE ?"; countParams.push(`%${q}%`); }
+    const text = q ? applyStoreTextSearch(q) : { sqlFragment: "", params: [] as unknown[], engine: "like" as const };
+    if (q) res.setHeader("X-Search-Engine", text.engine);
+
+    let countSql = "SELECT COUNT(DISTINCT s.id) as total FROM stores s WHERE 1=1" + text.sqlFragment;
+    const countParams: any[] = [...text.params];
     if (category) { countSql += " AND s.category = ?"; countParams.push(category); }
     if (city) { countSql += " AND s.city = ?"; countParams.push(city); }
     if (province) { countSql += " AND s.province = ?"; countParams.push(province); }
@@ -177,9 +180,8 @@ router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
       FROM stores s
       LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'
       LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'
-      WHERE 1=1`;
-    const params: any[] = [];
-    if (q) { sql += " AND s.name LIKE ?"; params.push(`%${q}%`); }
+      WHERE 1=1` + text.sqlFragment;
+    const params: any[] = [...text.params];
     if (category) { sql += " AND s.category = ?"; params.push(category); }
     if (city) { sql += " AND s.city = ?"; params.push(city); }
     if (province) { sql += " AND s.province = ?"; params.push(province); }
