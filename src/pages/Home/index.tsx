@@ -1,7 +1,7 @@
 import React from "react";
 import { Loader2, AlertCircle, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
-import { useHomeLogic } from "./useHomeLogic"; // اضافه شدن هوک لاجیک
+import { useHomeLogic } from "./useHomeLogic";
 import { HOME_CONFIG } from "./constants";
 import { HomeErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/HeaderWidgets";
@@ -11,6 +11,7 @@ import { PremiumProductCard, ProductCardSkeleton, SegmentedScope } from "./compo
 import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
 import { LocationModal } from "./components/LocationModal";
+import { SponsoredBanner } from "./components/SponsoredBanner";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,14 +19,11 @@ const containerVariants = {
 };
 
 export default function Home() {
-  // تمام منطق از اینجا خوانده می‌شود (Clean Architecture)
   const logic = useHomeLogic();
 
   return (
     <HomeErrorBoundary>
       <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] font-sans" dir="rtl">
-        
-        {/* Header & Location Modal */}
         <Header 
           user={logic.user}
           effectiveCity={logic.effectiveCity}
@@ -43,7 +41,6 @@ export default function Home() {
           onSelect={logic.handleCityChange}
         />
 
-        {/* Sticky Search & Categories */}
         <div className="sticky top-14 z-30 bg-[var(--bg-primary)] shadow-sm">
           <SearchBar 
             value={logic.search} 
@@ -56,14 +53,14 @@ export default function Home() {
           />
         </div>
 
-        {/* Main Content */}
         <main className="flex-1 pb-24 pt-4">
-          
+          {/* بنر اسپانسر محلی — برچسب آگهی (تحلیل روان‌شناسی فروشنده) */}
+          <SponsoredBanner city={logic.effectiveCity} />
+
           <div className="px-4 mb-4">
             <SegmentedScope scope={logic.scope} onScopeChange={logic.setScope} city={logic.effectiveCity} />
           </div>
 
-          {/* Active Filters Chip */}
           <AnimatePresence>
             {logic.hasActiveFilters && (
               <motion.div
@@ -81,7 +78,6 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* Error Message */}
           <AnimatePresence>
             {logic.error && (
               <motion.div 
@@ -96,20 +92,16 @@ export default function Home() {
             )}
           </AnimatePresence>
 
-          {/* Products Section */}
           <div className="px-4">
             {!logic.isLoading && logic.allProducts.length > 0 && (
               <ResultHeader count={logic.allProducts.length} sort={logic.sort} onSortChange={logic.setSort} isLoading={logic.isLoading} />
             )}
 
-            {/* Skeletons */}
             {logic.isLoading && logic.allProducts.length === 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 {Array.from({ length: HOME_CONFIG.SKELETON_COUNT }).map((_, i) => <ProductCardSkeleton key={i} />)}
               </div>
             ) : !logic.isLoading && logic.allProducts.length === 0 ? (
-              
-              /* Empty State */
               <div className="py-12">
                 <EmptyState title="آگهی‌ای یافت نشد" description={logic.hasActiveFilters ? "با فیلترهای فعلی چیزی پیدا نشد." : "آگهی جدیدی ثبت نشده است."}>
                   {logic.hasActiveFilters && (
@@ -118,8 +110,6 @@ export default function Home() {
                 </EmptyState>
               </div>
             ) : (
-
-              /* Products Grid */
               <>
                 <motion.div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4" variants={containerVariants} initial="hidden" animate="show">
                   {logic.allProducts.map((p) => (
@@ -127,7 +117,6 @@ export default function Home() {
                   ))}
                 </motion.div>
 
-                {/* Infinite Scroll Trigger */}
                 <div ref={logic.loadMoreRef} className="h-20 flex items-center justify-center mt-6">
                   {logic.isFetchingNextPage && (
                     <div className="flex items-center gap-2 text-sm text-gray-500"><Loader2 className="w-4 h-4 animate-spin" /><span>در حال بارگذاری...</span></div>

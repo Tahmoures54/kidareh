@@ -22,7 +22,6 @@ import db, { getStats, createBackup } from "./db.js";
 import { ensureMessagesRooms } from "./ensureMessagesRooms.js";
 import { bootstrapCache, closeRedis, cacheStatus } from "./bootstrapCache.js";
 
-// Routes
 import authRoutes from "./routes/auth.js";
 import aiRoutes from "./routes/ai.js";
 import productsRoutes from "./routes/products.js";
@@ -34,17 +33,17 @@ import storesRoutes from "./routes/stores.js";
 import referralRoutes from "./routes/referral.js";
 import messagesRoutes from "./routes/messages.js";
 import supportRoutes from "./routes/support.js";
+import promotionsRoutes from "./routes/promotions.js";
+import { ensurePromotionTables } from "./services/promotions.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = process.cwd();
-const DATA_DIR = path.join(ROOT_DIR, "data");
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = process.env.HOST || "0.0.0.0";
 const NODE_ENV = process.env.NODE_ENV || "development";
 const isProd = NODE_ENV === "production";
-const APP_VERSION = process.env.npm_package_version || "1.2.0";
 
 const MessageSchema = z.object({
   roomId: z.string().min(1).max(100),
@@ -197,6 +196,7 @@ async function startServer() {
     ensureDirectories();
     ensureMessagesRooms();
     await bootstrapCache();
+    try { ensurePromotionTables(); } catch {}
 
     const app = express();
     const httpServer = createServer(app);
@@ -240,6 +240,7 @@ async function startServer() {
     app.use("/api/referral", referralRoutes);
     app.use("/api/messages", messagesRoutes);
     app.use("/api/support", supportRoutes);
+    app.use("/api/promotions", promotionsRoutes);
 
     if (isProd) {
       const publicPath = fs.existsSync(path.join(ROOT_DIR, "dist/public")) ? path.join(ROOT_DIR, "dist/public") : path.join(ROOT_DIR, "dist");
