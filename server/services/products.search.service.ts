@@ -1,6 +1,6 @@
 /**
  * Products Search Service
- * FTS5 (Persian) + filters + Redis cache
+ * FTS5 (Persian) + filters + Redis cache + featured rank boost
  */
 
 import db from "../db.js";
@@ -86,7 +86,7 @@ export async function searchProductsService(
       radiusKm: params.radiusKm ?? "",
       lat: params.lat != null ? Math.round(params.lat * 1000) / 1000 : "",
       lng: params.lng != null ? Math.round(params.lng * 1000) / 1000 : "",
-      v: "fts1",
+      v: "fts2-featured",
     })
   );
 
@@ -124,7 +124,6 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
 
   where.push(`p.moderation_status = 'approved'`);
 
-  // ── Text: FTS5 first, LIKE fallback ──
   if (q && q.trim()) {
     let usedFts = false;
     if (isFtsReady()) {
@@ -135,12 +134,6 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
         whereValues.push(...ids);
         engine = "fts5";
         usedFts = true;
-
-        // preserve FTS rank when sort is relevance/newest default with q
-        if (!sort || sort === "relevance" || sort === "newest") {
-          // rank order via CASE id position
-          // built later in orderBy
-        }
       }
     }
 
@@ -213,19 +206,19 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
     radiusValues.push(lat as number, lng as number, lat as number, radiusKm * 1000);
   }
 
-  // ORDER BY
-  let orderBy = `CASE WHEN p.badge IS NOT NULL THEN 0 ELSE 1 END, p.created_at DESC`;
+  // Paid promotions (is_featured) rank first — psych: badge must affect visibility
+  const featuredFirst = `CASE WHEN COALESCE(p.is_featured,0) = 1 AND (p.featured_until IS NULL OR p.featured_until > datetime('now')) THEN 0 ELSE 1 END`;
+
+  let orderBy = `${featuredFirst}, CASE WHEN p.badge IS NOT NULL THEN 0 ELSE 1 END, p.created_at DESC`;
   if (sort === "cheapest") {
     orderBy = `p.price ASC, p.created_at DESC`;
   } else if (sort === "nearest" && hasCoords) {
     orderBy = `(distance IS NULL), distance ASC, p.created_at DESC`;
   } else if (engine === "fts5" && (sort === "relevance" || !sort)) {
-    // FTS ids order preserved via FIELD-like CASE
-    // ids were pushed into whereValues after fixed filters — reconstruct from query
     const ids = searchProductIdsFts(q!, 1000);
     if (ids.length) {
       orderBy =
-        `CASE p.id ${ids.map((id, i) => `WHEN ${id} THEN ${i}`).join(" ")} ELSE 9999 END, p.created_at DESC`;
+        `${featuredFirst}, CASE p.id ${ids.map((id, i) => `WHEN ${id} THEN ${i}`).join(" ")} ELSE 9999 END, p.created_at DESC`;
     }
   }
 
