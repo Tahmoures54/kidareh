@@ -19,6 +19,7 @@ import jwt from "jsonwebtoken";
 
 import logger from "./logger.js";
 import db, { getStats, createBackup } from "./db.js";
+import { ensureMessagesRooms } from "./ensureMessagesRooms.js";
 
 // Routes
 import authRoutes from "./routes/auth.js";
@@ -55,8 +56,9 @@ const APP_VERSION = process.env.npm_package_version || "1.2.0";
 const MessageSchema = z.object({
   roomId: z.string().min(1).max(100),
   senderId: z.string().min(1).max(100),
+  receiverId: z.union([z.string(), z.number()]).optional(),
   text: z.string().min(1).max(5000),
-  id: z.string().min(1).max(100),
+  id: z.string().min(1).max(100).optional(),
 });
 const JoinRoomSchema = z.string().min(1).max(100);
 const TypingSchema = z.string().min(1).max(100);
@@ -105,7 +107,7 @@ const CORS_OPTIONS: CorsOptions = (() => {
 ═══════════════════════════════════════════ */
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: isProd ? 300 : 1000, // در لیارا با فرانت‌اند مشترک، باید کمی محدودیت را بیشتر کنیم تا فایل‌های استاتیک بلاک نشوند
+  max: isProd ? 300 : 1000,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً تلاش کنید." },
@@ -122,14 +124,13 @@ const authLimiter = rateLimit({
    HELPERS (📂 Liara Disk Setup)
 ═══════════════════════════════════════════ */
 function ensureDirectories() {
-  // تمام فایل‌های متغیر باید درون پوشه data باشند تا روی دیسک لیارا بمانند
   const dirs = [
     "data/uploads/products", 
     "data/uploads/avatars", 
     "data/uploads/stores", 
     "data/logs", 
     "data/backup",
-    "data/database" // پوشه اصلی دیتابیس SQLite
+    "data/database"
   ];
   for (const dir of dirs) {
     const p = path.join(ROOT_DIR, dir);
@@ -154,8 +155,15 @@ function requireSystemToken(req: Request, res: Response, next: NextFunction) {
 
 async function checkRoomAccess(userId: string, roomId: string): Promise<boolean> {
   try {
-    const result = db.prepare(`SELECT 1 FROM messages_rooms WHERE room_id = ? AND (user1_id = ? OR user2_id = ?) LIMIT 1`).get(roomId, userId, userId);
-    return !!result;
+    const uid = Number(userId);
+    const room = db.prepare(
+      `SELECT 1 FROM messages_rooms WHERE room_id = ? AND (user1_id = ? OR user2_id = ?) LIMIT 1`
+    ).get(roomId, uid, uid);
+    if (room) return true;
+    const legacy = db.prepare(
+      `SELECT 1 FROM messages WHERE room_id = ? AND (sender_id = ? OR receiver_id = ?) LIMIT 1`
+    ).get(roomId, uid, uid);
+    return !!legacy;
   } catch (err) {
     return false;
   }
@@ -167,6 +175,8 @@ async function checkRoomAccess(userId: string, roomId: string): Promise<boolean>
 interface SocketData { user: { id: string; role: string }; }
 
 function setupSocket(io: Server) {
+  const onlineUsers = new Map<string, Set<string>>();
+
   io.use((socket: Socket, next) => {
     const token = socket.handshake.auth.token as string;
     if (!token) return next(new Error("Authentication required"));
@@ -180,8 +190,14 @@ function setupSocket(io: Server) {
 
   io.on("connection", (socket: Socket) => {
     const userData = (socket.data as SocketData).user;
+    const userId = String(userData.id);
+
+    if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
+    onlineUsers.get(userId)!.add(socket.id);
+    socket.broadcast.emit("user_online", { userId });
+
     const handleWithAuth = async (roomId: string, handler: Function, ack?: Function) => {
-      if (!(await checkRoomAccess(userData.id, roomId))) {
+      if (!(await checkRoomAccess(userId, roomId))) {
         if (ack) ack({ ok: false, error: "دسترسی غیرمجاز" });
         else socket.emit("error", { message: "دسترسی به این اتاق ندارید" });
         return;
@@ -189,18 +205,114 @@ function setupSocket(io: Server) {
       handler();
     };
 
-    socket.on("join_room", async (r) => { try { await handleWithAuth(JoinRoomSchema.parse(r), () => { socket.join(r); socket.emit("joined_room", { roomId: r }); }); } catch {} });
+    socket.on("join_room", async (r) => {
+      try {
+        const roomId = JoinRoomSchema.parse(r);
+        await handleWithAuth(roomId, () => {
+          socket.join(roomId);
+          socket.emit("joined_room", { roomId });
+        });
+      } catch {}
+    });
+
     socket.on("send_message", async (r, ack) => {
       try {
         const d = MessageSchema.parse(r);
-        if (d.senderId !== userData.id) return ack?.({ ok: false });
+        if (String(d.senderId) !== userId) return ack?.({ ok: false, error: "sender mismatch" });
+
         await handleWithAuth(d.roomId, () => {
-          socket.to(d.roomId).emit("receive_message", { ...d, timestamp: new Date().toISOString(), status: "sent" });
-          ack?.({ ok: true });
+          try {
+            let receiverId = d.receiverId != null ? Number(d.receiverId) : 0;
+            if (!receiverId) {
+              const room = db.prepare(
+                `SELECT user1_id, user2_id FROM messages_rooms WHERE room_id = ?`
+              ).get(d.roomId) as any;
+              if (room) {
+                receiverId = Number(room.user1_id) === Number(d.senderId)
+                  ? Number(room.user2_id)
+                  : Number(room.user1_id);
+              }
+            }
+            if (!receiverId) {
+              ack?.({ ok: false, error: "receiver unknown" });
+              return;
+            }
+            const result = db.prepare(
+              `INSERT INTO messages (room_id, sender_id, receiver_id, content, is_read, created_at)
+               VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`
+            ).run(d.roomId, Number(d.senderId), receiverId, d.text);
+
+            db.prepare(
+              `UPDATE messages_rooms SET updated_at = CURRENT_TIMESTAMP WHERE room_id = ?`
+            ).run(d.roomId);
+
+            const payload = {
+              id: result.lastInsertRowid,
+              roomId: d.roomId,
+              senderId: d.senderId,
+              text: d.text,
+              content: d.text,
+              timestamp: new Date().toISOString(),
+              status: "sent",
+            };
+
+            socket.to(d.roomId).emit("receive_message", payload);
+            ack?.({ ok: true, message: payload });
+          } catch (err) {
+            logger.error("Socket message persist error:", err);
+            socket.to(d.roomId).emit("receive_message", {
+              ...d,
+              timestamp: new Date().toISOString(),
+              status: "sent",
+            });
+            ack?.({ ok: true });
+          }
         }, ack);
-      } catch { ack?.({ ok: false }); }
+      } catch {
+        ack?.({ ok: false });
+      }
     });
-    socket.on("disconnect", () => {});
+
+    socket.on("typing", async (r) => {
+      try {
+        const roomId = TypingSchema.parse(r);
+        await handleWithAuth(roomId, () => {
+          socket.to(roomId).emit("user_typing", { roomId, userId });
+        });
+      } catch {}
+    });
+
+    socket.on("stop_typing", async (r) => {
+      try {
+        const roomId = TypingSchema.parse(r);
+        await handleWithAuth(roomId, () => {
+          socket.to(roomId).emit("user_stop_typing", { roomId, userId });
+        });
+      } catch {}
+    });
+
+    socket.on("message_read", async (r) => {
+      try {
+        const { roomId, messageId } = MessageReadSchema.parse(r);
+        await handleWithAuth(roomId, () => {
+          db.prepare(
+            `UPDATE messages SET is_read = 1 WHERE id = ? AND receiver_id = ?`
+          ).run(messageId, Number(userId));
+          socket.to(roomId).emit("message_read", { roomId, messageId, userId });
+        });
+      } catch {}
+    });
+
+    socket.on("disconnect", () => {
+      const sockets = onlineUsers.get(userId);
+      if (sockets) {
+        sockets.delete(socket.id);
+        if (sockets.size === 0) {
+          onlineUsers.delete(userId);
+          socket.broadcast.emit("user_offline", { userId });
+        }
+      }
+    });
   });
 }
 
@@ -211,20 +323,19 @@ async function startServer() {
   try {
     validateEnvironment();
     ensureDirectories();
+    ensureMessagesRooms();
 
     const app = express();
     const httpServer = createServer(app);
 
-    // 🛡️ Pro Tip: استخراج IP واقعی کاربر از پشت لودبالانسر لیارا برای مسدودسازی هکرها
     app.set("trust proxy", "loopback, linklocal, uniquelocal");
     app.disable("x-powered-by");
 
     app.use(compression());
     app.use(cors(CORS_OPTIONS));
 
-    // 🛡️ Relaxed Helmet for SPA (Vite/React)
     app.use(helmet({
-        contentSecurityPolicy: false, // غیرفعال کردن موقت CSP برای جلوگیری از بلاک شدن عکس‌های خارجی و اسکریپت‌های React
+        contentSecurityPolicy: false,
         crossOriginEmbedderPolicy: false,
     }));
 
@@ -242,18 +353,16 @@ async function startServer() {
 
     const io = new Server(httpServer, {
       cors: { origin: getAllowedOrigins(), credentials: true },
-      transports: ["websocket", "polling"], // ⚡ Websocket First for speed
+      transports: ["websocket", "polling"],
     });
     setupSocket(io);
     app.set("io", io);
 
-    // 📂 سرو کردن پوشه آپلود از مسیر امن لیارا
     app.use("/uploads", express.static(path.join(ROOT_DIR, "data/uploads"), { maxAge: "7d" }));
 
     app.use("/api", apiLimiter);
     app.use("/api/auth/send-otp", authLimiter);
 
-    /* ─── API Routes ─── */
     app.get("/api/health", async (_req, res) => res.status(200).json({ status: "healthy" }));
     app.use("/api/auth", authRoutes);
     app.use("/api/ai", aiRoutes);
@@ -267,9 +376,7 @@ async function startServer() {
     app.use("/api/messages", messagesRoutes);
     app.use("/api/support", supportRoutes);
 
-    /* ─── Static Files & SPA (Vite Fallback) ─── */
     if (isProd) {
-      // 🚀 مسیر استاندارد Vite معمولاً dist است نه dist/public
       const publicPath = fs.existsSync(path.join(ROOT_DIR, "dist/public")) 
         ? path.join(ROOT_DIR, "dist/public") 
         : path.join(ROOT_DIR, "dist");
@@ -281,19 +388,16 @@ async function startServer() {
       });
     }
 
-    /* ─── Global Error Handler ─── */
     app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
       const status = err?.status || 500;
       logger.error("❌ Server Error:", { status, message: err?.message, url: req.originalUrl });
       res.status(status).json({ error: isProd ? "خطای سرور" : err?.message });
     });
 
-    /* ─── Start Listening ─── */
     httpServer.listen(PORT, HOST, () => {
       logger.info(`🚀 Server running on ${HOST}:${PORT} | ENV: ${NODE_ENV}`);
     });
 
-    /* ─── Graceful Shutdown ─── */
     const shutdown = () => {
       logger.warn(`🛑 Shutting down...`);
       httpServer.close(() => {
