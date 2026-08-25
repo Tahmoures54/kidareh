@@ -1,0 +1,21 @@
+Kidareh v1.2.0 — Production Release Candidate
+
+Security:
+- Cookie-only browser sessions
+- __Host-kidareh_session in production
+- SameSite + Origin protection
+- Socket authentication from session cookie
+- Private support attachments with signature validation
+- No public support upload directory
+- Minimal health endpoint + readiness endpoint
+- Refresh does not expose session token
+
+Quality gates:
+- npm run typecheck
+- npm run lint
+- npm run test
+- npm run build
+
+Run: npm ci && npm run release:verify
+
+Important: configure production secrets and external services before deployment.

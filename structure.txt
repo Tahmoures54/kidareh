@@ -1,0 +1,455 @@
+Kidareh-Final-Production-v1.2.0:
+|   .commitlintrc.json
+|   .dockerignore
+|   .editorconfig
+|   .env.example
+|   .gitignore
+|   .npmrc
+|   CHANGELOG_PRODUCTION_HARDENING.md
+|   COMPLETION_REPORT.sh
+|   DEVELOPMENT_GUIDE.md
+|   docker-compose.yml
+|   Dockerfile
+|   DOCKER_GUIDE.md
+|   ecosystem.config.js
+|   eslint.config.js
+|   FINAL_RELEASE_STATUS.md
+|   IMPLEMENTATION_SUMMARY.md
+|   index.html
+|   INTEGRATION_GUIDE.md
+|   LAUNCH.md
+|   liara.json
+|   metadata.json
+|   package-lock.json
+|   package.json
+|   QUICK_START.md
+|   README.md
+|   RELEASE_CHECKLIST.md
+|   RELEASE_MANIFEST.txt
+|   RELEASE_NOTES_1.2.0.md
+|   structure.txt
+|   TESTING_GUIDE.md
+|   tsconfig.json
+|   vercel.json
+|   vite.config.ts
+|   vitest.config.ts
+|   
++---.husky
+|       pre-commit
+|       pre-push
+|       
++---public
+|   |   browserconfig.xml
+|   |   humans.txt
+|   |   manifest.json
+|   |   robots.txt
+|   |   sw.js
+|   |   
+|   +---.well-known
+|   |       security.txt
+|   |       
+|   +---icons
+|   |       icon-192x192.png
+|   |       icon-512x512.png
+|   |       icon-72x72.png
+|   |       maskable-512x512.png
+|   |       shortcut-add.png
+|   |       shortcut-saved.png
+|   |       shortcut-search.png
+|   |       shortcut-wallet.png
+|   |       
+|   \---screenshots
+|           m2.png
+|           mobile-2.png
+|           
++---scripts
+|       backup.js
+|       create-zip.js
+|       docker-build.sh
+|       docker-run.sh
+|       info.js
+|       migrate.js
+|       postinstall.js
+|       prepare-deploy.js
+|       release-verify.mjs
+|       start-prod.mjs
+|       verify-project.mjs
+|       
++---server
+|   |   bootstrapCache.ts
+|   |   db.ts
+|   |   ensureMessagesRooms.ts
+|   |   logger.ts
+|   |   server.ts
+|   |   
+|   +---config
+|   |       env.ts
+|   |       
+|   +---controllers
+|   |       products.search.controller.ts
+|   |       
+|   +---middleware
+|   |       auth.ts
+|   |       
+|   +---routes
+|   |       admin.ts
+|   |       ai.ts
+|   |       auth.ts
+|   |       health.ts
+|   |       messages.ts
+|   |       payment.ts
+|   |       products.search.route.ts
+|   |       products.ts
+|   |       promotions.ts
+|   |       referral.ts
+|   |       reports.ts
+|   |       stores.ts
+|   |       support.ts
+|   |       
+|   \---services
+|           cache.ts
+|           fts.ts
+|           otpStore.ts
+|           persianText.ts
+|           products.cached.ts
+|           products.search.service.ts
+|           promotions.ts
+|           redis.ts
+|           storage.ts
+|           textSearch.ts
+|           
++---src
+|   |   App.tsx
+|   |   index.css
+|   |   main.tsx
+|   |   theme.ts
+|   |   vite-env.d.ts
+|   |   
+|   +---components
+|   |   |   AIAssistant.tsx
+|   |   |   badges.ts
+|   |   |   InstallPrompt.tsx
+|   |   |   Layout.tsx
+|   |   |   Map.tsx
+|   |   |   
+|   |   +---cards
+|   |   |       ProductCard.tsx
+|   |   |       
+|   |   +---Home
+|   |   |       CitySelector.tsx
+|   |   |       MagicMenu.tsx
+|   |   |       
+|   |   \---ui
+|   |           BottomActionBar.tsx
+|   |           CategoryComboBox.tsx
+|   |           CitySearchComboBox.tsx
+|   |           EmptyState.tsx
+|   |           ErrorBoundary.tsx
+|   |           GlobalErrorBoundary.tsx
+|   |           HintCard.tsx
+|   |           PageHeader.tsx
+|   |           Toast.tsx
+|   |           
+|   +---config
+|   |       env.ts
+|   |       
+|   +---context
+|   |       AuthContext.tsx
+|   |       SettingsContext.tsx
+|   |       SupportContext.tsx
+|   |       
+|   +---data
+|   |   +---processed
+|   |   |       .gitkeep
+|   |   |       categories.ts
+|   |   |       iranCities.ts
+|   |   |       
+|   |   \---raw
+|   |           iranCities.json
+|   |           
+|   +---hooks
+|   |       useAdvanced.ts
+|   |       useAnalytics.ts
+|   |       useClipboard.ts
+|   |       useDebouncedValue.ts
+|   |       useGeolocation.ts
+|   |       useInfiniteProducts.ts
+|   |       useLocalStorage.ts
+|   |       useProducts.ts
+|   |       useReferral.ts
+|   |       useStoreStats.ts
+|   |       
+|   +---pages
+|   |   |   Profile.tsx
+|   |   |   
+|   |   +---AddProduct
+|   |   |   |   index.tsx
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           hooks.ts
+|   |   |           SegmentedControl.tsx
+|   |   |           
+|   |   +---AdminPanel
+|   |   |       components.tsx
+|   |   |       hooks.ts
+|   |   |       index.tsx
+|   |   |       types.ts
+|   |   |       
+|   |   +---AI
+|   |   |   |   constants.ts
+|   |   |   |   hooks.ts
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           MessageBubble.tsx
+|   |   |           TypingIndicator.tsx
+|   |   |           
+|   |   +---BecomeSeller
+|   |   |       index.tsx
+|   |   |       
+|   |   +---BuyBadge
+|   |   |       components.tsx
+|   |   |       hooks.ts
+|   |   |       index.tsx
+|   |   |       types.ts
+|   |   |       
+|   |   +---Categories
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           GroupCard.tsx
+|   |   |           
+|   |   +---ChatRoom
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           hooks.ts
+|   |   |           MessageBubble.tsx
+|   |   |           TypingIndicator.tsx
+|   |   |           
+|   |   +---CompleteProfile
+|   |   |   |   index.tsx
+|   |   |   |   
+|   |   |   \---components
+|   |   |           CategorySelect.tsx
+|   |   |           MapModal.tsx
+|   |   |           
+|   |   +---Home
+|   |   |   |   constants.ts
+|   |   |   |   index.tsx
+|   |   |   |   useHomeLogic.ts
+|   |   |   |   
+|   |   |   +---components
+|   |   |   |       CategorySlider.tsx
+|   |   |   |       ErrorBoundary.tsx
+|   |   |   |       HeaderWidgets.tsx
+|   |   |   |       LocationModal.tsx
+|   |   |   |       ProductSections.tsx
+|   |   |   |       ResultHeader.tsx
+|   |   |   |       SearchBar.tsx
+|   |   |   |       SponsoredBanner.tsx
+|   |   |   |       
+|   |   |   \---hooks
+|   |   |           useDebounce.ts
+|   |   |           useInfiniteScroll.ts
+|   |   |           
+|   |   +---Login
+|   |   |   |   hooks.ts
+|   |   |   |   index.tsx
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           FloatingParticles.tsx
+|   |   |           Shared.tsx
+|   |   |           StepOTP.tsx
+|   |   |           StepPhone.tsx
+|   |   |           
+|   |   +---Messages
+|   |   |   |   hooks.ts
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           ConvItem.tsx
+|   |   |           GuestView.tsx
+|   |   |           Skeleton.tsx
+|   |   |           
+|   |   +---Onboarding
+|   |   |       index.tsx
+|   |   |       OTPVerificationScreen.tsx
+|   |   |       PhoneInputScreen.tsx
+|   |   |       RegistrationFormScreen.tsx
+|   |   |       RoleSelectionScreen.tsx
+|   |   |       
+|   |   +---PaymentCallback
+|   |   |   |   hooks.ts
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           ErrorView.tsx
+|   |   |           LoadingView.tsx
+|   |   |           SuccessView.tsx
+|   |   |           
+|   |   +---Privacy
+|   |   |   |   constants.ts
+|   |   |   |   index.tsx
+|   |   |   |   
+|   |   |   \---components
+|   |   |           CommitmentBox.tsx
+|   |   |           PolicyCard.tsx
+|   |   |           
+|   |   +---ProductDetail
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           FloatingHeader.tsx
+|   |   |           ImageGallery.tsx
+|   |   |           ProductInfo.tsx
+|   |   |           StoreCard.tsx
+|   |   |           
+|   |   +---Referral
+|   |   |   |   constants.tsx
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           BalanceCard.tsx
+|   |   |           index.ts
+|   |   |           Leaderboard.tsx
+|   |   |           ReferralSection.tsx
+|   |   |           ReferralSkeleton.tsx
+|   |   |           StatsGrid.tsx
+|   |   |           TransactionSection.tsx
+|   |   |           WithdrawalSection.tsx
+|   |   |           
+|   |   +---Saved
+|   |   |   |   index.tsx
+|   |   |   |   
+|   |   |   \---components
+|   |   |           GuestView.tsx
+|   |   |           SavedHeader.tsx
+|   |   |           
+|   |   +---Search
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   +---components
+|   |   |   |       constants.ts
+|   |   |   |       FilterSheet.tsx
+|   |   |   |       IdleSection.tsx
+|   |   |   |       SearchSkeleton.tsx
+|   |   |   |       
+|   |   |   \---hooks
+|   |   |           useSearch.ts
+|   |   |           
+|   |   +---SellerPanel
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   
+|   |   |   +---components
+|   |   |   |       constants.ts
+|   |   |   |       CustomTooltip.tsx
+|   |   |   |       EditStoreSheet.tsx
+|   |   |   |       ProductItem.tsx
+|   |   |   |       
+|   |   |   \---hooks
+|   |   |           useSellerPanel.ts
+|   |   |           
+|   |   +---StoreDetail
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           AboutTab.tsx
+|   |   |           ProductsTab.tsx
+|   |   |           Skeleton.tsx
+|   |   |           StoreHeader.tsx
+|   |   |           
+|   |   +---Stores
+|   |   |   |   index.tsx
+|   |   |   |   types.ts
+|   |   |   |   
+|   |   |   \---components
+|   |   |           SortSheet.tsx
+|   |   |           StoreCard.tsx
+|   |   |           StoresHeader.tsx
+|   |   |           StoresSkeleton.tsx
+|   |   |           
+|   |   +---Support
+|   |   |   |   index.tsx
+|   |   |   |   utils.ts
+|   |   |   |   
+|   |   |   +---components
+|   |   |   |       FaqItem.tsx
+|   |   |   |       
+|   |   |   \---hooks
+|   |   |           useSupport.ts
+|   |   |           
+|   |   \---TermsAndGuide
+|   |       |   constants.ts
+|   |       |   index.tsx
+|   |       |   types.ts
+|   |       |   
+|   |       \---components
+|   |               GuideTab.tsx
+|   |               PrivacyTab.tsx
+|   |               SegmentedControl.tsx
+|   |               TermsTab.tsx
+|   |               
+|   +---services
+|   |       api.ts
+|   |       products.service.ts
+|   |       
+|   +---types
+|   |       common.ts
+|   |       product.ts
+|   |       
+|   \---utils
+|           analytics.ts
+|           api.ts
+|           authHelpers.ts
+|           categoryMapping.ts
+|           constants.ts
+|           formatPrice.ts
+|           imageCompression.ts
+|           index.ts
+|           lazyLoad.ts
+|           performance.ts
+|           security.ts
+|           
+\---tests
+    +---backend
+    |   \---routes
+    |           api.test.ts
+    |           products.test.ts
+    |           security.test.ts
+    |           
+    \---frontend
+        |   setup.ts
+        |   
+        +---components
+        |       ProductCard.test.tsx
+        |       
+        +---context
+        |       AuthContext.test.tsx
+        |       
+        +---pages
+        |   \---Referral
+        |           Referral.test.tsx
+        |           
+        \---utils
+                formatPrice.test.ts
+                imageCompression.test.ts
+                

@@ -1,0 +1,11 @@
+/* TEAM */
+Developer: Kidareh Team
+Contact: info@kidareh.com
+Location: Tehran, Iran
+
+/* SITE */
+Last update: 2026/06/14
+Language: Persian / ›«—”Ì
+Standards: HTML5, CSS3, ES2023
+Components: React 19, TypeScript, Vite
+Backend: Node.js, Express, SQLite

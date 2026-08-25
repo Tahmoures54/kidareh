@@ -1,0 +1,24 @@
+# Kidareh Release Checklist
+
+- [ ] Copy `.env.example` to `.env` and set production secrets.
+- [ ] Set `NODE_ENV=production`.
+- [ ] Set `DATABASE_URL`.
+- [ ] Set `JWT_SECRET` and `COOKIE_SECRET` to strong random values of at least 32 characters.
+- [ ] Set `APP_URL` and `ADMIN_PHONE`.
+- [ ] Keep `SHOW_OTP_IN_DEV=false` in production.
+- [ ] Configure Redis for multi-instance production deployments.
+- [ ] Configure SMS provider and payment gateway credentials.
+- [ ] Configure S3 storage if remote product images are required.
+- [ ] Run `npm ci`.
+- [ ] Run `npm run typecheck`.
+- [ ] Run `npm run lint`.
+- [ ] Run `npm test`.
+- [ ] Run `npm run build`.
+- [ ] Verify `/api/health`.
+- [ ] Verify OTP login and logout.
+- [ ] Verify seller product creation and moderation.
+- [ ] Verify image upload validation.
+- [ ] Verify saved products and reporting.
+- [ ] Verify payment initiation, callback and confirmation.
+- [ ] Verify PWA installation and service-worker update.
+- [ ] Verify production CORS and HTTPS cookies.

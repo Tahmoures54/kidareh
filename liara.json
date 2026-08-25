@@ -1,0 +1,11 @@
+{
+  "app": "kidareh-back",
+  "platform": "docker",
+  "port": 3000,
+  "disks": [...],
+  "healthCheck": {...},
+  "region": "iran",
+  "node": {
+    "mirror": false
+  }
+}

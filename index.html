@@ -1,0 +1,278 @@
+﻿<!doctype html>
+<html lang="fa-IR" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- 1) VIEWPORT & PERFORMANCE OPTIMIZATION -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    
+    <!-- Preconnect to speed up font loading -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    
+    <!-- VAZIRMATN FONT (Added directly for Splash Screen) -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+
+    <!-- 2) PRIMARY SEO -->
+    <title>کی‌داره؟ | ببین کی داره؟ حضوری بگیر</title>
+    <meta name="description" content="با کی‌داره کالای موردنظرتان را در فروشگاه‌های اطراف پیدا کنید و حضوری خرید کنید. چت آنلاین، نقشه تعاملی و قیمت‌های واقعی." />
+    <meta name="keywords" content="خرید حضوری, جستجوی کالا, کی‌داره, فروشگاه اطراف, چت با فروشنده, PWA, نقشه فروشگاه" />
+    <meta name="author" content="Kidareh Team" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <link rel="canonical" href="https://kidareh.com/" />
+
+    <!-- 3) OPEN GRAPH (SOCIAL MEDIA) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="کی‌داره" />
+    <meta property="og:title" content="کی‌داره؟ | ببین کی داره؟ حضوری بگیر" />
+    <meta property="og:description" content="کالای موردنظرتان را در فروشگاه‌های اطراف پیدا کنید و حضوری خرید کنید؛ سریع، بدون واسطه و با نقشه." />
+    <meta property="og:url" content="https://kidareh.com/" />
+    <meta property="og:image" content="https://kidareh.com/og-image-1200x630.jpg" />
+    <meta property="og:image:secure_url" content="https://kidareh.com/og-image-1200x630.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="لوگوی کی‌داره - خرید حضوری" />
+    <meta property="og:locale" content="fa_IR" />
+
+    <!-- 4) TWITTER -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="کی‌داره؟ | جستجوی کالا و خرید حضوری" />
+    <meta name="twitter:description" content="کالای موردنظرتان را در فروشگاه‌های اطراف پیدا کنید و حضوری خرید کنید. رایگان و بدون نصب." />
+    <meta name="twitter:image" content="https://kidareh.com/twitter-card-1200x600.jpg" />
+
+    <!-- 5) PWA & APP CONFIGURATION -->
+    <meta name="application-name" content="کی‌داره" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Dynamic Theme Color for Light/Dark Mode -->
+    <meta name="theme-color" content="#f8fafc" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#030712" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+
+    <!-- Apple Specific -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="کی‌داره" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Windows Specific -->
+    <meta name="msapplication-TileColor" content="#4f46e5" />
+    <meta name="msapplication-TileImage" content="/icons/icon-144x144.png" />
+
+    <!-- 6) ICONS -->
+    <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180x180.png" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- 8) SECURITY -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!-- 9) STRUCTURED DATA -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "کی‌داره",
+        "alternateName": "Kidareh",
+        "url": "https://kidareh.com",
+        "logo": "https://kidareh.com/icons/icon-512x512.png",
+        "description": "پلتفرم جست‌وجوی کالا در فروشگاه‌های اطراف و خرید حضوری",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web Browser, Android, iOS",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "IRR" },
+        "inLanguage": "fa-IR",
+        "featureList": [
+          "جست‌وجوی کالا با موقعیت مکانی",
+          "چت آنلاین با فروشنده",
+          "نقشه تعاملی فروشگاه‌ها"
+        ]
+      }
+    </script>
+
+    <!-- PREMIUM SPLASH SCREEN STYLES -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html { -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font-family: "Vazirmatn", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background-color: #f8fafc;
+        color: #0f172a;
+        -webkit-tap-highlight-color: transparent;
+        overflow-x: hidden;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        body { background-color: #030712; color: #f8fafc; }
+      }
+
+      /* Animated Mesh Background */
+      #splash-screen {
+        position: fixed; inset: 0; z-index: 99999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        background-color: #020617;
+        background-image: 
+          radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.4) 0px, transparent 50%),
+          radial-gradient(at 100% 100%, rgba(13, 148, 136, 0.4) 0px, transparent 50%);
+        background-size: 200% 200%;
+        animation: gradientMove 8s ease infinite;
+        transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+      }
+
+      @keyframes gradientMove {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      #splash-screen.hidden {
+        opacity: 0;
+        visibility: hidden;
+        transform: scale(1.05);
+      }
+
+      /* Glassmorphism Card */
+      .splash-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 45px 55px;
+        border-radius: 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        animation: float 6s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0px); }
+      }
+
+      /* Glowing Spinner */
+      .premium-spinner {
+        position: relative;
+        width: 64px; height: 64px;
+        margin-bottom: 28px;
+      }
+
+      .spinner-ring {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .spinner-active {
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        border: 4px solid transparent;
+        border-top-color: #2dd4bf; /* Teal 400 */
+        border-right-color: #818cf8; /* Indigo 400 */
+        animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+      }
+
+      @keyframes spin { 
+        0% { transform: rotate(0deg); } 
+        100% { transform: rotate(360deg); } 
+      }
+
+      /* Text Animations & Styles */
+      .splash-text-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: fadeUp 1s ease-out forwards;
+      }
+
+      @keyframes fadeUp {
+        0% { opacity: 0; transform: translateY(15px); }
+        100% { opacity: 1; transform: translateY(0); }
+      }
+
+      .splash-title {
+        font-weight: 900;
+        font-size: 2rem;
+        margin-bottom: 8px;
+        letter-spacing: -0.03em;
+        text-shadow: 0 4px 20px rgba(45, 212, 191, 0.3);
+        /* Gradient Text Magic */
+        background: linear-gradient(135deg, #2dd4bf 0%, #818cf8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      .splash-subtitle {
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 1rem;
+        font-weight: 500;
+        letter-spacing: 0px;
+      }
+
+      /* Noise Overlay for premium texture */
+      .noise-overlay {
+        position: absolute; inset: 0; z-index: -1;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        pointer-events: none;
+      }
+
+      .visually-hidden {
+        position: absolute !important; width: 1px !important; height: 1px !important;
+        padding: 0 !important; margin: -1px !important; overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Fallback for users with disabled JS -->
+    <noscript>
+      <div style="position:fixed;top:0;left:0;right:0;background:#e11d48;color:#fff;padding:16px;text-align:center;font-weight:bold;z-index:99999;box-shadow:0 4px 6px rgba(0,0,0,0.1);" role="alert">
+        ⚠️ کی‌داره برای اجرا به JavaScript نیاز دارد. لطفاً آن را فعال کنید.
+      </div>
+    </noscript>
+
+    <!-- PREMIUM SPLASH SCREEN -->
+    <div id="splash-screen" role="status" aria-label="در حال بارگذاری کی‌داره">
+      <div class="noise-overlay"></div>
+      
+      <div class="splash-card">
+        <div class="premium-spinner" aria-hidden="true">
+          <div class="spinner-ring"></div>
+          <div class="spinner-active"></div>
+        </div>
+        
+        <div class="splash-text-container">
+          <h1 class="splash-title">کی‌داره؟</h1>
+          <p class="splash-subtitle">ببین کی داره؟ حضوری بگیر!</p>
+        </div>
+      </div>
+
+      <span class="visually-hidden">لطفاً منتظر بمانید. برنامه در حال بارگذاری است.</span>
+    </div>
+
+    <!-- REACT ROOT -->
+    <div id="root"></div>
+
+    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Splash Screen Removal Logic -->
+    <script>
+      window.addEventListener("load", () => {
+        setTimeout(() => {
+          const splash = document.getElementById("splash-screen");
+          if (splash) {
+            splash.classList.add("hidden");
+            setTimeout(() => splash.remove(), 600);
+          }
+        }, 500); // زمان مکث کوتاه برای نمایش زیبایی صفحه لودینگ
+      });
+    </script>
+  </body>
+</html>
