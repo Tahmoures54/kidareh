@@ -1,224 +1,264 @@
-﻿import React, { useState } from "react";
-import { motion } from "motion/react";
-import {
-  Heart,
-  Trash2,
-  Share2,
-  MapPin,
-  CheckCircle2,
-  TrendingDown,
-} from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Heart, RefreshCw } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
+import { apiRequest } from "../../utils/api";
+import { ProductCard } from "../../components/cards/ProductCard";
+import { GuestView } from "./components/GuestView";
+import { SavedHeader, type Filter, type ViewMode } from "./components/SavedHeader";
+import EmptyState from "../../components/ui/EmptyState";
 
-// اگر در پروژه‌ات این ابزارها داری مسیرشان را درست وارد کن، اگر نه خطوطشان را کامنت کن
-import { formatPrice } from "../../utils/formatPrice"; 
-// import { LazyImage } from "../../utils/lazyLoad"; 
-
-// --- Type Definitions ---
-
-interface ProductData {
-  id: string;
+interface SavedProduct {
+  id: number | string;
   name: string;
+  title?: string;
   price: number;
-  oldPrice: number;
-  store: string;
-  status: string;
-  distance: string;
-  image: string;
-  hasPriceDrop: boolean;
+  oldPrice?: number;
+  old_price?: number;
+  store?: string;
+  store_name?: string;
+  status?: string;
+  distance?: string;
+  image?: string;
+  images?: string;
+  hasPriceDrop?: boolean;
+  city?: string;
 }
 
-interface ProductCardProps {
-  product: ProductData;
-  
-  // Props مربوط به صفحه Search
-  index?: number;
-  onShare?: (product: ProductData) => void;
-  onNavigate?: (product: ProductData) => void;
-  
-  // Props مربوط به صفحه Saved
-  viewMode?: "grid" | "list";
-  onRemove?: (id: string) => void;
-  isSelected?: boolean;
-  onToggleSelect?: (id: string) => void;
-  selectionMode?: boolean;
+function normalizeProduct(raw: any): SavedProduct & Record<string, any> {
+  const images = raw.images
+    ? typeof raw.images === "string"
+      ? (() => {
+          try {
+            return JSON.parse(raw.images);
+          } catch {
+            return [raw.images];
+          }
+        })()
+      : raw.images
+    : [];
+  const image =
+    raw.image ||
+    (Array.isArray(images) && images[0]) ||
+    "https://placehold.co/400x400/1e293b/94a3b8?text=No+Image";
+
+  return {
+    ...raw,
+    id: raw.id,
+    name: raw.name || raw.title || "کالا",
+    price: Number(raw.price) || 0,
+    oldPrice: Number(raw.oldPrice ?? raw.old_price ?? 0) || 0,
+    store: raw.store || raw.store_name || "فروشگاه",
+    status: raw.status || "موجود",
+    distance: raw.distance || raw.city || "",
+    image,
+    hasPriceDrop: Boolean(
+      raw.hasPriceDrop ||
+        (raw.old_price && Number(raw.old_price) > Number(raw.price))
+    ),
+  };
 }
 
-// --- Skeleton Component (مخصوص صفحه Saved) ---
+export default function Saved() {
+  const { user, isAuthenticated } = useAuth();
+  const [products, setProducts] = useState<(SavedProduct & Record<string, any>)[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [sortAsc, setSortAsc] = useState(true);
 
-export function SavedSkeleton({ viewMode = "grid" }: { viewMode?: "grid" | "list" }) {
-  const isGrid = viewMode === "grid";
-  return (
-    <div className={`animate-pulse ${isGrid ? "rounded-3xl overflow-hidden bg-white dark:bg-slate-800" : "flex gap-4 p-4 rounded-3xl bg-white dark:bg-slate-800"}`}>
-      <div className={`${isGrid ? "w-full h-44" : "w-28 h-28 shrink-0 rounded-2xl"} bg-slate-200 dark:bg-slate-700`} />
-      <div className={`flex-1 space-y-3 p-3 ${isGrid ? "pt-0" : ""}`}>
-        <div className="h-4 bg-slate-200 dark:bg-slate-700 rounded-full w-3/4" />
-        <div className="h-3 bg-slate-200 dark:bg-slate-700 rounded-full w-1/2" />
-        <div className="flex gap-2 mt-4">
-          <div className="h-5 w-20 bg-slate-200 dark:bg-slate-700 rounded-full" />
-          <div className="h-5 w-16 bg-slate-200 dark:bg-slate-700 rounded-full" />
-        </div>
-      </div>
-    </div>
+  const fetchSaved = useCallback(async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiRequest<any[]>("/api/products/saved");
+      const list = Array.isArray(data) ? data.map(normalizeProduct) : [];
+      setProducts(list);
+    } catch (e: any) {
+      setError(e?.message || "خطا در دریافت لیست ذخیره‌شده‌ها");
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchSaved();
+  }, [fetchSaved]);
+
+  const counts = useMemo(
+    () => ({
+      all: products.length,
+      price_drop: products.filter((p) => p.hasPriceDrop).length,
+      available: products.filter((p) => p.status === "موجود" || !p.status).length,
+    }),
+    [products]
   );
-}
 
-// --- Main ProductCard Component ---
+  const filtered = useMemo(() => {
+    let list = [...products];
+    if (filter === "price_drop") list = list.filter((p) => p.hasPriceDrop);
+    if (filter === "available")
+      list = list.filter((p) => p.status === "موجود" || !p.status);
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter(
+        (p) =>
+          String(p.name).toLowerCase().includes(q) ||
+          String(p.store || "").toLowerCase().includes(q)
+      );
+    }
+    list.sort((a, b) => (sortAsc ? a.price - b.price : b.price - a.price));
+    return list;
+  }, [products, filter, searchQuery, sortAsc]);
 
-export function ProductCard({
-  product,
-  index,
-  onShare,
-  onNavigate,
-  viewMode = "grid",
-  onRemove,
-  isSelected = false,
-  onToggleSelect,
-  selectionMode = false,
-}: ProductCardProps) {
-  const [imgError, setImgError] = useState(false);
-  
-  // تشخیص اینکه کارت در کدام صفحه استفاده شده است
-  const isSavedMode = !!onRemove;
-  const isSearchMode = !!onNavigate;
-  const isGrid = viewMode === "grid";
-
-  const handleClick = () => {
-    if (selectionMode && onToggleSelect) {
-      onToggleSelect(product.id);
-    } else if (isSearchMode && onNavigate) {
-      onNavigate(product);
+  const removeOne = async (id: string | number) => {
+    const sid = String(id);
+    setProducts((prev) => prev.filter((p) => String(p.id) !== sid));
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.delete(sid);
+      return next;
+    });
+    try {
+      await apiRequest("/api/products/saved", {
+        method: "POST",
+        body: JSON.stringify({ productId: Number(id), save: false }),
+      });
+    } catch {
+      fetchSaved();
     }
   };
 
+  const batchRemove = async () => {
+    const ids = Array.from(selected);
+    setProducts((prev) => prev.filter((p) => !selected.has(String(p.id))));
+    setSelected(new Set());
+    setSelectionMode(false);
+    await Promise.allSettled(
+      ids.map((id) =>
+        apiRequest("/api/products/saved", {
+          method: "POST",
+          body: JSON.stringify({ productId: Number(id), save: false }),
+        })
+      )
+    );
+  };
+
+  const toggleSelect = (id: string | number) => {
+    const sid = String(id);
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(sid)) next.delete(sid);
+      else next.add(sid);
+      return next;
+    });
+  };
+
+  if (!isAuthenticated || !user) {
+    return <GuestView />;
+  }
+
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ duration: 0.3, delay: index ? index * 0.05 : 0 }}
-      onClick={handleClick}
-      className={`relative group overflow-hidden rounded-3xl border transition-all duration-300 cursor-pointer ${
-        isSelected
-          ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-500/10 ring-2 ring-indigo-500/30"
-          : "border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-slate-900/50 active:scale-[0.98]"
-      } ${isGrid ? "flex flex-col" : "flex gap-4 p-3"}`}
-    >
-      {/* Image Container */}
-      <div className={`relative overflow-hidden bg-slate-100 dark:bg-slate-700 ${isGrid ? "w-full aspect-square" : "w-28 h-28 shrink-0 rounded-2xl"}`}>
-        {!imgError ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            loading="lazy"
-            onError={() => setImgError(true)}
-            className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-110 ${
-              isGrid ? "" : "rounded-2xl"
-            }`}
+    <div className="min-h-screen bg-[var(--bg-primary)] pb-28" dir="rtl">
+      <SavedHeader
+        selectionMode={selectionMode}
+        selectedCount={selected.size}
+        onCancelSelection={() => {
+          setSelectionMode(false);
+          setSelected(new Set());
+        }}
+        onBatchRemove={batchRemove}
+        productCount={products.length}
+        onToggleSort={() => setSortAsc((v) => !v)}
+        onRefresh={fetchSaved}
+        loading={loading}
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        filter={filter}
+        setFilter={setFilter}
+        counts={counts}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+      />
+
+      <div className="px-4 pt-4">
+        {loading && (
+          <div className="flex justify-center py-20">
+            <RefreshCw className="w-8 h-8 animate-spin text-[var(--brand-primary)]" />
+          </div>
+        )}
+
+        {!loading && error && (
+          <div className="text-center py-16 space-y-4">
+            <p className="text-rose-500 font-bold">{error}</p>
+            <button
+              onClick={fetchSaved}
+              className="px-5 py-2.5 rounded-xl bg-[var(--brand-primary)] text-white text-sm font-bold"
+            >
+              تلاش مجدد
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && filtered.length === 0 && (
+          <EmptyState
+            icon={Heart}
+            title={
+              searchQuery || filter !== "all"
+                ? "نتیجه‌ای یافت نشد"
+                : "هنوز کالایی ذخیره نکرده‌اید"
+            }
+            description={
+              searchQuery || filter !== "all"
+                ? "فیلتر یا عبارت جستجو را تغییر دهید"
+                : "کالاهای مورد علاقه را با ضربه روی قلب ذخیره کنید"
+            }
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-500 text-4xl">
-            🖼️
-          </div>
         )}
 
-        {/* Overlays on Image */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        
-        {/* Badges */}
-        <div className="absolute top-2 right-2 flex flex-col gap-1.5">
-          {product.hasPriceDrop && (
-            <div className="flex items-center gap-1 bg-rose-500 text-white text-[10px] font-black px-2 py-1 rounded-xl shadow-lg">
-              <TrendingDown className="w-3 h-3" />
-              کاهش
-            </div>
-          )}
-          {product.status === "ناموجود" && (
-            <div className="bg-slate-900/70 backdrop-blur-sm text-white text-[10px] font-bold px-2 py-1 rounded-xl">
-              ناموجود
-            </div>
-          )}
-        </div>
-
-        {/* Checkbox for Saved Mode */}
-        {isSavedMode && selectionMode && (
-          <div className="absolute top-2 left-2">
-            <div
-              className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                isSelected
-                  ? "bg-indigo-600 border-indigo-600"
-                  : "bg-white/80 dark:bg-slate-800/80 border-slate-300 dark:border-slate-600 backdrop-blur-sm"
-              }`}
-            >
-              {isSelected && <CheckCircle2 className="w-4 h-4 text-white" />}
-            </div>
-          </div>
-        )}
-
-        {/* Share Button for Search Mode */}
-        {isSearchMode && onShare && (
-          <motion.button
-            whileTap={{ scale: 0.8 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              onShare(product);
-            }}
-            className="absolute bottom-2 left-2 w-8 h-8 rounded-full bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+        {!loading && !error && filtered.length > 0 && (
+          <motion.div
+            layout
+            className={
+              viewMode === "grid"
+                ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+                : "flex flex-col gap-3"
+            }
           >
-            <Share2 className="w-4 h-4 text-slate-700 dark:text-slate-200" />
-          </motion.button>
+            <AnimatePresence mode="popLayout">
+              {filtered.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  viewMode={viewMode}
+                  onRemove={removeOne}
+                  isSelected={selected.has(String(product.id))}
+                  onToggleSelect={toggleSelect}
+                  selectionMode={selectionMode}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
         )}
       </div>
 
-      {/* Content Section */}
-      <div className={`flex flex-col justify-between flex-1 ${isGrid ? "p-3 pt-2.5" : "py-1 flex-1"}`}>
-        <div>
-          <h3 className="font-bold text-sm text-slate-800 dark:text-white line-clamp-2 leading-5 mb-1">
-            {product.name}
-          </h3>
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 font-medium">
-            <MapPin className="w-3 h-3 shrink-0" />
-            <span className="truncate">{product.store} • {product.distance}</span>
-          </div>
-        </div>
-
-        <div className="flex items-end justify-between mt-3">
-          <div className="flex flex-col">
-            {product.oldPrice > 0 && product.hasPriceDrop && (
-              <span className="text-[11px] text-slate-400 dark:text-slate-500 line-through mb-0.5">
-                {formatPrice(product.oldPrice)}
-              </span>
-            )}
-            <span className="text-sm font-black text-slate-900 dark:text-white">
-              {formatPrice(product.price)}
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mr-1">تومان</span>
-            </span>
-          </div>
-
-          {/* Remove Button for Saved Mode */}
-          {isSavedMode && !selectionMode && onRemove && (
-            <motion.button
-              whileTap={{ scale: 0.85 }}
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove(product.id);
-              }}
-              className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center text-rose-500"
-            >
-              <Trash2 className="w-4 h-4" />
-            </motion.button>
-          )}
-
-          {/* Heart Icon for Search Mode (Optional visual) */}
-          {isSearchMode && (
-             <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-700/50 flex items-center justify-center text-slate-400 dark:text-slate-500">
-               <Heart className="w-4 h-4" />
-             </div>
-          )}
-        </div>
-      </div>
-    </motion.div>
+      {!selectionMode && products.length > 0 && (
+        <button
+          onClick={() => setSelectionMode(true)}
+          className="fixed bottom-24 left-4 z-30 px-4 py-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-light)] shadow-lg text-xs font-bold text-[var(--text-secondary)]"
+        >
+          انتخاب چندتایی
+        </button>
+      )}
+    </div>
   );
 }
-
-export default ProductCard;
