@@ -1,5 +1,5 @@
-﻿// src/components/Map.tsx
-import React, { useState, useCallback } from 'react';
+// src/components/Map.tsx
+import React, { useState, useCallback, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
