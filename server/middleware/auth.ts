@@ -32,11 +32,11 @@ if (isProduction && (!JWT_SECRET || JWT_SECRET.length < 32)) {
   process.exit(1);
 }
 
-const SAFE_JWT_SECRET = JWT_SECRET;
-if (!SAFE_JWT_SECRET) {
+if (!JWT_SECRET) {
   logger.error("FATAL: JWT_SECRET must be configured before authentication middleware starts.");
   process.exit(1);
 }
+const SAFE_JWT_SECRET: string = JWT_SECRET;
 
 // ══════════════════════════════════════════════
 // Helpers
@@ -90,7 +90,7 @@ export function requireAuth(
 
     let decoded: AuthUser;
     try {
-      decoded = jwt.verify(token, SAFE_JWT_SECRET) as AuthUser;
+      decoded = jwt.verify(token, SAFE_JWT_SECRET) as unknown as AuthUser;
     } catch (jwtError: any) {
       // تشخیص دقیق نوع خطای JWT با استفاده از خود شیء jwt
       if (jwtError instanceof jwt.TokenExpiredError) {

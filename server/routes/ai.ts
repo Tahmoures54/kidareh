@@ -1,4 +1,4 @@
-﻿// server/routes/ai.ts
+// server/routes/ai.ts
 import express from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import db from "../db.js";
@@ -211,22 +211,56 @@ router.post("/chat", async (req, res) => {
 
 // ─── POST /api/ai/ask (simple question without image) ────
 router.post("/ask", async (req, res) => {
-  const { question, city } = req.body;
-  if (!question) return res.status(400).json({ error: "متن سوال الزامی است" });
+  const { question, city } = req.body || {};
+  if (!question || typeof question !== "string") {
+    return res.status(400).json({ error: "متن سوال الزامی است" });
+  }
 
-  // استفاده از همان منطق چت با history خالی
-  req.body.message = question;
-  req.body.image = undefined;
-  req.body.history = [];
-  req.body.city = city;
+  const message = question.trim();
+  const groundingText = fetchGroundingProducts(city);
+  const client = getAiClient();
 
-  // فراخوانی مستقیم کنترلر چت
-  return router.handle(req, res); // یا می‌توانیم منطق را تکرار کنیم اما بهتر است به handler داخلی هدایت شود
-  // در Express نمی‌توان به سادگی handler دیگر را صدا زد، بنابراین کد را مجدداً استفاده می‌کنیم.
+  if (!client) {
+    const sim = simulateResponse(message, false, groundingText);
+    return res.json({
+      success: true,
+      reply: sim.reply,
+      suggestedQuery: sim.suggestedQuery,
+      simulated: true,
+    });
+  }
+
+  try {
+    const model = client.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const systemPrompt = buildSystemPrompt(city).replace("[DATABASE_PRODUCTS]", groundingText);
+    const chat = model.startChat({
+      history: [
+        { role: "user", parts: [{ text: systemPrompt }] },
+        { role: "model", parts: [{ text: "باشه، آماده‌ام کمکت کنم." }] },
+      ],
+    });
+    const result = await chat.sendMessage([{ text: message }]);
+    const replyText = result.response.text() || "متاسفم، الان نمی‌تونم پاسخ بدم.";
+    return res.json({
+      success: true,
+      reply: replyText,
+      suggestedQuery: message.substring(0, 30).trim(),
+      simulated: false,
+    });
+  } catch (err: any) {
+    logger.error("Gemini ask error:", err?.message || err);
+    const sim = simulateResponse(message, false, groundingText);
+    return res.json({
+      success: true,
+      reply: "⚠️ (حالت آفلاین)\n" + sim.reply,
+      suggestedQuery: sim.suggestedQuery,
+      simulated: true,
+    });
+  }
 });
 
 // ─── POST /api/ai/speech-to-text (placeholder) ────────────
-router.post("/speech-to-text", async (req, res) => {
+router.post("/speech-to-text", async (_req, res) => {
   // این قابلیت نیاز به Google Speech-to-Text API دارد.
   // در حال حاضر پاسخ استاندارد می‌دهیم که قابل توسعه است.
   return res.json({
