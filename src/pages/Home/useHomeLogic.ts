@@ -4,7 +4,7 @@ import { useGeolocation } from "../../hooks/useGeolocation";
 import { useInfiniteProducts } from "../../hooks/useInfiniteProducts";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
-import { useDebounce } from "./hooks/useDebounce";
+import useDebounce from "./hooks/useDebounce";
 import { HOME_CONFIG, AppUser, SortType } from "./constants";
 
 export const useHomeLogic = () => {
