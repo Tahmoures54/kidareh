@@ -32,7 +32,6 @@ uploads/
 logs/
 backup/
 temp/
-data/
 
 # IDE & editors
 .vscode/
