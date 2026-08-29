@@ -1,5 +1,8 @@
 {
   "app": "kidareh",
   "platform": "node",
-  "port": 3000
+  "port": 3000,
+  "node": {
+    "mirror": false
+  }
 }
