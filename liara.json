@@ -1,5 +1,5 @@
 {
-  "app": "kidareh-back",
-  "platform": "docker",
+  "app": "kidareh",
+  "platform": "node",
   "port": 3000
 }
