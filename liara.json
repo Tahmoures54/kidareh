@@ -3,7 +3,7 @@
   "platform": "node",
   "port": 3000,
   "node": {
-    "version": "22.22.1",
+    "version": "22",
     "mirror": false
   }
 }
