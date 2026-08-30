@@ -5,7 +5,7 @@ import { useInfiniteProducts } from "../../hooks/useInfiniteProducts";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 import useDebounce from "./hooks/useDebounce";
-import { HOME_CONFIG, AppUser, SortType } from "./constants";
+import { HOME_CONFIG, AppUser, SortType, ManualLocation } from "./constants";
 
 export const useHomeLogic = () => {
   const { user } = useAuth() as { user: AppUser | null };
@@ -13,7 +13,10 @@ export const useHomeLogic = () => {
   // -------------------- States --------------------
   const [scope, setScope] = useState<"city" | "all">("city");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [manualLocation, setManualLocation] = useLocalStorage<any>("manual-location", null);
+  const [manualLocation, setManualLocation] = useLocalStorage<ManualLocation | null>(
+    "manual-location",
+    null
+  );
   const [favorites, setFavorites] = useLocalStorage<string[]>("favorites", []);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -28,15 +31,14 @@ export const useHomeLogic = () => {
   const effectiveProvince = manualLocation?.province || realProvince || "";
 
   // -------------------- Data Fetching --------------------
-  // در اینجا flatProducts را مستقیماً از هوک بهینه‌شده دریافت می‌کنیم
-  const { 
-    flatProducts: allProducts, // تغییر نام برای استفاده راحت در UI
-    isLoading, 
-    isFetchingNextPage, 
-    hasNextPage, 
-    fetchNextPage, 
-    error, 
-    refetch 
+  const {
+    flatProducts: allProducts,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error,
+    refetch,
   } = useInfiniteProducts({
     scope,
     city: scope === "city" ? effectiveCity : undefined,
@@ -54,29 +56,48 @@ export const useHomeLogic = () => {
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
-    rootMargin: "300px 0px"
+    rootMargin: "300px 0px",
   });
 
   // -------------------- Handlers --------------------
-  const toggleFavorite = useCallback((productId: string) => {
-    setFavorites((prev: string[]) =>
-      prev.includes(productId) ? prev.filter(id => id !== productId) : [...prev, productId]
-    );
-  }, [setFavorites]);
+  const toggleFavorite = useCallback(
+    (productId: string) => {
+      setFavorites((prev: string[]) =>
+        prev.includes(productId)
+          ? prev.filter((id) => id !== productId)
+          : [...prev, productId]
+      );
+    },
+    [setFavorites]
+  );
 
-  const handleCityChange = useCallback((city: string, display: string, province: string) => {
-    setManualLocation({ city, display, province });
-  }, [setManualLocation]);
+  const handleCityChange = useCallback(
+    (city: string, display: string, province: string) => {
+      setManualLocation({ city, display, province });
+    },
+    [setManualLocation]
+  );
 
   const handleClearFilters = useCallback(() => {
     setSearch("");
     setActiveCategory(null);
     setSort("newest");
+    setScope("city"); // بازنشانی محدوده به حالت پیش‌فرض
   }, []);
 
   // -------------------- Computed Values --------------------
-  const hasActiveFilters = !!(activeCategory || debouncedSearch || sort !== "newest");
-  const filterCount = [activeCategory, debouncedSearch, sort !== "newest"].filter(Boolean).length;
+  const hasActiveFilters = !!(
+    activeCategory ||
+    debouncedSearch ||
+    sort !== "newest" ||
+    scope !== "city"
+  );
+  const filterCount = [
+    activeCategory,
+    debouncedSearch,
+    sort !== "newest",
+    scope !== "city",
+  ].filter(Boolean).length;
 
   return {
     // Data
@@ -87,7 +108,7 @@ export const useHomeLogic = () => {
     isFetchingNextPage,
     hasNextPage,
     error,
-    
+
     // States
     scope,
     search,
@@ -96,14 +117,14 @@ export const useHomeLogic = () => {
     isLocationModalOpen,
     hasActiveFilters,
     filterCount,
-    
+
     // Location
     effectiveCity,
     effectiveDisplay,
     effectiveProvince,
     gpsEnabled,
     manualLocation,
-    
+
     // Handlers & Refs
     setScope,
     setSearch,
@@ -114,6 +135,6 @@ export const useHomeLogic = () => {
     handleCityChange,
     handleClearFilters,
     refetch,
-    loadMoreRef
+    loadMoreRef,
   };
 };
