@@ -211,7 +211,8 @@ async function startServer() {
 
     const app = express();
     const httpServer = createServer(app);
-    app.set("trust proxy", "loopback, linklocal, uniquelocal");
+    // لیارا / reverse-proxy: یک hop قابل اعتماد برای IP واقعی و rate-limit
+    app.set("trust proxy", isProd ? 1 : "loopback, linklocal, uniquelocal");
     app.disable("x-powered-by");
     app.use(compression());
     app.use(cors(CORS_OPTIONS));
@@ -230,8 +231,6 @@ async function startServer() {
     app.use(express.urlencoded({ extended: true, limit: "10mb" }));
     app.use(cookieParser(process.env.COOKIE_SECRET!));
 
-    // Cookie-authenticated state-changing requests require a same-origin/same-site Origin.
-    // This complements SameSite cookies and blocks cross-site form/fetch CSRF attempts.
     app.use((req: Request, res: Response, next: NextFunction) => {
       if (!isProd || !req.path.startsWith("/api/") || ["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
       const sessionCookie = (req as any).cookies?.["__Host-kidareh_session"] || (req as any).cookies?.kidareh_session;
@@ -246,7 +245,6 @@ async function startServer() {
     setupSocket(io);
     app.set("io", io);
 
-    // Public media is limited to non-sensitive asset folders. Support files stay private.
     for (const folder of ["products", "avatars", "stores"]) {
       app.use(`/uploads/${folder}`, express.static(path.join(ROOT_DIR, `data/uploads/${folder}`), { maxAge: "7d" }));
     }
