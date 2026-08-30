@@ -7,7 +7,11 @@ import { HomeErrorBoundary } from "./components/ErrorBoundary";
 import { Header } from "./components/HeaderWidgets";
 import { SearchBar } from "./components/SearchBar";
 import { ResultHeader } from "./components/ResultHeader";
-import { PremiumProductCard, ProductCardSkeleton, SegmentedScope } from "./components/ProductSections";
+import {
+  PremiumProductCard,
+  ProductCardSkeleton,
+  SegmentedScope,
+} from "./components/ProductSections";
 import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
 import { LocationModal } from "./components/LocationModal";
@@ -15,7 +19,10 @@ import { SponsoredBanner } from "./components/SponsoredBanner";
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: HOME_CONFIG.ANIMATION_STAGGER } },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: HOME_CONFIG.ANIMATION_STAGGER },
+  },
 };
 
 export default function Home() {
@@ -23,7 +30,10 @@ export default function Home() {
 
   return (
     <HomeErrorBoundary>
-      <div className="flex flex-col min-h-screen bg-[var(--bg-primary)] font-sans" dir="rtl">
+      <div
+        className="flex flex-col min-h-screen bg-[var(--bg-primary)] font-sans"
+        dir="rtl"
+      >
         <Header
           user={logic.user}
           effectiveCity={logic.effectiveCity}
@@ -42,15 +52,26 @@ export default function Home() {
         />
 
         <div className="sticky top-14 z-30 bg-[var(--bg-primary)] shadow-sm">
-          <SearchBar value={logic.search} onChange={logic.setSearch} placeholder="چی لازم داری؟ همین دور و بر…" />
-          <CategorySlider activeCategory={logic.activeCategory} onSelectCategory={logic.setActiveCategory} />
+          <SearchBar
+            value={logic.search}
+            onChange={logic.setSearch}
+            placeholder="چی لازم داری؟ همین دور و بر…"
+          />
+          <CategorySlider
+            activeCategory={logic.activeCategory}
+            onSelectCategory={logic.setActiveCategory}
+          />
         </div>
 
         <main className="flex-1 pb-24 pt-4">
           <SponsoredBanner city={logic.effectiveCity} />
 
           <div className="px-4 mb-4">
-            <SegmentedScope scope={logic.scope} onScopeChange={logic.setScope} city={logic.effectiveCity} />
+            <SegmentedScope
+              scope={logic.scope}
+              onScopeChange={logic.setScope}
+              city={logic.effectiveCity}
+            />
           </div>
 
           <AnimatePresence>
@@ -79,12 +100,17 @@ export default function Home() {
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 className="px-4 mb-4 overflow-hidden"
+                role="alert"
+                aria-live="assertive"
               >
                 <div className="flex items-center justify-between p-3.5 rounded-2xl bg-rose-50 border border-rose-200">
                   <span className="flex items-center gap-2 text-xs font-bold text-rose-600">
                     <AlertCircle className="w-4 h-4" /> نت یه لحظه قطع شد
                   </span>
-                  <button onClick={() => logic.refetch()} className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-100 text-rose-700">
+                  <button
+                    onClick={() => logic.refetch()}
+                    className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-100 text-rose-700"
+                  >
                     دوباره تلاش کن
                   </button>
                 </div>
@@ -94,14 +120,21 @@ export default function Home() {
 
           <div className="px-4">
             {!logic.isLoading && logic.allProducts.length > 0 && (
-              <ResultHeader count={logic.allProducts.length} sort={logic.sort} onSortChange={logic.setSort} isLoading={logic.isLoading} />
+              <ResultHeader
+                count={logic.allProducts.length}
+                sort={logic.sort}
+                onSortChange={logic.setSort}
+                isLoading={logic.isLoading}
+              />
             )}
 
             {logic.isLoading && logic.allProducts.length === 0 ? (
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                {Array.from({ length: HOME_CONFIG.SKELETON_COUNT }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
-                ))}
+                {Array.from({ length: HOME_CONFIG.SKELETON_COUNT }).map(
+                  (_, i) => (
+                    <ProductCardSkeleton key={i} />
+                  )
+                )}
               </div>
             ) : !logic.isLoading && logic.allProducts.length === 0 ? (
               <div className="py-12">
@@ -141,7 +174,10 @@ export default function Home() {
                   ))}
                 </motion.div>
 
-                <div ref={logic.loadMoreRef} className="h-20 flex items-center justify-center mt-6">
+                <div
+                  ref={logic.loadMoreRef}
+                  className="h-20 flex items-center justify-center mt-6"
+                >
                   {logic.isFetchingNextPage && (
                     <div className="flex items-center gap-2 text-sm text-gray-500">
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -150,13 +186,17 @@ export default function Home() {
                   )}
                 </div>
 
-                {!logic.hasNextPage && logic.allProducts.length > 0 && !logic.isFetchingNextPage && (
-                  <div className="py-12 flex items-center justify-center gap-3">
-                    <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-300" />
-                    <p className="text-xs text-gray-400 font-medium">فعلاً همین‌ها بود 🌿</p>
-                    <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gray-300" />
-                  </div>
-                )}
+                {!logic.hasNextPage &&
+                  logic.allProducts.length > 0 &&
+                  !logic.isFetchingNextPage && (
+                    <div className="py-12 flex items-center justify-center gap-3">
+                      <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-300" />
+                      <p className="text-xs text-gray-400 font-medium">
+                        فعلاً همین‌ها بود 🌿
+                      </p>
+                      <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gray-300" />
+                    </div>
+                  )}
               </>
             )}
           </div>
