@@ -12,7 +12,7 @@
     },
     {
       "name": "uploads",
-      "mountTo": "data/uploads"
+      "mountTo": "public/uploads"
     }
   ]
 }
