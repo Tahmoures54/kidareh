@@ -1,5 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import type { CookieOptions, Response } from "express";
 import db from "../db.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { z } from "zod";
@@ -31,13 +32,33 @@ if (!SAFE_JWT_SECRET) {
 
 const KAVENEGAR_API_KEY = process.env.KAVENEGAR_API_KEY;
 if (!KAVENEGAR_API_KEY && isProduction) {
-  logger.error("FATAL: KAVENEGAR_API_KEY is missing!");
-  process.exit(1);
+  logger.warn("KAVENEGAR_API_KEY is missing — OTP SMS will fail until configured.");
 }
 
 const kavenegarApi = KAVENEGAR_API_KEY
   ? Kavenegar.KavenegarApi({ apikey: KAVENEGAR_API_KEY })
   : null;
+
+const SESSION_COOKIE = isProduction ? "__Host-kidareh_session" : "kidareh_session";
+
+function sessionCookieOptions(): CookieOptions {
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "strict" : "lax",
+    path: "/",
+    maxAge: 60 * 60 * 1000,
+  };
+}
+
+function clearSessionCookie(res: Response): void {
+  res.clearCookie(SESSION_COOKIE, {
+    path: "/",
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "strict" : "lax",
+  });
+}
 
 async function sendSms(phone: string, otp: string): Promise<boolean> {
   if (!kavenegarApi) {
@@ -56,7 +77,7 @@ async function sendSms(phone: string, otp: string): Promise<boolean> {
     try {
       kavenegarApi.VerifyLookup(
         { receptor: phone, token: otp, template: process.env.KAVENEGAR_TEMPLATE || "verify" },
-        (response: any, status: any) => {
+        (_response: any, status: any) => {
           if (!isResolved) {
             clearTimeout(timeout);
             isResolved = true;
@@ -168,10 +189,7 @@ router.post("/send-otp", async (req, res) => {
     logger.info(`OTP generated for ${phone}`);
     const sent = await sendSms(phone, otp);
     if (sent) return res.json({ message: "کد تأیید ارسال شد", success: true });
-    const isAdminPhone = !!process.env.ADMIN_PHONE && phone === process.env.ADMIN_PHONE;
-    if (isAdminPhone) {
-      return res.json({ message: "کد تأیید به ادمین ارسال نشد اما اجازه ورود صادر شد", success: true });
-    }
+    // بدون SMS واقعی فقط در dev با SHOW_OTP_IN_DEV کد را برمی‌گردانیم
     if (!isProduction && process.env.SHOW_OTP_IN_DEV === "true") {
       return res.json({ message: "کد تأیید (تستی) تولید شد.", success: true, otp });
     }
@@ -241,13 +259,7 @@ router.post("/verify-otp", async (req, res) => {
       SAFE_JWT_SECRET,
       { expiresIn: "60m" }
     );
-    res.cookie(isProduction ? "__Host-kidareh_session" : "kidareh_session", token, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "strict" : "lax",
-      path: "/",
-      maxAge: 60 * 60 * 1000,
-    });
+    res.cookie(SESSION_COOKIE, token, sessionCookieOptions());
     return res.json({
       user: { ...user, is_profile_complete: !!user.is_profile_complete },
       ...(process.env.LEGACY_EXPOSE_TOKEN === "true" ? { token } : {}),
@@ -271,11 +283,11 @@ router.get("/me", requireAuth, (req: AuthRequest, res) => {
       LEFT JOIN referral_links rl ON u.id = rl.owner_user_id
       WHERE u.id = ?`).get(req.user!.id) as any;
     if (!user) {
-      res.clearCookie(isProduction ? "__Host-kidareh_session" : "kidareh_session", { path: "/" });
+      clearSessionCookie(res);
       return res.status(404).json({ error: "کاربر یافت نشد" });
     }
     if (user.is_banned) {
-      res.clearCookie(isProduction ? "__Host-kidareh_session" : "kidareh_session", { path: "/" });
+      clearSessionCookie(res);
       return res.status(403).json({ error: "حساب شما مسدود شده است", reason: user.ban_reason });
     }
     return res.json({ user: { ...user, is_profile_complete: !!user.is_profile_complete } });
@@ -326,8 +338,7 @@ router.post("/complete-profile", requireAuth, (req: AuthRequest, res) => {
 });
 
 router.post("/logout", (_req, res) => {
-  const cookieName = isProduction ? "__Host-kidareh_session" : "kidareh_session";
-  res.clearCookie(cookieName, { path: "/" });
+  clearSessionCookie(res);
   res.setHeader("Clear-Site-Data", '"cache", "storage"');
   return res.json({ success: true });
 });
@@ -339,14 +350,7 @@ router.post("/refresh", requireAuth, (req: AuthRequest, res) => {
       SAFE_JWT_SECRET,
       { expiresIn: "60m" }
     );
-    const cookieName = isProduction ? "__Host-kidareh_session" : "kidareh_session";
-    res.cookie(cookieName, newToken, {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "strict" : "lax",
-      path: "/",
-      maxAge: 60 * 60 * 1000,
-    });
+    res.cookie(SESSION_COOKIE, newToken, sessionCookieOptions());
     return res.json({ success: true });
   } catch (err) {
     logger.error("Refresh token error:", err);
