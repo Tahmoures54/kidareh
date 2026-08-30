@@ -8,15 +8,16 @@ export const HOME_CONFIG = {
   ANIMATION_STAGGER: 0.05,
   SKELETON_COUNT: 8,
   SEARCH_DEBOUNCE_MS: 500,
+  HEADER_CITY_MAX_WIDTH: 100, // حداکثر عرض نام شهر در هدر
 } as const;
 
 /**
  * تنظیمات انیمیشن‌های Framer Motion
  */
-export const SPRING_TRANSITION = { 
-  type: "spring", 
-  stiffness: 300, 
-  damping: 24 
+export const SPRING_TRANSITION = {
+  type: "spring",
+  stiffness: 300,
+  damping: 24,
 } as const;
 
 /**
@@ -29,7 +30,7 @@ export const SORT_OPTIONS = [
 ] as const;
 
 // استخراج خودکار تایپ‌ها از روی مقادیر (TypeScript Magic)
-export type SortType = typeof SORT_OPTIONS[number]["value"];
+export type SortType = (typeof SORT_OPTIONS)[number]["value"];
 
 /**
  * مدل داده‌ای کاربر
@@ -40,4 +41,13 @@ export interface AppUser {
   name?: string;
   phone?: string;
   avatar_url?: string;
+}
+
+/**
+ * موقعیت مکانی دستی ذخیره‌شده در localStorage
+ */
+export interface ManualLocation {
+  city: string;
+  display: string;
+  province: string;
 }
