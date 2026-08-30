@@ -1,4 +1,4 @@
-﻿import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -16,7 +16,6 @@ import { SupportProvider } from "./context/SupportContext";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
 
-/* ====================== LAZY PAGES ====================== */
 const Login = lazy(() => import("./pages/Login"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -38,10 +37,9 @@ const AIPage = lazy(() => import("./pages/AI"));
 const SupportPage = lazy(() => import("./pages/Support"));
 const TermsAndGuidePage = lazy(() => import("./pages/TermsAndGuide"));
 const Privacy = lazy(() => import("./pages/Privacy"));
-const BecomeSeller = lazy(() => import("./pages/BecomeSeller")); // صفحه ارتقا به فروشنده
-const OnboardingFlow = lazy(() => import("./pages/Onboarding")); // صفحه ثبت‌نام برای کاربران جدید
+const BecomeSeller = lazy(() => import("./pages/BecomeSeller"));
+const OnboardingFlow = lazy(() => import("./pages/Onboarding"));
 
-/* ====================== COMPONENTS ====================== */
 function PageLoader() {
   return (
     <div
@@ -87,51 +85,48 @@ function NotFound() {
   );
 }
 
-/* ====================== AUTH ROUTES ====================== */
-
-// مسیر محافظت شده عمومی (فقط لاگین کرده باشد)
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { isAuthenticated, loading, refreshing } = useAuth();
-
   if (loading || refreshing) return <PageLoader />;
-
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
-
   return <>{children}</>;
 }
 
-// مسیر محافظت شده فروشنده (لاگین کرده و نقش فروشنده/ادمین را داشته باشد)
 function SellerProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const { isAuthenticated, isSeller, loading, refreshing } = useAuth();
-
   if (loading || refreshing) return <PageLoader />;
-
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
-
-  // اگر کاربر است اما فروشنده نیست -> هدایت به صفحه ارتقا حساب
   if (!isSeller) {
     return <Navigate to="/become-seller" replace state={{ from: location.pathname }} />;
   }
-
   return <>{children}</>;
 }
 
-// مسیر مهمان (فقط برای کاربرانی که لاگین نکرده‌اند)
+function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
+  const location = useLocation();
+  const { isAuthenticated, isAdmin, loading, refreshing } = useAuth();
+  if (loading || refreshing) return <PageLoader />;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
 function GuestRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading, refreshing } = useAuth();
-
   if (loading || refreshing) return <PageLoader />;
-
   return isAuthenticated ? <Navigate to="/" replace /> : <>{children}</>;
 }
 
-/* ====================== MAIN APP ====================== */
 export default function App() {
   return (
     <AuthProvider>
@@ -141,7 +136,6 @@ export default function App() {
             <ScrollToTop />
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                {/* مسیرهای دارای Layout اصلی سایت */}
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Home />} />
                   <Route path="search" element={<Search />} />
@@ -153,109 +147,41 @@ export default function App() {
                   <Route path="privacy" element={<Privacy />} />
                   <Route path="ai" element={<AIPage />} />
 
-                  {/* مسیرهای نیازمند لاگین (Protected) */}
-                  <Route
-                    path="profile"
-                    element={<ProtectedRoute><Profile /></ProtectedRoute>}
-                  />
-                  <Route
-                    path="complete-profile"
-                    element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>}
-                  />
-                  <Route
-                    path="saved"
-                    element={<ProtectedRoute><Saved /></ProtectedRoute>}
-                  />
-                  <Route
-                    path="messages"
-                    element={<ProtectedRoute><Messages /></ProtectedRoute>}
-                  />
-                  <Route
-                    path="referral"
-                    element={<ProtectedRoute><ReferralPage /></ProtectedRoute>}
-                  />
-                  
-                  {/* صفحه ارتقا به فروشنده (نیاز به لاگین دارد اما نیاز به نقش فروشنده ندارد) */}
-                  <Route
-                    path="become-seller"
-                    element={<ProtectedRoute><BecomeSeller /></ProtectedRoute>}
-                  />
+                  <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
+                  <Route path="saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
+                  <Route path="messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                  <Route path="referral" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
+                  <Route path="become-seller" element={<ProtectedRoute><BecomeSeller /></ProtectedRoute>} />
 
-                  {/* پنل فروشنده (نیازمند نقش فروشنده) */}
-                  <Route
-                    path="seller"
-                    element={<SellerProtectedRoute><SellerPanel /></SellerProtectedRoute>}
-                  />
-                  <Route
-                    path="dashboard"
-                    element={<SellerProtectedRoute><SellerPanel /></SellerProtectedRoute>}
-                  />
-                  <Route
-                    path="add-product"
-                    element={<SellerProtectedRoute><AddProduct /></SellerProtectedRoute>}
-                  />
-                  <Route
-                    path="buy-badge"
-                    element={<SellerProtectedRoute><BuyBadge /></SellerProtectedRoute>}
-                  />
+                  <Route path="seller" element={<SellerProtectedRoute><SellerPanel /></SellerProtectedRoute>} />
+                  <Route path="dashboard" element={<SellerProtectedRoute><SellerPanel /></SellerProtectedRoute>} />
+                  <Route path="add-product" element={<SellerProtectedRoute><AddProduct /></SellerProtectedRoute>} />
+                  <Route path="buy-badge" element={<SellerProtectedRoute><BuyBadge /></SellerProtectedRoute>} />
 
-                  {/* پنل ادمین */}
-                  <Route
-                    path="admin"
-                    element={<ProtectedRoute><AdminPanel /></ProtectedRoute>}
-                  />
-                  <Route
-                    path="admin/stats"
-                    element={<ProtectedRoute><AdminPanel /></ProtectedRoute>}
-                  />
+                  <Route path="admin" element={<AdminProtectedRoute><AdminPanel /></AdminProtectedRoute>} />
+                  <Route path="admin/stats" element={<AdminProtectedRoute><AdminPanel /></AdminProtectedRoute>} />
                 </Route>
 
-                {/* مسیرهای مستقل (بدون Layout اصلی) */}
-                <Route
-                  path="/login"
-                  element={<GuestRoute><Login /></GuestRoute>}
-                />
-                <Route
-                  path="/onboarding"
-                  element={<GuestRoute><OnboardingFlow /></GuestRoute>}
-                />
+                <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+                <Route path="/onboarding" element={<GuestRoute><OnboardingFlow /></GuestRoute>} />
                 <Route path="/product/:id" element={<ProductDetail />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/store/:id" element={<StoreDetail />} />
                 <Route path="/stores/:id" element={<StoreDetail />} />
-                <Route
-                  path="/chat/:id"
-                  element={<ProtectedRoute><ChatRoom /></ProtectedRoute>}
-                />
-                <Route
-                  path="/chat/:conversationId/:userId"
-                  element={<ProtectedRoute><ChatRoom /></ProtectedRoute>}
-                />
-                <Route
-                  path="/payment-callback"
-                  element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>}
-                />
-                <Route
-                  path="/payment/callback"
-                  element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>}
-                />
-                <Route
-                  path="/seller/add-product"
-                  element={<SellerProtectedRoute><AddProduct /></SellerProtectedRoute>}
-                />
-                <Route
-                  path="/seller/buy-badge"
-                  element={<SellerProtectedRoute><BuyBadge /></SellerProtectedRoute>}
-                />
+                <Route path="/chat/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+                <Route path="/chat/:conversationId/:userId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
+                <Route path="/payment-callback" element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>} />
+                <Route path="/payment/callback" element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>} />
+                <Route path="/seller/add-product" element={<SellerProtectedRoute><AddProduct /></SellerProtectedRoute>} />
+                <Route path="/seller/buy-badge" element={<SellerProtectedRoute><BuyBadge /></SellerProtectedRoute>} />
 
-                {/* ریدایرکت‌ها */}
                 <Route path="/home" element={<Navigate to="/" replace />} />
                 <Route path="/saved-products" element={<Navigate to="/saved" replace />} />
                 <Route path="/dashboard/products" element={<Navigate to="/seller" replace />} />
                 <Route path="/products" element={<Navigate to="/search" replace />} />
                 <Route path="/wallet" element={<Navigate to="/referral" replace />} />
 
-                {/* 404 */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </Suspense>

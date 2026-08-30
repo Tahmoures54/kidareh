@@ -1,10 +1,9 @@
 /**
- * Advanced API Service Layer
- * Instagram-level API abstraction with interceptors, caching, and retry logic
+ * Advanced API Service Layer — cookie-only auth (no localStorage tokens)
  */
 
-import { ENV, getApiUrl } from './env';
-import { errorLogger, analytics } from '../utils/analytics';
+import { ENV, getApiUrl } from "../config/env";
+import { errorLogger, analytics } from "../utils/analytics";
 
 export interface RequestConfig {
   headers?: Record<string, string>;
@@ -29,111 +28,63 @@ class ApiService {
   private responseInterceptors: Array<(response: any) => any> = [];
   private errorInterceptors: Array<(error: Error) => Promise<any>> = [];
 
-  /**
-   * Add request interceptor
-   */
   addRequestInterceptor(interceptor: (config: RequestConfig) => RequestConfig): void {
     this.requestInterceptors.push(interceptor);
   }
 
-  /**
-   * Add response interceptor
-   */
   addResponseInterceptor(interceptor: (response: any) => any): void {
     this.responseInterceptors.push(interceptor);
   }
 
-  /**
-   * Add error interceptor
-   */
   addErrorInterceptor(interceptor: (error: Error) => Promise<any>): void {
     this.errorInterceptors.push(interceptor);
   }
 
-  /**
-   * GET request
-   */
-  async get<T = any>(
-    endpoint: string,
-    config: RequestConfig = {}
-  ): Promise<ApiResponse<T>> {
-    return this.request<T>('GET', endpoint, undefined, config);
+  async get<T = any>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+    return this.request<T>("GET", endpoint, undefined, config);
   }
 
-  /**
-   * POST request
-   */
-  async post<T = any>(
-    endpoint: string,
-    data: any,
-    config: RequestConfig = {}
-  ): Promise<ApiResponse<T>> {
-    return this.request<T>('POST', endpoint, data, config);
+  async post<T = any>(endpoint: string, data: any, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+    return this.request<T>("POST", endpoint, data, config);
   }
 
-  /**
-   * PUT request
-   */
-  async put<T = any>(
-    endpoint: string,
-    data: any,
-    config: RequestConfig = {}
-  ): Promise<ApiResponse<T>> {
-    return this.request<T>('PUT', endpoint, data, config);
+  async put<T = any>(endpoint: string, data: any, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+    return this.request<T>("PUT", endpoint, data, config);
   }
 
-  /**
-   * PATCH request
-   */
-  async patch<T = any>(
-    endpoint: string,
-    data: any,
-    config: RequestConfig = {}
-  ): Promise<ApiResponse<T>> {
-    return this.request<T>('PATCH', endpoint, data, config);
+  async patch<T = any>(endpoint: string, data: any, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+    return this.request<T>("PATCH", endpoint, data, config);
   }
 
-  /**
-   * DELETE request
-   */
-  async delete<T = any>(
-    endpoint: string,
-    config: RequestConfig = {}
-  ): Promise<ApiResponse<T>> {
-    return this.request<T>('DELETE', endpoint, undefined, config);
+  async delete<T = any>(endpoint: string, config: RequestConfig = {}): Promise<ApiResponse<T>> {
+    return this.request<T>("DELETE", endpoint, undefined, config);
   }
 
-  /**
-   * Core request method
-   */
   private async request<T>(
     method: string,
     endpoint: string,
     data?: any,
     config: RequestConfig = {}
   ): Promise<ApiResponse<T>> {
-    // Apply default config
     const finalConfig: RequestConfig = {
       timeout: ENV.API_TIMEOUT,
       retries: 3,
-      cache: method === 'GET' && config.requiresAuth === false,
+      cache: method === "GET" && config.requiresAuth === false,
       cacheTTL: ENV.CACHE_TTL,
       requiresAuth: true,
       ...config,
     };
 
-    // Apply request interceptors
     for (const interceptor of this.requestInterceptors) {
       Object.assign(finalConfig, interceptor(finalConfig));
     }
 
-    // Check cache for GET requests
-    if (method === 'GET' && finalConfig.cache && finalConfig.requiresAuth === false) {
+    if (method === "GET" && finalConfig.cache && finalConfig.requiresAuth === false) {
       const cached = this.getFromCache(endpoint);
       if (cached) {
         analytics.trackEvent({
-          name: 'api_cache_hit',
-          category: 'api',
+          name: "api_cache_hit",
+          category: "api",
           label: endpoint,
           metadata: { method },
         });
@@ -141,60 +92,42 @@ class ApiService {
       }
     }
 
-    // Execute request with retries
     let lastError: Error | null = null;
     for (let attempt = 0; attempt <= (finalConfig.retries || 0); attempt++) {
       try {
-        const response = await this.fetchWithTimeout(
-          method,
-          endpoint,
-          data,
-          finalConfig
-        );
-
-        // Apply response interceptors
+        const response = await this.fetchWithTimeout(method, endpoint, data, finalConfig);
         let finalResponse = response;
         for (const interceptor of this.responseInterceptors) {
           finalResponse = interceptor(finalResponse);
         }
-
-        // Cache successful GET responses
-        if (method === 'GET' && finalConfig.cache && finalConfig.requiresAuth === false && finalResponse.success) {
+        if (method === "GET" && finalConfig.cache && finalConfig.requiresAuth === false && finalResponse.success) {
           this.setCache(endpoint, finalResponse, finalConfig.cacheTTL || ENV.CACHE_TTL);
         }
-
-        // Log success
         analytics.trackEvent({
-          name: 'api_success',
-          category: 'api',
+          name: "api_success",
+          category: "api",
           label: endpoint,
-          metadata: { method, attempt, dataSize: JSON.stringify(data).length },
+          metadata: { method, attempt },
         });
-
         return finalResponse;
       } catch (error) {
         lastError = error as Error;
-
         if (attempt < (finalConfig.retries || 0)) {
-          const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
-          await new Promise(resolve => setTimeout(resolve, delay));
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delay));
         }
       }
     }
 
-    // Handle error
-    const finalError = lastError || new Error('Unknown API error');
-    
-    // Apply error interceptors
+    const finalError = lastError || new Error("Unknown API error");
     for (const interceptor of this.errorInterceptors) {
       try {
         await interceptor(finalError);
       } catch {
-        // Ignore interceptor errors
+        // ignore
       }
     }
 
-    // Log error
     errorLogger.logError(`API Error: ${method} ${endpoint}`, finalError, {
       endpoint,
       method,
@@ -202,8 +135,8 @@ class ApiService {
     });
 
     analytics.trackEvent({
-      name: 'api_error',
-      category: 'api',
+      name: "api_error",
+      category: "api",
       label: endpoint,
       metadata: { method, error: finalError.message },
     });
@@ -216,9 +149,6 @@ class ApiService {
     };
   }
 
-  /**
-   * Fetch with timeout
-   */
   private async fetchWithTimeout(
     method: string,
     endpoint: string,
@@ -227,13 +157,11 @@ class ApiService {
   ): Promise<ApiResponse> {
     const controller = new AbortController();
     const timeout = config?.timeout || ENV.API_TIMEOUT;
-    
     const timeoutId = setTimeout(() => controller.abort(), timeout);
 
     try {
       const url = getApiUrl(endpoint);
       const headers = this.buildHeaders(config);
-
       const response = await fetch(url, {
         method,
         headers,
@@ -243,7 +171,11 @@ class ApiService {
         cache: "no-store",
       });
 
-      const json = await response.json();
+      const json = await response.json().catch(() => ({}));
+
+      if (response.status === 401) {
+        window.dispatchEvent(new CustomEvent("kidareh:unauthorized"));
+      }
 
       if (!response.ok) {
         throw new Error(json.error || `HTTP ${response.status}`);
@@ -258,90 +190,53 @@ class ApiService {
     }
   }
 
-  /**
-   * Build request headers
-   */
   private buildHeaders(config?: RequestConfig): Record<string, string> {
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'X-Client-Version': ENV.APP_VERSION,
-      'X-Client-Timestamp': Date.now().toString(),
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "X-Client-Version": ENV.APP_VERSION,
+      "X-Client-Timestamp": Date.now().toString(),
     };
-
-    // Browser auth is carried by the HttpOnly session cookie.
-    // Never attach or persist credentials in localStorage.
-    void config;
-
-    // Merge custom headers
-    if (config?.headers) {
-      Object.assign(headers, config.headers);
-    }
-
+    // Auth is HttpOnly cookie only — never attach Bearer from storage
+    if (config?.headers) Object.assign(headers, config.headers);
     return headers;
   }
 
-  /**
-   * Cache management
-   */
   private getFromCache<T = any>(key: string): ApiResponse<T> | null {
     const cached = this.cache.get(key);
     if (!cached) return null;
-    
     if (Date.now() > cached.expiry) {
       this.cache.delete(key);
       return null;
     }
-
     return cached.data;
   }
 
   private setCache<T = any>(key: string, data: ApiResponse<T>, ttl: number): void {
-    this.cache.set(key, {
-      data,
-      expiry: Date.now() + ttl,
-    });
+    this.cache.set(key, { data, expiry: Date.now() + ttl });
   }
 
-  /**
-   * Clear cache
-   */
   clearCache(pattern?: string): void {
     if (!pattern) {
       this.cache.clear();
       return;
     }
-
     const regex = new RegExp(pattern);
     for (const [key] of this.cache) {
-      if (regex.test(key)) {
-        this.cache.delete(key);
-      }
+      if (regex.test(key)) this.cache.delete(key);
     }
   }
 
-  /**
-   * Get cache stats
-   */
   getCacheStats() {
-    return {
-      size: this.cache.size,
-      keys: Array.from(this.cache.keys()),
-    };
+    return { size: this.cache.size, keys: Array.from(this.cache.keys()) };
   }
 }
 
-// Singleton instance
 export const apiService = new ApiService();
 
-// Add default error interceptor for 401 (unauthorized)
 apiService.addErrorInterceptor(async (error) => {
-  if (error.message.includes('401') || error.message.includes('Unauthorized')) {
-    // Clear auth token and redirect to login
-    localStorage.removeItem(ENV.AUTH_TOKEN_KEY);
-    localStorage.removeItem(ENV.AUTH_REFRESH_KEY);
-    localStorage.removeItem(ENV.AUTH_EXPIRY_KEY);
-    window.location.href = '/login';
+  if (error.message.includes("401") || error.message.includes("Unauthorized")) {
+    window.dispatchEvent(new CustomEvent("kidareh:unauthorized"));
   }
 });
 

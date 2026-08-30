@@ -12,11 +12,13 @@ import { apiRequest, ApiError } from "../utils/api";
 
 /* ====================== TYPES ====================== */
 
+export type UserRole = "buyer" | "seller" | "admin" | "support" | "marketer";
+
 export interface User {
   id: string | number;
   name?: string;
   phone?: string;
-  role: "user" | "seller" | "admin";
+  role: UserRole | string;
   is_profile_complete?: boolean;
   email?: string;
   avatar_url?: string;
@@ -32,6 +34,7 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isSeller: boolean;
   isAdmin: boolean;
+  isSupport: boolean;
   sendOtp: (phone: string) => Promise<void>;
   verifyOtp: (phone: string, code: string) => Promise<User>;
   logout: () => Promise<void>;
@@ -43,27 +46,22 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-/* ====================== CONSTANTS ====================== */
-
 const USER_CACHE_KEY = "kidareh_user_cache_v2";
-const AUTH_CACHE_TTL = 5 * 60 * 1000; // ۵ دقیقه
+const AUTH_CACHE_TTL = 5 * 60 * 1000;
 const MAX_RETRY_ATTEMPTS = 3;
 const RETRY_DELAY = 1000;
-
-/* ====================== HELPER FUNCTIONS ====================== */
+/** JWT is 60m — refresh cookie well before expiry */
+const SESSION_REFRESH_MS = 35 * 60 * 1000;
 
 function readUserCache(): User | null {
   try {
     const cached = localStorage.getItem(USER_CACHE_KEY);
     if (!cached) return null;
-
     const { user, timestamp } = JSON.parse(cached);
-    
     if (Date.now() - timestamp > AUTH_CACHE_TTL) {
       localStorage.removeItem(USER_CACHE_KEY);
       return null;
     }
-
     return user;
   } catch {
     localStorage.removeItem(USER_CACHE_KEY);
@@ -83,10 +81,18 @@ function writeUserCache(user: User | null): void {
   }
 }
 
-// 🛡️ Pro Tip: پاکسازی کامل توکن‌ها برای امنیت
-function clearTokens(): void {
-  localStorage.removeItem("kidareh_token_v1");
-  localStorage.removeItem("token");
+function clearLegacyTokens(): void {
+  for (const key of [
+    "kidareh_token_v1",
+    "token",
+    "auth_token_v1",
+    "auth_refresh_v1",
+    "auth_expiry_v1",
+    "auth_refresh_token_v1",
+    "auth_token_expiry_v1",
+  ]) {
+    localStorage.removeItem(key);
+  }
 }
 
 async function retryRequest<T>(fn: () => Promise<T>, attempts = MAX_RETRY_ATTEMPTS, delay = RETRY_DELAY): Promise<T> {
@@ -95,13 +101,10 @@ async function retryRequest<T>(fn: () => Promise<T>, attempts = MAX_RETRY_ATTEMP
   } catch (err) {
     if (attempts <= 1) throw err;
     if (err instanceof ApiError && err.status >= 400 && err.status < 500) throw err;
-
     await new Promise((resolve) => setTimeout(resolve, delay));
     return retryRequest(fn, attempts - 1, delay * 2);
   }
 }
-
-/* ====================== PROVIDER ====================== */
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -113,27 +116,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isMountedRef = useRef(true);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
 
-  // 🚀 Pro Tip: گوش دادن به رویداد 401 از فایل api.ts
   useEffect(() => {
     const handleUnauthorized = () => {
       setUser(null);
       writeUserCache(null);
-      clearTokens();
-      // ریدایرکت سخت برای پاک شدن کامل مموری جاوااسکریپت
+      clearLegacyTokens();
       window.location.href = "/login";
     };
-
     window.addEventListener("kidareh:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("kidareh:unauthorized", handleUnauthorized);
   }, []);
 
-  // 🚀 Pro Tip: همگام‌سازی بین تب‌ها (Cross-Tab Synchronization)
   useEffect(() => {
     const syncAuth = (e: StorageEvent) => {
       if (e.key === USER_CACHE_KEY) {
         if (!e.newValue) {
           setUser(null);
-          clearTokens();
+          clearLegacyTokens();
         } else {
           try {
             setUser(JSON.parse(e.newValue).user);
@@ -143,7 +142,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     };
-
     window.addEventListener("storage", syncAuth);
     return () => window.removeEventListener("storage", syncAuth);
   }, []);
@@ -158,17 +156,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const promise = (async () => {
       if (!isMountedRef.current) return;
-
       try {
         setRefreshing(true);
         const data = await retryRequest(() =>
           apiRequest<{ user: User } | User>("/api/auth/me", { method: "GET", auth: true })
         );
-
         if (!isMountedRef.current) return;
-
         const userData = (data as any)?.user ?? (data as User);
-
         if (userData && typeof userData === "object") {
           setUser(userData);
           writeUserCache(userData);
@@ -178,11 +172,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (err) {
         if (!isMountedRef.current) return;
-
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
           setUser(null);
           writeUserCache(null);
-          clearTokens();
+          clearLegacyTokens();
         } else {
           const cachedUser = readUserCache();
           setUser(cachedUser ?? null);
@@ -200,13 +193,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       try {
         const cachedUser = readUserCache();
-        if (cachedUser && mounted) {
-          setUser(cachedUser);
-        }
+        if (cachedUser && mounted) setUser(cachedUser);
         if (mounted) await refreshMe();
       } catch (err) {
         console.error("Initial auth load failed:", err);
@@ -214,9 +204,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) setLoading(false);
       }
     })();
-
     return () => { mounted = false; };
   }, [refreshMe]);
+
+  // تمدید نشست HttpOnly قبل از انقضای ۶۰ دقیقه‌ای
+  useEffect(() => {
+    if (!user) return;
+    const tick = async () => {
+      try {
+        await apiRequest("/api/auth/refresh", { method: "POST", auth: true, credentials: "include" });
+      } catch {
+        // 401 توسط api.ts رویداد unauthorized می‌فرستد
+      }
+    };
+    const id = window.setInterval(tick, SESSION_REFRESH_MS);
+    return () => window.clearInterval(id);
+  }, [user]);
 
   const sendOtp = useCallback(async (phone: string): Promise<void> => {
     if (!isMountedRef.current) return;
@@ -234,7 +237,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!isMountedRef.current) throw new Error("Component unmounted");
     setError(null);
     setVerifying(true);
-
     try {
       const data = await apiRequest<{ user?: User }>("/api/auth/verify-otp", {
         method: "POST",
@@ -242,18 +244,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         auth: false,
         credentials: "include",
       });
-
       if (!isMountedRef.current) throw new Error("Component unmounted");
-
       if (data?.user) {
         const userData = data.user;
         setUser(userData);
         writeUserCache(userData);
         return userData;
       }
-
       await refreshMe();
-      return readUserCache() as User; // پس از رفرش باید کش موجود باشد
+      return readUserCache() as User;
     } catch (err) {
       if (!isMountedRef.current) throw err;
       setError(err instanceof ApiError ? err.message : "کد وارد شده نادرست است. دوباره تلاش کنید.");
@@ -265,7 +264,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async (): Promise<void> => {
     if (!isMountedRef.current) return;
-
     try {
       await apiRequest("/api/auth/logout", { method: "POST", auth: true, credentials: "include" });
     } catch (err) {
@@ -274,9 +272,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (isMountedRef.current) {
         setUser(null);
         writeUserCache(null);
-        clearTokens(); // 🛡️ پاکسازی امنیتی
+        clearLegacyTokens();
         setError(null);
-
         try {
           if ("serviceWorker" in navigator && navigator.serviceWorker.controller) {
             navigator.serviceWorker.controller.postMessage({ type: "CLEAR_CACHE" });
@@ -301,11 +298,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<AuthContextType>(
     () => ({
-      user, loading, isLoading: loading, refreshing, verifying,
+      user,
+      loading,
+      isLoading: loading,
+      refreshing,
+      verifying,
       isAuthenticated: !!user,
       isSeller: user?.role === "seller" || user?.role === "admin",
       isAdmin: user?.role === "admin",
-      sendOtp, verifyOtp, logout, refreshMe, updateUser, clearError, error,
+      isSupport: user?.role === "support" || user?.role === "admin",
+      sendOtp,
+      verifyOtp,
+      logout,
+      refreshMe,
+      updateUser,
+      clearError,
+      error,
     }),
     [user, loading, refreshing, verifying, sendOtp, verifyOtp, logout, refreshMe, updateUser, clearError, error]
   );
@@ -322,25 +330,26 @@ export function useAuth(): AuthContextType {
 export function useRequireAuth(redirectTo = "/login") {
   const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
-
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      navigate(redirectTo, { replace: true });
-    }
+    if (!loading && !isAuthenticated) navigate(redirectTo, { replace: true });
   }, [isAuthenticated, loading, navigate, redirectTo]);
-
   return { isAuthenticated, loading };
 }
 
 export function useRequireSeller(redirectTo = "/") {
   const { isSeller, loading } = useAuth();
   const navigate = useNavigate();
-
   useEffect(() => {
-    if (!loading && !isSeller) {
-      navigate(redirectTo, { replace: true });
-    }
+    if (!loading && !isSeller) navigate(redirectTo, { replace: true });
   }, [isSeller, loading, navigate, redirectTo]);
-
   return { isSeller, loading };
+}
+
+export function useRequireAdmin(redirectTo = "/") {
+  const { isAdmin, loading } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!loading && !isAdmin) navigate(redirectTo, { replace: true });
+  }, [isAdmin, loading, navigate, redirectTo]);
+  return { isAdmin, loading };
 }
