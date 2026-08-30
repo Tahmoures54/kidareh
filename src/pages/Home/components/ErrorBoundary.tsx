@@ -1,12 +1,12 @@
 import React, { Component, ErrorInfo } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
 
-interface Props { 
-  children: React.ReactNode; 
+interface Props {
+  children: React.ReactNode;
 }
 
-interface State { 
-  hasError: boolean; 
+interface State {
+  hasError: boolean;
 }
 
 export class HomeErrorBoundary extends Component<Props, State> {
@@ -14,15 +14,15 @@ export class HomeErrorBoundary extends Component<Props, State> {
     super(props);
     this.state = { hasError: false };
   }
-  
-  static getDerivedStateFromError(_: Error): State { 
-    return { hasError: true }; 
+
+  static getDerivedStateFromError(_: Error): State {
+    return { hasError: true };
   }
-  
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) { 
-    console.error("Home Page Error:", error, errorInfo); 
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Home Page Error:", error, errorInfo);
   }
-  
+
   render() {
     if (this.state.hasError) {
       return (
@@ -36,8 +36,8 @@ export class HomeErrorBoundary extends Component<Props, State> {
           <p className="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-xs">
             یک خطای غیرمنتظره رخ داده است. لطفاً صفحه را رفرش کنید.
           </p>
-          <button 
-            onClick={() => window.location.reload()} 
+          <button
+            onClick={() => window.location.reload()}
             className="flex items-center gap-2 px-6 py-3 bg-rose-600 text-white rounded-2xl font-bold text-sm shadow-lg shadow-rose-500/30 active:scale-95 transition-transform"
           >
             <RefreshCw className="w-4 h-4" /> بارگذاری مجدد
