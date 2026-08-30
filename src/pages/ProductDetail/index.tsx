@@ -1,7 +1,7 @@
-﻿import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AlertCircle, Check } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react"; // یکپارچه شدن فریمورک
+import { motion, AnimatePresence } from "motion/react";
 
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest, ApiError } from "../../utils/api";
@@ -11,15 +11,10 @@ import { FloatingHeader } from "./components/FloatingHeader";
 import { ImageCarousel, GalleryModal } from "./components/ImageGallery";
 import { ProductInfo } from "./components/ProductInfo";
 import { StoreCard } from "./components/StoreCard";
-
-// مسیر اصلاح شده
 import { BottomActionBar } from "../../components/ui/BottomActionBar";
-
-// --- Constants & Helpers ---
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
 
-// کامپوننت Toast محلی مخصوص این صفحه (چون استایل متفاوتی دارد)
 const Toast = ({ msg, type = "success" }: { msg: string; type?: "success" | "error" }) => (
   <motion.div
     initial={{ opacity: 0, y: -20, scale: 0.9 }}
@@ -42,21 +37,15 @@ const Toast = ({ msg, type = "success" }: { msg: string; type?: "success" | "err
 
 const calcDist = (la1: number, lo1: number, la2: number, lo2: number): string => {
   if (!la1 || !lo1 || !la2 || !lo2) return "نامشخص";
-  
   const R = 6371;
   const dLa = ((la2 - la1) * Math.PI) / 180;
   const dLo = ((lo2 - lo1) * Math.PI) / 180;
   const a =
     Math.sin(dLa / 2) ** 2 +
-    Math.cos((la1 * Math.PI) / 180) *
-      Math.cos((la2 * Math.PI) / 180) *
-      Math.sin(dLo / 2) ** 2;
+    Math.cos((la1 * Math.PI) / 180) * Math.cos((la2 * Math.PI) / 180) * Math.sin(dLo / 2) ** 2;
   const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
   return d < 1 ? `${Math.round(d * 1000)} متر` : `${d.toFixed(1)} کیلومتر`;
 };
-
-// --- Main Component ---
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -80,8 +69,6 @@ export default function ProductDetail() {
   const [followers, setFollowers] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
 
-  // --- Effects ---
-
   useEffect(() => {
     return () => {
       mounted.current = false;
@@ -95,8 +82,6 @@ export default function ProductDetail() {
     );
   }, []);
 
-  // --- Callbacks ---
-
   const showToast = useCallback((msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 2200);
@@ -108,14 +93,16 @@ export default function ProductDetail() {
     setError("");
     try {
       const data = await apiRequest<ProductData>(`/api/products/${id}`);
-      if (!mounted.current) return; // رفع باگ Memory Leak
+      if (!mounted.current) return;
       setProduct(data);
-      document.title = `${data.name} — کی داره؟`;
+      document.title = `${data.name} — کی‌داره`;
     } catch (err: unknown) {
-      if (!mounted.current) return; // رفع باگ Memory Leak
-      setError(err instanceof ApiError && err.status === 404 
-        ? "این آگهی یافت نشد یا حذف شده است" 
-        : "خطا در دریافت اطلاعات");
+      if (!mounted.current) return;
+      setError(
+        err instanceof ApiError && err.status === 404
+          ? "این کالا دیگه موجود نیست یا پاک شده."
+          : "نت یه لحظه قطع شد. دوباره امتحان کن."
+      );
     } finally {
       if (mounted.current) setLoading(false);
     }
@@ -125,10 +112,10 @@ export default function ProductDetail() {
     if (!id) return;
     try {
       const data = await apiRequest<Review[]>(`/api/products/${id}/reviews`);
-      if (!mounted.current) return; // رفع باگ Memory Leak
+      if (!mounted.current) return;
       setReviews(Array.isArray(data) ? data : []);
     } catch {
-      // silent catch for reviews
+      /* optional */
     }
   }, [id]);
 
@@ -139,17 +126,13 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!product?.store_id || !user) return;
-    
     apiRequest<{ following: boolean }>(`/api/stores/${product.store_id}/follow-status`)
       .then((r) => mounted.current && setFollowing(r.following))
       .catch(() => {});
-      
     apiRequest<{ count: number }>(`/api/stores/${product.store_id}/followers/count`)
       .then((r) => mounted.current && setFollowers(r.count))
       .catch(() => {});
   }, [product?.store_id, user]);
-
-  // --- Memos ---
 
   const images = useMemo(() => {
     if (!product) return [FALLBACK];
@@ -167,16 +150,14 @@ export default function ProductDetail() {
     return (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
   }, [reviews]);
 
-  const isProductAvailable = 
-    (product?.status || "").toLowerCase() === "موجود" || 
+  const isProductAvailable =
+    (product?.status || "").toLowerCase() === "موجود" ||
     (product?.status || "").toLowerCase() === "available";
 
   const hasBlueTick = useMemo(() => {
     if (!product?.blue_tick_expires_at) return false;
     return new Date(product.blue_tick_expires_at) > new Date();
   }, [product]);
-
-  // --- Handlers ---
 
   const handleSave = async () => {
     if (!user) return navigate("/login");
@@ -188,10 +169,10 @@ export default function ProductDetail() {
         method: "POST",
         body: { productId: Number(id), save: next },
       });
-      showToast(next ? "به علاقه‌مندی‌ها اضافه شد" : "از علاقه‌مندی‌ها حذف شد");
+      showToast(next ? "به علاقه‌مندی‌ها اضافه شد ❤️" : "از علاقه‌مندی‌ها برداشته شد");
     } catch {
       setSaved(!next);
-      showToast("خطا در ذخیره", "error");
+      showToast("ذخیره نشد. دوباره بزن.", "error");
     } finally {
       setSaveLoading(false);
     }
@@ -226,18 +207,33 @@ export default function ProductDetail() {
         showToast("لینک کپی شد");
       }
     } catch {
-      // User canceled sharing
+      /* cancelled */
     }
   };
 
   const handleNavigate = () => {
     if (!product?.lat || !product?.lng) {
-      return showToast("موقعیت نقشه ثبت نشده است", "error");
+      return showToast("آدرس نقشه ثبت نشده", "error");
     }
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${product.lat},${product.lng}`, "_blank");
+    window.open(
+      `https://www.google.com/maps/dir/?api=1&destination=${product.lat},${product.lng}`,
+      "_blank"
+    );
   };
 
-  // --- Render Loading State ---
+  const handleMessage = () => {
+    if (!user) return navigate("/login");
+    if (product?.store_id) navigate(`/chat/${product.store_id}`);
+    else navigate("/messages");
+  };
+
+  const handlePhoneClick = (e: React.MouseEvent) => {
+    if (!product?.store_phone) {
+      e.preventDefault();
+      showToast("شماره تماس ثبت نشده", "error");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--bg-primary)]">
@@ -252,32 +248,39 @@ export default function ProductDetail() {
     );
   }
 
-  // --- Render Error State ---
   if (error || !product) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-[var(--bg-primary)]">
-        <AlertCircle className="w-16 h-16 text-rose-400 mb-4" />
-        <h2 className="text-2xl font-black mb-2 text-[var(--text-primary)]">آگهی یافت نشد</h2>
-        <p className="text-[var(--text-muted)] mb-8">{error}</p>
-        <div className="flex gap-4">
+      <div
+        className="min-h-screen flex flex-col items-center justify-center p-6 text-center bg-[var(--bg-primary)]"
+        dir="rtl"
+      >
+        <div className="w-20 h-20 bg-rose-50 dark:bg-rose-500/10 rounded-3xl flex items-center justify-center mb-6">
+          <AlertCircle className="w-10 h-10 text-rose-400" />
+        </div>
+        <h2 className="text-2xl font-black mb-2 text-[var(--text-primary)]">کالا پیدا نشد</h2>
+        <p className="text-[var(--text-muted)] mb-8 max-w-xs leading-relaxed">
+          {error || "این صفحه دیگه در دسترس نیست."}
+        </p>
+        <div className="flex gap-3">
           <button
+            type="button"
             onClick={() => navigate(-1)}
-            className="px-8 py-3.5 bg-[var(--bg-tertiary)] rounded-2xl font-bold text-[var(--text-primary)]"
+            className="px-6 py-3.5 bg-[var(--bg-tertiary)] rounded-2xl font-bold text-[var(--text-primary)] active:scale-95"
           >
-            بازگشت
+            برگشت
           </button>
           <button
+            type="button"
             onClick={fetchProduct}
-            className="px-8 py-3.5 bg-[var(--brand-primary)] text-white rounded-2xl font-bold"
+            className="px-6 py-3.5 bg-teal-600 text-white rounded-2xl font-bold active:scale-95 shadow-lg shadow-teal-500/20"
           >
-            تلاش مجدد
+            دوباره تلاش کن
           </button>
         </div>
       </div>
     );
   }
 
-  // --- Render Main UI ---
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -285,16 +288,9 @@ export default function ProductDetail() {
       className="min-h-[100dvh] bg-[var(--bg-primary)] pb-[120px] font-sans relative"
       dir="rtl"
     >
-      <AnimatePresence>
-        {toast && <Toast msg={toast.msg} type={toast.type} />}
-      </AnimatePresence>
+      <AnimatePresence>{toast && <Toast msg={toast.msg} type={toast.type} />}</AnimatePresence>
 
-      <FloatingHeader
-        saved={saved}
-        saveLoading={saveLoading}
-        onShare={handleShare}
-        onSave={handleSave}
-      />
+      <FloatingHeader saved={saved} saveLoading={saveLoading} onShare={handleShare} onSave={handleSave} />
 
       <ImageCarousel
         images={images}
@@ -305,11 +301,7 @@ export default function ProductDetail() {
       />
 
       <div className="bg-[var(--bg-primary)] rounded-t-[40px] -mt-8 relative z-20 px-5 pt-8 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
-        <ProductInfo
-          product={product}
-          isAvailable={isProductAvailable}
-          avgRating={avgRating}
-        />
+        <ProductInfo product={product} isAvailable={isProductAvailable} avgRating={avgRating} />
         <StoreCard
           storeName={product.store_name || ""}
           storeCity={product.store_city || ""}
@@ -323,8 +315,11 @@ export default function ProductDetail() {
       </div>
 
       <BottomActionBar
-        phone={product.store_phone}
+        storeId={Number(product.store_id) || 0}
+        phone={product.store_phone || ""}
         onNavigate={handleNavigate}
+        onMessageClick={handleMessage}
+        onPhoneClick={handlePhoneClick}
       />
 
       <AnimatePresence>
