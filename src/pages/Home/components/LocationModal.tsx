@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { MapPin, X, Check, Search } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { iranCities } from "@data/processed/iranCities";
@@ -17,59 +17,48 @@ interface LocationModalProps {
   onClose: () => void;
   selectedCity: string;
   selectedProvince: string;
-  onSelect: (city: string, display: string, province: string) => void; // اصلاح‌شده
+  onSelect: (city: string, display: string, province: string) => void;
 }
 
 // ─────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────
-
-/** نرمال‌سازی رشته فارسی برای جستجوی مقاوم */
 function normalizeFA(str: string): string {
   return str
     .trim()
     .replace(/ي/g, "ی")
     .replace(/ك/g, "ک")
-    .replace(/‌/g, " ") // نیم‌فاصله → فاصله
+    .replace(/‌/g, " ")
     .replace(/\s+/g, " ");
 }
 
-/** مرتب‌سازی الفبایی فارسی - یک‌بار خارج از کامپوننت */
 const SORTED_CITIES: City[] = [...iranCities].sort((a, b) =>
   a.name.localeCompare(b.name, "fa")
 );
 
-const ITEM_HEIGHT = 64; // px - ارتفاع هر آیتم
+const ITEM_HEIGHT = 64;
 
 // ─────────────────────────────────────────────
-// Hook: useDebounce
+// Local Hooks (can be moved to separate files)
 // ─────────────────────────────────────────────
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState<T>(value);
-
   useEffect(() => {
     const timer = setTimeout(() => setDebounced(value), delay);
     return () => clearTimeout(timer);
   }, [value, delay]);
-
   return debounced;
 }
 
-// ─────────────────────────────────────────────
-// Hook: useBodyScrollLock
-// ─────────────────────────────────────────────
 function useBodyScrollLock(isLocked: boolean): void {
   useEffect(() => {
     if (!isLocked) return;
-
     const previousOverflow = document.body.style.overflow;
     const previousPaddingRight = document.body.style.paddingRight;
     const scrollbarWidth =
       window.innerWidth - document.documentElement.clientWidth;
-
     document.body.style.overflow = "hidden";
     document.body.style.paddingRight = `${scrollbarWidth}px`;
-
     return () => {
       document.body.style.overflow = previousOverflow;
       document.body.style.paddingRight = previousPaddingRight;
@@ -106,18 +95,11 @@ const CityItem = React.memo<CityItemProps>(
             text-sm
             ${
               isSelected
-                ? `
-                  bg-rose-50 dark:bg-rose-950/30
-                  border border-rose-300 dark:border-rose-800
-                `
-                : `
-                  hover:bg-[var(--bg-tertiary)]
-                  border border-transparent
-                `
+                ? "bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-800"
+                : "hover:bg-[var(--bg-tertiary)] border border-transparent"
             }
           `}
         >
-          {/* نام شهر + استان */}
           <div className="flex flex-col items-start gap-0.5">
             <span
               className={`font-bold ${
@@ -132,13 +114,8 @@ const CityItem = React.memo<CityItemProps>(
               {city.province}
             </span>
           </div>
-
-          {/* نشانگر انتخاب */}
           {isSelected && (
-            <Check
-              className="w-4 h-4 shrink-0 text-rose-500"
-              aria-hidden="true"
-            />
+            <Check className="w-4 h-4 shrink-0 text-rose-500" aria-hidden="true" />
           )}
         </button>
       </div>
@@ -176,16 +153,12 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   const debouncedQuery = useDebounce(searchQuery, 250);
   const scrollParentRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const sheetRef = useRef<HTMLDivElement>(null);
 
-  // قفل scroll صفحه پشتی
   useBodyScrollLock(isOpen);
 
-  // ریست جستجو و فوکوس input هنگام باز شدن
   useEffect(() => {
     if (isOpen) {
       setSearchQuery("");
-      // تأخیر کوچک برای اتمام انیمیشن ورود
       const timer = setTimeout(() => {
         searchInputRef.current?.focus();
       }, 350);
@@ -193,23 +166,18 @@ export const LocationModal: React.FC<LocationModalProps> = ({
     }
   }, [isOpen]);
 
-  // بستن با کلید Escape
   useEffect(() => {
     if (!isOpen) return;
-
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
-
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // فیلتر شهرها بر اساس جستجوی debounce‌شده
   const filteredCities = useMemo<City[]>(() => {
     const q = normalizeFA(debouncedQuery);
     if (!q) return SORTED_CITIES;
-
     return SORTED_CITIES.filter((city) => {
       const name = normalizeFA(city.name);
       const province = normalizeFA(city.province);
@@ -217,7 +185,6 @@ export const LocationModal: React.FC<LocationModalProps> = ({
     });
   }, [debouncedQuery]);
 
-  // Virtualizer برای رندر بهینه لیست بلند
   const virtualizer = useVirtualizer({
     count: filteredCities.length,
     getScrollElement: () => scrollParentRef.current,
@@ -225,7 +192,6 @@ export const LocationModal: React.FC<LocationModalProps> = ({
     overscan: 8,
   });
 
-  // انتخاب شهر – اکنون display مناسب ساخته و به والد می‌دهد
   const handleSelectCity = useCallback(
     (city: City) => {
       const display = `${city.name}، ${city.province}`;
@@ -235,9 +201,8 @@ export const LocationModal: React.FC<LocationModalProps> = ({
     [onSelect, onClose]
   );
 
-  // بستن مودال با drag
   const handleDragEnd = useCallback(
-    (_: never, info: { offset: { y: number } }) => {
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
       if (info.offset.y > 120) onClose();
     },
     [onClose]
@@ -265,7 +230,6 @@ export const LocationModal: React.FC<LocationModalProps> = ({
           aria-modal="true"
           aria-label="انتخاب شهر"
         >
-          {/* ── Backdrop ── */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -276,9 +240,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
             aria-hidden="true"
           />
 
-          {/* ── Bottom Sheet ── */}
           <motion.div
-            ref={sheetRef}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -296,7 +258,6 @@ export const LocationModal: React.FC<LocationModalProps> = ({
               max-h-[88vh]
             "
           >
-            {/* ── Drag Handle ── */}
             <div
               className="pt-3 pb-2 flex justify-center cursor-grab active:cursor-grabbing"
               aria-hidden="true"
@@ -304,14 +265,10 @@ export const LocationModal: React.FC<LocationModalProps> = ({
               <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-600 rounded-full" />
             </div>
 
-            {/* ── Header ── */}
             <div className="px-5 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="p-1.5 rounded-xl bg-rose-50 dark:bg-rose-950/40">
-                  <MapPin
-                    className="w-4 h-4 text-rose-500"
-                    aria-hidden="true"
-                  />
+                  <MapPin className="w-4 h-4 text-rose-500" aria-hidden="true" />
                 </div>
                 <h2 className="font-extrabold text-lg text-[var(--text-primary)]">
                   انتخاب شهر
@@ -321,29 +278,18 @@ export const LocationModal: React.FC<LocationModalProps> = ({
               <button
                 onClick={onClose}
                 aria-label="بستن پنجره انتخاب شهر"
-                className="
-                  p-2 rounded-full
-                  hover:bg-[var(--bg-tertiary)]
-                  text-[var(--text-muted)]
-                  transition-colors
-                "
+                className="p-2 rounded-full hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] transition-colors"
               >
                 <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
-            {/* ── Search ── */}
             <div className="px-5 pb-3">
               <div className="relative">
                 <Search
-                  className="
-                    absolute right-3.5 top-1/2 -translate-y-1/2
-                    w-4 h-4 text-[var(--text-muted)]
-                    pointer-events-none
-                  "
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)] pointer-events-none"
                   aria-hidden="true"
                 />
-
                 <input
                   ref={searchInputRef}
                   type="search"
@@ -352,21 +298,8 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                   placeholder="جستجوی شهر یا استان..."
                   value={searchQuery}
                   onChange={handleSearchChange}
-                  className="
-                    w-full pl-10 pr-11 py-3
-                    rounded-2xl
-                    bg-[var(--bg-secondary)]
-                    border border-[var(--border-light)]
-                    text-sm text-[var(--text-primary)]
-                    placeholder:text-gray-400
-                    focus:outline-none
-                    focus:ring-2 focus:ring-rose-500/40
-                    focus:border-rose-500
-                    transition-all
-                  "
+                  className="w-full pl-10 pr-11 py-3 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-light)] text-sm text-[var(--text-primary)] placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-rose-500/40 focus:border-rose-500 transition-all"
                 />
-
-                {/* دکمه پاک کردن جستجو */}
                 <AnimatePresence>
                   {searchQuery && (
                     <motion.button
@@ -376,14 +309,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                       transition={{ duration: 0.15 }}
                       onClick={handleClearSearch}
                       aria-label="پاک کردن جستجو"
-                      className="
-                        absolute left-3 top-1/2 -translate-y-1/2
-                        p-1 rounded-full
-                        bg-gray-200 dark:bg-gray-700
-                        text-gray-500 dark:text-gray-400
-                        hover:bg-gray-300 dark:hover:bg-gray-600
-                        transition-colors
-                      "
+                      className="absolute left-3 top-1/2 -translate-y-1/2 p-1 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
                     >
                       <X className="w-3 h-3" aria-hidden="true" />
                     </motion.button>
@@ -391,7 +317,6 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                 </AnimatePresence>
               </div>
 
-              {/* تعداد نتایج */}
               <p
                 className="text-[11px] text-[var(--text-muted)] mt-2 pr-1"
                 aria-live="polite"
@@ -403,10 +328,8 @@ export const LocationModal: React.FC<LocationModalProps> = ({
               </p>
             </div>
 
-            {/* ── Divider ── */}
             <div className="h-px bg-[var(--border-light)] mx-5" />
 
-            {/* ── Cities List (Virtualized) ── */}
             <div
               ref={scrollParentRef}
               className="flex-1 overflow-y-auto overscroll-contain pb-6"
@@ -427,7 +350,6 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                     const isSelected =
                       city.name === selectedCity &&
                       city.province === selectedProvince;
-
                     return (
                       <CityItem
                         key={`${city.name}-${city.province}`}
