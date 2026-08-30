@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Megaphone, BadgeCheck, ChevronLeft } from "lucide-react";
+import { Megaphone, BadgeCheck, ChevronLeft, RefreshCw } from "lucide-react";
 
 interface BannerItem {
   id: number;
@@ -14,40 +14,94 @@ interface BannerItem {
   isAd: boolean;
 }
 
-/**
- * Homepage sponsored stores — labeled "آگهی" (psych analysis: tangible visibility for sellers)
- */
-export function SponsoredBanner({ city }: { city: string }) {
+interface SponsoredBannerProps {
+  city: string;
+}
+
+// سرویس دریافت بنرها
+const fetchBanners = async (city: string, signal?: AbortSignal) => {
+  const q = encodeURIComponent(city || "تهران");
+  const response = await fetch(`/api/promotions/banners?city=${q}&limit=5`, {
+    credentials: "include",
+    signal,
+  });
+  if (!response.ok) throw new Error("Failed to fetch banners");
+  const data = await response.json();
+  return data.banners as BannerItem[];
+};
+
+export function SponsoredBanner({ city }: SponsoredBannerProps) {
   const [banners, setBanners] = useState<BannerItem[]>([]);
   const [index, setIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    let cancelled = false;
-    const q = encodeURIComponent(city || "تهران");
-    fetch(`/api/promotions/banners?city=${q}&limit=5`, { credentials: "include" })
-      .then((r) => r.json())
-      .then((data) => {
-        if (!cancelled && Array.isArray(data.banners)) setBanners(data.banners);
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
+  const loadBanners = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const controller = new AbortController();
+    try {
+      const data = await fetchBanners(city, controller.signal);
+      setBanners(data);
+      setIndex(0);
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        setError("خطا در دریافت بنرها");
+      }
+    } finally {
+      setLoading(false);
+    }
+    return () => controller.abort();
   }, [city]);
 
   useEffect(() => {
+    const cleanup = loadBanners();
+    return cleanup;
+  }, [loadBanners]);
+
+  useEffect(() => {
     if (banners.length <= 1) return;
-    const t = setInterval(() => setIndex((i) => (i + 1) % banners.length), 5000);
+    const t = setInterval(() => {
+      setIndex((i) => (i + 1) % banners.length);
+    }, 5000);
     return () => clearInterval(t);
   }, [banners.length]);
+
+  if (loading) {
+    return (
+      <div className="px-4 mb-4">
+        <div className="w-full h-[88px] rounded-2xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-4 mb-4">
+        <div className="w-full rounded-2xl border border-rose-200 bg-rose-50 p-4 flex items-center justify-between">
+          <span className="text-xs font-bold text-rose-600">{error}</span>
+          <button
+            onClick={loadBanners}
+            className="px-3 py-1.5 text-xs font-bold rounded-lg bg-rose-100 text-rose-700 flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" />
+            تلاش مجدد
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (!banners.length) return null;
 
   const b = banners[index] || banners[0];
 
   const onClick = () => {
-    fetch(`/api/promotions/banners/${b.id}/click`, { method: "POST", credentials: "include" }).catch(() => {});
+    fetch(`/api/promotions/banners/${b.id}/click`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
     navigate(`/stores/${b.storeId}`);
   };
 
@@ -66,21 +120,32 @@ export function SponsoredBanner({ city }: { city: string }) {
         <div className="flex items-stretch gap-3 p-3 min-h-[88px]">
           <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0">
             {b.imageUrl ? (
-              <img src={b.imageUrl} alt={b.title} className="w-full h-full object-cover" loading="lazy" />
+              <img
+                src={b.imageUrl}
+                alt={b.title}
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-2xl">🏪</div>
+              <div className="w-full h-full flex items-center justify-center text-2xl">
+                🏪
+              </div>
             )}
           </div>
 
           <div className="flex-1 flex flex-col justify-center min-w-0">
             <div className="flex items-center gap-1.5">
-              <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate">{b.title}</h3>
+              <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate">
+                {b.title}
+              </h3>
               {(b.verified || b.blueTick) && (
                 <BadgeCheck className="w-4 h-4 text-sky-500 shrink-0" />
               )}
             </div>
             {b.category && (
-              <p className="text-xs text-gray-500 mt-0.5 truncate">{b.category} · {b.city}</p>
+              <p className="text-xs text-gray-500 mt-0.5 truncate">
+                {b.category} · {b.city}
+              </p>
             )}
             <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 font-medium">
               فروشگاه پیشنهادی محله شما
@@ -97,7 +162,11 @@ export function SponsoredBanner({ city }: { city: string }) {
             {banners.map((_, i) => (
               <span
                 key={i}
-                className={`h-1 rounded-full transition-all ${i === index ? "w-4 bg-amber-500" : "w-1.5 bg-amber-300/60"}`}
+                className={`h-1 rounded-full transition-all ${
+                  i === index
+                    ? "w-4 bg-amber-500"
+                    : "w-1.5 bg-amber-300/60"
+                }`}
               />
             ))}
           </div>
