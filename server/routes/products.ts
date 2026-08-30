@@ -18,6 +18,19 @@ import { applyProductTextSearch } from "../services/textSearch.js";
 
 const router = Router();
 
+/** Must match products.status CHECK in db.ts */
+const PRODUCT_STATUSES = ["موجود", "فقط ۱ عدد", "ناموجود", "به‌زودی"] as const;
+type ProductStatus = (typeof PRODUCT_STATUSES)[number];
+
+function normalizeProductStatus(raw: unknown): ProductStatus | null {
+  if (typeof raw !== "string") return null;
+  const t = raw.trim();
+  if ((PRODUCT_STATUSES as readonly string[]).includes(t)) return t as ProductStatus;
+  // legacy / UI variants
+  if (t === "به زودی" || t === "بزودی") return "به‌زودی";
+  return null;
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },
@@ -155,11 +168,21 @@ router.post("/save", requireAuth, (req: AuthRequest, res: Response) => {
   }
 });
 
+// Admin list BEFORE /:id
+router.get("/admin/pending", requireAuth, requireRole(["admin"]), (_req: AuthRequest, res: Response) => {
+  try {
+    return res.json(db.prepare(`SELECT p.*, s.name as store_name FROM products p LEFT JOIN stores s ON p.store_id = s.id WHERE p.moderation_status = 'pending' ORDER BY p.created_at DESC`).all());
+  } catch (error) {
+    logger.error("Get pending products error:", error);
+    return res.status(500).json({ error: "خطا در دریافت لیست انتظار" });
+  }
+});
+
 router.put("/:id/status", requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
-    if (!["موجود", "فقط ۱ عدد", "ناموجود", "به زودی"].includes(status)) return res.status(400).json({ error: "وضعیت نامعتبر است" });
+    const status = normalizeProductStatus(req.body.status);
+    if (!status) return res.status(400).json({ error: "وضعیت نامعتبر است" });
     const storeInfo = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(req.user!.id) as any;
     if (!storeInfo) return res.status(403).json({ error: "فروشگاهی یافت نشد" });
     const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(id) as any;
@@ -189,31 +212,6 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
-router.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    if (isNaN(Number(id))) return res.status(400).json({ error: "شناسه نامعتبر است" });
-    setImmediate(() => {
-      try { db.prepare("UPDATE products SET views = views + 1 WHERE id = ?").run(id); } catch (e) { logger.error("Failed to increment views:", e); }
-    });
-    const product = await getCachedProductDetail(id);
-    if (!product) return res.status(404).json({ error: "کالای مورد نظر یافت نشد" });
-    return res.json(product);
-  } catch (error) {
-    logger.error("Product detail error:", error);
-    return res.status(500).json({ error: "خطا در دریافت اطلاعات کالا" });
-  }
-});
-
-router.get("/admin/pending", requireAuth, requireRole(["admin"]), (req: AuthRequest, res: Response) => {
-  try {
-    return res.json(db.prepare(`SELECT p.*, s.name as store_name FROM products p LEFT JOIN stores s ON p.store_id = s.id WHERE p.moderation_status = 'pending' ORDER BY p.created_at DESC`).all());
-  } catch (error) {
-    logger.error("Get pending products error:", error);
-    return res.status(500).json({ error: "خطا در دریافت لیست انتظار" });
-  }
-});
-
 router.post("/:id/approve", requireAuth, requireRole(["admin"]), async (req: AuthRequest, res: Response) => {
   try {
     db.prepare("UPDATE products SET moderation_status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
@@ -237,46 +235,6 @@ router.post("/:id/reject", requireAuth, requireRole(["admin"]), async (req: Auth
   }
 });
 
-const createProductSchema = z.object({
-  name: z.string().min(2).max(200),
-  price: z.union([z.string(), z.number()]),
-  status: z.enum(["موجود", "فقط ۱ عدد", "ناموجود", "به زودی"]).optional(),
-  description: z.string().max(2000).optional().nullable(),
-  category: z.string().max(100).optional().nullable(),
-  badge: z.string().max(50).optional().nullable(),
-});
-
-router.post("/", requireAuth, upload.single("image"), async (req: AuthRequest & { file?: Express.Multer.File }, res: Response) => {
-  try {
-    const validatedData = createProductSchema.parse(req.body);
-    const { name, price, status, description, category, badge } = validatedData;
-    const storeInfo = db.prepare("SELECT id, city, province FROM stores WHERE user_id = ?").get(req.user!.id) as any;
-    if (!storeInfo) return res.status(403).json({ error: "شما هنوز فروشگاهی ثبت نکرده‌اید.", redirect: "/complete-profile" });
-    const parsedPrice = typeof price === "string" ? parseInt(price.replace(/\D/g, ""), 10) : price;
-    if (isNaN(parsedPrice)) return res.status(400).json({ error: "قیمت نامعتبر است" });
-    let imageUrl = null;
-    if (req.file) {
-      if (!hasValidImageSignature(req.file)) {
-        return res.status(400).json({ error: "محتوای تصویر معتبر نیست" });
-      }
-      try { imageUrl = await uploadFile(req.file, "products"); }
-      catch (uploadError) {
-        logger.error("Image upload failed:", uploadError);
-        return res.status(500).json({ error: "خطا در آپلود تصویر محصول" });
-      }
-    }
-    const result = db.prepare(`INSERT INTO products (store_id, name, price, status, badge, moderation_status, image_url, description, category, city, province, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
-      .run(storeInfo.id, name, parsedPrice, status || "موجود", badge || null, imageUrl, description || null, category || null, storeInfo.city || null, storeInfo.province || null);
-    logger.info(`New product created: ${result.lastInsertRowid} by user ${req.user!.id}`);
-    await invalidateSearchCache();
-    return res.status(201).json({ success: true, productId: result.lastInsertRowid, message: "محصول با موفقیت ثبت شد و در انتظار تایید است" });
-  } catch (error: any) {
-    if (error.name === "ZodError") return res.status(400).json({ error: error.errors[0].message, field: error.errors[0].path[0] });
-    logger.error("Create Product Error:", error);
-    return res.status(500).json({ error: "خطا در ثبت کالا" });
-  }
-});
-
 router.post("/:id/report", requireAuth, (req: AuthRequest, res) => {
   try {
     const { reason } = req.body;
@@ -291,9 +249,11 @@ router.post("/:id/report", requireAuth, (req: AuthRequest, res) => {
   }
 });
 
-router.post("/:id/notify", (req, res) => {
+router.post("/:id/notify", requireAuth, (req: AuthRequest, res) => {
   try {
-    db.prepare("INSERT INTO notify_requests (product_id, user_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)").run(req.params.id, req.body.userId || null);
+    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(req.params.id);
+    if (!product) return res.status(404).json({ error: "کالا یافت نشد" });
+    db.prepare("INSERT INTO notify_requests (product_id, user_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)").run(req.params.id, req.user!.id);
     return res.json({ success: true, message: "با موجود شدن محصول به شما اطلاع می‌دهیم" });
   } catch (error) {
     logger.error("Notify request error:", error);
@@ -310,16 +270,86 @@ router.get("/:id/reviews", (req, res) => {
   }
 });
 
-router.post("/:id/reviews", (req, res) => {
-  const { author_name, rating, content } = req.body;
+router.post("/:id/reviews", requireAuth, (req: AuthRequest, res) => {
   try {
-    if (!content || content.length < 3) return res.status(400).json({ error: "متن نظر بیش از حد کوتاه است" });
-    if (rating < 1 || rating > 5) return res.status(400).json({ error: "امتیاز باید بین ۱ تا ۵ باشد" });
-    const result = db.prepare("INSERT INTO reviews (product_id, author_name, rating, content, status, created_at) VALUES (?, ?, ?, ?, 'approved', CURRENT_TIMESTAMP)").run(req.params.id, author_name || "کاربر ناشناس", rating || 5, content);
-    return res.status(201).json(db.prepare("SELECT * FROM reviews WHERE id = ?").get(result.lastInsertRowid));
+    const { rating, content } = req.body;
+    if (!content || typeof content !== "string" || content.trim().length < 3) {
+      return res.status(400).json({ error: "متن نظر بیش از حد کوتاه است" });
+    }
+    if (content.length > 2000) return res.status(400).json({ error: "متن نظر بیش از حد بلند است" });
+    const r = Number(rating ?? 5);
+    if (!Number.isFinite(r) || r < 1 || r > 5) return res.status(400).json({ error: "امتیاز باید بین ۱ تا ۵ باشد" });
+    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(req.params.id);
+    if (!product) return res.status(404).json({ error: "کالا یافت نشد" });
+    const authorName = req.user!.name || "کاربر";
+    const result = db.prepare(
+      "INSERT INTO reviews (product_id, user_id, author_name, rating, content, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)"
+    ).run(req.params.id, req.user!.id, authorName, r, content.trim());
+    return res.status(201).json({
+      success: true,
+      message: "نظر شما ثبت شد و پس از بررسی نمایش داده می‌شود",
+      id: result.lastInsertRowid,
+    });
   } catch (error) {
     logger.error("Create review error:", error);
     return res.status(500).json({ error: "خطا در ثبت نظر" });
+  }
+});
+
+router.get("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isNaN(Number(id))) return res.status(400).json({ error: "شناسه نامعتبر است" });
+    setImmediate(() => {
+      try { db.prepare("UPDATE products SET views = views + 1 WHERE id = ?").run(id); } catch (e) { logger.error("Failed to increment views:", e); }
+    });
+    const product = await getCachedProductDetail(id);
+    if (!product) return res.status(404).json({ error: "کالای مورد نظر یافت نشد" });
+    return res.json(product);
+  } catch (error) {
+    logger.error("Product detail error:", error);
+    return res.status(500).json({ error: "خطا در دریافت اطلاعات کالا" });
+  }
+});
+
+const createProductSchema = z.object({
+  name: z.string().min(2).max(200),
+  price: z.union([z.string(), z.number()]),
+  status: z.string().optional().nullable(),
+  description: z.string().max(2000).optional().nullable(),
+  category: z.string().max(100).optional().nullable(),
+  badge: z.string().max(50).optional().nullable(),
+});
+
+router.post("/", requireAuth, upload.single("image"), async (req: AuthRequest & { file?: Express.Multer.File }, res: Response) => {
+  try {
+    const validatedData = createProductSchema.parse(req.body);
+    const { name, price, description, category, badge } = validatedData;
+    const status = normalizeProductStatus(validatedData.status) || "موجود";
+    const storeInfo = db.prepare("SELECT id, city, province FROM stores WHERE user_id = ?").get(req.user!.id) as any;
+    if (!storeInfo) return res.status(403).json({ error: "شما هنوز فروشگاهی ثبت نکرده‌اید.", redirect: "/complete-profile" });
+    const parsedPrice = typeof price === "string" ? parseInt(price.replace(/\D/g, ""), 10) : price;
+    if (isNaN(parsedPrice)) return res.status(400).json({ error: "قیمت نامعتبر است" });
+    let imageUrl = null;
+    if (req.file) {
+      if (!hasValidImageSignature(req.file)) {
+        return res.status(400).json({ error: "محتوای تصویر معتبر نیست" });
+      }
+      try { imageUrl = await uploadFile(req.file, "products"); }
+      catch (uploadError) {
+        logger.error("Image upload failed:", uploadError);
+        return res.status(500).json({ error: "خطا در آپلود تصویر محصول" });
+      }
+    }
+    const result = db.prepare(`INSERT INTO products (store_id, name, price, status, badge, moderation_status, image_url, description, category, city, province, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+      .run(storeInfo.id, name, parsedPrice, status, badge || null, imageUrl, description || null, category || null, storeInfo.city || null, storeInfo.province || null);
+    logger.info(`New product created: ${result.lastInsertRowid} by user ${req.user!.id}`);
+    await invalidateSearchCache();
+    return res.status(201).json({ success: true, productId: result.lastInsertRowid, message: "محصول با موفقیت ثبت شد و در انتظار تایید است" });
+  } catch (error: any) {
+    if (error.name === "ZodError") return res.status(400).json({ error: error.errors[0].message, field: error.errors[0].path[0] });
+    logger.error("Create Product Error:", error);
+    return res.status(500).json({ error: "خطا در ثبت کالا" });
   }
 });
 
