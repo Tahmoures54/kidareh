@@ -85,11 +85,11 @@ export default defineConfig(({ mode, command }) => {
       strictPort: false,
       open: false,
       cors: true,
+      // پروکسی بدون strip کردن /api — روت‌های بک‌اند زیر /api هستند
       proxy: {
         "/api": {
           target: process.env.VITE_API_URL || "http://localhost:3000",
           changeOrigin: true,
-          rewrite: (p) => p.replace(/^\/api/, ""),
           secure: false,
         },
       },
