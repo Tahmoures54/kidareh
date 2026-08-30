@@ -1,7 +1,6 @@
 import React, { memo, useRef, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { categoriesData } from "@data/processed/categories";
-import { HOME_CONFIG } from "../constants";
 
 interface CategorySliderProps {
   activeCategory: string | null;
@@ -14,9 +13,9 @@ export const CategorySlider = memo(
 
     const items = [
       { slug: null, name: "همه", icon: "🏪" },
-      ...categoriesData.slice(0, HOME_CONFIG.CATEGORIES_DISPLAY_COUNT).map((cat) => ({
+      ...categoriesData.map((cat) => ({
         slug: cat.slug,
-        name: cat.group,            // ✅ استفاده از group به‌جای name برای نمایش نام فارسی
+        name: cat.group,
         icon: cat.icon || "📦",
       })),
     ];
@@ -26,12 +25,16 @@ export const CategorySlider = memo(
       if (activeCategory && scrollRef.current) {
         const activeElement = scrollRef.current.querySelector(
           `[data-category="${activeCategory}"]`
-        );
+        ) as HTMLElement | null;
         if (activeElement) {
-          activeElement.scrollIntoView({
+          const container = scrollRef.current;
+          const elementLeft = activeElement.offsetLeft;
+          const elementWidth = activeElement.offsetWidth;
+          const containerWidth = container.clientWidth;
+          const targetScroll = elementLeft - (containerWidth - elementWidth) / 2;
+          container.scrollTo({
+            left: targetScroll,
             behavior: "smooth",
-            inline: "center",
-            block: "nearest",
           });
         }
       }
@@ -86,9 +89,15 @@ export const CategorySlider = memo(
           })}
         </div>
 
-        {/* گرادیانت فید برای نشان دادن قابلیت اسکرول */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none" />
+        {/* گرادیانت‌های محو برای نشان دادن اسکرول */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none"
+          aria-hidden="true"
+        />
       </div>
     );
   }
