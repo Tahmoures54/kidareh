@@ -1,6 +1,5 @@
 /**
- * Global Error Boundary Component
- * Instagram-level error handling
+ * Global Error Boundary — پیام‌های ساده برای کاربر غیرحرفه‌ای
  */
 
 import React, { Component, ReactNode, ErrorInfo } from "react";
@@ -66,25 +65,23 @@ export class GlobalErrorBoundary extends Component<Props, State> {
               <AlertTriangle className="w-10 h-10 text-red-600 dark:text-red-400" />
             </div>
             <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
-              خطای سیستمی
+              یه مشکل پیش اومد
             </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 text-center max-w-sm">
-              متأسفانه مشکلی در برنامه پیش آمد. لطفاً بعداً دوباره تلاش کنید یا با تیم
-              پشتیبانی تماس بگیرید.
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 text-center max-w-sm leading-relaxed">
+              الان اپ درست کار نمی‌کنه. کمی بعد دوباره بیا، یا از پشتیبانی کمک بگیر.
             </p>
             <div className="flex gap-3">
               <button
+                type="button"
                 onClick={() => (window.location.href = "/")}
                 className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-700 transition-colors"
               >
-                <Home className="w-4 h-4" /> بازگشت به خانه
+                <Home className="w-4 h-4" /> برگرد خونه
               </button>
             </div>
             {import.meta.env.DEV && (
               <div className="mt-8 p-4 bg-red-50 dark:bg-red-950/30 rounded-xl max-w-md overflow-auto">
-                <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-2">
-                  جزئیات خطا:
-                </p>
+                <p className="text-xs font-bold text-red-600 dark:text-red-400 mb-2">جزئیات (فقط در حالت توسعه):</p>
                 <pre className="text-xs text-red-700 dark:text-red-300 whitespace-pre-wrap break-words">
                   {this.state.error.toString()}
                 </pre>
@@ -107,23 +104,22 @@ export class GlobalErrorBoundary extends Component<Props, State> {
             <AlertTriangle className="w-10 h-10 text-yellow-600 dark:text-yellow-400" />
           </div>
           <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">
-            خطا در بارگذاری
+            صفحه درست لود نشد
           </h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 text-center max-w-sm">
-            {this.state.error?.message || "مشکلی در برنامه پیش آمد."}
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-8 text-center max-w-sm leading-relaxed">
+            یه لحظه مشکل پیش اومد. دوباره امتحان کن.
           </p>
           <button
+            type="button"
             onClick={this.resetError}
             className="flex items-center gap-2 px-6 py-3 bg-teal-600 text-white rounded-xl font-bold text-sm hover:bg-teal-700 active:scale-95 transition-all"
           >
-            <RefreshCw className="w-4 h-4" /> تلاش مجدد
+            <RefreshCw className="w-4 h-4" /> دوباره تلاش کن
           </button>
 
           {import.meta.env.DEV && (
             <div className="mt-8 p-4 bg-yellow-50 dark:bg-yellow-950/30 rounded-xl max-w-md overflow-auto">
-              <p className="text-xs font-bold text-yellow-600 dark:text-yellow-400 mb-2">
-                جزئیات خطا:
-              </p>
+              <p className="text-xs font-bold text-yellow-600 dark:text-yellow-400 mb-2">جزئیات (فقط در حالت توسعه):</p>
               <pre className="text-xs text-yellow-700 dark:text-yellow-300 whitespace-pre-wrap break-words">
                 {this.state.error.stack}
               </pre>
