@@ -227,10 +227,11 @@ export const analytics = new Analytics();
 export const errorLogger = new ErrorLogger();
 export const performanceLogger = new PerformanceLogger();
 
+// ❗ تایپ‌ها را از خروجی پیش‌فرض حذف کردیم چون در runtime وجود ندارند
 export default {
   analytics,
   errorLogger,
   performanceLogger,
-  AnalyticsEvent,
-  ErrorLog,
+  // AnalyticsEvent,   // ❌ حذف شد
+  // ErrorLog,         // ❌ حذف شد
 };
