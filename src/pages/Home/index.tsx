@@ -16,6 +16,7 @@ import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
 import { LocationModal } from "./components/LocationModal";
 import { SponsoredBanner } from "./components/SponsoredBanner";
+import { ValuePropsBanner } from "./components/ValuePropsBanner";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -64,7 +65,11 @@ export default function Home() {
         </div>
 
         <main className="flex-1 pb-24 pt-4">
+          {/* بنر تبلیغاتی درآمدزایی (آگهی فروشگاه‌ها) */}
           <SponsoredBanner city={logic.effectiveCity} />
+
+          {/* بنر کارت‌های تشویق ثبت‌نام و مزایای کی‌داره — استایل اینستاگرام */}
+          <ValuePropsBanner />
 
           <div className="px-4 mb-4">
             <SegmentedScope
