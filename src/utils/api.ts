@@ -7,6 +7,10 @@ interface ApiRequestOptions<TBody = unknown> {
   timeoutMs?: number;
   credentials?: RequestCredentials;
   signal?: AbortSignal;
+  /**
+   * 🔧 true = این درخواست «فرض» می‌کند نشست فعال داریم؛ 401 یعنی نشست منقضی شده.
+   * false (پیش‌فرض) = درخواست عمومی؛ 401 فقط یعنی «دسترسی نداری» — نه خروج!
+   */
   auth?: boolean;
 }
 
@@ -39,6 +43,9 @@ function clearLegacyTokens(): void {
   }
 }
 
+// 🔧 مسیری که 401 آن «طبیعی» است (بررسی نشست) — خود AuthContext جوابش را مدیریت می‌کند
+const isSessionCheckPath = (p: string) => /\/auth\/me\/?$/i.test(p);
+
 export async function apiRequest<TResponse = any, TBody = unknown>(
   path: string,
   options: ApiRequestOptions<TBody> = {}
@@ -50,7 +57,7 @@ export async function apiRequest<TResponse = any, TBody = unknown>(
     timeoutMs = DEFAULT_TIMEOUT,
     credentials = "include",
     signal,
-    auth = true,
+    auth = false, // 🔧 پیش‌فرض false — مهمان‌ها دیگر قربانی 401 نمی‌شوند
   } = options;
 
   const base = normalizeBaseUrl(getBaseUrl());
@@ -62,22 +69,21 @@ export async function apiRequest<TResponse = any, TBody = unknown>(
   const url = `${base}${cleanPath}`;
   const mergedHeaders: Record<string, string> = {
     "Content-Type": "application/json",
-    "Accept": "application/json", // Pro Tip: همیشه به سرور بگویید JSON می‌خواهید
+    "Accept": "application/json",
     ...headers,
   };
 
-
-  // 🚀 Pro Tip: True Network Timeout & Signal Combiner
-  // لغو واقعی درخواست در سطح مرورگر برای جلوگیری از هدر رفت منابع لیارا
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(new Error("Request timeout")), timeoutMs);
-  
-  // اگر کامپوننت (مثلاً سرچ) خواست درخواست را لغو کند، تایمر را هم لغو می‌کنیم
+
+  // 🔧 پاک‌سازی شنونده برای جلوگیری از نشت حافظه
+  const onOuterAbort = () => {
+    clearTimeout(timeoutId);
+    controller.abort(signal?.reason);
+  };
   if (signal) {
-    signal.addEventListener("abort", () => {
-      clearTimeout(timeoutId);
-      controller.abort(signal.reason);
-    });
+    if (signal.aborted) onOuterAbort();
+    else signal.addEventListener("abort", onOuterAbort, { once: true });
   }
 
   let res: Response;
@@ -88,42 +94,43 @@ export async function apiRequest<TResponse = any, TBody = unknown>(
       credentials,
       headers: mergedHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: controller.signal, // پاس دادن سیگنال کنترلر خودمان
-      cache: "no-store", 
+      signal: controller.signal,
+      cache: "no-store",
     });
   } catch (error: any) {
-    // تبدیل ارورهای سطح شبکه (قطعی اینترنت یا لغو شدن) به ساختار قابل فهم
     if (error.name === "AbortError" || error.message === "Request timeout") {
       throw new ApiError("ارتباط با سرور قطع شد (تایم‌اوت).", 408);
     }
     throw new ApiError("خطا در برقراری ارتباط با اینترنت.", 0);
   } finally {
-    clearTimeout(timeoutId); // جلوگیری از Memory Leak تایمرها
+    clearTimeout(timeoutId);
+    signal?.removeEventListener("abort", onOuterAbort);
   }
 
-  // 🛡️ Pro Tip: مدیریت خروج خودکار (401 Unauthorized)
+  // 🛡️ 🔧 مدیریت 401 — فقط وقتی «انقضای نشست» معنا دارد، نه برای مهمان
   if (res.status === 401) {
     clearLegacyTokens();
-    // ارسال یک رویداد سراسری (Event) تا AuthContext متوجه شود و کاربر را لاگ‌اوت کند
-    window.dispatchEvent(new CustomEvent("kidareh:unauthorized"));
+    if (auth && !isSessionCheckPath(normalizedPath)) {
+      window.dispatchEvent(
+        new CustomEvent("kidareh:unauthorized", { detail: { path: normalizedPath } })
+      );
+    }
   }
 
-  // 🚀 Pro Tip: پارس کردن بهینه و امن پاسخ
   let data: any = null;
   const status = res.status;
 
   if (status !== 204 && status !== 304) {
     try {
       const contentType = res.headers.get("content-type");
-      // فقط اگر سرور واقعاً JSON فرستاده بود از متد سریع json() استفاده می‌کنیم
       if (contentType && contentType.includes("application/json")) {
         data = await res.json();
       } else {
         const text = await res.text();
-        data = text ? JSON.parse(text) : null; // Fallback برای سرورهایی که هدر اشتباه می‌دهند
+        data = text ? JSON.parse(text) : null;
       }
     } catch {
-      data = null; // اگر پارس نشد، اپلیکیشن کرش نکند
+      data = null;
     }
   }
 
@@ -135,20 +142,16 @@ export async function apiRequest<TResponse = any, TBody = unknown>(
   return data as TResponse;
 }
 
-// ✅ شیء api برای سازگاری با کدهای قدیمی
+// ✅ شیء api برای سازگاری با کدهای قدیمی (بدون تغییر)
 export const api = {
   get: <T>(path: string, options?: Omit<ApiRequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...options, method: "GET" }),
-
-  post: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) => 
+  post: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...options, method: "POST", body }),
-
-  put: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) => 
+  put: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...options, method: "PUT", body }),
-
-  patch: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) => 
+  patch: <T>(path: string, body?: unknown, options?: Omit<ApiRequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...options, method: "PATCH", body }),
-
   delete: <T>(path: string, options?: Omit<ApiRequestOptions, "method" | "body">) =>
     apiRequest<T>(path, { ...options, method: "DELETE" }),
 };
