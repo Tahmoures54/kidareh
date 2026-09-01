@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Megaphone, BadgeCheck, ChevronLeft, RefreshCw } from "lucide-react";
 
@@ -19,7 +19,10 @@ interface SponsoredBannerProps {
 }
 
 // سرویس دریافت بنرها
-const fetchBanners = async (city: string, signal?: AbortSignal) => {
+const fetchBanners = async (
+  city: string,
+  signal?: AbortSignal
+): Promise<BannerItem[]> => {
   const q = encodeURIComponent(city || "تهران");
   const response = await fetch(`/api/promotions/banners?city=${q}&limit=5`, {
     credentials: "include",
@@ -37,10 +40,19 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
+  // استفاده از ref برای نگه‌داری AbortController تا بتوانیم لغو کنیم
+  const abortControllerRef = useRef<AbortController | null>(null);
+
   const loadBanners = useCallback(async () => {
+    // لغو درخواست قبلی
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     setLoading(true);
     setError(null);
-    const controller = new AbortController();
     try {
       const data = await fetchBanners(city, controller.signal);
       setBanners(data);
@@ -50,16 +62,25 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
         setError("خطا در دریافت بنرها");
       }
     } finally {
-      setLoading(false);
+      // فقط اگر همین controller جاری باشد loading را false می‌کنیم
+      if (abortControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
-    return () => controller.abort();
   }, [city]);
 
+  // اثر برای بارگذاری اولیه و تغییر city
   useEffect(() => {
-    const cleanup = loadBanners();
-    return cleanup;
+    loadBanners();
+    // پاک‌سازی: لغو درخواست در صورت unmount یا تغییر city
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [loadBanners]);
 
+  // چرخش خودکار
   useEffect(() => {
     if (banners.length <= 1) return;
     const t = setInterval(() => {
@@ -67,6 +88,17 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
     }, 5000);
     return () => clearInterval(t);
   }, [banners.length]);
+
+  const handleBannerClick = useCallback(() => {
+    if (!banners.length) return;
+    const current = banners[index] || banners[0];
+    // ثبت کلیک
+    fetch(`/api/promotions/banners/${current.id}/click`, {
+      method: "POST",
+      credentials: "include",
+    }).catch(() => {});
+    navigate(`/stores/${current.storeId}`);
+  }, [banners, index, navigate]);
 
   if (loading) {
     return (
@@ -95,21 +127,13 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
 
   if (!banners.length) return null;
 
-  const b = banners[index] || banners[0];
-
-  const onClick = () => {
-    fetch(`/api/promotions/banners/${b.id}/click`, {
-      method: "POST",
-      credentials: "include",
-    }).catch(() => {});
-    navigate(`/stores/${b.storeId}`);
-  };
+  const current = banners[index] || banners[0];
 
   return (
     <div className="px-4 mb-4">
       <button
         type="button"
-        onClick={onClick}
+        onClick={handleBannerClick}
         className="relative w-full overflow-hidden rounded-2xl border border-amber-200/80 dark:border-amber-800/50 bg-gradient-to-l from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/30 text-right shadow-sm active:scale-[0.99] transition-transform"
       >
         <div className="absolute top-2 left-2 z-10 flex items-center gap-1 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-bold">
@@ -119,10 +143,10 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
 
         <div className="flex items-stretch gap-3 p-3 min-h-[88px]">
           <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0">
-            {b.imageUrl ? (
+            {current.imageUrl ? (
               <img
-                src={b.imageUrl}
-                alt={b.title}
+                src={current.imageUrl}
+                alt={current.title}
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
@@ -136,15 +160,15 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
           <div className="flex-1 flex flex-col justify-center min-w-0">
             <div className="flex items-center gap-1.5">
               <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 truncate">
-                {b.title}
+                {current.title}
               </h3>
-              {(b.verified || b.blueTick) && (
+              {(current.verified || current.blueTick) && (
                 <BadgeCheck className="w-4 h-4 text-sky-500 shrink-0" />
               )}
             </div>
-            {b.category && (
+            {current.category && (
               <p className="text-xs text-gray-500 mt-0.5 truncate">
-                {b.category} · {b.city}
+                {current.category} · {current.city}
               </p>
             )}
             <p className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 font-medium">
