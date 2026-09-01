@@ -26,9 +26,20 @@ export const useHomeLogic = () => {
 
   // -------------------- Location Logic --------------------
   const { city: realCity, province: realProvince, displayLocation, gpsEnabled } = useGeolocation("تهران");
-  const effectiveCity = manualLocation?.city || realCity || "تهران";
-  const effectiveDisplay = manualLocation?.display || displayLocation || "انتخاب شهر";
-  const effectiveProvince = manualLocation?.province || realProvince || "";
+
+  // بهینه‌سازی با useMemo برای جلوگیری از محاسبه مجدد در هر رندر
+  const effectiveCity = useMemo(
+    () => manualLocation?.city || realCity || "تهران",
+    [manualLocation, realCity]
+  );
+  const effectiveDisplay = useMemo(
+    () => manualLocation?.display || displayLocation || "انتخاب شهر",
+    [manualLocation, displayLocation]
+  );
+  const effectiveProvince = useMemo(
+    () => manualLocation?.province || realProvince || "",
+    [manualLocation, realProvince]
+  );
 
   // -------------------- Data Fetching --------------------
   const {
@@ -85,19 +96,25 @@ export const useHomeLogic = () => {
     setScope("city"); // بازنشانی محدوده به حالت پیش‌فرض
   }, []);
 
-  // -------------------- Computed Values --------------------
-  const hasActiveFilters = !!(
-    activeCategory ||
-    debouncedSearch ||
-    sort !== "newest" ||
-    scope !== "city"
+  // -------------------- Computed Values (با useMemo برای بهینه‌سازی) --------------------
+  const hasActiveFilters = useMemo(
+    () =>
+      !!(
+        activeCategory ||
+        debouncedSearch ||
+        sort !== "newest" ||
+        scope !== "city"
+      ),
+    [activeCategory, debouncedSearch, sort, scope]
   );
-  const filterCount = [
-    activeCategory,
-    debouncedSearch,
-    sort !== "newest",
-    scope !== "city",
-  ].filter(Boolean).length;
+
+  const filterCount = useMemo(
+    () =>
+      [activeCategory, debouncedSearch, sort !== "newest", scope !== "city"].filter(
+        Boolean
+      ).length,
+    [activeCategory, debouncedSearch, sort, scope]
+  );
 
   return {
     // Data
