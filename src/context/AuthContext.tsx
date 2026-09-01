@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { useNavigate } from "react-router-dom";
+// 🔧 useNavigate حذف شد (استفاده نشده بود)
 import { apiRequest, ApiError } from "../utils/api";
 
 /* ====================== TYPES ====================== */
@@ -115,17 +115,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isMountedRef = useRef(true);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
+  // 🔧 مقدار لحظه‌ای کاربر — برای تشخیص «مهمان» از «کاربرِ خارج‌شده»
+  const userRef = useRef<User | null>(null);
+  // 🔧 جلوگیری از اجرای تکراری خروج وقتی چند 401 هم‌زمان می‌رسد
+  const sessionExpiredHandledRef = useRef(false);
+
+  useEffect(() => { userRef.current = user; }, [user]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
+      // 🔧🔧 ریشه‌ی باگ اینجا بود:
+      // مهمان بودن = 401 طبیعی از /auth/me و... — نه نشستِ منقضی‌شده!
+      if (!userRef.current) return;
+
+      // 🔧 چند 401 پشت‌سرهم → فقط یک‌بار
+      if (sessionExpiredHandledRef.current) return;
+      sessionExpiredHandledRef.current = true;
+
       setUser(null);
       writeUserCache(null);
       clearLegacyTokens();
 
-      // فقط اگر در صفحه لاگین نیستیم، ریدایرکت نرم انجام بده
+      // فقط وقتی واقعاً کاربری بوده و نشستش منقضی شده، ریدایرکت کن
       if (window.location.pathname !== "/login") {
-        // استفاده از History API برای جلوگیری از بارگذاری مجدد کامل
-        window.history.pushState(null, "", "/login");
+        window.history.replaceState(null, "", "/login");
         window.dispatchEvent(new PopStateEvent("popstate"));
       }
     };
@@ -170,6 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isMountedRef.current) return;
         const userData = (data as any)?.user ?? (data as User);
         if (userData && typeof userData === "object") {
+          sessionExpiredHandledRef.current = false; // 🔧 ورود موفق → پرچم ریست
           setUser(userData);
           writeUserCache(userData);
           setError(null);
@@ -179,6 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         if (!isMountedRef.current) return;
         if (err instanceof ApiError && (err.status === 401 || err.status === 403)) {
+          // 🔧 مهمان یا نشست منقضی — بی‌صدا و بدون ریدایرکت
           setUser(null);
           writeUserCache(null);
           clearLegacyTokens();
@@ -220,7 +235,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await apiRequest("/api/auth/refresh", { method: "POST", auth: true, credentials: "include" });
       } catch {
-        // 401 توسط api.ts رویداد unauthorized می‌فرستد
+        // 401 واقعی اینجا = نشست منقضی → رویداد → خروج صحیح
       }
     };
     const id = window.setInterval(tick, SESSION_REFRESH_MS);
@@ -253,6 +268,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!isMountedRef.current) throw new Error("Component unmounted");
       if (data?.user) {
         const userData = data.user;
+        sessionExpiredHandledRef.current = false; // 🔧
         setUser(userData);
         writeUserCache(userData);
         return userData;
@@ -329,7 +345,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth(): AuthContextType {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("useAuth must be used within AuthProvider");
+  if (!ctx) throw new Error("useAuth must be used within an AuthProvider");
   return ctx;
 }
 
