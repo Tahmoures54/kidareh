@@ -1,4 +1,4 @@
-﻿// src/context/SettingsContext.tsx
+// src/context/SettingsContext.tsx
 import React, {
   createContext,
   useContext,
@@ -8,7 +8,10 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-import { apiRequest } from "../utils/api";
+import { apiRequest, ApiError } from "../utils/api";
+import { useAuth } from "./AuthContext";
+
+/* ====================== TYPES ====================== */
 
 export interface BadgeConfig {
   price: number;
@@ -32,7 +35,8 @@ interface AppSettings {
 interface SettingsContextType extends AppSettings {
   isLoading: boolean;
   error: string | null;
-  fetchSettings: () => Promise<void>;
+  /** force=true → درخواست حتی برای غیرادمین هم ارسال می‌شود (مثلاً دکمه‌ی رفرش در پنل ادمین) */
+  fetchSettings: (force?: boolean) => Promise<void>;
   updateReferralPercentage: (val: number) => Promise<void>;
   updateBadgeConfig: (badge: string, config: Partial<BadgeConfig>) => Promise<void>;
   updateSetting: <K extends keyof Omit<AppSettings, "badgeConfigs">>(
@@ -42,6 +46,8 @@ interface SettingsContextType extends AppSettings {
   resetToDefaults: () => void;
   getBadgeColor: (badgeId: string) => string;
 }
+
+/* ====================== DEFAULTS ====================== */
 
 const defaultBadgeConfigs: BadgeConfigs = {
   "بلک فرایدی": {
@@ -146,10 +152,31 @@ const defaultSettings: AppSettings = {
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
+/* ====================== PROVIDER ====================== */
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
-  const [settings, setSettings] = useState<AppSettings>(defaultSettings);
-  const [isLoading, setIsLoading] = useState(true);
+  // 🔧 نمایش فوری از کش محلی — بدون انتظار برای شبکه
+  // (قبلاً همه منتظر پاسخ سرور/خطای 401 می‌ماندند)
+  const [settings, setSettings] = useState<AppSettings>(() => {
+    try {
+      const saved = localStorage.getItem("app_settings");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...defaultSettings,
+          ...parsed,
+          badgeConfigs: parsed?.badgeConfigs ?? defaultBadgeConfigs,
+        };
+      }
+    } catch {}
+    return defaultSettings;
+  });
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // 🔧 endpoint ادمین است — فقط ادمین آن را صدا بزند.
+  // مهمان/خریدار هرگز 401 از این مسیر نمی‌گیرد (ریشه‌ی ریدایرکت غلط به /login همین بود).
+  const { isAdmin } = useAuth();
 
   const isMountedRef = useRef(true);
   const fetchPromiseRef = useRef<Promise<void> | null>(null);
@@ -160,70 +187,83 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const fetchSettings = useCallback(async () => {
-    // اگر درخواستی در حال اجراست، منتظر همان بمان
-    if (fetchPromiseRef.current) {
-      return fetchPromiseRef.current;
-    }
+  const fetchSettings = useCallback(
+    async (force = false): Promise<void> => {
+      // اگر درخواستی در حال اجراست، منتظر همان بمان (جلوگیری از درخواست موازی)
+      if (fetchPromiseRef.current) return fetchPromiseRef.current;
 
-    const promise = (async () => {
-      if (!isMountedRef.current) return;
+      // 🔧 بدون نقش ادمین (مگر force از پنل ادمین) درخواستی نزن
+      if (!isAdmin && !force) return;
 
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const data = await apiRequest<Record<string, any>>("/api/admin/settings", {
-          method: "GET",
-          auth: false,
-        });
-
+      const promise = (async () => {
         if (!isMountedRef.current) return;
 
-        const loaded: AppSettings = {
-          referralPercentage: data.referralPercentage
-            ? Number(data.referralPercentage)
-            : defaultSettings.referralPercentage,
-          badgeConfigs: data.badgeConfigs
-            ? typeof data.badgeConfigs === "string"
-              ? JSON.parse(data.badgeConfigs)
-              : data.badgeConfigs
-            : defaultSettings.badgeConfigs,
-          appName: data.appName || defaultSettings.appName,
-          maintenanceMode: data.maintenanceMode === "true",
-          defaultCurrency: data.defaultCurrency || defaultSettings.defaultCurrency,
-        };
+        setIsLoading(true);
+        setError(null);
 
-        setSettings(loaded);
-        localStorage.setItem("app_settings", JSON.stringify(loaded));
-      } catch (err) {
-        if (!isMountedRef.current) return;
+        try {
+          const data = await apiRequest<Record<string, any>>("/api/admin/settings", {
+            method: "GET",
+            auth: true, // 🔧 401 اینجا فقط یعنی «نشست ادمین منقضی» — نه خطای عمومی
+          });
 
-        console.error("Fetch settings error:", err);
-        setError("خطا در دریافت تنظیمات");
+          if (!isMountedRef.current) return;
 
-        // تلاش برای بازیابی از localStorage
-        const saved = localStorage.getItem("app_settings");
-        if (saved) {
-          try {
-            setSettings(JSON.parse(saved));
-          } catch {}
+          const loaded: AppSettings = {
+            referralPercentage: data.referralPercentage
+              ? Number(data.referralPercentage)
+              : defaultSettings.referralPercentage,
+            badgeConfigs: data.badgeConfigs
+              ? typeof data.badgeConfigs === "string"
+                ? JSON.parse(data.badgeConfigs)
+                : data.badgeConfigs
+              : defaultSettings.badgeConfigs,
+            appName: data.appName || defaultSettings.appName,
+            maintenanceMode: data.maintenanceMode === "true",
+            defaultCurrency: data.defaultCurrency || defaultSettings.defaultCurrency,
+          };
+
+          setSettings(loaded);
+          localStorage.setItem("app_settings", JSON.stringify(loaded));
+        } catch (err) {
+          if (!isMountedRef.current) return;
+
+          // 🔧 401 = «دسترسی نداری» — بی‌صدا با همان کش/پیش‌فرض ادامه بده
+          if (err instanceof ApiError && err.status === 401) return;
+
+          console.error("Fetch settings error:", err);
+          setError("خطا در دریافت تنظیمات");
+
+          const saved = localStorage.getItem("app_settings");
+          if (saved) {
+            try {
+              setSettings(JSON.parse(saved));
+            } catch {}
+          }
+        } finally {
+          if (isMountedRef.current) {
+            setIsLoading(false);
+          }
+          fetchPromiseRef.current = null;
         }
-      } finally {
-        if (isMountedRef.current) {
-          setIsLoading(false);
-        }
-        fetchPromiseRef.current = null;
-      }
-    })();
+      })();
 
-    fetchPromiseRef.current = promise;
-    return promise;
-  }, []);
+      fetchPromiseRef.current = promise;
+      return promise;
+    },
+    [isAdmin]
+  );
 
+  // 🔧 فقط وقتی کاربرِ ادمین شناخته شد، تنظیمات را از سرور بگیر
   useEffect(() => {
-    fetchSettings();
-  }, [fetchSettings]);
+    if (isAdmin) {
+      fetchSettings();
+    } else {
+      setIsLoading(false);
+    }
+  }, [isAdmin, fetchSettings]);
+
+  /* ====================== ADMIN UPDATES ====================== */
 
   const updateSetting = useCallback(
     async <K extends keyof Omit<AppSettings, "badgeConfigs">>(
@@ -281,9 +321,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getBadgeColor = useCallback(
-    (badgeId: string) => {
-      return settings.badgeConfigs[badgeId]?.color || "bg-indigo-500 text-white";
-    },
+    (badgeId: string) => settings.badgeConfigs[badgeId]?.color || "bg-indigo-500 text-white",
     [settings.badgeConfigs]
   );
 
@@ -299,12 +337,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     getBadgeColor,
   };
 
-  return (
-    <SettingsContext.Provider value={value}>
-      {children}
-    </SettingsContext.Provider>
-  );
+  return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 }
+
+/* ====================== HOOK ====================== */
 
 export function useSettings() {
   const ctx = useContext(SettingsContext);
