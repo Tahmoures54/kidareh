@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Bell,
@@ -6,7 +6,7 @@ import {
   MapPin,
   ChevronDown,
   User,
-  Plus,
+  LogIn,
 } from "lucide-react";
 import { AppUser, ManualLocation, HOME_CONFIG } from "../constants";
 
@@ -17,7 +17,12 @@ interface HeaderProps {
   gpsEnabled: boolean;
   manualLocation: ManualLocation | null;
   onOpenLocationModal: () => void;
+  hasNotifications?: boolean; // پراپ جدید برای نشان دادن نقطه اعلان
 }
+
+// کلاس‌های مشترک برای دکمه‌های آیکونی
+const ICON_BUTTON_CLASS =
+  "p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-90";
 
 export const Header = memo(
   ({
@@ -27,10 +32,27 @@ export const Header = memo(
     gpsEnabled,
     manualLocation,
     onOpenLocationModal,
+    hasNotifications = false,
   }: HeaderProps) => {
     const navigate = useNavigate();
     const isSeller = user?.role === "seller" || user?.role === "admin";
-    const showNotificationDot = false; // می‌توانید true کنید و به state واقعی متصل شوید
+
+    // استفاده از useCallback برای جلوگیری از ساخت تابع در هر رندر
+    const handleNavigateToMessages = useCallback(() => {
+      navigate("/messages");
+    }, [navigate]);
+
+    const handleNavigateToProfile = useCallback(() => {
+      navigate(user ? "/profile" : "/login");
+    }, [navigate, user]);
+
+    const handleAvatarError = useCallback(
+      (e: React.SyntheticEvent<HTMLImageElement>) => {
+        e.currentTarget.style.display = "none";
+        // می‌توان fallback icon را نشان داد، اما در اینجا با مخفی کردن تصویر، آیکون کاربر از قبل وجود دارد
+      },
+      []
+    );
 
     return (
       <header
@@ -42,6 +64,7 @@ export const Header = memo(
           <button
             onClick={onOpenLocationModal}
             aria-label="انتخاب شهر"
+            title={effectiveDisplay}
             className="flex items-center gap-1.5 text-sm font-bold text-[var(--text-primary)] min-w-0 active:scale-95 transition-transform hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg px-2 py-1.5 -mr-2"
           >
             <MapPin
@@ -74,27 +97,30 @@ export const Header = memo(
               <Link
                 to="/seller"
                 aria-label="پنل فروشنده"
-                className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-90"
+                title="پنل فروشنده"
+                className={ICON_BUTTON_CLASS}
               >
                 <StoreIcon className="w-5 h-5" />
               </Link>
             )}
 
             <button
-              onClick={() => navigate("/messages")}
+              onClick={handleNavigateToMessages}
               aria-label="پیام‌ها"
-              className="relative p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-90"
+              title="پیام‌ها"
+              className={`relative ${ICON_BUTTON_CLASS}`}
             >
               <Bell className="w-5 h-5" />
-              {showNotificationDot && (
+              {hasNotifications && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full" />
               )}
             </button>
 
             <button
-              onClick={() => navigate(user ? "/profile" : "/login")}
+              onClick={handleNavigateToProfile}
               aria-label={user ? "پروفایل" : "ورود"}
-              className="p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-90"
+              title={user ? "پروفایل" : "ورود"}
+              className={ICON_BUTTON_CLASS}
             >
               {user ? (
                 user.avatar_url ? (
@@ -102,12 +128,13 @@ export const Header = memo(
                     src={user.avatar_url}
                     alt={user.name || "کاربر"}
                     className="w-6 h-6 rounded-full object-cover"
+                    onError={handleAvatarError}
                   />
                 ) : (
                   <User className="w-5 h-5" />
                 )
               ) : (
-                <Plus className="w-5 h-5 text-[var(--brand-primary)]" />
+                <LogIn className="w-5 h-5 text-[var(--brand-primary)]" />
               )}
             </button>
           </div>
