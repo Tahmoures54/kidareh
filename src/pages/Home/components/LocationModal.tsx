@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { motion, AnimatePresence, PanInfo } from "framer-motion";
 import { MapPin, X, Check, Search } from "lucide-react";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -85,6 +91,7 @@ const CityItem = React.memo<CityItemProps>(
     return (
       <div style={style} className="px-4 py-1">
         <button
+          role="option" // Added role="option" for listbox accessibility
           onClick={handleClick}
           aria-selected={isSelected}
           className={`
@@ -154,6 +161,12 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   const scrollParentRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
+  // Stable onClose reference for effect
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useBodyScrollLock(isOpen);
 
   useEffect(() => {
@@ -169,11 +182,11 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen]); // No dependency on onClose, uses ref
 
   const filteredCities = useMemo<City[]>(() => {
     const q = normalizeFA(debouncedQuery);
@@ -190,22 +203,27 @@ export const LocationModal: React.FC<LocationModalProps> = ({
     getScrollElement: () => scrollParentRef.current,
     estimateSize: () => ITEM_HEIGHT,
     overscan: 8,
+    getItemKey: (index) =>
+      `${filteredCities[index].name}-${filteredCities[index].province}`, // Added stable key for virtualizer
   });
 
   const handleSelectCity = useCallback(
     (city: City) => {
       const display = `${city.name}، ${city.province}`;
       onSelect(city.name, display, city.province);
-      onClose();
+      onCloseRef.current();
     },
-    [onSelect, onClose]
+    [onSelect] // onClose not needed, we use ref
   );
 
   const handleDragEnd = useCallback(
     (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-      if (info.offset.y > 120) onClose();
+      // Added velocity threshold for more responsive drag close
+      if (info.offset.y > 120 || info.velocity.y > 500) {
+        onCloseRef.current();
+      }
     },
-    [onClose]
+    []
   );
 
   const handleSearchChange = useCallback(
@@ -235,7 +253,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={onClose}
+            onClick={onCloseRef.current} // Using ref for stable callback
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             aria-hidden="true"
           />
@@ -276,7 +294,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
               </div>
 
               <button
-                onClick={onClose}
+                onClick={onCloseRef.current}
                 aria-label="بستن پنجره انتخاب شهر"
                 className="p-2 rounded-full hover:bg-[var(--bg-tertiary)] text-[var(--text-muted)] transition-colors"
               >
