@@ -1,5 +1,5 @@
-import React, { memo, useRef, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
+import React, { memo, useRef, useEffect, useCallback, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { categoriesData } from "@data/processed/categories";
 
 interface CategorySliderProps {
@@ -10,6 +10,8 @@ interface CategorySliderProps {
 export const CategorySlider = memo(
   ({ activeCategory, onSelectCategory }: CategorySliderProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [isPaused, setIsPaused] = useState(false);
+    const reducedMotion = useReducedMotion();
 
     const items = [
       { slug: null, name: "همه", icon: "🏪" },
@@ -22,7 +24,7 @@ export const CategorySlider = memo(
 
     // اسکرول خودکار به دسته فعال
     useEffect(() => {
-      if (activeCategory && scrollRef.current) {
+      if (activeCategory && scrollRef.current && !isPaused) {
         const activeElement = scrollRef.current.querySelector(
           `[data-category="${activeCategory}"]`
         ) as HTMLElement | null;
@@ -34,11 +36,35 @@ export const CategorySlider = memo(
           const targetScroll = elementLeft - (containerWidth - elementWidth) / 2;
           container.scrollTo({
             left: targetScroll,
-            behavior: "smooth",
+            behavior: reducedMotion ? "auto" : "smooth",
           });
         }
       }
-    }, [activeCategory]);
+    }, [activeCategory, isPaused, reducedMotion]);
+
+    // اسکرول خودکار چرخشی بین دسته‌ها
+    useEffect(() => {
+      if (isPaused || reducedMotion) return;
+
+      const container = scrollRef.current;
+      if (!container) return;
+
+      const interval = setInterval(() => {
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        const cardWidth = container.querySelector<HTMLElement>(
+          '[role="tab"]'
+        )?.offsetWidth;
+        const step = cardWidth ? cardWidth + 8 : 150; // 8 = gap-2
+
+        if (container.scrollLeft + container.clientWidth >= maxScroll - 5) {
+          container.scrollTo({ left: 0, behavior: "smooth" });
+        } else {
+          container.scrollBy({ left: step, behavior: "smooth" });
+        }
+      }, 2500);
+
+      return () => clearInterval(interval);
+    }, [isPaused, reducedMotion]);
 
     const handleSelect = useCallback(
       (slug: string | null) => {
@@ -48,7 +74,13 @@ export const CategorySlider = memo(
     );
 
     return (
-      <div className="relative">
+      <div
+        className="relative"
+        onMouseEnter={() => setIsPaused(true)}
+        onMouseLeave={() => setIsPaused(false)}
+        onFocus={() => setIsPaused(true)}
+        onBlur={() => setIsPaused(false)}
+      >
         <div
           ref={scrollRef}
           className="flex gap-2 overflow-x-auto no-scrollbar px-4 py-3 scroll-smooth"
@@ -77,7 +109,11 @@ export const CategorySlider = memo(
                   <motion.div
                     layoutId="activeCategoryPill"
                     className="absolute inset-0 bg-gradient-to-br from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-700 rounded-xl"
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 350,
+                      damping: 30,
+                    }}
                   />
                 )}
                 <span className="relative z-10 text-base leading-none">
@@ -89,7 +125,7 @@ export const CategorySlider = memo(
           })}
         </div>
 
-        {/* گرادیانت‌های محو برای نشان دادن اسکرول */}
+        {/* گرادیانت‌های محو */}
         <div
           className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none"
           aria-hidden="true"
