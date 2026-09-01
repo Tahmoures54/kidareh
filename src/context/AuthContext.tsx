@@ -121,7 +121,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(null);
       writeUserCache(null);
       clearLegacyTokens();
-      window.location.href = "/login";
+
+      // فقط اگر در صفحه لاگین نیستیم، ریدایرکت نرم انجام بده
+      if (window.location.pathname !== "/login") {
+        // استفاده از History API برای جلوگیری از بارگذاری مجدد کامل
+        window.history.pushState(null, "", "/login");
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }
     };
     window.addEventListener("kidareh:unauthorized", handleUnauthorized);
     return () => window.removeEventListener("kidareh:unauthorized", handleUnauthorized);
