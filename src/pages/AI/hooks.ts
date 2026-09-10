@@ -3,24 +3,39 @@ import { apiRequest } from "../../utils/api";
 import { Msg } from "./types";
 import { WELCOME } from "./constants";
 
+export interface ShoppingProduct {
+  id: number;
+  name: string;
+  price: number | string;
+  status: string;
+  store_name: string;
+  store_phone?: string | null;
+  distance?: number | null;
+  city?: string | null;
+  province?: string | null;
+  rating?: number | null;
+}
+
 interface ShoppingResponse {
   reply: string;
   suggestedQuery?: string;
   matched?: boolean;
-  products?: Array<{ id: number; name: string; price: number | string; status: string; store_name: string; distance?: number | null }>;
+  products?: ShoppingProduct[];
 }
 
 export function useAIChat() {
   const [messages, setMessages] = useState<Msg[]>([WELCOME]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [lastResults, setLastResults] = useState<ShoppingProduct[]>([]);
+  const [lastQuery, setLastQuery] = useState("");
 
   const endRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages, loading, lastResults]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
@@ -31,12 +46,12 @@ export function useAIChat() {
   const send = useCallback(async (text?: string) => {
     const q = (text ?? input).trim();
     if (!q || loading) return;
-
     if (navigator.vibrate) navigator.vibrate(40);
 
-    const userMsg: Msg = { id: Date.now().toString(), role: "user", text: q };
-    setMessages(prev => [...prev, userMsg]);
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: "user", text: q }]);
     setInput("");
+    setLastResults([]);
+    setLastQuery("");
     if (textareaRef.current) textareaRef.current.style.height = "auto";
     setLoading(true);
 
@@ -50,19 +65,15 @@ export function useAIChat() {
       let lng: number | undefined;
       try {
         if (navigator.geolocation) {
-          const position = await new Promise<GeolocationPosition>((resolve, reject) =>
-            navigator.geolocation.getCurrentPosition(resolve, reject, {
-              enableHighAccuracy: false,
-              timeout: 2500,
-              maximumAge: 5 * 60 * 1000,
-            })
-          );
+          const position = await new Promise<GeolocationPosition>((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: false,
+            timeout: 2500,
+            maximumAge: 5 * 60 * 1000,
+          }));
           lat = position.coords.latitude;
           lng = position.coords.longitude;
         }
-      } catch {
-        // Location is optional. The agent can still search globally/city-wide.
-      }
+      } catch { /* Location is optional. */ }
 
       const data = await apiRequest<ShoppingResponse>("/api/ai/chat", {
         method: "POST",
@@ -71,11 +82,12 @@ export function useAIChat() {
       });
 
       if (navigator.vibrate) navigator.vibrate([30, 50, 30]);
-
+      setLastResults(data.products || []);
+      setLastQuery(data.suggestedQuery || q);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        text: data.reply || "متاسفم، نتیجه‌ای دریافت نکردم. لطفاً عبارت جستجو را تغییر دهید.",
+        text: data.reply || "نتیجه‌ای دریافت نکردم. عبارت جستجو را کمی تغییر دهید.",
       }]);
     } catch {
       setMessages(prev => [...prev, {
@@ -90,8 +102,8 @@ export function useAIChat() {
   }, [input, loading, messages]);
 
   return {
-    state: { messages, input, loading },
+    state: { messages, input, loading, lastResults, lastQuery },
     refs: { endRef, textareaRef },
-    actions: { handleInput, send }
+    actions: { handleInput, send },
   };
 }
