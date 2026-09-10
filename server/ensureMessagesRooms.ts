@@ -1,8 +1,9 @@
 /**
- * messages_rooms bootstrap — ensures chat rooms table exists
+ * messages_rooms bootstrap — ensures chat rooms and reservation request tables exist
  */
 import db from "./db.js";
 import logger from "./logger.js";
+import { ensureReservationRequests } from "./ensureReservationRequests.js";
 
 export function ensureMessagesRooms() {
   try {
@@ -44,6 +45,7 @@ export function ensureMessagesRooms() {
       db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (11)").run();
     } catch {}
 
+    ensureReservationRequests();
     logger.info("✅ messages_rooms ready");
   } catch (err) {
     logger.error("ensureMessagesRooms failed:", err);
