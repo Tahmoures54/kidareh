@@ -215,7 +215,7 @@ export default function PresenceShell() {
               </button>
             </div>
           </header>
-          <main id="presence-main" className={cn("flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
+          <main className={cn("w-full flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
             <Outlet />
           </main>
         </div>

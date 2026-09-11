@@ -735,6 +735,7 @@ a {
     var(--paper);
   color: var(--ink);
   min-height: 100dvh;
+  width: 100%;
   -webkit-font-smoothing: antialiased;
 }
 
