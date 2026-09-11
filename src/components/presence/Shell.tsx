@@ -71,6 +71,11 @@ export default function PresenceShell() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName;
+      if (e.key === "Escape") {
+        setPalette(false);
+        setMenu(false);
+        return;
+      }
       if (["INPUT", "TEXTAREA", "SELECT"].includes(tag)) return;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
@@ -80,7 +85,6 @@ export default function PresenceShell() {
         e.preventDefault();
         setPalette(true);
       }
-      if (e.key === "Escape") setPalette(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
