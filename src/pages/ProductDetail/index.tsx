@@ -12,6 +12,7 @@ import { ImageCarousel, GalleryModal } from "./components/ImageGallery";
 import { ProductInfo } from "./components/ProductInfo";
 import { StoreCard } from "./components/StoreCard";
 import { BottomActionBar } from "../../components/ui/BottomActionBar";
+import { setProductSaved } from "../../lib/feedStorage";
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
 
@@ -175,6 +176,7 @@ export default function ProductDetail() {
     if (!user) return navigate("/login");
     const next = !saved;
     setSaved(next);
+    setProductSaved(Number(id), next);
     setSaveLoading(true);
     try {
       await apiRequest("/api/products/save", {
@@ -185,6 +187,7 @@ export default function ProductDetail() {
       showToast(next ? "به علاقه‌مندی‌ها اضافه شد ❤️" : "از علاقه‌مندی‌ها برداشته شد");
     } catch {
       setSaved(!next);
+      setProductSaved(Number(id), !next);
       showToast("ذخیره نشد. دوباره بزن.", "error");
     } finally {
       setSaveLoading(false);

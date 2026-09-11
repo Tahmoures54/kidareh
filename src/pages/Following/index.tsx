@@ -1,10 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Heart, RefreshCw, Store, Users } from "lucide-react";
+import { Heart, RefreshCw, Users } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../utils/api";
-import { ProductCard } from "../../components/cards/ProductCard";
 import EmptyState from "../../components/ui/EmptyState";
+import { FeedColumn, FeedStack } from "../../components/feed/FeedColumn";
+import { FeedPost } from "../../components/feed/FeedPost";
+import { FeedStories, type StoryItem } from "../../components/feed/FeedStories";
+import { productToFeedPost } from "../../lib/feedMappers";
 
 interface FollowedStore {
   id: number;
@@ -16,41 +19,10 @@ interface FollowedStore {
   follower_count?: number;
 }
 
-function normalizeProduct(raw: any) {
-  const images = raw.images
-    ? typeof raw.images === "string"
-      ? (() => {
-          try {
-            return JSON.parse(raw.images);
-          } catch {
-            return [raw.images];
-          }
-        })()
-      : raw.images
-    : [];
-  const image =
-    raw.image ||
-    raw.image_url ||
-    (Array.isArray(images) && images[0]) ||
-    "https://placehold.co/400x400/e8f7f6/00A693?text=Kidareh";
-
-  return {
-    ...raw,
-    id: raw.id,
-    name: raw.name || raw.title || "کالا",
-    price: Number(raw.price) || 0,
-    oldPrice: Number(raw.oldPrice ?? raw.old_price ?? 0) || 0,
-    store: raw.store || raw.store_name || "فروشگاه",
-    status: raw.status || "موجود",
-    distance: raw.distance || raw.city || raw.store_city || "",
-    image,
-  };
-}
-
 export default function Following() {
   const { isAuthenticated } = useAuth();
   const [stores, setStores] = useState<FollowedStore[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
+  const [products, setProducts] = useState<Record<string, any>[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,7 +44,7 @@ export default function Following() {
         : Array.isArray((productsRes as any)?.products)
           ? (productsRes as any).products
           : [];
-      setProducts(list.map(normalizeProduct));
+      setProducts(list);
     } catch (e: any) {
       setError(e?.message || "خطا در دریافت ویترین دنبال‌شده‌ها");
       setStores([]);
@@ -87,13 +59,26 @@ export default function Following() {
     fetchFeed();
   }, [fetchFeed]);
 
+  const posts = useMemo(() => products.map((product) => productToFeedPost(product)), [products]);
+  const stories = useMemo<StoryItem[]>(
+    () =>
+      stores.map((store) => ({
+        id: String(store.id),
+        name: store.name,
+        href: `/store/${store.id}`,
+        image: store.image_url,
+        live: true,
+      })),
+    [stores]
+  );
+
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] pb-28" dir="rtl">
-      <header className="sticky top-0 z-40 border-b border-[var(--border-light)] bg-[var(--bg-primary)]/90 px-4 py-4 backdrop-blur-xl">
-        <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-white pb-28" dir="rtl">
+      <header className="sticky top-0 z-40 border-b border-[var(--border-light)] bg-white/90 px-4 py-3 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-[470px] items-center justify-between">
           <div>
-            <p className="text-xs font-black text-[var(--brand-primary)]">خریدار</p>
-            <h1 className="text-xl font-black">فروشگاه‌های دنبال‌شده</h1>
+            <p className="text-xs font-black text-[var(--brand-primary)]">فید دنبال‌شده‌ها</p>
+            <h1 className="text-xl font-black">فروشگاه‌هایی که دنبال می‌کنی</h1>
           </div>
           <button
             type="button"
@@ -104,12 +89,9 @@ export default function Following() {
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </button>
         </div>
-        <p className="mt-2 text-sm font-bold leading-7 text-[var(--text-muted)]">
-          فقط کالاهای مغازه‌هایی که دنبال می‌کنی
-        </p>
       </header>
 
-      <div className="px-4 pt-4">
+      <FeedColumn>
         {loading && (
           <div className="flex justify-center py-20">
             <RefreshCw className="h-8 w-8 animate-spin text-[var(--brand-primary)]" />
@@ -117,7 +99,7 @@ export default function Following() {
         )}
 
         {!loading && error && (
-          <div className="space-y-4 py-16 text-center">
+          <div className="space-y-4 px-4 py-16 text-center">
             <p className="font-bold text-rose-500">{error}</p>
             <button
               type="button"
@@ -130,55 +112,44 @@ export default function Following() {
         )}
 
         {!loading && !error && stores.length === 0 && (
-          <EmptyState
-            icon={Users}
-            title="هنوز فروشگاهی را دنبال نکرده‌اید"
-            description="از صفحه فروشگاه، دکمه دنبال کردن را بزن تا کالاهای همان مغازه اینجا بیاید"
-          />
+          <div className="px-4 py-8">
+            <EmptyState
+              icon={Users}
+              title="هنوز فروشگاهی را دنبال نکرده‌اید"
+              description="از صفحه فروشگاه، دکمه دنبال کردن را بزن تا کالاهای همان مغازه اینجا بیاید"
+            />
+            <div className="mt-4 text-center">
+              <Link
+                to="/stores"
+                className="inline-flex h-12 items-center rounded-2xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white"
+              >
+                دیدن فروشگاه‌ها
+              </Link>
+            </div>
+          </div>
         )}
 
         {!loading && !error && stores.length > 0 && (
           <>
-            <div className="mb-4 flex gap-2 overflow-x-auto presence-hide-scroll pb-1">
-              {stores.map((store) => (
-                <Link
-                  key={store.id}
-                  to={`/store/${store.id}`}
-                  className="flex shrink-0 items-center gap-2 rounded-full border border-[var(--border-light)] bg-white px-3 py-2"
-                >
-                  <Store className="h-4 w-4 text-[var(--brand-primary)]" />
-                  <span className="text-xs font-black">{store.name}</span>
-                </Link>
-              ))}
-            </div>
-
-            {products.length === 0 ? (
-              <EmptyState
-                icon={Heart}
-                title="هنوز کالای تأییدشده‌ای نیست"
-                description="فروشگاه‌های دنبال‌شده هنوز ویترین آماده‌ای ندارند"
-              />
-            ) : (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} viewMode="grid" />
-                ))}
+            <FeedStories items={stories} />
+            {posts.length === 0 ? (
+              <div className="px-4 py-8">
+                <EmptyState
+                  icon={Heart}
+                  title="هنوز کالای تأییدشده‌ای نیست"
+                  description="فروشگاه‌های دنبال‌شده هنوز ویترین آماده‌ای ندارند"
+                />
               </div>
+            ) : (
+              <FeedStack>
+                {posts.map((post) => (
+                  <FeedPost key={post.key} post={post} />
+                ))}
+              </FeedStack>
             )}
           </>
         )}
-
-        {!loading && !error && stores.length === 0 && (
-          <div className="mt-4 text-center">
-            <Link
-              to="/stores"
-              className="inline-flex h-12 items-center rounded-2xl bg-[var(--brand-primary)] px-5 text-sm font-black text-white"
-            >
-              دیدن فروشگاه‌ها
-            </Link>
-          </div>
-        )}
-      </div>
+      </FeedColumn>
     </div>
   );
 }

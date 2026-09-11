@@ -20,7 +20,9 @@ import {
 import Map from "../../components/Map";
 import EmptyState from "../../components/ui/EmptyState";
 import { Toast } from "../../components/ui/Toast";
-import { ProductCard } from "../../components/cards/ProductCard";
+import { FeedColumn } from "../../components/feed/FeedColumn";
+import { FeedPost } from "../../components/feed/FeedPost";
+import { productToFeedPost } from "../../lib/feedMappers";
 
 import { useSearch, getInitialScope } from "./hooks/useSearch";
 import { SearchSkeleton } from "./components/SearchSkeleton";
@@ -44,7 +46,6 @@ export default function Search() {
     sortedProducts, userLoc,
     commitSearch, clearSearch, clearRecents, removeRecent,
     expandSearchScope, cycleScope, resetFilters,
-    handleShare, handleNavigate,
     searchPlaceholder, scopeLabel,
   } = useSearch();
 
@@ -56,7 +57,7 @@ export default function Search() {
 
   return (
     <div 
-      className="min-h-[100dvh] bg-gray-50 dark:bg-gray-950 font-sans" 
+      className="min-h-[100dvh] bg-white font-sans" 
       dir="rtl"
     >
       {/* Toast */}
@@ -293,22 +294,16 @@ export default function Search() {
               </p>
             </div>
 
+            <FeedColumn className="-mx-4">
             <Virtuoso
               data={sortedProducts}
               useWindowScroll
-              overscan={600}
+              overscan={800}
               endReached={() => {
                 if (hasNextPage && !isFetchingNextPage) fetchNextPage();
               }}
-              itemContent={(index, product) => (
-                <div className="mb-3">
-                  <ProductCard
-                    product={product}
-                    index={index}
-                    onShare={handleShare}
-                    onNavigate={handleNavigate}
-                  />
-                </div>
+              itemContent={(_index, product) => (
+                <FeedPost post={productToFeedPost(product)} />
               )}
               components={{
                 Footer: () =>
@@ -327,6 +322,7 @@ export default function Search() {
                   ) : null,
               }}
             />
+            </FeedColumn>
           </>
         )}
 

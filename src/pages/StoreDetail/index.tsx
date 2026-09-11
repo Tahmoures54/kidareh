@@ -197,6 +197,7 @@ export default function StoreDetail() {
             >
               <ProductsTab
                 products={store.products || []}
+                store={store}
                 onProductClick={(productId) => navigate(`/products/${productId}`)}
               />
             </motion.div>

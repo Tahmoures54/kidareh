@@ -3,7 +3,7 @@ export type { SortType, ViewMode, LocationScopeType, LocationScope } from "../..
 export interface ProductResult {
   id: number | string;
   name: string;
-  store_name: string;
+  store_id?: number | string;
   distance: string;
   distanceMeters?: number;
   price: number | string;

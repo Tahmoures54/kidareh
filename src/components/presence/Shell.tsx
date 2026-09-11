@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
-  Compass,
+  Bookmark,
+  Home,
   Map as MapIcon,
   Radio,
   Route,
@@ -25,8 +26,14 @@ import InstallPrompt from "../InstallPrompt";
 import { cn } from "../../utils";
 
 const TABS = [
-  { to: "/", label: "محله", icon: Compass, end: true },
+  { to: "/", label: "خانه", icon: Home, end: true },
+  { to: "/search", label: "جستجو", icon: Search },
   { to: "/explore", label: "نقشه", icon: MapIcon },
+  { to: "/saved", label: "نشان‌ها", icon: Bookmark },
+  { to: "/profile", label: "من", icon: User },
+] as const;
+
+const EXTRA_RAIL = [
   { to: "/radar", label: "قیمت", icon: Radio },
   { to: "/trip", label: "مسیر", icon: Route },
   { to: "/holds", label: "رزرو", icon: QrCode },
@@ -35,7 +42,7 @@ const TABS = [
 function isPresencePath(pathname: string) {
   return (
     pathname === "/" ||
-    ["/explore", "/radar", "/trip", "/holds", "/reservations"].includes(pathname) ||
+    ["/explore", "/radar", "/trip", "/holds", "/reservations", "/search", "/saved", "/following"].includes(pathname) ||
     pathname.startsWith("/p/") ||
     pathname.startsWith("/product/")
   );
@@ -111,6 +118,33 @@ export default function PresenceShell() {
             key={tab.to}
             to={tab.to}
             end={"end" in tab ? tab.end : false}
+            className={({ isActive }) =>
+              cn(
+                "relative flex h-14 w-14 flex-col items-center justify-center rounded-2xl text-[var(--muted)] transition",
+                isActive && "bg-white text-[var(--accent)] shadow-sm"
+              )
+            }
+            aria-label={tab.label}
+          >
+            <tab.icon className="h-5 w-5" />
+            <span className="mt-0.5 text-[10px] font-black">{tab.label}</span>
+            {tab.to === "/trip" && tripCount > 0 && (
+              <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9px] font-black text-white">
+                {tripCount}
+              </span>
+            )}
+            {tab.to === "/holds" && holdCount > 0 && (
+              <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--gold)] px-1 text-[9px] font-black text-[var(--ink)]">
+                {holdCount}
+              </span>
+            )}
+          </NavLink>
+        ))}
+        <div className="my-2 h-px w-8 bg-[var(--line)]" />
+        {EXTRA_RAIL.map((tab) => (
+          <NavLink
+            key={tab.to}
+            to={tab.to}
             className={({ isActive }) =>
               cn(
                 "relative flex h-14 w-14 flex-col items-center justify-center rounded-2xl text-[var(--muted)] transition",
@@ -275,6 +309,15 @@ export default function PresenceShell() {
               </Link>
               <Link to="/saved" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 ذخیره‌شده‌ها
+              </Link>
+              <Link to="/radar" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                رادار قیمت
+              </Link>
+              <Link to="/trip" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                مسیر خرید
+              </Link>
+              <Link to="/holds" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                رزروها
               </Link>
               <Link to="/following" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 فروشگاه‌های دنبال‌شده

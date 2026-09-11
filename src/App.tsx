@@ -164,7 +164,7 @@ export default function App() {
 
                   <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
-                  <Route path="saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
+                  <Route path="saved" element={<Saved />} />
                   <Route path="following" element={<ProtectedRoute><Following /></ProtectedRoute>} />
                   <Route path="referral" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
                   <Route path="become-seller" element={<ProtectedRoute><BecomeSeller /></ProtectedRoute>} />

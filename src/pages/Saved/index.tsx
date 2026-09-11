@@ -7,6 +7,12 @@ import { ProductCard } from "../../components/cards/ProductCard";
 import { GuestView } from "./components/GuestView";
 import { SavedHeader, type Filter, type ViewMode } from "./components/SavedHeader";
 import EmptyState from "../../components/ui/EmptyState";
+import { FeedColumn, FeedStack } from "../../components/feed/FeedColumn";
+import { FeedPost } from "../../components/feed/FeedPost";
+import { listingToFeedPost, productToFeedPost, type FeedPostData } from "../../lib/feedMappers";
+import { listSavedListingIds, onFeedChange, setProductSaved, syncSavedProductIds } from "../../lib/feedStorage";
+import { enrichListing, getListing } from "../../presence/engine";
+import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 
 interface SavedProduct {
   id: number | string;
@@ -65,7 +71,9 @@ export default function Saved() {
   const [products, setProducts] = useState<(SavedProduct & Record<string, any>)[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const { origin } = usePresenceOrigin();
+  const [listingTick, setListingTick] = useState(0);
   const [filter, setFilter] = useState<Filter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectionMode, setSelectionMode] = useState(false);
@@ -83,6 +91,7 @@ export default function Saved() {
       const data = await apiRequest<any[]>("/api/products/saved", { auth: true });
       const list = Array.isArray(data) ? data.map(normalizeProduct) : [];
       setProducts(list);
+      syncSavedProductIds(list.map((item) => item.id));
     } catch (e: any) {
       setError(e?.message || "خطا در دریافت لیست ذخیره‌شده‌ها");
       setProducts([]);
@@ -95,13 +104,26 @@ export default function Saved() {
     fetchSaved();
   }, [fetchSaved]);
 
+  useEffect(() => onFeedChange(() => setListingTick((n) => n + 1)), []);
+
+  const listingPosts = useMemo<FeedPostData[]>(() => {
+    return listSavedListingIds()
+      .map((id) => {
+        const raw = getListing(id);
+        if (!raw) return null;
+        return enrichListing(raw, origin);
+      })
+      .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      .map(listingToFeedPost);
+  }, [origin, listingTick]);
+
   const counts = useMemo(
     () => ({
-      all: products.length,
+      all: products.length + listingPosts.length,
       price_drop: products.filter((p) => p.hasPriceDrop).length,
       available: products.filter((p) => p.status === "موجود" || !p.status).length,
     }),
-    [products]
+    [listingPosts.length, products]
   );
 
   const filtered = useMemo(() => {
@@ -121,9 +143,26 @@ export default function Saved() {
     return list;
   }, [products, filter, searchQuery, sortAsc]);
 
+  const productPosts = useMemo(
+    () => filtered.map((product) => productToFeedPost(product)),
+    [filtered]
+  );
+
+  const feedPosts = useMemo(() => {
+    if (filter !== "all") return productPosts;
+    const q = searchQuery.trim().toLowerCase();
+    const listings = q
+      ? listingPosts.filter((post) =>
+          `${post.title} ${post.storeName}`.toLowerCase().includes(q)
+        )
+      : listingPosts;
+    return [...listings, ...productPosts];
+  }, [filter, listingPosts, productPosts, searchQuery]);
+
   const removeOne = async (id: string | number) => {
     const sid = String(id);
     setProducts((prev) => prev.filter((p) => String(p.id) !== sid));
+    setProductSaved(id, false);
     setSelected((prev) => {
       const next = new Set(prev);
       next.delete(sid);
@@ -166,12 +205,12 @@ export default function Saved() {
     });
   };
 
-  if (!isAuthenticated || !user) {
+  if ((!isAuthenticated || !user) && listingPosts.length === 0) {
     return <GuestView />;
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] pb-28" dir="rtl">
+    <div className="min-h-screen bg-white pb-28" dir="rtl">
       <SavedHeader
         selectionMode={selectionMode}
         selectedCount={selected.size}
@@ -180,7 +219,7 @@ export default function Saved() {
           setSelected(new Set());
         }}
         onBatchRemove={batchRemove}
-        productCount={products.length}
+        productCount={products.length + listingPosts.length}
         onToggleSort={() => setSortAsc((v) => !v)}
         onRefresh={fetchSaved}
         loading={loading}
@@ -212,7 +251,7 @@ export default function Saved() {
           </div>
         )}
 
-        {!loading && !error && filtered.length === 0 && (
+        {!loading && !error && feedPosts.length === 0 && (
           <EmptyState
             icon={Heart}
             title={
@@ -223,16 +262,32 @@ export default function Saved() {
             description={
               searchQuery || filter !== "all"
                 ? "فیلتر یا عبارت جستجو را تغییر دهید"
-                : "کالاهای مورد علاقه را با ضربه روی قلب ذخیره کنید"
+                : "روی نشان هر پست بزن تا کالا اینجا بماند"
             }
           />
         )}
 
-        {!loading && !error && filtered.length > 0 && (
+        {!loading && !error && feedPosts.length > 0 && viewMode === "list" && !selectionMode && (
+          <FeedColumn className="-mx-4">
+            <FeedStack>
+              {feedPosts.map((post) => (
+                <FeedPost
+                  key={post.key}
+                  post={post}
+                  onRemoved={(item) => {
+                    if (item.productId) removeOne(item.productId);
+                  }}
+                />
+              ))}
+            </FeedStack>
+          </FeedColumn>
+        )}
+
+        {!loading && !error && filtered.length > 0 && (viewMode === "grid" || selectionMode) && (
           <motion.div
             layout
             className={
-              viewMode === "grid"
+              viewMode === "grid" || selectionMode
                 ? "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
                 : "flex flex-col gap-3"
             }
@@ -242,7 +297,7 @@ export default function Saved() {
                 <ProductCard
                   key={product.id}
                   product={product}
-                  viewMode={viewMode}
+                  viewMode={selectionMode ? "grid" : viewMode}
                   onRemove={removeOne}
                   isSelected={selected.has(String(product.id))}
                   onToggleSelect={toggleSelect}
@@ -254,7 +309,7 @@ export default function Saved() {
         )}
       </div>
 
-      {!selectionMode && products.length > 0 && (
+      {!selectionMode && isAuthenticated && products.length > 0 && (
         <button
           onClick={() => setSelectionMode(true)}
           className="fixed bottom-24 left-4 z-30 px-4 py-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-light)] shadow-lg text-xs font-bold text-[var(--text-secondary)]"

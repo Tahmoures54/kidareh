@@ -5,11 +5,14 @@ import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { CATEGORY_META } from "../../presence/catalog";
 import { compareCopy, pulseStats, searchListings, toFa } from "../../presence/engine";
 import type { ListingCategory, PresenceQuery } from "../../presence/types";
-import { ListingCard } from "../../components/presence/ListingCard";
 import PresenceMap from "../../components/presence/PresenceMap";
 import PresenceEmpty from "../../components/presence/EmptyState";
-import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
 import { useMinWidth } from "../../hooks/useMinWidth";
+import { FeedColumn, FeedStack } from "../../components/feed/FeedColumn";
+import { FeedPost } from "../../components/feed/FeedPost";
+import { FeedStories, type StoryItem } from "../../components/feed/FeedStories";
+import { listingToFeedPost, productToFeedPost, type FeedPostData } from "../../lib/feedMappers";
+import { apiRequest } from "../../utils/api";
 
 const RADII = [
   { km: 0.8, label: "۸۰۰ م" },
@@ -25,10 +28,8 @@ export default function PresenceHome() {
   const [radiusKm, setRadiusKm] = useState(3);
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
-  const [trip, setTrip] = useState<string[]>(() => listTripIds());
+  const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
   const desktop = useMinWidth(1024);
-
-  useEffect(() => onTripChange(() => setTrip(listTripIds())), []);
 
   const pulse = useMemo(() => pulseStats(origin), [origin]);
   const listings = useMemo(
@@ -37,153 +38,181 @@ export default function PresenceHome() {
   );
   const compare = compareCopy();
 
+  useEffect(() => {
+    let cancelled = false;
+    apiRequest<{ products?: Record<string, unknown>[] }>("/api/search?limit=12&sort=newest")
+      .then((res) => {
+        if (cancelled) return;
+        const rows = Array.isArray(res?.products) ? res.products : [];
+        setShopPosts(rows.map((row) => productToFeedPost(row)));
+      })
+      .catch(() => {
+        if (!cancelled) setShopPosts([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const listingPosts = useMemo(() => listings.map(listingToFeedPost), [listings]);
+  const posts = useMemo(() => {
+    const qn = q.trim().toLowerCase();
+    const shops = qn
+      ? shopPosts.filter((post) =>
+          `${post.title} ${post.storeName} ${post.caption ?? ""}`.toLowerCase().includes(qn)
+        )
+      : shopPosts;
+    const seen = new Set<string>();
+    return [...shops, ...listingPosts].filter((post) => {
+      if (seen.has(post.key)) return false;
+      seen.add(post.key);
+      return true;
+    });
+  }, [listingPosts, q, shopPosts]);
+
+  const stories = useMemo<StoryItem[]>(() => {
+    const items: StoryItem[] = [];
+    const seen = new Set<string>();
+    for (const listing of listings) {
+      if (seen.has(listing.store.id)) continue;
+      seen.add(listing.store.id);
+      items.push({
+        id: listing.store.id,
+        name: listing.store.name,
+        href: `/p/${listing.id}`,
+        image: listing.store.cover,
+        live: listing.openNow,
+      });
+      if (items.length >= 12) break;
+    }
+    return items;
+  }, [listings]);
+
   return (
-    <div className="grid lg:grid-cols-[minmax(0,1fr)_420px]">
-      <div className="px-4 py-5 sm:px-6">
-        <section className="presence-card overflow-hidden rounded-[32px] p-5 sm:p-7">
-          <p className="text-sm font-black text-[var(--accent)]">خرید حضوری محله</p>
-          <h1 className="mt-2 max-w-xl text-3xl font-black leading-[1.25] tracking-tight sm:text-4xl">
-            ببین کی داره.
-            <br />
-            همین الان حضوری بگیر.
-          </h1>
-          <p className="mt-3 max-w-lg text-sm font-bold leading-7 text-[var(--ink-soft)]">
-            کالا را در مغازه همین اطراف پیدا کن، پیاده برو، ببین، بعد پول بده. بدون پست و بدون انتظار.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            {[
-              `${toFa(pulse.inWalk15)} کالا تا ۱۵ دقیقه پیاده`,
-              `${toFa(pulse.openStores)} فروشگاه باز`,
-              `${toFa(pulse.liveUpdates)} به‌روزرسانی زنده`,
-            ].map((item) => (
-              <span key={item} className="presence-chip rounded-full px-3 py-1.5 text-[11px] font-black">
-                {item}
-              </span>
-            ))}
-          </div>
-          <div className="mt-5 grid grid-cols-2 gap-2">
-            <Link
-              to="/stores"
-              className="flex min-h-12 items-center justify-center rounded-2xl bg-[var(--accent)] px-3 text-sm font-black text-white"
-            >
-              فروشگاه‌های واقعی
-            </Link>
-            <Link
-              to="/search"
-              className="flex min-h-12 items-center justify-center rounded-2xl border border-[var(--line)] bg-white px-3 text-sm font-black"
-            >
-              جستجوی کالا
-            </Link>
-          </div>
-          <label className="mt-5 flex h-14 items-center gap-3 rounded-2xl bg-[var(--paper)] px-4">
-            <Sparkles className="h-4 w-4 text-[var(--accent)]" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="آیفون، دایسون، دانک پاندا…"
-              className="h-full flex-1 bg-transparent text-sm font-bold outline-none"
-            />
-          </label>
-        </section>
-
-        <div className="mt-5 flex gap-2 overflow-x-auto presence-hide-scroll pb-1">
-          <button
-            type="button"
-            onClick={() => setCategory("all")}
-            className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-black ${category === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
-          >
-            همه
-          </button>
-          {(Object.keys(CATEGORY_META) as ListingCategory[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setCategory(key)}
-              className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-black ${category === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
-            >
-              {CATEGORY_META[key].emoji} {CATEGORY_META[key].label}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {RADII.map((r) => (
-            <button
-              key={r.km}
-              type="button"
-              onClick={() => setRadiusKm(r.km)}
-              className={`rounded-full px-3 py-2 text-[12px] font-black ${radiusKm === r.km ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
-            >
-              {r.label}
-            </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => setOpenNow((v) => !v)}
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-2 text-[12px] font-black ${openNow ? "bg-[var(--ok)] text-white" : "presence-chip"}`}
-          >
-            <Clock3 className="h-3 w-3" /> فقط باز
-          </button>
-          {(
-            [
-              ["nearest", "نزدیک‌ترین"],
-              ["cheapest", "ارزان‌ترین"],
-              ["trust", "معتبرترین"],
-              ["newest", "تازه‌ترین"],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setSort(key)}
-              className={`rounded-full px-3 py-2 text-[12px] font-black ${sort === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
-            >
-              {label}
-            </button>
-          ))}
-          <span className="text-[11px] font-black text-[var(--muted)]">{toFa(listings.length)} کالا</span>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {listings.map((listing) => (
-            <ListingCard
-              key={listing.id}
-              listing={listing}
-              inTrip={trip.includes(listing.id)}
-              onToggleTrip={(id) => setTrip(toggleTrip(id))}
-            />
-          ))}
-        </div>
-        {listings.length === 0 && (
-          <div className="mt-6">
-            <PresenceEmpty
-              title="در این شعاع کالایی نیست"
-              hint="فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
-              actionLabel="نمایش کل شهر"
-              onAction={() => {
-                setOpenNow(false);
-                setRadiusKm(8);
-              }}
-            />
-          </div>
-        )}
-
-        <section className="mt-10 overflow-hidden rounded-[28px] border border-[var(--line)]">
-          <div className="bg-[var(--accent)] px-5 py-4 text-white">
-            <p className="text-sm font-black text-white/90">چرا کی‌داره؟</p>
-            <h2 className="mt-1 text-lg font-black">ببین، بعد بخر — از مغازه همین محله</h2>
-          </div>
-          <div className="grid sm:grid-cols-2">
-            {compare.map((row) => (
-              <div key={row.axis} className="border-t border-[var(--line)] bg-white/70 p-4">
-                <p className="text-sm font-black text-[var(--ink)]">{row.axis}</p>
-                <p className="mt-2 text-xs font-bold text-[var(--muted)]">دیجی‌کالا: {row.digikala}</p>
-                <p className="text-xs font-bold text-[var(--muted)]">دیوار: {row.divar}</p>
-                <p className="mt-1 text-sm font-black text-[var(--accent)]">کی‌داره: {row.kidareh}</p>
+    <div className="grid bg-white lg:grid-cols-[minmax(0,1fr)_420px]">
+      <div className="min-w-0">
+        <FeedColumn>
+          <section className="px-3 pt-3">
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-black text-[var(--accent)]">فید محله</p>
+                <h1 className="text-xl font-black tracking-tight">ببین کی داره</h1>
               </div>
+              <p className="text-[11px] font-black text-[var(--muted)]">
+                {toFa(pulse.inWalk15)} کالا تا ۱۵ دقیقه
+              </p>
+            </div>
+            <label className="mt-3 flex h-12 items-center gap-3 rounded-2xl bg-[var(--paper)] px-3">
+              <Sparkles className="h-4 w-4 text-[var(--accent)]" />
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="جستجو در پست‌ها…"
+                className="h-full flex-1 bg-transparent text-sm font-bold outline-none"
+              />
+            </label>
+          </section>
+
+          <FeedStories items={stories} />
+
+          <div className="flex gap-2 overflow-x-auto presence-hide-scroll px-3 pb-1">
+            <button
+              type="button"
+              onClick={() => setCategory("all")}
+              className={`shrink-0 rounded-full px-3 py-2 text-[12px] font-black ${category === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+            >
+              همه
+            </button>
+            {(Object.keys(CATEGORY_META) as ListingCategory[]).map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setCategory(key)}
+                className={`shrink-0 rounded-full px-3 py-2 text-[12px] font-black ${category === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+              >
+                {CATEGORY_META[key].emoji} {CATEGORY_META[key].label}
+              </button>
             ))}
           </div>
-        </section>
+
+          <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+            {RADII.map((r) => (
+              <button
+                key={r.km}
+                type="button"
+                onClick={() => setRadiusKm(r.km)}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-black ${radiusKm === r.km ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+              >
+                {r.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setOpenNow((v) => !v)}
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-black ${openNow ? "bg-[var(--ok)] text-white" : "presence-chip"}`}
+            >
+              <Clock3 className="h-3 w-3" /> فقط باز
+            </button>
+            {(
+              [
+                ["nearest", "نزدیک‌ترین"],
+                ["cheapest", "ارزان‌ترین"],
+                ["trust", "معتبرترین"],
+                ["newest", "تازه‌ترین"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setSort(key)}
+                className={`rounded-full px-3 py-1.5 text-[11px] font-black ${sort === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </FeedColumn>
+
+        <FeedColumn>
+          {posts.length === 0 ? (
+            <div className="px-3 py-6">
+              <PresenceEmpty
+                title="در این شعاع کالایی نیست"
+                hint="فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
+                actionLabel="نمایش کل شهر"
+                onAction={() => {
+                  setOpenNow(false);
+                  setRadiusKm(8);
+                }}
+              />
+            </div>
+          ) : (
+            <FeedStack>
+              {posts.map((post) => (
+                <FeedPost key={post.key} post={post} />
+              ))}
+            </FeedStack>
+          )}
+        </FeedColumn>
+
+        <FeedColumn>
+          <section className="mx-3 my-6 overflow-hidden rounded-[24px] border border-[var(--line)]">
+            <div className="bg-[var(--accent)] px-5 py-4 text-white">
+              <p className="text-sm font-black text-white/90">چرا کی‌داره؟</p>
+              <h2 className="mt-1 text-lg font-black">ببین، بعد بخر — از مغازه همین محله</h2>
+            </div>
+            <div className="grid sm:grid-cols-2">
+              {compare.map((row) => (
+                <div key={row.axis} className="border-t border-[var(--line)] bg-white p-4">
+                  <p className="text-sm font-black text-[var(--ink)]">{row.axis}</p>
+                  <p className="mt-2 text-xs font-bold text-[var(--muted)]">دیجی‌کالا: {row.digikala}</p>
+                  <p className="text-xs font-bold text-[var(--muted)]">دیوار: {row.divar}</p>
+                  <p className="mt-1 text-sm font-black text-[var(--accent)]">کی‌داره: {row.kidareh}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        </FeedColumn>
       </div>
 
       {desktop && (
