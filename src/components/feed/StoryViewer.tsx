@@ -29,15 +29,22 @@ export default function StoryViewer({ items, index, onIndexChange, onClose }: Pr
   const frames = item ? framesOf(item) : [];
   const [frameIndex, setFrameIndex] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [imgBroken, setImgBroken] = useState(false);
   const holdRef = useRef(false);
   const holdTimer = useRef<number | null>(null);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const rootRef = useRef<HTMLDivElement | null>(null);
   const frame = frames[frameIndex];
 
   useEffect(() => {
     setFrameIndex(0);
     setPaused(false);
+    setImgBroken(false);
   }, [item?.id]);
+
+  useEffect(() => {
+    setImgBroken(false);
+  }, [frameIndex]);
 
   useEffect(() => {
     if (!item) return;
@@ -48,8 +55,11 @@ export default function StoryViewer({ items, index, onIndexChange, onClose }: Pr
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    document.body.classList.add("story-open");
+    window.setTimeout(() => rootRef.current?.focus(), 0);
     return () => {
       document.body.style.overflow = prev;
+      document.body.classList.remove("story-open");
     };
   }, []);
 
@@ -142,7 +152,20 @@ export default function StoryViewer({ items, index, onIndexChange, onClose }: Pr
   if (!item || !frame || typeof document === "undefined") return null;
 
   return createPortal(
-    <div className="story-viewer" role="dialog" aria-modal="true" aria-label={`استوری ${item.name}`} dir="rtl">
+    <div
+      ref={rootRef}
+      className="story-viewer"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`استوری ${item.name}`}
+      dir="rtl"
+      tabIndex={-1}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") goClose();
+        if (e.key === "ArrowRight") goNext();
+        if (e.key === "ArrowLeft") goPrev();
+      }}
+    >
       <div className="story-viewer-stage" dir="ltr">
         <div className="story-progress" aria-hidden>
           {frames.map((entry, i) => (
@@ -175,7 +198,7 @@ export default function StoryViewer({ items, index, onIndexChange, onClose }: Pr
               {item.isAd !== false ? "آگهی · استوری بازار" : "استوری"}
             </p>
           </div>
-          <button type="button" className="story-viewer-icon" onClick={goClose} aria-label="بستن">
+          <button type="button" className="story-viewer-icon" data-testid="story-close" onClick={goClose} aria-label="بستن">
             <X className="h-5 w-5" />
           </button>
         </header>
@@ -190,7 +213,12 @@ export default function StoryViewer({ items, index, onIndexChange, onClose }: Pr
             setPaused(false);
           }}
         >
-          <img src={frame.image} alt={frame.title || item.name} draggable={false} />
+          <img
+            src={imgBroken && item.image && item.image !== frame.image ? item.image : frame.image}
+            alt={frame.title || item.name}
+            draggable={false}
+            onError={() => setImgBroken(true)}
+          />
         </div>
 
         {(frame.title || frame.caption) && (

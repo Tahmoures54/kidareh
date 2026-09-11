@@ -61,6 +61,7 @@ export function FeedStories({
         data-testid="feed-stories"
         role="list"
         aria-label="استوری بازار"
+        style={{ WebkitOverflowScrolling: "touch" }}
       >
         {composer && (
           <Link

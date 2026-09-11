@@ -969,11 +969,19 @@ a {
 .story-viewer {
   position: fixed;
   inset: 0;
-  z-index: 500;
+  z-index: 100000;
+  isolation: isolate;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #000;
+  pointer-events: auto;
+  outline: none;
+}
+
+body.story-open .presence-tabs,
+body.story-open .presence-root header {
+  pointer-events: none !important;
 }
 
 .story-viewer-stage {
