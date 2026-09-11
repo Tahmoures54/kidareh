@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock3, Footprints, Radio, Sparkles } from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
+import { useAppLocation } from "../../hooks/useAppLocation";
 import { CATEGORY_META } from "../../presence/catalog";
 import { compareCopy, pulseStats, searchListings, toFa } from "../../presence/engine";
 import type { ListingCategory, PresenceQuery } from "../../presence/types";
@@ -23,6 +24,7 @@ const RADII = [
 
 export default function PresenceHome() {
   const { origin } = usePresenceOrigin();
+  const { location: cityLocation, isTehran } = useAppLocation();
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<ListingCategory | "all">("all");
   const [radiusKm, setRadiusKm] = useState(3);
@@ -32,16 +34,21 @@ export default function PresenceHome() {
   const [showFilters, setShowFilters] = useState(false);
   const desktop = useMinWidth(1024);
 
-  const pulse = useMemo(() => pulseStats(origin), [origin]);
+  const pulse = useMemo(() => (isTehran ? pulseStats(origin) : { inWalk15: 0 }), [isTehran, origin]);
   const listings = useMemo(
-    () => searchListings(origin, { q, category, radiusKm, openNow, sort, inStock: true, verifiedOnly: false }),
-    [origin, q, category, radiusKm, openNow, sort]
+    () =>
+      isTehran
+        ? searchListings(origin, { q, category, radiusKm, openNow, sort, inStock: true, verifiedOnly: false })
+        : [],
+    [isTehran, origin, q, category, radiusKm, openNow, sort]
   );
   const compare = compareCopy();
 
   useEffect(() => {
     let cancelled = false;
-    apiRequest<{ products?: Record<string, unknown>[] }>("/api/search?limit=12&sort=newest")
+    apiRequest<{ products?: Record<string, unknown>[] }>(
+      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}`
+    )
       .then((res) => {
         if (cancelled) return;
         const rows = Array.isArray(res?.products) ? res.products : [];
@@ -53,7 +60,7 @@ export default function PresenceHome() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [cityLocation.city]);
 
   const listingPosts = useMemo(() => listings.map(listingToFeedPost), [listings]);
   const posts = useMemo(() => {
@@ -89,8 +96,22 @@ export default function PresenceHome() {
       });
       if (items.length >= 12) break;
     }
+    if (items.length === 0) {
+      for (const post of shopPosts) {
+        if (!post.storeId || seen.has(String(post.storeId))) continue;
+        seen.add(String(post.storeId));
+        items.push({
+          id: String(post.storeId),
+          name: post.storeName,
+          href: `/store/${post.storeId}`,
+          image: post.storeAvatar || post.image,
+          live: false,
+        });
+        if (items.length >= 12) break;
+      }
+    }
     return items;
-  }, [listings]);
+  }, [listings, shopPosts]);
 
   return (
     <div className="grid bg-white lg:grid-cols-[minmax(0,1fr)_420px]">
@@ -108,6 +129,7 @@ export default function PresenceHome() {
 
           <FeedStories items={stories} />
 
+          {isTehran && (
           <div className="flex items-center gap-2 overflow-x-auto presence-hide-scroll px-3 pb-2">
             <button
               type="button"
@@ -134,8 +156,9 @@ export default function PresenceHome() {
               فیلتر
             </button>
           </div>
+          )}
 
-          {showFilters && (
+          {showFilters && isTehran && (
           <div className="flex flex-wrap items-center gap-2 px-3 pb-2">
             {RADII.map((r) => (
               <button
@@ -180,13 +203,22 @@ export default function PresenceHome() {
           {posts.length === 0 ? (
             <div className="px-3 py-6">
               <PresenceEmpty
-                title="در این شعاع کالایی نیست"
-                hint="فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
-                actionLabel="نمایش کل شهر"
-                onAction={() => {
-                  setOpenNow(false);
-                  setRadiusKm(8);
-                }}
+                title={isTehran ? "در این شعاع کالایی نیست" : `هنوز آگهی در ${cityLocation.city} نیست`}
+                hint={
+                  isTehran
+                    ? "فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
+                    : "فروشگاه‌های همین شهر را ببین یا از هدر شهر دیگری انتخاب کن."
+                }
+                actionLabel={isTehran ? "نمایش کل شهر" : "فروشگاه‌های این شهر"}
+                actionTo={isTehran ? undefined : "/stores"}
+                onAction={
+                  isTehran
+                    ? () => {
+                        setOpenNow(false);
+                        setRadiusKm(8);
+                      }
+                    : undefined
+                }
               />
             </div>
           ) : (
@@ -225,7 +257,7 @@ export default function PresenceHome() {
           <div className="absolute bottom-4 right-4 left-4 z-10 presence-card rounded-2xl p-3">
             <p className="inline-flex items-center gap-1 text-xs font-black">
               <Footprints className="h-3.5 w-3.5 text-[var(--accent)]" />
-              {toFa(listings.length)} کالا روی نقشهٔ {origin.label}
+              {toFa(listings.length)} کالا روی نقشهٔ {isTehran ? origin.label : cityLocation.city}
             </p>
             <div className="mt-2 flex gap-2">
               <Link to="/explore" className="flex-1 rounded-xl bg-[var(--accent)] py-3 text-center text-sm font-black text-white">

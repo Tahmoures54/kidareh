@@ -13,7 +13,7 @@ function FilterChip({ active, label, count, onClick }: { active: boolean; label:
 
 export const StoresHeader = memo(({ 
   isScrolled, refreshing, onRefresh, search, setSearch, isSearching, 
-  filter, setFilter, counts, sort, onSortClick 
+  filter, setFilter, counts, sort, onSortClick, cityName, nationwide, onToggleNationwide
 }: any) => {
   const navigate = useNavigate();
   const activeSortLabel = SORT_OPTIONS.find((s) => s.id === sort)?.label || "مرتب‌سازی";
@@ -24,7 +24,9 @@ export const StoresHeader = memo(({
         <button onClick={() => navigate(-1)} className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center active:scale-90 transition-transform shadow-sm"><ArrowRight className="w-5 h-5 text-gray-700" /></button>
         <div className="flex-1 min-w-0">
           <h1 className="text-xl font-black tracking-tight flex items-center gap-2"><Sparkles className="w-5 h-5 text-teal-600" /> فروشگاه‌ها</h1>
-          <p className="text-[11px] text-gray-500 font-medium mt-0.5">فروشندگان فعال و معتبر کی‌داره</p>
+          <p className="text-[11px] text-gray-500 font-medium mt-0.5">
+            {nationwide ? "سراسر ایران" : `فروشگاه‌های ${cityName || "شهر شما"}`}
+          </p>
         </div>
         <button onClick={onRefresh} className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center active:scale-90 transition-transform shadow-sm"><RefreshCw className={`w-4 h-4 text-gray-600 ${refreshing ? "animate-spin" : ""}`} /></button>
       </div>
@@ -42,7 +44,8 @@ export const StoresHeader = memo(({
         <FilterChip active={filter === "verified"} label="تأییدشده" count={counts.verified} onClick={() => setFilter("verified")} />
         <FilterChip active={filter === "top"} label="برتر" count={counts.top} onClick={() => setFilter("top")} />
         <FilterChip active={filter === "active"} label="فعال" count={counts.active} onClick={() => setFilter("active")} />
-        <button onClick={onSortClick} className="mr-auto flex items-center gap-2 px-4 py-2 rounded-2xl bg-teal-50 border border-teal-100 text-xs font-black text-teal-800 whitespace-nowrap active:scale-95 transition-transform"><SlidersHorizontal className="w-3.5 h-3.5" /> {activeSortLabel}</button>
+        <button onClick={onToggleNationwide} className={`mr-auto flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap active:scale-95 transition-transform ${nationwide ? "bg-teal-600 text-white" : "bg-white border border-gray-200 text-gray-600"}`}>{nationwide ? "سراسر کشور" : cityName || "این شهر"}</button>
+        <button onClick={onSortClick} className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-teal-50 border border-teal-100 text-xs font-black text-teal-800 whitespace-nowrap active:scale-95 transition-transform"><SlidersHorizontal className="w-3.5 h-3.5" /> {activeSortLabel}</button>
       </div>
     </header>
   );

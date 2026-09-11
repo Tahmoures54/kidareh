@@ -85,7 +85,7 @@ router.get("/", async (req, res) => {
     }
     if (minPrice) { const n = Number(minPrice); baseConditions += " AND p.price >= ?"; params.push(n); countParams.push(n); }
     if (maxPrice) { const n = Number(maxPrice); baseConditions += " AND p.price <= ?"; params.push(n); countParams.push(n); }
-    if (scope === "city" && city) { baseConditions += " AND p.city = ?"; params.push(city); countParams.push(city); }
+    if (scope === "city" && city) { baseConditions += " AND (p.city = ? OR s.city = ?)"; params.push(city, city); countParams.push(city, city); }
     else if (scope === "province" && city) {
       const province = cityProvinceMap[city as string];
       if (province) { baseConditions += " AND p.province = ?"; params.push(province); countParams.push(province); }

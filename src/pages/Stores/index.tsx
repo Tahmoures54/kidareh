@@ -11,6 +11,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { apiRequest } from "../../utils/api";
+import { useAppLocation } from "../../hooks/useAppLocation";
 
 import { StoreItem, FilterKey, SortKey } from "./types";
 import { StoresHeader } from "./components/StoresHeader";
@@ -23,6 +24,8 @@ function isVerified(store: StoreItem): boolean {
 }
 
 export default function Stores() {
+  const { location: cityLocation } = useAppLocation();
+  const [nationwide, setNationwide] = useState(false);
   const [stores, setStores] = useState<StoreItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,7 +62,8 @@ export default function Stores() {
       pageNum = 1,
       query = "",
       append = false,
-    }: { pageNum?: number; query?: string; append?: boolean } = {}) => {
+      city = "",
+    }: { pageNum?: number; query?: string; append?: boolean; city?: string } = {}) => {
       if (pageNum === 1) {
         setLoading(true);
         setError("");
@@ -70,6 +74,7 @@ export default function Stores() {
       try {
         const qs = new URLSearchParams({ limit: "20", page: String(pageNum) });
         if (query.trim()) qs.set("q", query.trim());
+        if (city.trim()) qs.set("city", city.trim());
         const data = await apiRequest<{
           stores: StoreItem[];
           pagination?: { hasMore?: boolean };
@@ -96,18 +101,37 @@ export default function Stores() {
   );
 
   useEffect(() => {
-    void fetchStores({ pageNum: 1, query: debouncedSearch, append: false });
-  }, [debouncedSearch, fetchStores]);
+    setNationwide(false);
+  }, [cityLocation.city]);
+
+  useEffect(() => {
+    void fetchStores({
+      pageNum: 1,
+      query: debouncedSearch,
+      append: false,
+      city: nationwide ? "" : cityLocation.city,
+    });
+  }, [debouncedSearch, fetchStores, cityLocation.city, nationwide]);
 
   const handleRefresh = useCallback(() => {
     setRefreshing(true);
-    void fetchStores({ pageNum: 1, query: debouncedSearch, append: false });
-  }, [debouncedSearch, fetchStores]);
+    void fetchStores({
+      pageNum: 1,
+      query: debouncedSearch,
+      append: false,
+      city: nationwide ? "" : cityLocation.city,
+    });
+  }, [debouncedSearch, fetchStores, cityLocation.city, nationwide]);
 
   const handleMore = useCallback(() => {
     if (loading || moreLoading || !hasMore) return;
-    void fetchStores({ pageNum: page + 1, query: debouncedSearch, append: true });
-  }, [loading, moreLoading, hasMore, page, debouncedSearch, fetchStores]);
+    void fetchStores({
+      pageNum: page + 1,
+      query: debouncedSearch,
+      append: true,
+      city: nationwide ? "" : cityLocation.city,
+    });
+  }, [loading, moreLoading, hasMore, page, debouncedSearch, fetchStores, cityLocation.city, nationwide]);
 
   useEffect(() => {
     const el = sentinelRef.current;
@@ -186,6 +210,9 @@ export default function Stores() {
         counts={counts}
         sort={sort}
         onSortClick={() => setSortOpen(true)}
+        cityName={cityLocation.city}
+        nationwide={nationwide}
+        onToggleNationwide={() => setNationwide((v) => !v)}
       />
 
       <main className="px-4 py-6 max-w-2xl mx-auto">
@@ -245,10 +272,18 @@ export default function Stores() {
               )}
             </div>
             <h3 className="text-lg font-black mb-2">
-              {search ? "فروشگاهی پیدا نشد" : "با این فیلتر چیزی نیست"}
+              {search
+                ? "فروشگاهی پیدا نشد"
+                : nationwide
+                  ? "با این فیلتر چیزی نیست"
+                  : `هنوز فروشگاهی در ${cityLocation.city} نیست`}
             </h3>
             <p className="text-sm text-gray-500 mb-8">
-              {search ? "یه اسم دیگه امتحان کن" : "فیلتر رو عوض کن یا بعداً سر بزن"}
+              {search
+                ? "یه اسم دیگه امتحان کن"
+                : nationwide
+                  ? "فیلتر رو عوض کن یا بعداً سر بزن"
+                  : "شهر را از هدر عوض کن یا فروشگاه‌های سراسر کشور را ببین"}
             </p>
             <div className="flex justify-center gap-3">
               {search && (
@@ -258,6 +293,15 @@ export default function Stores() {
                   className="bg-teal-600 text-white px-6 py-3 rounded-2xl text-sm font-black active:scale-95 shadow-md"
                 >
                   پاک کردن جستجو
+                </button>
+              )}
+              {!nationwide && !search && (
+                <button
+                  type="button"
+                  onClick={() => setNationwide(true)}
+                  className="bg-teal-600 text-white px-6 py-3 rounded-2xl text-sm font-black active:scale-95 shadow-md"
+                >
+                  سراسر کشور
                 </button>
               )}
               {filter !== "all" && (

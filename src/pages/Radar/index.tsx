@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, BadgeCheck, Footprints } from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
+import { useAppLocation } from "../../hooks/useAppLocation";
 import { buildRadar, formatCompactToman, formatToman, formatWalk, toFa } from "../../presence/engine";
 import PageHero from "../../components/presence/PageHero";
 import PresenceImage from "../../components/presence/PresenceImage";
@@ -9,9 +10,10 @@ import PresenceEmpty from "../../components/presence/EmptyState";
 
 export default function RadarPage() {
   const { origin } = usePresenceOrigin();
+  const { location: cityLocation, isTehran } = useAppLocation();
   const [params] = useSearchParams();
   const sku = params.get("sku") || undefined;
-  const groups = useMemo(() => buildRadar(origin, sku), [origin, sku]);
+  const groups = useMemo(() => (isTehran ? buildRadar(origin, sku) : []), [isTehran, origin, sku]);
   const [openSku, setOpenSku] = useState(sku ?? groups[0]?.sku);
 
   return (
@@ -93,7 +95,12 @@ export default function RadarPage() {
           );
         })}
         {groups.length === 0 && (
-          <PresenceEmpty title="برای این کالا هنوز چند فروشگاه در رادار نیست" actionTo="/" actionLabel="بازگشت به محله" />
+          <PresenceEmpty
+            title={isTehran ? "برای این کالا هنوز چند فروشگاه در رادار نیست" : `رادار قیمت فعلاً برای محله‌های تهران است`}
+            hint={isTehran ? undefined : `کالاهای ${cityLocation.city} را از جستجو مقایسه کن.`}
+            actionTo="/"
+            actionLabel="بازگشت به خانه"
+          />
         )}
       </div>
     </div>

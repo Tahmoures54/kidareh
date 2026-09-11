@@ -27,7 +27,7 @@ export const FilterSheet = memo(({ open, filters, onChange, onClose, onReset }: 
     },
     { 
       value: "province", 
-      label: "کل استان", 
+      label: filters.scope.province ? `استان ${filters.scope.province}` : "کل استان", 
       icon: <Map className="w-4 h-4" /> 
     },
     { 

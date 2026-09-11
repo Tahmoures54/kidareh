@@ -9,6 +9,8 @@ export interface LocationScope {
   type: LocationScopeType;
   id?: string;
   name?: string;
+  city?: string;
+  province?: string;
 }
 
 export interface BaseProduct {

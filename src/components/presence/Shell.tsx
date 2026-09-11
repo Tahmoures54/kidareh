@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Bookmark,
+  ChevronDown,
   Home,
   Map as MapIcon,
+  MapPin,
   Radio,
   Route,
   QrCode,
@@ -17,11 +19,13 @@ import {
   LocateFixed,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { useAppLocation } from "../../hooks/useAppLocation";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { listTripIds, onTripChange } from "../../presence/tripBasket";
 import { listLocalHolds, onHoldsChange } from "../../presence/holds";
 import { NEIGHBORHOODS } from "../../presence/catalog";
 import CommandPalette from "./CommandPalette";
+import CityPicker from "../location/CityPicker";
 import InstallPrompt from "../InstallPrompt";
 import { cn } from "../../utils";
 
@@ -56,6 +60,16 @@ export default function PresenceShell() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, isSeller, isAdmin, isMarketer } = useAuth();
+  const {
+    location: cityLocation,
+    pickerOpen,
+    setPickerOpen,
+    selectCity,
+    useGps: useCityGps,
+    gpsError: cityGpsError,
+    gpsLoading,
+    isTehran,
+  } = useAppLocation();
   const { origin, setNeighborhood, useGps, gpsError } = usePresenceOrigin();
   const [palette, setPalette] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -201,30 +215,47 @@ export default function PresenceShell() {
               </Link>
               <div className="min-w-0 flex-1">
                 <p className="text-[12px] font-black text-[var(--accent)]">کی‌داره · خرید حضوری</p>
-                <div className="flex items-center gap-2">
-                  <select
-                    value={origin.neighborhoodId ?? ""}
-                    onChange={(e) => setNeighborhood(e.target.value as (typeof NEIGHBORHOODS)[number]["id"])}
-                    className="max-w-[200px] truncate rounded-xl bg-transparent py-1 text-sm font-black outline-none"
-                    aria-label="انتخاب محله"
-                  >
-                    <option value="">موقعیت فعلی</option>
-                    {NEIGHBORHOODS.map((n) => (
-                      <option key={n.id} value={n.id}>
-                        {n.name} · {n.district}
-                      </option>
-                    ))}
-                  </select>
+                <div className="flex min-w-0 flex-wrap items-center gap-1">
                   <button
                     type="button"
-                    onClick={useGps}
-                    className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-[12px] font-black text-[var(--accent)]"
+                    onClick={() => setPickerOpen(true)}
+                    className="inline-flex min-h-11 max-w-full items-center gap-1 rounded-xl px-1 text-sm font-black"
+                    aria-label="انتخاب شهر"
+                    title={cityLocation.display}
                   >
-                    <LocateFixed className="h-3.5 w-3.5" />
-                    اینجا
+                    <MapPin className="h-4 w-4 shrink-0 text-[var(--accent)]" />
+                    <span className="truncate">{cityLocation.city}</span>
+                    <ChevronDown className="h-4 w-4 shrink-0 text-[var(--muted)]" />
                   </button>
+                  {isTehran && (
+                    <select
+                      value={origin.neighborhoodId ?? ""}
+                      onChange={(e) => setNeighborhood(e.target.value as (typeof NEIGHBORHOODS)[number]["id"])}
+                      className="max-w-[160px] truncate rounded-xl bg-transparent py-1 text-[12px] font-black outline-none"
+                      aria-label="انتخاب محله تهران"
+                    >
+                      <option value="">محله تهران</option>
+                      {NEIGHBORHOODS.map((n) => (
+                        <option key={n.id} value={n.id}>
+                          {n.name} · {n.district}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  {isTehran && (
+                    <button
+                      type="button"
+                      onClick={useGps}
+                      className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-[12px] font-black text-[var(--accent)]"
+                    >
+                      <LocateFixed className="h-3.5 w-3.5" />
+                      اینجا
+                    </button>
+                  )}
                 </div>
-                {gpsError && <p className="text-[10px] font-bold text-[var(--danger)]">{gpsError}</p>}
+                {(gpsError || cityGpsError) && (
+                  <p className="text-[10px] font-bold text-[var(--danger)]">{gpsError || cityGpsError}</p>
+                )}
               </div>
               <button
                 type="button"
@@ -240,7 +271,7 @@ export default function PresenceShell() {
                 className="hidden h-12 min-w-[220px] items-center gap-2 rounded-2xl border border-[var(--line)] bg-white px-3 text-sm font-bold text-[var(--muted)] md:flex"
               >
                 <Search className="h-4 w-4" />
-                جستجو در محله
+                جستجو در {cityLocation.city}
               </button>
               <Link to="/stores" className="hidden h-12 items-center gap-1 rounded-2xl px-3 text-sm font-black text-[var(--ink-soft)] sm:inline-flex">
                 <Store className="h-4 w-4" /> فروشگاه‌ها
@@ -353,6 +384,16 @@ export default function PresenceShell() {
       )}
 
       <CommandPalette open={palette} onClose={() => setPalette(false)} origin={origin} />
+      <CityPicker
+        open={pickerOpen}
+        selectedCity={cityLocation.city}
+        selectedProvince={cityLocation.province}
+        gpsLoading={gpsLoading}
+        gpsError={cityGpsError}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(city) => selectCity(city)}
+        onGps={useCityGps}
+      />
     </div>
   );
 }

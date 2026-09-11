@@ -2,6 +2,10 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useInfiniteProducts } from "../../../hooks/useInfiniteProducts";
 import {
+  onAppLocationChange,
+  readAppLocation,
+} from "../../../hooks/useAppLocation";
+import {
   SearchFilters,
   ViewMode,
   SortType,
@@ -20,23 +24,30 @@ import { FALLBACK } from "../components/constants";
 const DEBOUNCE = 350;
 
 export const getInitialScope = (): LocationScope => {
-  try {
-    const savedLoc = localStorage.getItem("manual-location");
-    if (savedLoc) {
-      const loc = JSON.parse(savedLoc);
-      if (loc?.city) {
-        return { 
-          type: "city", 
-          id: loc.city, 
-          name: loc.display || loc.city 
-        };
-      }
-    }
-  } catch (e) {
-    console.error("Error parsing location", e);
-  }
-  return { type: "city", id: "tehran", name: "تهران" };
+  const loc = readAppLocation();
+  return {
+    type: "city",
+    id: loc.slug || loc.city,
+    name: loc.city,
+    city: loc.city,
+    province: loc.province,
+  };
 };
+
+function withCityFields(scope: LocationScope): LocationScope {
+  const loc = readAppLocation();
+  return {
+    ...scope,
+    city: scope.city || loc.city,
+    province: scope.province || loc.province,
+  };
+}
+
+function productScope(scope: LocationScope): "all" | "city" | "province" {
+  if (scope.type === "province") return "province";
+  if (scope.type === "country") return "all";
+  return "city";
+}
 
 const DEFAULT_FILTERS: Omit<SearchFilters, "scope"> = {
   minPrice: "",
@@ -57,16 +68,25 @@ export function useSearch() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [toastMsg, setToastMsg] = useState("");
   const [recents, setRecents] = useState<string[]>([]);
-  const [userLoc, setUserLoc] = useState({ lat: 35.6892, lng: 51.389 });
+  const [userLoc, setUserLoc] = useState(() => {
+    const loc = readAppLocation();
+    return { lat: loc.lat, lng: loc.lng };
+  });
 
   const [filters, setFilters] = useState<SearchFilters>(() => {
     const freshScope = getInitialScope();
     const scopeType = (params.get("scope") as LocationScopeType) || freshScope.type;
     const scopeId = params.get("scopeId") || freshScope.id;
     const scopeName = params.get("scopeName") || freshScope.name;
-    return { 
-      ...DEFAULT_FILTERS, 
-      scope: { type: scopeType, id: scopeId, name: scopeName } 
+    return {
+      ...DEFAULT_FILTERS,
+      scope: withCityFields({
+        type: scopeType,
+        id: scopeId,
+        name: scopeName,
+        city: freshScope.city,
+        province: freshScope.province,
+      }),
     };
   });
 
@@ -139,6 +159,15 @@ export function useSearch() {
       (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     );
+
+    return onAppLocationChange(() => {
+      const loc = readAppLocation();
+      setUserLoc({ lat: loc.lat, lng: loc.lng });
+      setFilters((prev) => ({
+        ...prev,
+        scope: getInitialScope(),
+      }));
+    });
   }, []);
 
   // -------------------- Handlers --------------------
@@ -177,11 +206,21 @@ export function useSearch() {
 
   const expandSearchScope = useCallback(() => {
     setFilters((prev) => {
-      if (prev.scope.type === "city") {
-        return { ...prev, scope: { type: "province", id: prev.scope.id, name: "کل استان" } };
+      const scope = withCityFields(prev.scope);
+      if (scope.type === "city") {
+        return {
+          ...prev,
+          scope: {
+            type: "province",
+            id: scope.province,
+            name: scope.province || "کل استان",
+            city: scope.city,
+            province: scope.province,
+          },
+        };
       }
-      if (prev.scope.type === "province") {
-        return { ...prev, scope: { type: "country", id: undefined, name: "سراسری" } };
+      if (scope.type === "province") {
+        return { ...prev, scope: { type: "country", id: undefined, name: "سراسری", city: scope.city, province: scope.province } };
       }
       return prev;
     });
@@ -189,11 +228,21 @@ export function useSearch() {
 
   const cycleScope = useCallback(() => {
     setFilters((prev) => {
-      if (prev.scope.type === "city") {
-        return { ...prev, scope: { type: "province", id: prev.scope.id, name: "کل استان" } };
+      const scope = withCityFields(prev.scope);
+      if (scope.type === "city") {
+        return {
+          ...prev,
+          scope: {
+            type: "province",
+            id: scope.province,
+            name: scope.province || "کل استان",
+            city: scope.city,
+            province: scope.province,
+          },
+        };
       }
-      if (prev.scope.type === "province") {
-        return { ...prev, scope: { type: "country", id: undefined, name: "سراسری" } };
+      if (scope.type === "province") {
+        return { ...prev, scope: { type: "country", id: undefined, name: "سراسری", city: scope.city, province: scope.province } };
       }
       return { ...prev, scope: getInitialScope() };
     });
@@ -218,14 +267,15 @@ export function useSearch() {
   } = useInfiniteProducts({
     q: debouncedQuery || undefined,
     limit: 20,
-    sort: filters.sortBy,
+    sort: filters.sortBy === "expensive" ? "newest" : filters.sortBy,
     onlyAvailable: filters.onlyAvailable,
     minPrice: filters.minPrice ? Number(filters.minPrice) : undefined,
     maxPrice: filters.maxPrice ? Number(filters.maxPrice) : undefined,
     lat: userLoc.lat,
     lng: userLoc.lng,
-    scopeType: filters.scope.type,
-    scopeId: filters.scope.id,
+    scope: productScope(filters.scope),
+    city: filters.scope.city || filters.scope.name,
+    province: filters.scope.province,
   });
 
   // -------------------- Products Processing --------------------
@@ -325,8 +375,8 @@ export function useSearch() {
   }, [filters.scope]);
 
   const scopeLabel = useMemo(() => {
-    if (filters.scope.type === "city") return filters.scope.name || "شهر من";
-    if (filters.scope.type === "province") return "کل استان";
+    if (filters.scope.type === "city") return filters.scope.name || filters.scope.city || "شهر من";
+    if (filters.scope.type === "province") return filters.scope.province ? `استان ${filters.scope.province}` : "کل استان";
     return "سراسری";
   }, [filters.scope]);
 

@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback } from "react";
 import { useAuth } from "../../context/AuthContext";
-import { useGeolocation } from "../../hooks/useGeolocation";
+import { useAppLocation } from "../../hooks/useAppLocation";
+import { findIranCity } from "../../data/processed/iranCities";
 import { useInfiniteProducts } from "../../hooks/useInfiniteProducts";
 import { useLocalStorage } from "../../hooks/useLocalStorage";
 import { useInfiniteScroll } from "./hooks/useInfiniteScroll";
 import useDebounce from "./hooks/useDebounce";
-import { HOME_CONFIG, AppUser, SortType, ManualLocation } from "./constants";
+import { HOME_CONFIG, AppUser, SortType } from "./constants";
 
 export const useHomeLogic = () => {
   const { user } = useAuth() as { user: AppUser | null };
@@ -13,33 +14,26 @@ export const useHomeLogic = () => {
   // -------------------- States --------------------
   const [scope, setScope] = useState<"city" | "all">("city");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [manualLocation, setManualLocation] = useLocalStorage<ManualLocation | null>(
-    "manual-location",
-    null
-  );
+  const {
+    location,
+    pickerOpen,
+    setPickerOpen,
+    selectCity,
+    useGps,
+    gpsError,
+    gpsLoading,
+  } = useAppLocation();
   const [favorites, setFavorites] = useLocalStorage<string[]>("favorites", []);
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortType>("newest");
 
   const debouncedSearch = useDebounce(search, HOME_CONFIG.SEARCH_DEBOUNCE_MS);
 
   // -------------------- Location Logic --------------------
-  const { city: realCity, province: realProvince, displayLocation, gpsEnabled } = useGeolocation("تهران");
-
-  // بهینه‌سازی با useMemo برای جلوگیری از محاسبه مجدد در هر رندر
-  const effectiveCity = useMemo(
-    () => manualLocation?.city || realCity || "تهران",
-    [manualLocation, realCity]
-  );
-  const effectiveDisplay = useMemo(
-    () => manualLocation?.display || displayLocation || "انتخاب شهر",
-    [manualLocation, displayLocation]
-  );
-  const effectiveProvince = useMemo(
-    () => manualLocation?.province || realProvince || "",
-    [manualLocation, realProvince]
-  );
+  const effectiveCity = location.city || "تهران";
+  const effectiveDisplay = location.display || "انتخاب شهر";
+  const effectiveProvince = location.province || "";
+  const gpsEnabled = location.source === "gps";
 
   // -------------------- Data Fetching --------------------
   const {
@@ -51,12 +45,12 @@ export const useHomeLogic = () => {
     error,
     refetch,
   } = useInfiniteProducts({
-    scope,
+    scope: scope === "city" ? "city" : "all",
     city: scope === "city" ? effectiveCity : undefined,
     category: activeCategory || undefined,
-    search: debouncedSearch || undefined,
+    q: debouncedSearch || undefined,
     limit: HOME_CONFIG.PRODUCTS_PER_PAGE,
-    sort,
+    sort: sort === "expensive" ? "newest" : sort,
   });
 
   // تبدیل آرایه به Set برای جستجوی فوق‌سریع در زمان رندر علاقه‌مندی‌ها (O(1))
@@ -83,10 +77,11 @@ export const useHomeLogic = () => {
   );
 
   const handleCityChange = useCallback(
-    (city: string, display: string, province: string) => {
-      setManualLocation({ city, display, province });
+    (city: string, _display: string, province: string) => {
+      const matched = findIranCity(city, province) ?? findIranCity(city);
+      if (matched) selectCity(matched);
     },
-    [setManualLocation]
+    [selectCity]
   );
 
   const handleClearFilters = useCallback(() => {
@@ -131,7 +126,7 @@ export const useHomeLogic = () => {
     search,
     sort,
     activeCategory,
-    isLocationModalOpen,
+    isLocationModalOpen: pickerOpen,
     hasActiveFilters,
     filterCount,
 
@@ -140,17 +135,24 @@ export const useHomeLogic = () => {
     effectiveDisplay,
     effectiveProvince,
     gpsEnabled,
-    manualLocation,
+    manualLocation: location.source === "manual"
+      ? { city: location.city, display: location.display, province: location.province }
+      : null,
+    pickerOpen,
+    gpsError,
+    gpsLoading,
 
     // Handlers & Refs
     setScope,
     setSearch,
     setSort,
     setActiveCategory,
-    setIsLocationModalOpen,
+    setIsLocationModalOpen: setPickerOpen,
     toggleFavorite,
     handleCityChange,
     handleClearFilters,
+    selectCity,
+    useGps,
     refetch,
     loadMoreRef,
   };

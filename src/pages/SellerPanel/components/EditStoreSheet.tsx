@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  X, Store, Phone, Package, AlignRight, Save, Loader2
+  X, Store, Phone, Package, AlignRight, Save, Loader2, MapPin
 } from "lucide-react";
 import { StoreFormValues, storeFormSchema } from "../types";
+import { citiesInProvince, iranProvinceNames } from "../../../data/processed/iranCities";
 
 interface EditStoreSheetProps {
   isOpen: boolean;
@@ -27,10 +28,17 @@ export const EditStoreSheet = ({
     handleSubmit,
     formState: { errors },
     reset,
+    watch,
+    setValue,
   } = useForm<StoreFormValues>({
     resolver: zodResolver(storeFormSchema),
     defaultValues,
   });
+
+  const province = watch("province") || "";
+  const city = watch("city") || "";
+  const provinceCities = citiesInProvince(province);
+  const cityInList = provinceCities.some((item) => item.name === city);
 
   useEffect(() => {
     reset(defaultValues);
@@ -59,7 +67,7 @@ export const EditStoreSheet = ({
               <div className="w-12 h-1.5 bg-[var(--border-light)] rounded-full mb-4" />
               <div className="w-full flex items-center justify-between">
                 <h3 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2">
-                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> اطلاعات فروشگاه
+                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> ??????? ???????
                 </h3>
                 <button
                   type="button"
@@ -76,7 +84,7 @@ export const EditStoreSheet = ({
             >
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Store className="w-3.5 h-3.5" /> نام فروشگاه
+                  <Store className="w-3.5 h-3.5" /> ??? ???????
                 </label>
                 <input {...register("name")} className="input-base" />
                 {errors.name && (
@@ -87,7 +95,7 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Phone className="w-3.5 h-3.5" /> شماره تماس
+                  <Phone className="w-3.5 h-3.5" /> ????? ????
                 </label>
                 <input {...register("phone")} dir="ltr" className="input-base text-left" />
                 {errors.phone && (
@@ -98,7 +106,7 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Package className="w-3.5 h-3.5" /> دسته‌بندی
+                  <Package className="w-3.5 h-3.5" /> ?????????
                 </label>
                 <input {...register("category")} className="input-base" />
                 {errors.category && (
@@ -109,22 +117,44 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <AlignRight className="w-3.5 h-3.5" /> درباره فروشگاه
+                  <AlignRight className="w-3.5 h-3.5" /> ?????? ???????
                 </label>
                 <textarea {...register("description")} rows={3} className="input-base resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">استان</label>
-                  <input {...register("province")} className="input-base" />
+                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">?????</label>
+                  <select
+                    {...register("province", {
+                      onChange: () => setValue("city", ""),
+                    })}
+                    className="input-base"
+                  >
+                    <option value="">?????? ?????</option>
+                    {iranProvinceNames.map((name) => (
+                      <option key={name} value={name}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">شهر</label>
-                  <input {...register("city")} className="input-base" />
+                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">???</label>
+                  <select {...register("city")} className="input-base" disabled={!province}>
+                    <option value="">{province ? "?????? ???" : "??? ?????"}</option>
+                    {!cityInList && city ? <option value={city}>{city}</option> : null}
+                    {provinceCities.map((item) => (
+                      <option key={`${item.name}-${item.province}`} value={item.name}>
+                        {item.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">آدرس</label>
+                <label className="text-xs font-bold text-[var(--text-secondary)] ml-1 flex items-center gap-1">
+                  <MapPin className="w-3.5 h-3.5" /> ????
+                </label>
                 <input {...register("address")} className="input-base" />
               </div>
               <div className="pt-4">
@@ -135,11 +165,11 @@ export const EditStoreSheet = ({
                 >
                   {isPending ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" /> ذخیره…
+                      <Loader2 className="w-5 h-5 animate-spin" /> ??????
                     </>
                   ) : (
                     <>
-                      <Save className="w-5 h-5" /> ذخیره اطلاعات
+                      <Save className="w-5 h-5" /> ????? ???????
                     </>
                   )}
                 </button>

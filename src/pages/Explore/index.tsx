@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
+import { useAppLocation } from "../../hooks/useAppLocation";
 import { searchListings } from "../../presence/engine";
 import PresenceMap from "../../components/presence/PresenceMap";
 import { ListingCard } from "../../components/presence/ListingCard";
@@ -10,14 +11,15 @@ import PresenceEmpty from "../../components/presence/EmptyState";
 
 export default function ExplorePage() {
   const { origin } = usePresenceOrigin();
+  const { location: cityLocation, isTehran } = useAppLocation();
   const [params] = useSearchParams();
   const q = params.get("q") || "";
   const [query, setQuery] = useState(q);
   const [selected, setSelected] = useState<string>();
   const [trip, setTrip] = useState(() => listTripIds());
   const listings = useMemo(
-    () => searchListings(origin, { q: query, inStock: true, sort: "nearest" }),
-    [origin, query]
+    () => (isTehran ? searchListings(origin, { q: query, inStock: true, sort: "nearest" }) : []),
+    [isTehran, origin, query]
   );
 
   useEffect(() => onTripChange(() => setTrip(listTripIds())), []);
@@ -37,8 +39,10 @@ export default function ExplorePage() {
         </div>
       </div>
       <div className="order-2 max-h-[54vh] space-y-3 overflow-y-auto p-4 lg:order-1 lg:max-h-[calc(100dvh-73px)]">
-        <PageHero kicker="نقشه محله" title="کجا هست و کی داره">
-          مغازه‌های اطراف را روی نقشه ببین. هر پین یک کالا است که الان موجود است.
+        <PageHero kicker={`نقشه ${cityLocation.city}`} title="کجا هست و کی داره">
+          {isTehran
+            ? "مغازه‌های اطراف را روی نقشه ببین. هر پین یک کالا است که الان موجود است."
+            : `نقشه حضوری فعلاً برای محله‌های تهران است. کالاهای ${cityLocation.city} را از جستجو ببین.`}
         </PageHero>
         {listings.map((listing) => (
           <div key={listing.id} onMouseEnter={() => setSelected(listing.id)} onFocus={() => setSelected(listing.id)} onClick={() => setSelected(listing.id)}>
@@ -50,7 +54,14 @@ export default function ExplorePage() {
             />
           </div>
         ))}
-        {listings.length === 0 && <PresenceEmpty title="چیزی روی نقشه پیدا نشد" hint="عبارت دیگری جستجو کن یا محله را عوض کن." />}
+        {listings.length === 0 && (
+          <PresenceEmpty
+            title={isTehran ? "چیزی روی نقشه پیدا نشد" : `هنوز پین حضوری در ${cityLocation.city} نیست`}
+            hint={isTehran ? "عبارت دیگری جستجو کن یا محله را عوض کن." : "شهر را از هدر عوض کن یا کالاها را در جستجو ببین."}
+            actionTo={isTehran ? undefined : "/search"}
+            actionLabel={isTehran ? undefined : "جستجوی کالا"}
+          />
+        )}
       </div>
     </div>
   );

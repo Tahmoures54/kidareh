@@ -153,13 +153,13 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
   }
 
   if (scope === "city" && city) {
-    whereValues.push(city);
-    where.push(`p.city = ?`);
+    whereValues.push(city, city);
+    where.push(`(p.city = ? OR s.city = ?)`);
   }
 
   if (scope === "province" && province) {
-    whereValues.push(province);
-    where.push(`p.province = ?`);
+    whereValues.push(province, province);
+    where.push(`(p.province = ? OR s.province = ?)`);
   }
 
   if (onlyAvailable) {

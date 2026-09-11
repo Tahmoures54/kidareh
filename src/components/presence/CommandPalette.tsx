@@ -6,6 +6,7 @@ import { formatCompactToman, formatWalk, searchListings } from "../../presence/e
 import type { PresenceOrigin } from "../../presence/types";
 import PresenceImage from "./PresenceImage";
 import { cn } from "../../utils";
+import { useAppLocation } from "../../hooks/useAppLocation";
 
 interface Props {
   open: boolean;
@@ -18,7 +19,11 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const results = useMemo(() => searchListings(origin, { q, inStock: true }).slice(0, 8), [origin, q]);
+  const { location: cityLocation, isTehran } = useAppLocation();
+  const results = useMemo(
+    () => (isTehran ? searchListings(origin, { q, inStock: true }).slice(0, 8) : []),
+    [isTehran, origin, q]
+  );
 
   useEffect(() => {
     if (!open) return undefined;
@@ -50,7 +55,7 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
     } else if (e.key === "Enter") {
       e.preventDefault();
       if (results[active]) go(`/p/${results[active].id}`);
-      else if (q) go(`/explore?q=${encodeURIComponent(q)}`);
+      else if (q) go(isTehran ? `/explore?q=${encodeURIComponent(q)}` : `/search?q=${encodeURIComponent(q)}`);
     }
   };
 
@@ -61,7 +66,7 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
           <button type="button" className="absolute inset-0 bg-[var(--ink)]/45 backdrop-blur-md" aria-label="بستن جستجو" onClick={onClose} />
           <motion.div
             role="dialog"
-                aria-label="جستجو در محله"
+                aria-label={`جستجو در ${cityLocation.city}`}
             initial={{ y: 16, opacity: 0, scale: 0.98 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 10, opacity: 0 }}
@@ -74,15 +79,30 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 onKeyDown={onKeyDown}
-                placeholder="چی می‌خوای؟ آیفون، دایسون، دانک…"
+                placeholder={`جستجو در ${cityLocation.city}…`}
                 className="h-10 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[var(--muted)]"
                 aria-autocomplete="list"
               />
               <kbd className="hidden rounded-lg border border-[var(--line)] px-2 py-1 text-[10px] font-black text-[var(--muted)] sm:inline-flex">بستن</kbd>
             </div>
             <div className="max-h-[50vh] overflow-y-auto p-2">
-              {results.length === 0 ? (
-                <p className="px-3 py-8 text-center text-sm font-bold text-[var(--muted)]">چیزی در این محله پیدا نشد</p>
+                {results.length === 0 ? (
+                <div className="px-3 py-8 text-center">
+                  <p className="text-sm font-bold text-[var(--muted)]">
+                    {q
+                      ? `چیزی در ${cityLocation.city} پیدا نشد`
+                      : `نام کالا را بنویس تا در ${cityLocation.city} جستجو شود`}
+                  </p>
+                  {q ? (
+                    <button
+                      type="button"
+                      onClick={() => go(`/search?q=${encodeURIComponent(q)}`)}
+                      className="mt-3 inline-flex h-11 items-center rounded-2xl bg-[var(--accent)] px-4 text-sm font-black text-white"
+                    >
+                      جستجو در کالاها
+                    </button>
+                  ) : null}
+                </div>
               ) : (
                 results.map((item, index) => (
                   <button

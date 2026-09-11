@@ -14,7 +14,7 @@ import {
 } from "./components/ProductSections";
 import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
-import { LocationModal } from "./components/LocationModal";
+import CityPicker from "../../components/location/CityPicker";
 import { SponsoredBanner } from "./components/SponsoredBanner";
 import { ValuePropsBanner } from "./components/ValuePropsBanner";
 
@@ -113,7 +113,6 @@ export default function Home() {
     setSort,
     isLocationModalOpen,
     setIsLocationModalOpen,
-    handleCityChange,
     handleClearFilters,
     hasActiveFilters,
     filterCount,
@@ -126,6 +125,10 @@ export default function Home() {
     isFetchingNextPage,
     hasNextPage,
     loadMoreRef,
+    selectCity,
+    useGps,
+    gpsLoading,
+    gpsError,
   } = logic;
 
   // توابع پایدار برای جلوگیری از رندر مجدد کامپوننت‌های memo شده
@@ -154,12 +157,15 @@ export default function Home() {
           onOpenLocationModal={handleOpenLocationModal}
         />
 
-        <LocationModal
-          isOpen={isLocationModalOpen}
-          onClose={handleCloseLocationModal}
+        <CityPicker
+          open={isLocationModalOpen}
           selectedCity={effectiveCity}
           selectedProvince={effectiveProvince}
-          onSelect={handleCityChange}
+          gpsLoading={gpsLoading}
+          gpsError={gpsError}
+          onClose={handleCloseLocationModal}
+          onSelect={selectCity}
+          onGps={useGps}
         />
 
         <div className="sticky top-14 z-30 bg-[var(--bg-primary)] shadow-sm">
