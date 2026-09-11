@@ -6,6 +6,8 @@ import { formatCompactToman, formatWalk, mapsMultiStopUrl, planTrip, toFa } from
 import { clearTrip, listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
 import PresenceMap from "../../components/presence/PresenceMap";
 
+import PageHero from "../../components/presence/PageHero";
+
 export default function TripPage() {
   const { origin } = usePresenceOrigin();
   const [ids, setIds] = useState(() => listTripIds());
@@ -20,11 +22,9 @@ export default function TripPage() {
         <PresenceMap origin={origin} listings={plan.stops.map((s) => s.listing)} path={path} />
       </div>
       <div className="space-y-4 p-5">
-        <p className="text-[11px] font-black tracking-[0.2em] text-[#0e6f63]">WALKING ERRAND</p>
-        <h1 className="text-3xl font-black">مسیر خرید حضوری</h1>
-        <p className="text-sm font-bold leading-7 text-[#3d433c]">
+        <PageHero kicker="WALKING ERRAND" title="مسیر خرید حضوری">
           چند فروشگاه، یک پیاده‌روی بهینه. کالاها را از محله بردار، مسیر کوتاه‌ترین تور را بگیر، برو و ببین.
-        </p>
+        </PageHero>
         {plan.stops.length === 0 ? (
           <div className="presence-card rounded-[28px] p-6 text-sm font-bold text-[#6b7168]">
             هنوز کالایی به مسیر اضافه نشده. از صفحه محله روی «مسیر» بزن.

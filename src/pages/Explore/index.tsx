@@ -1,10 +1,11 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
-import { searchListings } from "../../presence/engine";
+import { searchListings, toFa } from "../../presence/engine";
 import PresenceMap from "../../components/presence/PresenceMap";
 import { ListingCard } from "../../components/presence/ListingCard";
-import { listTripIds, toggleTrip } from "../../presence/tripBasket";
+import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
+import PageHero from "../../components/presence/PageHero";
 
 export default function ExplorePage() {
   const { origin } = usePresenceOrigin();
@@ -13,13 +14,19 @@ export default function ExplorePage() {
   const [query, setQuery] = useState(q);
   const [selected, setSelected] = useState<string>();
   const [trip, setTrip] = useState(() => listTripIds());
-  const listings = useMemo(() => searchListings(origin, { q: query, inStock: true, sort: "nearest" }), [origin, query]);
+  const listings = useMemo(
+    () => searchListings(origin, { q: query, inStock: true, sort: "nearest" }),
+    [origin, query]
+  );
+
+  useEffect(() => onTripChange(() => setTrip(listTripIds())), []);
+  useEffect(() => setQuery(q), [q]);
 
   return (
     <div className="grid min-h-[calc(100dvh-73px)] lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="relative h-[46vh] lg:h-auto">
+      <div className="relative z-0 h-[46vh] lg:h-auto">
         <PresenceMap origin={origin} listings={listings} selectedId={selected} height="100%" />
-        <div className="absolute top-3 right-3 left-3">
+        <div className="absolute top-3 right-3 left-3 z-10">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -29,8 +36,9 @@ export default function ExplorePage() {
         </div>
       </div>
       <div className="max-h-[54vh] space-y-3 overflow-y-auto p-4 lg:max-h-[calc(100dvh-73px)]">
-        <h1 className="text-xl font-black">نقشهٔ موجودی زنده</h1>
-        <p className="text-xs font-bold text-[#6b7168]">Airbnb برای ویترین مغازه‌ها — نه دیوار آگهی، نه انبار مرکزی.</p>
+        <PageHero kicker="LIVE MAP" title="نقشهٔ موجودی زنده">
+          Airbnb برای ویترین مغازه‌ها — نه دیوار آگهی، نه انبار مرکزی. {toFa(listings.length)} کالا در محدوده.
+        </PageHero>
         {listings.map((listing) => (
           <div key={listing.id} onMouseEnter={() => setSelected(listing.id)} onFocus={() => setSelected(listing.id)}>
             <ListingCard
@@ -41,6 +49,7 @@ export default function ExplorePage() {
             />
           </div>
         ))}
+        {listings.length === 0 && <p className="py-10 text-center text-sm font-bold text-[var(--muted)]">چیزی روی نقشه پیدا نشد.</p>}
       </div>
     </div>
   );

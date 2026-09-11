@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { cancelLocalHold, listLocalHolds } from "../../presence/holds";
 import { formatToman } from "../../presence/engine";
 import type { HoldRecord } from "../../presence/types";
+import PageHero from "../../components/presence/PageHero";
 
 const labels: Record<HoldRecord["status"], string> = {
   requested: "منتظر تأیید",
@@ -47,11 +48,9 @@ export default function HoldsPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6">
-      <p className="text-[11px] font-black tracking-[0.2em] text-[#0e6f63]">RESERVE & COLLECT</p>
-      <h1 className="mt-1 text-3xl font-black">رزروهای حضوری</h1>
-      <p className="mt-2 text-sm font-bold leading-7 text-[#3d433c]">
+      <PageHero kicker="RESERVE & COLLECT" title="رزروهای حضوری">
         کالا را نگه می‌دارند، تو پیاده می‌رسی، با QR تحویل می‌گیری. هیچ پولی تا دیدن کالا کم نمی‌شود.
-      </p>
+      </PageHero>
       <div className="mt-6 space-y-4">
         {live.length === 0 && (
           <div className="presence-card rounded-[28px] p-8 text-center">

@@ -9,6 +9,7 @@ import {
   searchListings,
   walkMinutes,
 } from "@/presence/engine";
+import { isOpenAt } from "@/presence/geo";
 
 describe("presence geo", () => {
   it("walk minutes scale with distance", () => {
@@ -22,6 +23,13 @@ describe("presence geo", () => {
     const b = { lat: 35.76, lng: 51.42 };
     expect(haversineKm(a, a)).toBe(0);
     expect(haversineKm(a, b)).toBeCloseTo(haversineKm(b, a), 8);
+  });
+
+  it("uses Tehran wall clock for store hours", () => {
+    const noonTehran = new Date("2026-09-11T12:00:00+03:30");
+    const nightTehran = new Date("2026-09-11T02:00:00+03:30");
+    expect(isOpenAt(9, 22, noonTehran)).toBe(true);
+    expect(isOpenAt(9, 22, nightTehran)).toBe(false);
   });
 });
 

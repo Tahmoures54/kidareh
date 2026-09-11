@@ -17,6 +17,19 @@ function read(): HoldRecord[] {
 
 function write(items: HoldRecord[]) {
   localStorage.setItem(KEY, JSON.stringify(items));
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("kidareh-holds-change"));
+  }
+}
+
+export function onHoldsChange(cb: () => void) {
+  if (typeof window === "undefined") return () => undefined;
+  window.addEventListener("kidareh-holds-change", cb);
+  window.addEventListener("storage", cb);
+  return () => {
+    window.removeEventListener("kidareh-holds-change", cb);
+    window.removeEventListener("storage", cb);
+  };
 }
 
 export function listLocalHolds(): HoldRecord[] {

@@ -34,16 +34,29 @@ export function formatKm(km: number): string {
   return `${km.toFixed(1).replace(".", "٫")} کیلومتر`;
 }
 
+/** Store hours are Tehran wall-clock, not the visitor's OS timezone. */
+export function tehranHourFloat(at: Date = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Tehran",
+    hour: "numeric",
+    minute: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(at);
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+  return hour + minute / 60;
+}
+
 export function isOpenAt(openHour: number, closeHour: number, at: Date = new Date()): boolean {
   if (openHour === closeHour) return false;
-  const hour = at.getHours() + at.getMinutes() / 60;
+  const hour = tehranHourFloat(at);
   if (closeHour > openHour) return hour >= openHour && hour < closeHour;
   return hour >= openHour || hour < closeHour;
 }
 
 export function minutesUntilClose(openHour: number, closeHour: number, at: Date = new Date()): number | null {
   if (!isOpenAt(openHour, closeHour, at)) return null;
-  const hour = at.getHours() + at.getMinutes() / 60;
+  const hour = tehranHourFloat(at);
   const remaining = closeHour > hour ? closeHour - hour : 24 - hour + closeHour;
   return Math.max(1, Math.round(remaining * 60));
 }

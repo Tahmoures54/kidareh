@@ -48,11 +48,11 @@ const LegacyHome = lazy(() => import("./pages/Home"));
 
 function PageLoader() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 gap-3" dir="rtl">
-      <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-teal-200 dark:shadow-none">
-        <Loader2 className="w-6 h-6 text-white animate-spin" />
+    <div className="presence-root flex min-h-screen flex-col items-center justify-center gap-3" dir="rtl">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--ink)] text-sm font-black text-[var(--paper)]">
+        <Loader2 className="h-5 w-5 animate-spin" />
       </div>
-      <p className="text-xs font-bold text-gray-400">یه لحظه صبر کن…</p>
+      <p className="text-xs font-black text-[var(--muted)]">در حال آماده‌سازی محله…</p>
     </div>
   );
 }
@@ -67,17 +67,19 @@ function ScrollToTop() {
 
 function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-50 dark:bg-slate-950 p-6 text-center" dir="rtl">
-      <div className="w-20 h-20 bg-red-50 dark:bg-red-500/10 border border-red-100 dark:border-red-500/20 rounded-3xl flex items-center justify-center mb-6">
-        <AlertTriangle className="w-10 h-10 text-red-400" />
+    <div className="presence-root flex min-h-screen flex-col items-center justify-center p-6 text-center" dir="rtl">
+      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-[var(--line)] bg-white">
+        <AlertTriangle className="h-10 w-10 text-[var(--gold)]" />
       </div>
-      <h1 className="text-2xl font-black text-gray-900 dark:text-white mb-2">این صفحه پیدا نشد</h1>
-      <p className="text-sm text-gray-500 mb-8 max-w-xs leading-relaxed">آدرس اشتباهه یا صفحه جابه‌جا شده. برگرد خونه و از اونجا ادامه بده.</p>
+      <h1 className="mb-2 text-2xl font-black">این صفحه پیدا نشد</h1>
+      <p className="mb-8 max-w-xs text-sm font-bold leading-relaxed text-[var(--muted)]">
+        آدرس اشتباه است یا صفحه جابه‌جا شده. برگرد به محله و از آنجا ادامه بده.
+      </p>
       <Link
         to="/"
-        className="flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-lg shadow-teal-200 hover:bg-teal-700 dark:shadow-none"
+        className="flex items-center gap-2 rounded-xl bg-[var(--accent)] px-6 py-3 text-sm font-black text-white"
       >
-        <HomeIcon className="w-4 h-4" /> بازگشت به خانه
+        <HomeIcon className="h-4 w-4" /> بازگشت به محله
       </Link>
     </div>
   );
@@ -142,6 +144,7 @@ export default function App() {
                   <Route path="holds" element={<HoldsPage />} />
                   <Route path="reservations" element={<HoldsPage />} />
                   <Route path="p/:id" element={<PresenceListing />} />
+                  <Route path="product/:id" element={<PresenceListing />} />
                   <Route path="legacy" element={<LegacyHome />} />
                   <Route path="search" element={<Search />} />
                   <Route path="categories" element={<Categories />} />
@@ -172,8 +175,6 @@ export default function App() {
 
                 <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
                 <Route path="/onboarding" element={<GuestRoute><OnboardingFlow /></GuestRoute>} />
-                <Route path="/p/:id" element={<PresenceListing />} />
-                <Route path="/product/:id" element={<PresenceListing />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/store/:id" element={<StoreDetail />} />
                 <Route path="/stores/:id" element={<StoreDetail />} />

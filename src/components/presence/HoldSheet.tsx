@@ -139,18 +139,12 @@ export default function HoldSheet({ listing, open, onClose, onCreated }: Props) 
                 {error && <p className="mt-3 text-xs font-bold text-[#b42318]">{error}</p>}
                 <button
                   type="button"
-                  disabled={busy || !listing.openNow}
+                  disabled={busy}
                   onClick={submit}
-                  className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#14161c] text-sm font-black text-white disabled:opacity-40"
+                  className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] text-sm font-black text-white disabled:opacity-40"
                 >
-                  {listing.openNow ? (
-                    <>
-                      <QrCode className="h-4 w-4" />
-                      {busy ? "در حال رزرو…" : "رزرو و ساخت کد تحویل"}
-                    </>
-                  ) : (
-                    "فروشگاه الان باز نیست"
-                  )}
+                  <QrCode className="h-4 w-4" />
+                  {busy ? "در حال رزرو…" : listing.openNow ? "رزرو و ساخت کد تحویل" : "رزرو برای ساعت باز شدن"}
                 </button>
                 <p className="mt-3 flex items-center justify-center gap-1 text-[11px] font-bold text-[#6b7168]">
                   <Check className="h-3.5 w-3.5 text-[#157a4b]" />

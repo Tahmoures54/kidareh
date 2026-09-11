@@ -727,17 +727,14 @@ a {
   --gold: #b68a3a;
   --danger: #b42318;
   --ok: #157a4b;
-  --card: rgba(255, 252, 246, 0.86);
+  --card: rgba(255, 252, 246, 0.92);
+  font-family: var(--font-body);
   background:
     radial-gradient(1200px 500px at 10% -10%, rgba(14, 111, 99, 0.08), transparent 50%),
     radial-gradient(900px 400px at 110% 0%, rgba(182, 138, 58, 0.08), transparent 45%),
     var(--paper);
   color: var(--ink);
   min-height: 100dvh;
-}
-
-.presence-root * {
-  font-family: var(--font-body);
 }
 
 .presence-card {
@@ -752,9 +749,43 @@ a {
   background: rgba(255, 252, 246, 0.7);
 }
 
+.presence-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 2.75rem;
+  border-radius: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 900;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+.presence-btn:active {
+  transform: scale(0.98);
+}
+
+.presence-map {
+  isolation: isolate;
+  position: relative;
+  z-index: 0;
+}
 .presence-map .leaflet-container {
   background: #d9e2d6;
   font-family: var(--font-body);
+  z-index: 0;
+}
+.presence-map .leaflet-pane,
+.presence-map .leaflet-top,
+.presence-map .leaflet-bottom {
+  z-index: 1;
+}
+.presence-map .leaflet-popup-content-wrapper {
+  border-radius: 16px;
+  font-family: var(--font-body);
+}
+.presence-pin {
+  background: none !important;
+  border: none !important;
 }
 
 .presence-hide-scroll {
@@ -762,4 +793,10 @@ a {
 }
 .presence-hide-scroll::-webkit-scrollbar {
   display: none;
+}
+
+.presence-legacy {
+  background: #fff;
+  min-height: calc(100dvh - 8rem);
+  box-shadow: 0 0 0 1px var(--line);
 }
