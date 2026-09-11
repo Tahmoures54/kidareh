@@ -1,0 +1,20 @@
+{
+  "name": "kidareh",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "server",
+      "command": "NODE_ENV=development DATABASE_URL=./data/database/app.db SHOW_OTP_IN_DEV=true npm run dev:server",
+      "description": "Express + Socket.IO API (dev, tsx watch) on http://localhost:3000. Dev overrides force development mode and a writable SQLite path, and expose OTP codes in API responses for testing."
+    },
+    {
+      "name": "client",
+      "command": "npm run dev:client",
+      "description": "Vite dev server for the React PWA on http://localhost:5173 (proxies /api to http://localhost:3000)."
+    }
+  ],
+  "ports": [
+    { "name": "client", "port": 5173 },
+    { "name": "api", "port": 3000 }
+  ]
+}
