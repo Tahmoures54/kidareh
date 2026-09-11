@@ -30,7 +30,7 @@ const TermsTab = () => (
           <ul className="space-y-3">
             {section.items.map((item, j) => (
               <li key={j} className="flex items-start gap-3 text-sm text-gray-600 dark:text-gray-400 font-medium leading-relaxed">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 dark:bg-indigo-500 mt-2 flex-shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500 dark:bg-teal-600 mt-2 flex-shrink-0" />
                 <span>{item}</span>
               </li>
             ))}

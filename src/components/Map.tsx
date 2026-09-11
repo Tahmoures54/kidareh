@@ -29,7 +29,7 @@ const createStoreIcon = (isHighlight = false) =>
     html: `
       <div class="relative group cursor-pointer -ml-4 -mt-8">
         <div class="w-8 h-8 ${
-          isHighlight ? 'bg-rose-500' : 'bg-indigo-600'
+          isHighlight ? 'bg-rose-500' : 'bg-teal-700'
         } rounded-t-full rounded-bl-full rotate-45 flex items-center justify-center shadow-lg border-2 border-white transition-transform group-hover:scale-110 group-hover:shadow-xl">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="-rotate-45">
             <path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/>
@@ -128,7 +128,7 @@ function Map({ center, results, height = '65vh' }: MapProps) {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={handleLocateMe}
-          className="w-12 h-12 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center text-indigo-600 shadow-xl border border-white/50"
+          className="w-12 h-12 bg-white/90 backdrop-blur-md rounded-2xl flex items-center justify-center text-teal-700 shadow-xl border border-white/50"
           aria-label="مکان من"
         >
           <Crosshair className="w-6 h-6" />
@@ -186,7 +186,7 @@ function Map({ center, results, height = '65vh' }: MapProps) {
 
                   <div className="px-1">
                     <div className="flex items-center gap-1 text-[10px] text-gray-500 mb-1 font-bold">
-                      <Store className="w-3 h-3 text-indigo-400" />
+                      <Store className="w-3 h-3 text-teal-500" />
                       <span className="truncate">{result.store}</span>
                     </div>
 
@@ -194,7 +194,7 @@ function Map({ center, results, height = '65vh' }: MapProps) {
                       {result.name}
                     </h3>
 
-                    <p className="text-sm font-black text-indigo-600 mb-3 mt-2">
+                    <p className="text-sm font-black text-teal-700 mb-3 mt-2">
                       {typeof result.price === 'number'
                         ? result.price.toLocaleString('fa-IR')
                         : result.price}{' '}

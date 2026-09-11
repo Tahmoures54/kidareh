@@ -59,10 +59,10 @@ const TONE_STYLES: Record<
     soft: "from-amber-50 to-yellow-50 dark:from-amber-950/50 dark:to-yellow-950/40",
   },
   sky: {
-    gradient: "from-sky-500 via-blue-500 to-indigo-500",
+    gradient: "from-teal-500 via-emerald-500 to-teal-700",
     ring: "ring-sky-400/40",
     iconBg: "bg-white/20",
-    soft: "from-sky-50 to-indigo-50 dark:from-sky-950/50 dark:to-indigo-950/40",
+    soft: "from-teal-50 to-emerald-50 dark:from-teal-950/50 dark:to-emerald-950/40",
   },
   emerald: {
     gradient: "from-emerald-500 via-green-500 to-teal-400",

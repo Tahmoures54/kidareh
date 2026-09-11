@@ -149,7 +149,7 @@ export default function OTPVerificationScreen({ phone, onVerified, onBack }: OTP
             className={`w-20 h-20 rounded-[28px] flex items-center justify-center mx-auto mb-6 shadow-2xl transition-all ${
               isSuccess
                 ? "bg-gradient-to-br from-emerald-500 to-green-600 shadow-emerald-500/30"
-                : "bg-gradient-to-br from-cyan-500 to-teal-600 shadow-cyan-500/30"
+                : "bg-gradient-to-br from-[#14161c] to-[#0e6f63] shadow-cyan-500/30"
             }`}
           >
             <AnimatePresence>
@@ -235,7 +235,7 @@ export default function OTPVerificationScreen({ phone, onVerified, onBack }: OTP
               onClick={handleOtpSubmit}
               whileTap={{ scale: 0.97 }}
               disabled={loading || otp.length !== CONFIG.OTP_LENGTH}
-              className="w-full h-16 bg-gradient-to-r from-cyan-500 via-teal-400 to-violet-500 text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-3 group"
+              className="w-full h-16 bg-gradient-to-r from-[#14161c] to-[#0e6f63] text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-3 group"
             >
               {loading ? (
                 <motion.div className="flex items-center gap-2">

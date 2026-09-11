@@ -29,8 +29,8 @@ const Benefit = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: 
     variants={itemVariants}
     className="flex items-start gap-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl shadow-sm"
   >
-    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-xl flex items-center justify-center shrink-0">
-      <Icon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+    <div className="w-10 h-10 bg-teal-50 dark:bg-teal-500/10 rounded-xl flex items-center justify-center shrink-0">
+      <Icon className="w-5 h-5 text-teal-700 dark:text-teal-400" />
     </div>
     <div className="text-right">
       <h3 className="font-bold text-sm text-slate-900 dark:text-white">{title}</h3>
@@ -73,7 +73,7 @@ export default function BecomeSeller() {
         initial={{ opacity: 0, scale: 0.5 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-indigo-500/20"
+        className="w-24 h-24 bg-gradient-to-br from-teal-600 to-teal-800 rounded-3xl flex items-center justify-center mb-8 shadow-xl shadow-teal-700/20"
       >
         <Store className="w-12 h-12 text-white" />
       </motion.div>
@@ -123,7 +123,7 @@ export default function BecomeSeller() {
           type="button"
           onClick={handleUpgrade}
           disabled={isLoading}
-          className="w-full h-14 bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-500/30 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
+          className="w-full h-14 bg-gradient-to-r from-teal-700 to-emerald-800 text-white font-black rounded-2xl shadow-lg shadow-teal-700/30 active:scale-95 transition-transform flex items-center justify-center gap-2 disabled:opacity-70 disabled:active:scale-100"
         >
           {isLoading ? (
             <>

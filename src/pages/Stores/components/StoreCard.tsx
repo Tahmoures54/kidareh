@@ -37,17 +37,17 @@ export const StoreCard = memo(({ store, index }: { store: StoreItem; index: numb
     >
       <Link
         to={`/store/${store.id}`}
-        className="relative block overflow-hidden rounded-[1.5rem] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 active:scale-[0.985]"
+        className="relative block overflow-hidden rounded-[1.5rem] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-xl hover:shadow-teal-600/5 transition-all duration-300 active:scale-[0.985]"
       >
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-indigo-500/[0.03] via-transparent to-fuchsia-500/[0.03]" />
+        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-teal-600/[0.03] via-transparent to-fuchsia-500/[0.03]" />
         <div className="relative p-4 flex items-center gap-4">
           <div className="relative w-16 h-16 shrink-0">
-            <div className={`w-full h-full rounded-2xl overflow-hidden transition-colors ${verified ? "p-[2px] bg-gradient-to-br from-blue-400 to-indigo-500 shadow-sm" : "bg-gray-100 dark:bg-gray-800"}`}>
+            <div className={`w-full h-full rounded-2xl overflow-hidden transition-colors ${verified ? "p-[2px] bg-gradient-to-br from-blue-400 to-teal-600 shadow-sm" : "bg-gray-100 dark:bg-gray-800"}`}>
               <div className="w-full h-full rounded-[14px] overflow-hidden bg-white dark:bg-gray-900 border border-gray-100/50 flex items-center justify-center">
                 {store.image_url ? (
                   <img src={store.image_url} alt={store.name} loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).src = PLACEHOLDER; }} className="w-full h-full object-cover" />
                 ) : (
-                  <StoreIcon className={`w-7 h-7 ${verified ? "text-indigo-400" : "text-gray-400"}`} />
+                  <StoreIcon className={`w-7 h-7 ${verified ? "text-teal-500" : "text-gray-400"}`} />
                 )}
               </div>
             </div>
@@ -56,11 +56,11 @@ export const StoreCard = memo(({ store, index }: { store: StoreItem; index: numb
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <h3 className="text-[15px] font-black text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition-colors">{store.name}</h3>
+              <h3 className="text-[15px] font-black text-gray-900 dark:text-white truncate group-hover:text-teal-700 transition-colors">{store.name}</h3>
               {verified && <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-50 text-blue-600"><ShieldCheck className="w-3 h-3" /> تأییدشده</span>}
             </div>
             <div className="flex flex-wrap items-center gap-2 text-[10px] mb-2.5">
-              <span className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 font-black px-2.5 py-0.5 rounded-lg">{store.category || "عمومی"}</span>
+              <span className="bg-teal-50 dark:bg-teal-500/10 text-teal-700 font-black px-2.5 py-0.5 rounded-lg">{store.category || "عمومی"}</span>
               <span className="flex items-center gap-1 text-gray-500 font-medium"><MapPin className="w-3 h-3" /> {cityLine(store)}</span>
             </div>
             <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 font-bold">
@@ -69,7 +69,7 @@ export const StoreCard = memo(({ store, index }: { store: StoreItem; index: numb
               {store.product_count != null && <span className="inline-flex items-center gap-1"><ShoppingBag className="w-3.5 h-3.5 text-gray-400" /> {fmtNum(store.product_count)} کالا</span>}
             </div>
           </div>
-          <div className="shrink-0 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-500 transition-colors"><ChevronLeft className="w-4 h-4" /></div>
+          <div className="shrink-0 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors"><ChevronLeft className="w-4 h-4" /></div>
         </div>
       </Link>
     </motion.div>

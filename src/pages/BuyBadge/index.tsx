@@ -97,7 +97,7 @@ export default function BuyBadge() {
                       onClick={() => setSelectedId(b.id)}
                       className={`w-full text-right rounded-3xl border p-4 transition-all ${
                         active
-                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/40 shadow-md shadow-indigo-500/10"
+                          ? "border-teal-600 bg-teal-50 dark:bg-teal-950/40 shadow-md shadow-teal-700/10"
                           : "border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm"
                       }`}
                     >
@@ -119,7 +119,7 @@ export default function BuyBadge() {
                           <p className="text-[12px] text-gray-600 dark:text-gray-300 mt-1 leading-relaxed">
                             {b.simpleDesc}
                           </p>
-                          <p className="text-[11px] text-indigo-600 dark:text-indigo-300 font-bold mt-1">
+                          <p className="text-[11px] text-teal-700 dark:text-teal-300 font-bold mt-1">
                             {b.benefit}
                           </p>
                           <p className="text-sm font-black mt-2 text-gray-900 dark:text-white">
@@ -129,7 +129,7 @@ export default function BuyBadge() {
                         </div>
                         <div
                           className={`w-6 h-6 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${
-                            active ? "border-indigo-600 bg-indigo-600" : "border-gray-300"
+                            active ? "border-teal-700 bg-teal-700" : "border-gray-300"
                           }`}
                         >
                           {active && <Check className="w-3.5 h-3.5 text-white" />}
@@ -163,7 +163,7 @@ export default function BuyBadge() {
                 {selected ? (
                   <>
                     <p className="text-[10px] text-gray-500 font-bold">مبلغ پرداخت</p>
-                    <p className="text-lg font-black text-indigo-600 truncate">
+                    <p className="text-lg font-black text-teal-700 truncate">
                       {selected.price.toLocaleString("fa-IR")} تومان
                     </p>
                   </>
@@ -175,7 +175,7 @@ export default function BuyBadge() {
                 type="button"
                 disabled={!selected || paying}
                 onClick={handleBuy}
-                className="h-14 px-6 rounded-2xl bg-gradient-to-l from-indigo-600 to-violet-600 text-white font-black text-sm flex items-center gap-2 shadow-lg shadow-indigo-500/30 disabled:opacity-40 active:scale-95 transition-transform"
+                className="h-14 px-6 rounded-2xl bg-gradient-to-l from-teal-700 to-emerald-800 text-white font-black text-sm flex items-center gap-2 shadow-lg shadow-teal-700/30 disabled:opacity-40 active:scale-95 transition-transform"
               >
                 {paying ? (
                   <Loader2 className="w-5 h-5 animate-spin" />

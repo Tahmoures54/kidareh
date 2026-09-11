@@ -6,16 +6,16 @@ import { motion } from "motion/react";
 export default function GuestView() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center p-6 text-center relative overflow-hidden" dir="rtl">
-      <div className="absolute top-1/4 right-10 w-40 h-40 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-10 w-40 h-40 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 right-10 w-40 h-40 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", bounce: 0.5 }}
-        className="relative z-10 w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-50 dark:from-indigo-500/20 dark:to-purple-500/5 border border-indigo-200 dark:border-indigo-500/30 rounded-[2rem] shadow-xl flex items-center justify-center mb-8 rotate-3"
+        className="relative z-10 w-24 h-24 bg-gradient-to-br from-teal-50 to-emerald-50 dark:from-teal-500/20 dark:to-emerald-500/5 border border-teal-200 dark:border-teal-500/30 rounded-[2rem] shadow-xl flex items-center justify-center mb-8 rotate-3"
       >
-        <MessageCircle className="w-12 h-12 text-indigo-600 dark:text-indigo-400" />
+        <MessageCircle className="w-12 h-12 text-teal-700 dark:text-teal-400" />
         <motion.div
           animate={{ y: [0, -5, 0] }}
           transition={{ repeat: Infinity, duration: 2 }}

@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion"; // اگر پکیج شما motion/react است، تغییر دهید
+import { motion, AnimatePresence } from "framer-motion";
 import { Smartphone, CheckCircle2, Loader2, ArrowRight } from "lucide-react";
 
 import { validatePhone, toEn } from "../utils";
@@ -15,34 +15,34 @@ interface StepPhoneProps {
 }
 
 const StepPhone = memo(({ phone, setPhone, onSubmit, loading, error }: StepPhoneProps) => (
-  <motion.form 
-    onSubmit={(e) => { 
-      e.preventDefault(); 
-      if (!loading && validatePhone(phone)) onSubmit(); 
+  <motion.form
+    onSubmit={(e) => {
+      e.preventDefault();
+      if (!loading && validatePhone(phone)) onSubmit();
     }}
-    initial={{ opacity: 0, x: 20 }} 
-    animate={{ opacity: 1, x: 0 }} 
+    initial={{ opacity: 0, x: 20 }}
+    animate={{ opacity: 1, x: 0 }}
     exit={{ opacity: 0, x: -20 }}
     className="flex flex-col gap-6"
   >
     <div className="relative group">
-      <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-violet-500 rounded-[24px] blur-md opacity-0 group-focus-within:opacity-30 transition-all duration-500" />
-      <div className="relative bg-white dark:bg-slate-800 rounded-[22px] border border-slate-100 dark:border-slate-700/50 p-1.5 transition-colors group-focus-within:border-cyan-300 dark:group-focus-within:border-cyan-700">
+      <div className="absolute -inset-1 rounded-[24px] bg-[var(--accent)]/20 blur-md opacity-0 transition-all duration-500 group-focus-within:opacity-100" />
+      <div className="relative rounded-[22px] border border-[var(--line)] bg-white p-1.5 transition-colors group-focus-within:border-[var(--accent)]">
         <div className="flex items-center px-4">
-          <Smartphone className="w-5 h-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
+          <Smartphone className="h-5 w-5 text-[var(--muted)] transition-colors group-focus-within:text-[var(--accent)]" />
           <input
-            type="tel" 
-            inputMode="numeric" 
+            type="tel"
+            inputMode="numeric"
             value={phone}
             onChange={(e) => setPhone(toEn(e.target.value).replace(/\D/g, "").slice(0, 11))}
-            className="flex-1 h-16 bg-transparent border-none focus:ring-0 text-lg font-black tracking-[0.2em] text-slate-900 dark:text-white placeholder:text-slate-300 dark:placeholder:text-slate-600 text-center outline-none"
-            placeholder="09..." 
+            className="h-16 flex-1 border-none bg-transparent text-center text-lg font-black tracking-[0.2em] text-[var(--ink)] outline-none placeholder:text-[var(--muted)]"
+            placeholder="09..."
             dir="ltr"
           />
           <AnimatePresence>
             {validatePhone(phone) && (
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}>
-                <CheckCircle2 className="w-6 h-6 text-teal-500" />
+                <CheckCircle2 className="h-6 w-6 text-[var(--ok)]" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -52,33 +52,33 @@ const StepPhone = memo(({ phone, setPhone, onSubmit, loading, error }: StepPhone
 
     <ErrorToast error={error} />
 
-    <div className="flex flex-col gap-3 mt-2">
-      <p className="text-[11px] leading-relaxed text-center text-slate-500 dark:text-slate-400 font-medium px-2">
+    <div className="mt-2 flex flex-col gap-3">
+      <p className="px-2 text-center text-[11px] font-medium leading-relaxed text-[var(--muted)]">
         وارد کردن شماره به منزله پذیرش{" "}
-        <Link to="/terms" target="_blank" className="font-bold text-cyan-600 hover:text-cyan-500 dark:text-cyan-400 underline underline-offset-4 transition-colors">
+        <Link to="/terms" target="_blank" className="font-bold text-[var(--accent)] underline underline-offset-4">
           شرایط استفاده
-        </Link>
-        {" "}و{" "}
-        <Link to="/privacy" target="_blank" className="font-bold text-violet-600 hover:text-violet-500 dark:text-violet-400 underline underline-offset-4 transition-colors">
+        </Link>{" "}
+        و{" "}
+        <Link to="/privacy" target="_blank" className="font-bold text-[var(--accent)] underline underline-offset-4">
           حریم خصوصی
-        </Link>
-        {" "}کی‌داره است.
+        </Link>{" "}
+        کی‌داره است.
       </p>
 
       <motion.button
         type="submit"
-        whileTap={{ scale: 0.97 }} 
+        whileTap={{ scale: 0.97 }}
         disabled={loading || !validatePhone(phone)}
-        className="w-full h-16 bg-gradient-to-r from-cyan-500 via-teal-400 to-violet-500 text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-3 group"
+        className="group flex h-16 w-full items-center justify-center gap-3 rounded-[22px] bg-[var(--ink)] text-base font-black text-white shadow-xl disabled:opacity-40"
       >
         {loading ? (
-          <motion.div layoutId="btn-loader" className="flex items-center gap-2">
-            <Loader2 className="w-5 h-5 animate-spin" /> <span>در حال ارسال...</span>
-          </motion.div>
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" /> در حال ارسال...
+          </span>
         ) : (
-          <motion.div layoutId="btn-loader" className="flex items-center gap-3">
-            دریافت کد تایید <ArrowRight className="w-5 h-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
-          </motion.div>
+          <span className="flex items-center gap-3">
+            دریافت کد تایید <ArrowRight className="h-5 w-5 rotate-180 transition-transform group-hover:-translate-x-1" />
+          </span>
         )}
       </motion.button>
     </div>

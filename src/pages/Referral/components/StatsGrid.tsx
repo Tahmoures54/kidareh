@@ -109,7 +109,7 @@ export default function StatsGrid({
         <div className="mt-2 text-center">
           {nextTier ? (
             <p className="text-[10px] font-black text-gray-600 dark:text-gray-300">
-              فقط <span className="text-indigo-600 dark:text-indigo-400">{remaining}</span> نفر تا رتبه <span className={`${nextTier.color}`}>{nextTier.name}</span> فاصله داری!
+              فقط <span className="text-teal-700 dark:text-teal-400">{remaining}</span> نفر تا رتبه <span className={`${nextTier.color}`}>{nextTier.name}</span> فاصله داری!
             </p>
           ) : (
             <p className="text-[10px] font-black text-cyan-600 dark:text-cyan-300">

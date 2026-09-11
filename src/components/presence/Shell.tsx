@@ -142,6 +142,9 @@ export default function PresenceShell() {
 
   return (
     <div className="presence-root" dir="rtl">
+      <a href="#presence-main" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[80] focus:rounded-xl focus:bg-[var(--ink)] focus:px-3 focus:py-2 focus:text-xs focus:font-black focus:text-white">
+        پرش به محتوا
+      </a>
       <InstallPrompt />
       <div className="mx-auto flex min-h-[100dvh] max-w-[1440px]">
         <aside className="sticky top-0 z-50 hidden h-[100dvh] w-[84px] shrink-0 border-l border-[var(--line)] bg-[var(--paper)]/90 backdrop-blur-xl lg:block">
@@ -162,7 +165,7 @@ export default function PresenceShell() {
                   <select
                     value={origin.neighborhoodId ?? ""}
                     onChange={(e) => setNeighborhood(e.target.value as (typeof NEIGHBORHOODS)[number]["id"])}
-                    className="max-w-[170px] truncate bg-transparent text-sm font-black outline-none"
+                    className="max-w-[180px] truncate rounded-xl bg-transparent text-sm font-black outline-none"
                     aria-label="انتخاب محله"
                   >
                     <option value="">موقعیت فعلی</option>
@@ -208,7 +211,7 @@ export default function PresenceShell() {
               </button>
             </div>
           </header>
-          <main className={cn("flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
+          <main id="presence-main" className={cn("flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
             <Outlet />
           </main>
         </div>

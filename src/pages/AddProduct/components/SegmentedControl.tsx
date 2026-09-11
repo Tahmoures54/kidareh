@@ -28,7 +28,7 @@ const SegmentedControl = React.memo(({ options, value, onChange }: Props) => {
             className={`flex-1 relative z-10 rounded-lg text-sm font-bold transition-colors duration-200 ${
               isActive
                 ? isPositive
-                  ? "text-indigo-600 dark:text-indigo-400"
+                  ? "text-teal-700 dark:text-teal-400"
                   : "text-rose-500"
                 : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
             }`}
@@ -41,7 +41,7 @@ const SegmentedControl = React.memo(({ options, value, onChange }: Props) => {
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 className={`absolute inset-0 -z-10 rounded-lg shadow-sm border ${
                   isPositive
-                    ? "bg-white dark:bg-slate-700 border-indigo-200 dark:border-indigo-500/30"
+                    ? "bg-white dark:bg-slate-700 border-teal-200 dark:border-teal-500/30"
                     : "bg-white dark:bg-slate-700 border-rose-200 dark:border-rose-500/30"
                 }`}
               />

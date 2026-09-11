@@ -735,6 +735,16 @@ a {
     var(--paper);
   color: var(--ink);
   min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+}
+
+.presence-root :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.presence-root select {
+  cursor: pointer;
 }
 
 .presence-card {
@@ -758,7 +768,7 @@ a {
   border-radius: 1rem;
   font-size: 0.8125rem;
   font-weight: 900;
-  transition: transform 0.15s ease, opacity 0.15s ease;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
 }
 .presence-btn:active {
   transform: scale(0.98);
@@ -796,7 +806,32 @@ a {
 }
 
 .presence-legacy {
-  background: #fff;
+  background: var(--card);
   min-height: calc(100dvh - 8rem);
   box-shadow: 0 0 0 1px var(--line);
+  border-radius: 1.5rem 1.5rem 0 0;
+}
+
+.presence-meter {
+  height: 6px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: var(--paper-2);
+}
+.presence-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .presence-root *,
+  .presence-root *::before,
+  .presence-root *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

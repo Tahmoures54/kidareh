@@ -25,7 +25,7 @@ const PolicyCard = ({ item }: Props) => {
       </div>
       
       <div className="flex-1 mt-0.5">
-        <h3 className="text-sm font-black text-gray-900 dark:text-white mb-1.5 tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+        <h3 className="text-sm font-black text-gray-900 dark:text-white mb-1.5 tracking-tight group-hover:text-teal-700 dark:group-hover:text-teal-500 transition-colors">
           {item.title}
         </h3>
         <p className="text-[12px] text-gray-500 dark:text-gray-400 leading-relaxed font-medium">

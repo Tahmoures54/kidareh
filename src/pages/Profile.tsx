@@ -217,7 +217,7 @@ export default function Profile() {
           {isSeller && (
             <Link
               to="/buy-badge"
-              className="bg-gradient-to-r from-sky-50 to-indigo-50 dark:from-sky-500/10 dark:to-indigo-500/10 rounded-[1.5rem] p-4 flex items-center justify-between border border-sky-200 dark:border-sky-800/40 active:scale-[0.98] transition-transform shadow-sm"
+              className="bg-gradient-to-r from-teal-50 to-emerald-50 dark:from-teal-500/10 dark:to-emerald-500/10 rounded-[1.5rem] p-4 flex items-center justify-between border border-sky-200 dark:border-sky-800/40 active:scale-[0.98] transition-transform shadow-sm"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-sky-100 dark:bg-sky-500/20 rounded-xl flex items-center justify-center">

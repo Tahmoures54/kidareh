@@ -3,15 +3,15 @@ import { Shield, Eye, Lock, ShieldCheck, BellRing, Users } from "lucide-react";
 export const ITEMS = [
   {
     icon: Shield,
-    gradient: "from-blue-500 to-indigo-500",
-    darkGradient: "dark:from-blue-600 dark:to-indigo-600",
+    gradient: "from-blue-500 to-teal-600",
+    darkGradient: "dark:from-blue-600 dark:to-teal-700",
     title: "تعهد ما",
     text: "ما در کی‌داره متعهد هستیم اطلاعات شخصی کاربران را محافظت کنیم و فقط داده‌های ضروری برای ارائه خدمات را جمع‌آوری کنیم.",
   },
   {
     icon: Eye,
-    gradient: "from-indigo-500 to-violet-500",
-    darkGradient: "dark:from-indigo-600 dark:to-violet-600",
+    gradient: "from-teal-600 to-violet-500",
+    darkGradient: "dark:from-teal-700 dark:to-violet-600",
     title: "اطلاعات جمع‌آوری‌شده",
     text: "شماره موبایل، نام، موقعیت جغرافیایی (با اجازه)، اطلاعات فروشگاه و کالا، و تنظیمات حساب.",
   },

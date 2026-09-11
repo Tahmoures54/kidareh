@@ -95,7 +95,7 @@ const MessageBubble = React.memo(
       } items-start gap-2.5`}
     >
       {message.sender === "ai" && (
-        <div className="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-200 mt-1 shadow-sm">
+        <div className="w-8 h-8 bg-gradient-to-br from-teal-100 to-purple-100 rounded-xl flex items-center justify-center text-teal-700 shrink-0 border border-teal-200 mt-1 shadow-sm">
           <Brain className="w-4 h-4" />
         </div>
       )}
@@ -104,7 +104,7 @@ const MessageBubble = React.memo(
         <div
           className={`px-4 py-3 rounded-2xl shadow-sm border text-[13px] font-medium leading-relaxed transition-all ${
             message.sender === "user"
-              ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-br-none border-indigo-500 shadow-indigo-200"
+              ? "bg-gradient-to-r from-teal-700 to-emerald-800 text-white rounded-br-none border-teal-600 shadow-teal-200"
               : "bg-white text-gray-800 rounded-tl-none border-gray-100 hover:bg-gray-50"
           }`}
         >
@@ -157,7 +157,7 @@ const MessageBubble = React.memo(
       </div>
 
       {message.sender === "user" && (
-        <div className="w-8 h-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl flex items-center justify-center text-white shrink-0 shadow-md mt-1 font-bold text-xs">
+        <div className="w-8 h-8 bg-gradient-to-r from-teal-700 to-emerald-800 rounded-xl flex items-center justify-center text-white shrink-0 shadow-md mt-1 font-bold text-xs">
           من
         </div>
       )}
@@ -185,11 +185,11 @@ const TypingAnimation = () => (
           key={delay}
           animate={{ y: [0, -8, 0] }}
           transition={{ duration: 0.6, repeat: Infinity, delay }}
-          className="w-2 h-2 bg-indigo-500 rounded-full"
+          className="w-2 h-2 bg-teal-600 rounded-full"
         />
       ))}
     </div>
-    <div className="w-8 h-8 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-xl flex items-center justify-center text-indigo-600 shrink-0 border border-indigo-200 mt-1">
+    <div className="w-8 h-8 bg-gradient-to-br from-teal-100 to-purple-100 rounded-xl flex items-center justify-center text-teal-700 shrink-0 border border-teal-200 mt-1">
       <Brain className="w-4 h-4 animate-pulse" />
     </div>
   </motion.div>
@@ -407,7 +407,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             className="w-full sm:max-w-md h-[92vh] sm:h-[85vh] bg-white rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col overflow-hidden shadow-2xl"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white px-5 py-4 flex items-center justify-between shadow-lg shrink-0">
+            <div className="bg-gradient-to-r from-teal-700 via-purple-600 to-teal-800 text-white px-5 py-4 flex items-center justify-between shadow-lg shrink-0">
               <div className="flex items-center gap-3">
                 <motion.div
                   animate={{ scale: [1, 1.1, 1] }}
@@ -422,7 +422,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                     دستیار هوشمند
                     <Sparkles className="w-4 h-4 text-amber-300 animate-bounce" />
                   </h2>
-                  <p className="text-[10px] text-indigo-100 font-medium mt-0.5">
+                  <p className="text-[10px] text-teal-100 font-medium mt-0.5">
                     آنلاین و دائماً آماده
                   </p>
                 </div>
@@ -438,12 +438,12 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
             </div>
 
             {/* Status Bar */}
-            <div className="bg-gradient-to-l from-indigo-50 to-purple-50 px-4 py-2.5 border-b border-indigo-100 flex items-center gap-2 text-[10px] text-indigo-700 shrink-0">
+            <div className="bg-gradient-to-l from-teal-50 to-purple-50 px-4 py-2.5 border-b border-teal-100 flex items-center gap-2 text-[10px] text-teal-800 shrink-0">
               <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
               <span className="font-bold flex-1">
                 متصل به دیتابیس کی‌داره
               </span>
-              <span className="bg-white px-2 py-0.5 rounded-full font-black border border-indigo-100">
+              <span className="bg-white px-2 py-0.5 rounded-full font-black border border-teal-100">
                 v2.1
               </span>
             </div>
@@ -482,7 +482,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                       whileTap={{ scale: 0.95 }}
                       disabled={isLoading || isListening}
                       onClick={() => handleSend(prompt)}
-                      className="shrink-0 bg-gray-50 hover:bg-indigo-50 text-gray-700 hover:text-indigo-700 text-[11px] font-bold px-3 py-2 rounded-xl border border-gray-200 snap-center transition-all disabled:opacity-50"
+                      className="shrink-0 bg-gray-50 hover:bg-teal-50 text-gray-700 hover:text-teal-800 text-[11px] font-bold px-3 py-2 rounded-xl border border-gray-200 snap-center transition-all disabled:opacity-50"
                     >
                       {prompt}
                     </motion.button>
@@ -514,7 +514,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                   className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-all ${
                     isListening
                       ? "bg-red-50 text-red-500 border border-red-200 shadow-md"
-                      : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-100"
+                      : "bg-teal-50 text-teal-700 hover:bg-teal-100 border border-teal-100"
                   }`}
                 >
                   {isListening ? (
@@ -524,7 +524,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                   )}
                 </motion.button>
 
-                <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:bg-white transition-all">
+                <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 focus-within:ring-2 focus-within:ring-teal-600 focus-within:bg-white transition-all">
                   <input
                     type="text"
                     placeholder="پیام بنویسید..."
@@ -539,7 +539,7 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
                     whileTap={{ scale: 0.9 }}
                     disabled={!input.trim() || isLoading}
                     onClick={() => handleSend()}
-                    className="w-10 h-10 rounded-lg bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors disabled:bg-gray-200 disabled:text-gray-400"
+                    className="w-10 h-10 rounded-lg bg-teal-700 text-white flex items-center justify-center hover:bg-teal-800 transition-colors disabled:bg-gray-200 disabled:text-gray-400"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

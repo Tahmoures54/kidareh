@@ -76,7 +76,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
           <button
             onClick={this.handleReset}
-            className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-colors"
+            className="bg-teal-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-teal-800 transition-colors"
           >
             <RefreshCw className="w-5 h-5" />
             بارگذاری مجدد

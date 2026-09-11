@@ -14,8 +14,8 @@ export const TABS: TabConfig[] = [
 export const TERMS_SECTIONS = [
   {
     icon: Gavel,
-    gradient: "from-blue-500 to-indigo-600",
-    darkGradient: "dark:from-blue-600 dark:to-indigo-700",
+    gradient: "from-blue-500 to-teal-700",
+    darkGradient: "dark:from-blue-600 dark:to-teal-800",
     title: "تعهدات کاربر",
     items: [
       "کاربر متعهد است اطلاعات صحیح و قانونی ثبت کند.",

@@ -4,6 +4,8 @@ import { ArrowLeft, BadgeCheck, Footprints } from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { buildRadar, formatCompactToman, formatToman, formatWalk, toFa } from "../../presence/engine";
 import PageHero from "../../components/presence/PageHero";
+import PresenceImage from "../../components/presence/PresenceImage";
+import PresenceEmpty from "../../components/presence/EmptyState";
 
 export default function RadarPage() {
   const { origin } = usePresenceOrigin();
@@ -37,6 +39,11 @@ export default function RadarPage() {
                   <p className="text-[11px] font-bold text-[var(--muted)]">ارزان‌ترین</p>
                   <p className="text-base font-black text-[var(--accent)]">{formatCompactToman(group.cheapest.price)}</p>
                   <p className="text-[11px] font-bold">{formatWalk(group.cheapest.walkMinutes)}</p>
+                  {group.cheapest.price > 0 && (
+                    <div className="presence-meter mt-2 w-24">
+                      <span style={{ width: `${Math.min(100, Math.round((group.spreadToman / group.cheapest.price) * 100))}%` }} />
+                    </div>
+                  )}
                 </div>
               </button>
               {open && (
@@ -49,7 +56,7 @@ export default function RadarPage() {
                         to={`/p/${item.id}`}
                         className="flex items-center gap-3 border-b border-[var(--line)] px-5 py-3 last:border-0 hover:bg-[var(--paper)]/70"
                       >
-                        <img src={item.image} alt="" className="h-14 w-14 rounded-2xl object-cover" />
+                        <PresenceImage src={item.image} className="h-14 w-14 rounded-2xl object-cover" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-black">{item.store.name}</p>
                           <p className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] font-bold text-[var(--muted)]">
@@ -86,12 +93,7 @@ export default function RadarPage() {
           );
         })}
         {groups.length === 0 && (
-          <div className="presence-card rounded-[28px] p-8 text-center">
-            <p className="font-black">برای این کالا هنوز چند فروشگاه در رادار نیست</p>
-            <Link to="/" className="mt-3 inline-block text-sm font-black text-[var(--accent)]">
-              بازگشت به محله
-            </Link>
-          </div>
+          <PresenceEmpty title="برای این کالا هنوز چند فروشگاه در رادار نیست" actionTo="/" actionLabel="بازگشت به محله" />
         )}
       </div>
     </div>

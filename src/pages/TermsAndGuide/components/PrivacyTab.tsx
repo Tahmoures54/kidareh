@@ -6,7 +6,7 @@ import { PRIVACY_ITEMS } from "../constants";
 const PrivacyTab = () => (
   <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="space-y-4">
     <div className="bg-white dark:bg-gray-900 rounded-[1.5rem] border border-gray-100 dark:border-gray-800 p-5 shadow-sm text-center">
-      <ShieldCheck className="w-10 h-10 text-indigo-500 mx-auto mb-3" />
+      <ShieldCheck className="w-10 h-10 text-teal-600 mx-auto mb-3" />
       <h3 className="text-base font-black text-gray-900 dark:text-white mb-2">رویکرد شفاف ما به حریم خصوصی</h3>
       <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed font-medium">
         ما فقط داده‌های لازم را پردازش می‌کنیم. دسترسی‌ها در چارچوب نیاز برنامه استفاده شده و هیچ‌گاه به اشخاص ثالث فروخته نمی‌شوند.

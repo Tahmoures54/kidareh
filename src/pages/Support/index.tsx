@@ -30,7 +30,7 @@ export default function Support() {
       </AnimatePresence>
 
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-indigo-500/5 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-teal-500/5 blur-[120px] rounded-full pointer-events-none -translate-y-1/2 translate-x-1/3" />
 
       {/* ── Header ── */}
       <header className="sticky top-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl border-b border-slate-200/50 dark:border-slate-800/50 px-5 pt-[max(16px,env(safe-area-inset-top))] pb-3 transition-colors">
@@ -44,7 +44,7 @@ export default function Support() {
           </motion.button>
           <div>
             <h1 className="text-[15px] font-black text-slate-900 dark:text-white flex items-center gap-2">
-              <LifeBuoy className="w-5 h-5 text-indigo-500" /> مرکز پشتیبانی
+              <LifeBuoy className="w-5 h-5 text-teal-600" /> مرکز پشتیبانی
             </h1>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold tracking-wide mt-0.5">پاسخ‌گویی سریع از طریق واتساپ</p>
           </div>
@@ -59,7 +59,7 @@ export default function Support() {
           initial={{ opacity: 0, y: 15 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={SPRING_TRANSITION} 
-          className="bg-gradient-to-br from-indigo-600 via-violet-600 to-fuchsia-600 rounded-[32px] p-6 text-white shadow-xl shadow-indigo-500/20 relative overflow-hidden group"
+          className="bg-gradient-to-br from-teal-700 via-emerald-700 to-teal-900 rounded-[32px] p-6 text-white shadow-xl shadow-teal-700/20 relative overflow-hidden group"
         >
           <div className="absolute -top-20 -left-20 w-48 h-48 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700 pointer-events-none" />
           <div className="relative z-10">
@@ -151,12 +151,12 @@ export default function Support() {
           className="bg-white dark:bg-slate-800 rounded-[32px] border border-slate-100 dark:border-slate-700/50 p-6 shadow-sm"
         >
           <h2 className="text-[15px] font-black text-slate-900 dark:text-white mb-5 flex items-center gap-2">
-            <Send className="w-5 h-5 text-indigo-500" /> ارسال سریع پیام
+            <Send className="w-5 h-5 text-teal-600" /> ارسال سریع پیام
           </h2>
           <div className="space-y-4">
             <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-[20px] blur opacity-0 group-focus-within:opacity-20 transition duration-300" />
-              <div className="relative bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-[20px] p-2 transition-colors group-focus-within:border-indigo-500/50">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-600 to-violet-500 rounded-[20px] blur opacity-0 group-focus-within:opacity-20 transition duration-300" />
+              <div className="relative bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-[20px] p-2 transition-colors group-focus-within:border-teal-600/50">
                 <input 
                   type="text" 
                   value={state.subject} 
@@ -167,8 +167,8 @@ export default function Support() {
               </div>
             </div>
             <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 rounded-[24px] blur opacity-0 group-focus-within:opacity-20 transition duration-300" />
-              <div className="relative bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-[24px] p-2 transition-colors group-focus-within:border-indigo-500/50">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-teal-600 to-violet-500 rounded-[24px] blur opacity-0 group-focus-within:opacity-20 transition duration-300" />
+              <div className="relative bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-[24px] p-2 transition-colors group-focus-within:border-teal-600/50">
                 <textarea 
                   value={state.message} 
                   onChange={(e) => setters.setMessage(e.target.value)} 
@@ -181,7 +181,7 @@ export default function Support() {
             <button 
               type="button" 
               onClick={actions.openWhatsApp} 
-              className="w-full h-14 bg-slate-900 dark:bg-indigo-600 text-white rounded-[22px] font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-xl"
+              className="w-full h-14 bg-slate-900 dark:bg-teal-700 text-white rounded-[22px] font-black text-sm flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-xl"
             >
               <Send className="w-4 h-4" /> ارسال پیام در واتساپ
             </button>
@@ -195,7 +195,7 @@ export default function Support() {
           transition={{ ...SPRING_TRANSITION, delay: 0.2 }}
         >
           <div className="flex items-center gap-2 mb-4 px-2">
-            <HelpCircle className="w-5 h-5 text-indigo-500" />
+            <HelpCircle className="w-5 h-5 text-teal-600" />
             <h2 className="text-[15px] font-black text-slate-900 dark:text-white">سوالات پرتکرار</h2>
           </div>
           <div className="space-y-3">

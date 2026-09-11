@@ -54,8 +54,8 @@ export default function TermsAndGuide() {
 
       {/* ── Hero Banner ── */}
       <div className="px-4 py-6 relative">
-        <div className="absolute top-10 right-10 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="bg-indigo-600 dark:bg-indigo-900 rounded-[2rem] p-6 text-white shadow-xl shadow-indigo-600/20 relative overflow-hidden">
+        <div className="absolute top-10 right-10 w-32 h-32 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="bg-teal-700 dark:bg-teal-900 rounded-[2rem] p-6 text-white shadow-xl shadow-teal-700/20 relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.15] mix-blend-overlay" />
           <div className="relative z-10 flex items-start gap-4">
             <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-inner flex-shrink-0">
@@ -63,7 +63,7 @@ export default function TermsAndGuide() {
             </div>
             <div>
               <h2 className="text-base font-black mb-1.5 drop-shadow-sm">با خیال راحت استفاده کنید</h2>
-              <p className="text-xs text-indigo-100 font-medium leading-relaxed">
+              <p className="text-xs text-teal-100 font-medium leading-relaxed">
                 استفاده از خدمات کی‌داره به منزله پذیرش شرایط و قوانین است. ما اینجا هستیم تا تجربه امن و راحتی داشته باشید.
               </p>
             </div>

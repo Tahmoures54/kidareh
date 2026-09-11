@@ -32,13 +32,13 @@ const MessageBubble = React.memo(({ msg, isMe, onRetry }: Props) => {
     >
       <div className={`relative max-w-[85%] px-4 py-2.5 shadow-sm group ${
         isMe
-          ? "bg-gradient-to-br from-indigo-500 to-blue-500 dark:from-indigo-600 dark:to-blue-600 text-white rounded-2xl rounded-tl-sm"
+          ? "bg-gradient-to-br from-teal-600 to-blue-500 dark:from-teal-700 dark:to-blue-600 text-white rounded-2xl rounded-tl-sm"
           : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-2xl rounded-tr-sm"
       }`}>
         <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">
           {msg.text}
         </p>
-        <div className={`flex items-center justify-end gap-1.5 mt-1 select-none ${isMe ? "text-indigo-100" : "text-gray-400 dark:text-gray-500"}`}>
+        <div className={`flex items-center justify-end gap-1.5 mt-1 select-none ${isMe ? "text-teal-100" : "text-gray-400 dark:text-gray-500"}`}>
           <span className="text-[10px] font-medium tracking-wide">
             {msg.timestamp}
           </span>

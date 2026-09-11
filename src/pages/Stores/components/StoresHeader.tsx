@@ -23,7 +23,7 @@ export const StoresHeader = memo(({
       <div className="flex items-center gap-3 mb-4">
         <button onClick={() => navigate(-1)} className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center active:scale-90 transition-transform shadow-sm"><ArrowRight className="w-5 h-5 text-gray-700" /></button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-xl font-black tracking-tight flex items-center gap-2"><Sparkles className="w-5 h-5 text-indigo-500" /> فروشگاه‌ها</h1>
+          <h1 className="text-xl font-black tracking-tight flex items-center gap-2"><Sparkles className="w-5 h-5 text-teal-600" /> فروشگاه‌ها</h1>
           <p className="text-[11px] text-gray-500 font-medium mt-0.5">فروشندگان فعال و معتبر کی‌داره</p>
         </div>
         <button onClick={onRefresh} className="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center active:scale-90 transition-transform shadow-sm"><RefreshCw className={`w-4 h-4 text-gray-600 ${refreshing ? "animate-spin" : ""}`} /></button>
@@ -31,9 +31,9 @@ export const StoresHeader = memo(({
 
       <div className="relative group mb-4">
         <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 transition-colors" />
-        <input type="text" placeholder="جستجوی فروشگاه، دسته یا شهر..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-white border border-gray-200 rounded-2xl pr-12 pl-12 py-3.5 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm" />
+        <input type="text" placeholder="جستجوی فروشگاه، دسته یا شهر..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full bg-white border border-gray-200 rounded-2xl pr-12 pl-12 py-3.5 text-sm font-bold text-gray-900 placeholder-gray-400 outline-none focus:ring-4 focus:ring-teal-600/10 transition-all shadow-sm" />
         <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center">
-          {isSearching ? <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" /> : search ? <button onClick={() => setSearch("")} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center active:scale-90 transition-transform"><X className="w-3.5 h-3.5 text-gray-600" /></button> : null}
+          {isSearching ? <Loader2 className="w-4 h-4 text-teal-600 animate-spin" /> : search ? <button onClick={() => setSearch("")} className="w-7 h-7 rounded-full bg-gray-100 flex items-center justify-center active:scale-90 transition-transform"><X className="w-3.5 h-3.5 text-gray-600" /></button> : null}
         </div>
       </div>
 
@@ -42,7 +42,7 @@ export const StoresHeader = memo(({
         <FilterChip active={filter === "verified"} label="تأییدشده" count={counts.verified} onClick={() => setFilter("verified")} />
         <FilterChip active={filter === "top"} label="برتر" count={counts.top} onClick={() => setFilter("top")} />
         <FilterChip active={filter === "active"} label="فعال" count={counts.active} onClick={() => setFilter("active")} />
-        <button onClick={onSortClick} className="mr-auto flex items-center gap-2 px-4 py-2 rounded-2xl bg-indigo-50 border border-indigo-100 text-xs font-black text-indigo-700 whitespace-nowrap active:scale-95 transition-transform"><SlidersHorizontal className="w-3.5 h-3.5" /> {activeSortLabel}</button>
+        <button onClick={onSortClick} className="mr-auto flex items-center gap-2 px-4 py-2 rounded-2xl bg-teal-50 border border-teal-100 text-xs font-black text-teal-800 whitespace-nowrap active:scale-95 transition-transform"><SlidersHorizontal className="w-3.5 h-3.5" /> {activeSortLabel}</button>
       </div>
     </header>
   );

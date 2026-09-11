@@ -16,11 +16,11 @@ const GuideTab = () => {
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.3 }} className="space-y-4">
       {/* Search Bar */}
       <div className="relative group">
-        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 group-focus-within:text-indigo-500 transition-colors" />
+        <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400 group-focus-within:text-teal-600 transition-colors" />
         <input
           type="text" value={query} onChange={e => setQuery(e.target.value)}
           placeholder="جستجوی سوال یا کلمه کلیدی..."
-          className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl pl-12 pr-12 py-3.5 text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-indigo-400 dark:focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all shadow-sm"
+          className="w-full bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl pl-12 pr-12 py-3.5 text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:border-teal-500 dark:focus:border-teal-600 focus:ring-4 focus:ring-teal-600/10 transition-all shadow-sm"
         />
         <AnimatePresence>
           {query && (
@@ -45,7 +45,7 @@ const GuideTab = () => {
               return (
                 <motion.div layout initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} transition={{ delay: i * 0.03 }} key={g.title} className="bg-white dark:bg-gray-900 rounded-[1.5rem] border border-gray-100 dark:border-gray-800 p-5 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-start gap-4 mb-3">
-                    <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-[14px] flex items-center justify-center flex-shrink-0 border border-indigo-100 dark:border-indigo-500/20">
+                    <div className="w-10 h-10 bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 rounded-[14px] flex items-center justify-center flex-shrink-0 border border-teal-100 dark:border-teal-500/20">
                       <Icon className="w-5 h-5" />
                     </div>
                     <h3 className="text-sm font-black text-gray-900 dark:text-white mt-2 leading-tight tracking-tight">{g.title}</h3>

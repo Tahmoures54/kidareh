@@ -176,7 +176,7 @@ export const categoriesData: CategoryGroup[] = [
     slug: "services",
     group: "خدمات و کسب‌وکار",
     icon: "💼",
-    color: "bg-indigo-500 text-indigo-50",
+    color: "bg-teal-600 text-teal-50",
     description: "خدمات حرفه‌ای و تخصصی",
     types: [
       { value: "repairs", text: "تعمیرات لوازم خانگی و دیجیتال" },

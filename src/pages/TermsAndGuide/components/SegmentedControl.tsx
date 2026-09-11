@@ -19,7 +19,7 @@ const SegmentedControl = ({ tabs, activeTab, onChange }: Props) => (
           type="button"
           onClick={() => { onChange(t.id); if(navigator.vibrate) navigator.vibrate(30); }}
           className={`flex-1 relative z-10 py-3 rounded-xl text-xs font-black transition-colors flex items-center justify-center gap-2 ${
-            isActive ? "text-indigo-700 dark:text-indigo-300" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+            isActive ? "text-teal-800 dark:text-teal-300" : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           }`}
         >
           <Icon className="w-4 h-4" />

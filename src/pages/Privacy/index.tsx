@@ -50,7 +50,7 @@ export default function Privacy() {
           className="relative overflow-hidden rounded-[2rem] bg-gray-900 dark:bg-gray-900 p-6 shadow-2xl shadow-gray-900/20 dark:shadow-none"
         >
           <div className="absolute -top-20 -right-20 w-48 h-48 bg-blue-500/30 rounded-full blur-[50px] pointer-events-none" />
-          <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-indigo-500/20 rounded-full blur-[50px] pointer-events-none" />
+          <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-teal-600/20 rounded-full blur-[50px] pointer-events-none" />
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none" />
 
           <div className="relative z-10 flex flex-col items-center text-center">

@@ -51,7 +51,7 @@ const ConvItem: React.FC<ConvItemProps> = ({ conv, index, onOpen, onDelete }) =>
         animate={controls}
         className={`relative z-10 w-full bg-white dark:bg-gray-900 border ${
           isUnread 
-            ? "border-indigo-200 dark:border-indigo-500/30 bg-indigo-50/40 dark:bg-indigo-500/10 shadow-md shadow-indigo-100 dark:shadow-none" 
+            ? "border-teal-200 dark:border-teal-500/30 bg-teal-50/40 dark:bg-teal-500/10 shadow-md shadow-teal-100 dark:shadow-none" 
             : "border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700"
         } p-4 flex items-center gap-4 transition-colors rounded-[1.5rem] cursor-pointer`}
         onClick={(e) => {
@@ -69,7 +69,7 @@ const ConvItem: React.FC<ConvItemProps> = ({ conv, index, onOpen, onDelete }) =>
         
         {/* Avatar */}
         <div className="relative flex-shrink-0 z-10 pointer-events-none">
-          <div className={`w-14 h-14 rounded-full p-0.5 ${isUnread ? 'bg-gradient-to-tr from-indigo-500 to-purple-500' : 'bg-transparent'}`}>
+          <div className={`w-14 h-14 rounded-full p-0.5 ${isUnread ? 'bg-gradient-to-tr from-teal-600 to-emerald-700' : 'bg-transparent'}`}>
             <img
               src={conv.avatar || AVATAR}
               alt={conv.storeName}
@@ -92,7 +92,7 @@ const ConvItem: React.FC<ConvItemProps> = ({ conv, index, onOpen, onDelete }) =>
               {conv.storeName}
             </h3>
             <span className={`text-[10px] font-bold flex-shrink-0 flex items-center gap-1 ${
-              isUnread ? "text-indigo-600 dark:text-indigo-400" : "text-gray-400 dark:text-gray-500"
+              isUnread ? "text-teal-700 dark:text-teal-400" : "text-gray-400 dark:text-gray-500"
             }`}>
               {conv.time}
             </span>
@@ -109,7 +109,7 @@ const ConvItem: React.FC<ConvItemProps> = ({ conv, index, onOpen, onDelete }) =>
               {isUnread ? (
                 <motion.span 
                   initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-                  className="min-w-[22px] h-5.5 px-1.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 shadow-sm shadow-indigo-500/30"
+                  className="min-w-[22px] h-5.5 px-1.5 bg-gradient-to-r from-teal-600 to-teal-700 text-white rounded-full flex items-center justify-center text-[10px] font-black flex-shrink-0 shadow-sm shadow-teal-700/30"
                 >
                   {conv.unread > 99 ? "99+" : conv.unread}
                 </motion.span>

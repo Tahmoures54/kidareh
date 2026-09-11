@@ -23,7 +23,7 @@ const MessageBubble = React.memo(({ msg }: { msg: Msg }) => {
       <div
         className={`max-w-[85%] px-4 py-3 rounded-2xl text-[14px] leading-relaxed whitespace-pre-wrap break-words ${
           !isAI
-            ? "bg-gradient-to-br from-indigo-500 to-violet-600 text-white rounded-br-sm shadow-md shadow-indigo-500/20"
+            ? "bg-gradient-to-br from-teal-600 to-teal-800 text-white rounded-br-sm shadow-md shadow-teal-700/20"
             : "bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-sm shadow-sm border border-gray-100 dark:border-gray-700"
         }`}
       >

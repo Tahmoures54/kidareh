@@ -5,8 +5,8 @@ import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { formatCompactToman, formatWalk, mapsMultiStopUrl, planTrip, toFa } from "../../presence/engine";
 import { clearTrip, listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
 import PresenceMap from "../../components/presence/PresenceMap";
-
 import PageHero from "../../components/presence/PageHero";
+import PresenceEmpty from "../../components/presence/EmptyState";
 
 export default function TripPage() {
   const { origin } = usePresenceOrigin();
@@ -26,10 +26,12 @@ export default function TripPage() {
           چند فروشگاه، یک پیاده‌روی بهینه. کالاها را از محله بردار، مسیر کوتاه‌ترین تور را بگیر، برو و ببین.
         </PageHero>
         {plan.stops.length === 0 ? (
-          <div className="presence-card rounded-[28px] p-6 text-sm font-bold text-[#6b7168]">
-            هنوز کالایی به مسیر اضافه نشده. از صفحه محله روی «مسیر» بزن.
-            <Link to="/" className="mt-3 block font-black text-[#0e6f63]">بازگشت به محله</Link>
-          </div>
+          <PresenceEmpty
+            title="هنوز کالایی به مسیر اضافه نشده"
+            hint="از صفحه محله روی «مسیر» بزن تا تور پیاده ساخته شود."
+            actionTo="/"
+            actionLabel="بازگشت به محله"
+          />
         ) : (
           <>
             <div className="grid grid-cols-3 gap-2">
@@ -40,14 +42,14 @@ export default function TripPage() {
             <ol className="space-y-3">
               {plan.stops.map((stop, i) => (
                 <li key={stop.listing.id} className="presence-card flex gap-3 rounded-3xl p-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#14161c] text-sm font-black text-white">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--ink)] text-sm font-black text-white">
                     {toFa(i + 1)}
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link to={`/p/${stop.listing.id}`} className="line-clamp-2 text-sm font-black">
                       {stop.listing.name}
                     </Link>
-                    <p className="mt-1 text-[11px] font-bold text-[#6b7168]">
+                    <p className="mt-1 text-[11px] font-bold text-[var(--muted)]">
                       {stop.listing.store.name} · از توقف قبل {formatWalk(stop.walkFromPrev)}
                     </p>
                   </div>
@@ -55,7 +57,7 @@ export default function TripPage() {
                     type="button"
                     aria-label="حذف از مسیر"
                     onClick={() => setIds(toggleTrip(stop.listing.id))}
-                    className="text-[#b42318]"
+                    className="text-[var(--danger)]"
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
@@ -66,7 +68,7 @@ export default function TripPage() {
               href={maps}
               target="_blank"
               rel="noreferrer"
-              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#0e6f63] text-sm font-black text-white"
+              className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] text-sm font-black text-white"
             >
               <Navigation className="h-4 w-4" /> شروع پیاده‌روی در نقشه
             </a>
@@ -76,13 +78,13 @@ export default function TripPage() {
                 clearTrip();
                 setIds([]);
               }}
-              className="w-full text-center text-xs font-black text-[#6b7168]"
+              className="w-full text-center text-xs font-black text-[var(--muted)]"
             >
               پاک کردن مسیر
             </button>
           </>
         )}
-        <p className="inline-flex items-center gap-1 text-[11px] font-bold text-[#6b7168]">
+        <p className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--muted)]">
           <Footprints className="h-3.5 w-3.5" /> الگوریتم نزدیک‌ترین همسایه — مناسب تور ۲ تا ۸ توقف محله
         </p>
       </div>
@@ -93,7 +95,7 @@ export default function TripPage() {
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="presence-card rounded-2xl p-3">
-      <p className="text-[10px] font-black text-[#6b7168]">{label}</p>
+      <p className="text-[10px] font-black text-[var(--muted)]">{label}</p>
       <p className="mt-1 text-sm font-black">{value}</p>
     </div>
   );

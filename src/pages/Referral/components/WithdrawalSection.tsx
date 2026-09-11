@@ -59,7 +59,7 @@ export default function WithdrawalSection({
             setAmount(e.target.value.replace(/[^0-9]/g, "").slice(0, 12))
           }
           placeholder={`مثلاً ${minAmount.toLocaleString("fa-IR")}`}
-          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-teal-600 outline-none transition-all"
         />
 
         <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-gray-500 dark:text-gray-400">
@@ -83,7 +83,7 @@ export default function WithdrawalSection({
             value={ibanClean}
             onChange={(e) => setIban(e.target.value)}
             placeholder="24 رقم"
-            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 pl-12 py-3 text-left font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 pl-12 py-3 text-left font-mono text-sm focus:ring-2 focus:ring-teal-600 outline-none transition-all"
             dir="ltr"
           />
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-black font-mono">
@@ -99,7 +99,7 @@ export default function WithdrawalSection({
       <button
         type="submit"
         disabled={!canSubmit}
-        className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-600 text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 transition active:scale-[0.99]"
+        className="w-full bg-teal-700 hover:bg-teal-800 disabled:bg-gray-200 disabled:text-gray-400 dark:disabled:bg-gray-800 dark:disabled:text-gray-600 text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 transition active:scale-[0.99]"
       >
         {submitting ? (
           <>

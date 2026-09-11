@@ -47,7 +47,7 @@ const ErrorView = ({ msg, code, retry, retryCount, onSupport }: Props) => (
       <button type="button" onClick={onSupport} className="flex-1 h-14 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-black text-sm flex items-center justify-center gap-1.5 hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all shadow-sm">
         <LifeBuoy className="w-5 h-5" /> پشتیبانی
       </button>
-      <button type="button" onClick={retry} disabled={retryCount >= MAX_RETRY} className="flex-[1.5] h-14 bg-indigo-600 dark:bg-indigo-500 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all shadow-xl shadow-indigo-600/20">
+      <button type="button" onClick={retry} disabled={retryCount >= MAX_RETRY} className="flex-[1.5] h-14 bg-teal-700 dark:bg-teal-600 text-white rounded-2xl font-black text-sm flex items-center justify-center gap-2 disabled:opacity-50 active:scale-[0.98] transition-all shadow-xl shadow-teal-700/20">
         <RefreshCw className="w-5 h-5" /> دوباره امتحان کن
       </button>
     </div>

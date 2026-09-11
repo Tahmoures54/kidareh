@@ -22,7 +22,7 @@ export const Toast = memo(({ msg, onDismiss }: { msg: string; onDismiss: () => v
 
 export const Loading = memo(() => (
   <div className="flex justify-center py-20">
-    <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+    <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
   </div>
 ));
 

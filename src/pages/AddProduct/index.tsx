@@ -36,7 +36,7 @@ export default function AddProduct() {
   if (!user) {
     return (
       <div className="h-screen flex items-center justify-center bg-slate-50">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-teal-600" />
       </div>
     );
   }
@@ -67,9 +67,9 @@ export default function AddProduct() {
 
           <AnimatePresence mode="wait">
             {state.compressing ? (
-              <div className="h-48 bg-indigo-50 dark:bg-indigo-500/10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-indigo-200">
-                <Loader2 className="w-6 h-6 text-indigo-500 animate-spin" />
-                <span className="text-xs text-indigo-600 font-bold">داره عکس رو آماده می‌کنه…</span>
+              <div className="h-48 bg-teal-50 dark:bg-teal-500/10 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-teal-200">
+                <Loader2 className="w-6 h-6 text-teal-600 animate-spin" />
+                <span className="text-xs text-teal-700 font-bold">داره عکس رو آماده می‌کنه…</span>
               </div>
             ) : state.preview ? (
               <div className="relative h-56 rounded-2xl overflow-hidden group">
@@ -80,11 +80,11 @@ export default function AddProduct() {
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                <button type="button" onClick={() => refs.fileRef.current?.click()} className="h-28 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:border-indigo-500 hover:text-indigo-500 transition-colors">
+                <button type="button" onClick={() => refs.fileRef.current?.click()} className="h-28 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:border-teal-600 hover:text-teal-600 transition-colors">
                   <UploadCloud className="w-6 h-6" />
                   <span className="text-xs font-bold">از گالری</span>
                 </button>
-                <button type="button" onClick={() => refs.cameraRef.current?.click()} className="h-28 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:border-indigo-500 hover:text-indigo-500 transition-colors">
+                <button type="button" onClick={() => refs.cameraRef.current?.click()} className="h-28 flex flex-col items-center justify-center gap-2 bg-white dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:border-teal-600 hover:text-teal-600 transition-colors">
                   <Camera className="w-6 h-6" />
                   <span className="text-xs font-bold">با دوربین</span>
                 </button>
@@ -104,7 +104,7 @@ export default function AddProduct() {
               value={state.name}
               onChange={(e) => setters.setName(e.target.value)}
               placeholder="مثلاً: گوشی سامسونگ A15"
-              className="w-full h-12 pr-10 pl-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:border-indigo-500 transition-colors"
+              className="w-full h-12 pr-10 pl-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium outline-none focus:border-teal-600 transition-colors"
             />
           </div>
         </div>
@@ -119,7 +119,7 @@ export default function AddProduct() {
               onChange={(e) => setters.setPrice(fmtPrice(e.target.value))}
               placeholder="مثلاً ۱۲۰۰۰۰۰"
               dir="ltr"
-              className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-left outline-none focus:border-indigo-500 transition-colors"
+              className="w-full h-12 px-4 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold text-left outline-none focus:border-teal-600 transition-colors"
             />
           </div>
           <div>
@@ -154,7 +154,7 @@ export default function AddProduct() {
             onChange={(e) => setters.setDesc(e.target.value)}
             placeholder="مثلاً: نو، با گارانتی، تحویل حضوری در مغازه"
             rows={4}
-            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-indigo-500 resize-none transition-colors leading-7"
+            className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm outline-none focus:border-teal-600 resize-none transition-colors leading-7"
           />
         </div>
 
@@ -174,7 +174,7 @@ export default function AddProduct() {
             <button
               type="button"
               onClick={() => navigate("/buy-badge")}
-              className="h-20 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center gap-1 text-slate-400 hover:border-indigo-500 hover:text-indigo-500 transition-colors"
+              className="h-20 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl flex flex-col items-center justify-center gap-1 text-slate-400 hover:border-teal-600 hover:text-teal-600 transition-colors"
             >
               <Plus className="w-5 h-5" />
               <span className="text-[10px] font-bold">خرید برچسب</span>
@@ -197,7 +197,7 @@ export default function AddProduct() {
                   }}
                   className={`h-20 rounded-xl border-[1.5px] flex flex-col items-center justify-center gap-1 relative transition-all ${
                     active
-                      ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-500/10 scale-[1.02]"
+                      ? "border-teal-600 bg-teal-50 dark:bg-teal-500/10 scale-[1.02]"
                       : disabled
                         ? "border-slate-100 dark:border-slate-800 opacity-50 cursor-not-allowed"
                         : "border-slate-200 dark:border-slate-700 hover:border-slate-300"
@@ -208,7 +208,7 @@ export default function AddProduct() {
                   </div>
                   <span className="text-[10px] font-bold truncate px-1">{badgeConfig.name}</span>
                   {active && (
-                    <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-indigo-500 text-white rounded-full flex items-center justify-center border-2 border-slate-50 dark:border-slate-900">
+                    <div className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-teal-600 text-white rounded-full flex items-center justify-center border-2 border-slate-50 dark:border-slate-900">
                       <Check className="w-2.5 h-2.5" strokeWidth={3} />
                     </div>
                   )}
@@ -225,7 +225,7 @@ export default function AddProduct() {
         <button
           type="submit"
           disabled={state.submitting}
-          className="w-full h-14 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white rounded-2xl font-black text-[15px] flex items-center justify-center gap-2 transition-colors shadow-lg shadow-indigo-500/20 mt-2"
+          className="w-full h-14 bg-teal-700 hover:bg-teal-800 disabled:bg-teal-500 text-white rounded-2xl font-black text-[15px] flex items-center justify-center gap-2 transition-colors shadow-lg shadow-teal-700/20 mt-2"
         >
           {state.submitting ? (
             <>

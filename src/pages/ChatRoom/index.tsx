@@ -27,7 +27,7 @@ export default function ChatRoom() {
   if (authLoad || !user) {
     return (
       <div className="flex h-[100dvh] items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <Loader2 className="w-8 h-8 text-indigo-500 animate-spin" />
+        <Loader2 className="w-8 h-8 text-teal-600 animate-spin" />
       </div>
     );
   }
@@ -49,7 +49,7 @@ export default function ChatRoom() {
 
           <div className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group">
             <div className="relative flex-shrink-0">
-              <div className="w-11 h-11 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-500/20 dark:to-purple-500/20 rounded-full border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-lg shadow-inner">
+              <div className="w-11 h-11 bg-gradient-to-br from-teal-100 to-purple-100 dark:from-teal-500/20 dark:to-purple-500/20 rounded-full border border-teal-200 dark:border-teal-500/30 flex items-center justify-center text-teal-700 dark:text-teal-400 font-black text-lg shadow-inner">
                 {state.storeName.charAt(0)}
               </div>
               <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-950 ${state.connected ? "bg-emerald-500" : "bg-amber-400"}`}>
@@ -69,7 +69,7 @@ export default function ChatRoom() {
           </div>
 
           <div className="flex items-center gap-0.5 flex-shrink-0">
-            <button className="w-10 h-10 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 active:bg-indigo-50 dark:active:bg-indigo-500/10 transition-colors">
+            <button className="w-10 h-10 rounded-full flex items-center justify-center text-teal-700 dark:text-teal-400 active:bg-teal-50 dark:active:bg-teal-500/10 transition-colors">
               <Phone className="w-5 h-5" />
             </button>
             <button className="w-10 h-10 rounded-full flex items-center justify-center text-gray-500 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800 transition-colors">
@@ -84,7 +84,7 @@ export default function ChatRoom() {
         {state.histLoad ? (
           <div className="flex justify-center py-10">
             <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm flex items-center gap-2">
-              <Loader2 className="w-4 h-4 text-indigo-500 animate-spin" />
+              <Loader2 className="w-4 h-4 text-teal-600 animate-spin" />
               <span className="text-xs font-bold text-gray-600 dark:text-gray-300">در حال دریافت پیام‌ها...</span>
             </div>
           </div>
@@ -99,9 +99,9 @@ export default function ChatRoom() {
                 </div>
                 
                 {productId && (
-                  <div className="bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200/50 dark:border-indigo-500/20 px-4 py-2.5 rounded-2xl text-center flex items-center gap-2 shadow-sm">
-                    <Store className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
-                    <p className="text-[11px] font-black text-indigo-800 dark:text-indigo-300">
+                  <div className="bg-teal-50 dark:bg-teal-500/10 border border-teal-200/50 dark:border-teal-500/20 px-4 py-2.5 rounded-2xl text-center flex items-center gap-2 shadow-sm">
+                    <Store className="w-4 h-4 text-teal-700 dark:text-teal-400" />
+                    <p className="text-[11px] font-black text-teal-900 dark:text-teal-300">
                       شما از صفحه یک کالا وارد شده‌اید.
                     </p>
                   </div>
@@ -130,7 +130,7 @@ export default function ChatRoom() {
           <motion.button
             initial={{ opacity: 0, scale: 0.5, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.5, y: 20 }}
             onClick={() => refs.endRef.current?.scrollIntoView({ behavior: "smooth" })}
-            className="absolute bottom-20 right-4 z-20 w-11 h-11 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg text-indigo-600 dark:text-indigo-400 active:scale-90 transition-transform"
+            className="absolute bottom-20 right-4 z-20 w-11 h-11 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-200 dark:border-gray-700 rounded-full flex items-center justify-center shadow-lg text-teal-700 dark:text-teal-400 active:scale-90 transition-transform"
           >
             <ArrowDown className="w-5 h-5" />
           </motion.button>
@@ -144,7 +144,7 @@ export default function ChatRoom() {
             <Paperclip className="w-5 h-5" />
           </button>
 
-          <div className="flex-1 bg-gray-100 dark:bg-gray-900 border border-transparent focus-within:border-indigo-300 dark:focus-within:border-indigo-500/50 focus-within:bg-white dark:focus-within:bg-gray-800 rounded-3xl transition-all shadow-inner">
+          <div className="flex-1 bg-gray-100 dark:bg-gray-900 border border-transparent focus-within:border-teal-300 dark:focus-within:border-teal-600/50 focus-within:bg-white dark:focus-within:bg-gray-800 rounded-3xl transition-all shadow-inner">
             <textarea
               ref={refs.textareaRef} value={state.input} onChange={actions.handleInput}
               onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); actions.sendMsg(); } }}
@@ -157,7 +157,7 @@ export default function ChatRoom() {
             type="submit" disabled={!state.input.trim() || !state.connected}
             className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 mb-0.5 transition-all active:scale-90 ${
               state.input.trim() && state.connected
-                ? "bg-gradient-to-br from-indigo-500 to-blue-600 text-white shadow-lg shadow-indigo-500/30 dark:shadow-indigo-500/20 translate-y-0"
+                ? "bg-gradient-to-br from-teal-600 to-blue-600 text-white shadow-lg shadow-teal-700/30 dark:shadow-teal-700/20 translate-y-0"
                 : "bg-gray-200 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
             }`}
           >

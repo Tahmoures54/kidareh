@@ -34,9 +34,9 @@ export default function AI() {
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                className="absolute inset-0 rounded-full bg-gradient-to-tr from-violet-500 via-fuchsia-500 to-indigo-500 blur-[6px] opacity-70"
+                className="absolute inset-0 rounded-full bg-gradient-to-tr from-teal-500 via-emerald-600 to-teal-800 blur-[6px] opacity-70"
               />
-              <div className="relative w-10 h-10 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-full flex items-center justify-center border border-white/20 shadow-sm">
+              <div className="relative w-10 h-10 bg-gradient-to-br from-teal-600 to-emerald-800 rounded-full flex items-center justify-center border border-white/20 shadow-sm">
                 <Bot className="w-5 h-5 text-white" />
               </div>
             </div>

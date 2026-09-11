@@ -285,7 +285,7 @@ export default function Layout() {
       actions.push({
         icon: Package,
         label: "ثبت کالای جدید",
-        color: "bg-gradient-to-br from-blue-500 to-indigo-600",
+        color: "bg-gradient-to-br from-blue-500 to-teal-700",
         onClick: () => go("/add-product"),
       });
     } else if (user) {
@@ -339,7 +339,7 @@ export default function Layout() {
       actions.push({
         icon: ShieldCheck,
         label: "پنل ادمین",
-        color: "bg-gradient-to-br from-indigo-500 to-blue-700",
+        color: "bg-gradient-to-br from-teal-600 to-blue-700",
         onClick: () => go("/admin"),
       });
     }
@@ -368,8 +368,8 @@ export default function Layout() {
           icon: ShieldCheck,
           label: "پنل مدیریت سایت",
           path: "/admin",
-          color: "text-indigo-600",
-          bg: "bg-indigo-50",
+          color: "text-teal-700",
+          bg: "bg-teal-50",
           requiresAuth: true,
         },
         ...items.slice(-1),

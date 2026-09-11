@@ -45,7 +45,7 @@ export default function Leaderboard() {
   };
 
   const getRankBg = (user: LeaderboardUser) => {
-    if (user.isCurrentUser) return "bg-indigo-50 dark:bg-indigo-500/10 border-indigo-200 dark:border-indigo-500/30";
+    if (user.isCurrentUser) return "bg-teal-50 dark:bg-teal-500/10 border-teal-200 dark:border-teal-500/30";
     if (user.rank === 1) return "bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-500/10 dark:to-amber-500/10 border-yellow-200 dark:border-yellow-500/20";
     if (user.rank === 2) return "bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700";
     if (user.rank === 3) return "bg-orange-50/50 dark:bg-orange-500/5 border-orange-200 dark:border-orange-500/10";
@@ -130,7 +130,7 @@ export default function Leaderboard() {
                 <div className="flex items-center gap-3">
                   {getRankIcon(user.rank)}
                   <div>
-                    <p className={`text-sm font-bold ${user.isCurrentUser ? "text-indigo-700 dark:text-indigo-400" : "text-gray-800 dark:text-gray-200"}`}>
+                    <p className={`text-sm font-bold ${user.isCurrentUser ? "text-teal-800 dark:text-teal-400" : "text-gray-800 dark:text-gray-200"}`}>
                       {user.name} {user.isCurrentUser && "(شما)"}
                     </p>
                     <p className="text-[10px] text-gray-500 font-medium">{user.referredCount} دعوت موفق</p>
@@ -147,16 +147,16 @@ export default function Leaderboard() {
 
           {/* My Rank Footer */}
           {myRank && !leaders.find(u => u.isCurrentUser) && (
-            <div className="mt-4 sticky bottom-4 bg-indigo-600 text-white p-3.5 rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center justify-between border border-indigo-500">
+            <div className="mt-4 sticky bottom-4 bg-teal-700 text-white p-3.5 rounded-2xl shadow-lg shadow-teal-700/30 flex items-center justify-between border border-teal-600">
               <div className="flex items-center gap-3">
-                <ChevronUp className="w-5 h-5 text-indigo-200" />
+                <ChevronUp className="w-5 h-5 text-teal-200" />
                 <div>
                   <p className="text-sm font-black">رتبه شما</p>
-                  <p className="text-[10px] text-indigo-200 font-medium">به رتبه بالاتر دلخور نشو، بیشتر معرفی کن!</p>
+                  <p className="text-[10px] text-teal-200 font-medium">به رتبه بالاتر دلخور نشو، بیشتر معرفی کن!</p>
                 </div>
               </div>
               <div className="text-left">
-                <p className="text-xs font-bold text-indigo-200">رتبه {myRank.rank}</p>
+                <p className="text-xs font-bold text-teal-200">رتبه {myRank.rank}</p>
                 <p className="text-sm font-black">{formatPrice(myRank.totalEarned)} تومان</p>
               </div>
             </div>

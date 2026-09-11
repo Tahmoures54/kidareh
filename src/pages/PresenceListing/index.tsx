@@ -1,11 +1,12 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { BadgeCheck, Clock3, Footprints, MessageCircle, Navigation, Radio, ShieldCheck } from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { buildRadar, enrichListing, formatToman, formatWalk, getListing, mapsWalkUrl, toFa } from "../../presence/engine";
 import HoldSheet from "../../components/presence/HoldSheet";
 import PresenceMap from "../../components/presence/PresenceMap";
-import { listTripIds, toggleTrip } from "../../presence/tripBasket";
+import PresenceImage from "../../components/presence/PresenceImage";
+import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
 import { CATEGORY_META } from "../../presence/catalog";
 
 export default function PresenceListingPage() {
@@ -17,6 +18,12 @@ export default function PresenceListingPage() {
   const [holdOpen, setHoldOpen] = useState(false);
   const [inTrip, setInTrip] = useState(() => listTripIds().includes(id));
   const [img, setImg] = useState(0);
+
+  useEffect(() => onTripChange(() => setInTrip(listTripIds().includes(id))), [id]);
+  useEffect(() => {
+    setImg(0);
+    setInTrip(listTripIds().includes(id));
+  }, [id]);
 
   const maps = useMemo(
     () => (listing ? mapsWalkUrl(origin, { lat: listing.store.lat, lng: listing.store.lng }) : "#"),
@@ -40,8 +47,8 @@ export default function PresenceListingPage() {
   return (
     <div className="grid lg:grid-cols-[minmax(0,1fr)_400px]">
       <div className="px-4 py-5 pb-28 sm:px-6 lg:pb-8">
-        <div className="overflow-hidden rounded-[32px]">
-          <img src={gallery[img] ?? listing.image} alt={listing.name} className="aspect-[4/3] w-full object-cover" />
+        <div className="overflow-hidden rounded-[32px] bg-[var(--paper-2)]">
+          <PresenceImage src={gallery[img] ?? listing.image} alt={listing.name} className="aspect-[4/3] w-full object-cover" />
         </div>
         {gallery.length > 1 && (
           <div className="mt-3 flex gap-2">
@@ -52,7 +59,7 @@ export default function PresenceListingPage() {
                 onClick={() => setImg(i)}
                 className={`h-14 w-14 overflow-hidden rounded-2xl border ${i === img ? "border-[var(--ink)]" : "border-transparent opacity-70"}`}
               >
-                <img src={src} alt="" className="h-full w-full object-cover" />
+                <PresenceImage src={src} className="h-full w-full object-cover" />
               </button>
             ))}
           </div>
@@ -69,7 +76,7 @@ export default function PresenceListingPage() {
         </div>
         <h1 className="mt-4 text-3xl font-black leading-snug">{listing.name}</h1>
         <p className="mt-2 text-2xl font-black text-[var(--accent)]">{formatToman(listing.price)}</p>
-        {listing.oldPrice ? <p className="text-sm font-bold text-[#9aa196] line-through">{formatToman(listing.oldPrice)}</p> : null}
+        {listing.oldPrice ? <p className="text-sm font-bold text-[var(--muted)] line-through">{formatToman(listing.oldPrice)}</p> : null}
         <p className="mt-4 text-sm font-bold leading-8 text-[var(--ink-soft)]">{listing.description}</p>
         <ul className="mt-4 flex flex-wrap gap-2">
           {listing.specs.map((s) => (
@@ -155,7 +162,7 @@ export default function PresenceListingPage() {
         <PresenceMap origin={origin} listings={[listing]} selectedId={listing.id} />
       </aside>
 
-      <div className="fixed inset-x-0 bottom-16 z-40 border-t border-[var(--line)] bg-[var(--paper)]/95 p-3 backdrop-blur-xl lg:hidden">
+      <div className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-40 border-t border-[var(--line)] bg-[var(--paper)]/95 p-3 backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-lg gap-2">
           <button
             type="button"

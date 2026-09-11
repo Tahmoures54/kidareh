@@ -125,11 +125,11 @@ export default function ReferralPage() {
 
           <button
             onClick={refreshData}
-            className="w-10 h-10 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl flex items-center justify-center transition active:scale-95"
+            className="w-10 h-10 bg-teal-50 dark:bg-teal-500/10 rounded-2xl flex items-center justify-center transition active:scale-95"
             aria-label="تازه‌سازی"
             title="تازه‌سازی"
           >
-            <RefreshCw className={`w-5 h-5 text-indigo-600 dark:text-indigo-400 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-5 h-5 text-teal-700 dark:text-teal-400 ${loading ? "animate-spin" : ""}`} />
           </button>
         </header>
 
@@ -216,7 +216,7 @@ export default function ReferralPage() {
               <motion.div {...sectionAnimation} transition={{ delay: 0.25 }}>
                 <section className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 p-5 shadow-sm">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-9 h-9 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-300 flex items-center justify-center">
+                    <div className="w-9 h-9 rounded-2xl bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300 flex items-center justify-center">
                       <Wallet2 className="w-5 h-5" />
                     </div>
                     <div>
@@ -276,7 +276,7 @@ export default function ReferralPage() {
 
               <button
                 onClick={refreshData}
-                className="mt-4 inline-flex items-center justify-center gap-2 text-sm font-black text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-2xl px-4 py-2.5 active:scale-95 transition"
+                className="mt-4 inline-flex items-center justify-center gap-2 text-sm font-black text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 rounded-2xl px-4 py-2.5 active:scale-95 transition"
               >
                 <RefreshCw className="w-4 h-4" />
                 بارگذاری مجدد

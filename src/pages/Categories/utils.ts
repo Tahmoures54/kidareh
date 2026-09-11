@@ -21,7 +21,7 @@ export const GROUP_CONFIG: Record<string, ThemeConfig> = {
   },
   "لوازم خانگی": { 
     icon: Home, 
-    gradient: "from-blue-400 to-indigo-500", 
+    gradient: "from-blue-400 to-teal-600", 
     lightBg: "bg-blue-50", 
     darkBg: "dark:bg-blue-500/10", 
     iconColor: "text-blue-600 dark:text-blue-400" 
@@ -35,10 +35,10 @@ export const GROUP_CONFIG: Record<string, ThemeConfig> = {
   },
   "آموزش": { 
     icon: GraduationCap, 
-    gradient: "from-indigo-400 to-violet-500", 
-    lightBg: "bg-indigo-50", 
-    darkBg: "dark:bg-indigo-500/10", 
-    iconColor: "text-indigo-600 dark:text-indigo-400" 
+    gradient: "from-teal-500 to-violet-500", 
+    lightBg: "bg-teal-50", 
+    darkBg: "dark:bg-teal-500/10", 
+    iconColor: "text-teal-700 dark:text-teal-400" 
   },
   "سلامت و زیبایی": { 
     icon: Heart, 

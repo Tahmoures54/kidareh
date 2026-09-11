@@ -15,7 +15,7 @@ export function HintCard({
 }) {
   const tones = {
     amber: "from-amber-50 to-orange-50 border-amber-200/80 text-amber-900 dark:from-amber-950/40 dark:to-orange-950/30 dark:border-amber-800/40 dark:text-amber-100",
-    blue: "from-sky-50 to-indigo-50 border-sky-200/80 text-sky-900 dark:from-sky-950/40 dark:to-indigo-950/30 dark:border-sky-800/40 dark:text-sky-100",
+    blue: "from-teal-50 to-emerald-50 border-sky-200/80 text-sky-900 dark:from-sky-950/40 dark:to-teal-950/30 dark:border-sky-800/40 dark:text-sky-100",
     green: "from-emerald-50 to-teal-50 border-emerald-200/80 text-emerald-900 dark:from-emerald-950/40 dark:to-teal-950/30 dark:border-emerald-800/40 dark:text-emerald-100",
   };
   return (

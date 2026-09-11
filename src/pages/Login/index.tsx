@@ -13,17 +13,17 @@ export default function Login() {
 
   if (state.authLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900">
-        <Loader2 className="w-10 h-10 animate-spin text-cyan-500 dark:text-cyan-400 mb-4" />
-        <span className="text-sm font-bold text-slate-400">یه لحظه صبر کن…</span>
+      <div className="presence-root flex h-screen flex-col items-center justify-center" dir="rtl">
+        <Loader2 className="mb-4 h-10 w-10 animate-spin text-[var(--accent)]" />
+        <span className="text-sm font-bold text-[var(--muted)]">یه لحظه صبر کن…</span>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[100dvh] w-full max-w-md mx-auto bg-white dark:bg-[#0B0F19] flex flex-col relative overflow-hidden font-sans shadow-2xl" dir="rtl">
-      <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/15 dark:bg-cyan-500/20 blur-[100px] rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-80 h-80 bg-violet-500/10 dark:bg-violet-500/15 blur-[120px] rounded-full translate-y-1/2 -translate-x-1/2 pointer-events-none" />
+    <div className="presence-root relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col overflow-hidden" dir="rtl">
+      <div className="pointer-events-none absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/15 blur-[100px]" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 -translate-x-1/2 translate-y-1/2 rounded-full bg-[var(--gold)]/12 blur-[120px]" />
 
       <AnimatePresence>
         {state.isSuccess && (
@@ -31,7 +31,7 @@ export default function Login() {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute top-1/4 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-500/20 blur-[120px] rounded-full pointer-events-none z-0"
+            className="pointer-events-none absolute top-1/4 left-1/2 z-0 h-96 w-96 -translate-x-1/2 rounded-full bg-[var(--ok)]/20 blur-[120px]"
           />
         )}
       </AnimatePresence>
@@ -47,23 +47,23 @@ export default function Login() {
         }}
       />
 
-      <main className="flex-1 flex flex-col justify-center px-8 w-full z-10 py-10">
+      <main className="z-10 flex w-full flex-1 flex-col justify-center px-8 py-10">
         <div className="mb-10 text-center">
           <motion.div
             initial={{ scale: 0, rotate: -30 }}
-            animate={{ scale: 1, rotate: state.isSuccess ? 0 : state.step === "phone" ? 0 : 10 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="w-24 h-24 bg-gradient-to-br from-cyan-400 via-teal-400 to-violet-500 rounded-[32px] flex items-center justify-center shadow-2xl shadow-cyan-500/40 mx-auto mb-6 relative"
+            className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[32px] bg-[var(--ink)] text-white shadow-xl"
           >
             <motion.div animate={{ y: state.isSuccess ? 0 : [0, -3, 0] }} transition={{ duration: 2, repeat: state.isSuccess ? 0 : Infinity }}>
               {state.isSuccess ? (
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 15, delay: 0.2 }}>
-                  <CheckCircle2 className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={2.5} />
+                  <CheckCircle2 className="h-12 w-12 text-white" strokeWidth={2.5} />
                 </motion.div>
               ) : state.step === "phone" ? (
-                <LockKeyholeOpen className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={2.5} />
+                <LockKeyholeOpen className="h-12 w-12 text-white" strokeWidth={2.5} />
               ) : (
-                <ShieldCheck className="w-12 h-12 text-white drop-shadow-lg" strokeWidth={2.5} />
+                <ShieldCheck className="h-12 w-12 text-white" strokeWidth={2.5} />
               )}
             </motion.div>
           </motion.div>
@@ -72,9 +72,9 @@ export default function Login() {
             key={state.step + "-title"}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-3xl font-black text-slate-900 dark:text-white mb-3 tracking-tight"
+            className="mb-3 text-3xl font-black tracking-tight text-[var(--ink)]"
           >
-            {state.isSuccess ? "آفرین، وارد شدی 🌿" : state.step === "phone" ? "سلام، خوش اومدی" : "کد رو وارد کن"}
+            {state.isSuccess ? "آفرین، وارد شدی" : state.step === "phone" ? "سلام، خوش اومدی" : "کد رو وارد کن"}
           </motion.h2>
 
           <motion.p
@@ -82,7 +82,7 @@ export default function Login() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed font-medium"
+            className="text-sm font-medium leading-relaxed text-[var(--muted)]"
           >
             {state.isSuccess
               ? "داره حسابت آماده می‌شه…"
@@ -126,10 +126,10 @@ export default function Login() {
         </AnimatePresence>
       </main>
 
-      <footer className="p-8 text-center z-10">
+      <footer className="z-10 p-8 text-center">
         <div className="inline-flex items-center justify-center gap-2">
-          <Lock className="w-3.5 h-3.5 text-teal-500 dark:text-teal-400" strokeWidth={3} />
-          <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500">ورود امن با پیامک — بدون پسورد</p>
+          <Lock className="h-3.5 w-3.5 text-[var(--accent)]" strokeWidth={3} />
+          <p className="text-[11px] font-bold text-[var(--muted)]">ورود امن با پیامک — بدون پسورد</p>
         </div>
       </footer>
     </div>

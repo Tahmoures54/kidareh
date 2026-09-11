@@ -13,16 +13,16 @@ const FaqItem = memo(({ question, answer, defaultOpen = false }: FaqItemProps) =
   const [open, setOpen] = useState(defaultOpen);
   
   return (
-    <div className={`rounded-[24px] border transition-colors duration-300 overflow-hidden ${open ? "bg-indigo-50/50 dark:bg-indigo-500/5 border-indigo-100 dark:border-indigo-500/20" : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700/50"}`}>
+    <div className={`rounded-[24px] border transition-colors duration-300 overflow-hidden ${open ? "bg-teal-50/50 dark:bg-teal-500/5 border-teal-100 dark:border-teal-500/20" : "bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700/50"}`}>
       <button type="button" onClick={() => setOpen(!open)} className="w-full flex items-center gap-3 p-4 text-right active:scale-[0.99] transition-transform">
-        <div className={`w-10 h-10 rounded-[16px] flex items-center justify-center shrink-0 transition-colors ${open ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/20" : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"}`}>
+        <div className={`w-10 h-10 rounded-[16px] flex items-center justify-center shrink-0 transition-colors ${open ? "bg-teal-600 text-white shadow-md shadow-teal-700/20" : "bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400"}`}>
           <HelpCircle className="w-5 h-5" />
         </div>
         <div className="flex-1">
-          <p className={`text-sm font-black leading-snug transition-colors ${open ? "text-indigo-900 dark:text-indigo-300" : "text-slate-800 dark:text-slate-200"}`}>{question}</p>
+          <p className={`text-sm font-black leading-snug transition-colors ${open ? "text-teal-950 dark:text-teal-300" : "text-slate-800 dark:text-slate-200"}`}>{question}</p>
         </div>
         <motion.div animate={{ rotate: open ? 180 : 0 }} transition={SPRING_TRANSITION} className="shrink-0">
-          <ChevronDown className={`w-5 h-5 ${open ? "text-indigo-500" : "text-slate-400"}`} />
+          <ChevronDown className={`w-5 h-5 ${open ? "text-teal-600" : "text-slate-400"}`} />
         </motion.div>
       </button>
       <AnimatePresence initial={false}>

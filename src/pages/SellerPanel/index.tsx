@@ -166,7 +166,7 @@ export default function SellerProductForm() {
               <input
                 {...register("name")}
                 placeholder="مثال: کفش ورزشی سایز ۴۲"
-                className="w-full h-14 pr-10 pl-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-indigo-500"
+                className="w-full h-14 pr-10 pl-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-teal-600"
               />
             </div>
             {errors.name && (
@@ -183,7 +183,7 @@ export default function SellerProductForm() {
               type="number"
               inputMode="numeric"
               placeholder="مثال: ۵۰۰۰۰۰"
-              className="w-full h-14 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-indigo-500"
+              className="w-full h-14 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-teal-600"
             />
             {errors.price && (
               <p className="text-rose-500 text-xs mt-1.5 font-bold">{errors.price.message}</p>
@@ -197,7 +197,7 @@ export default function SellerProductForm() {
             <input
               {...register("category")}
               placeholder="مثال: پوشاک"
-              className="w-full h-14 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-indigo-500"
+              className="w-full h-14 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-teal-600"
             />
           </div>
 
@@ -209,7 +209,7 @@ export default function SellerProductForm() {
               {...register("description")}
               rows={3}
               placeholder="رنگ، سایز، وضعیت کالا..."
-              className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-indigo-500 resize-none"
+              className="w-full p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-teal-600 resize-none"
             />
           </div>
 
@@ -225,12 +225,12 @@ export default function SellerProductForm() {
                   onClick={() => setValue("status", s.value, { shouldValidate: true })}
                   className={`py-3 rounded-2xl border text-center transition-all ${
                     status === s.value
-                      ? "bg-indigo-600 border-indigo-600 text-white shadow-md"
+                      ? "bg-teal-700 border-teal-700 text-white shadow-md"
                       : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200"
                   }`}
                 >
                   <span className="block text-xs font-black">{s.label}</span>
-                  <span className={`block text-[10px] mt-0.5 ${status === s.value ? "text-indigo-100" : "text-slate-400"}`}>
+                  <span className={`block text-[10px] mt-0.5 ${status === s.value ? "text-teal-100" : "text-slate-400"}`}>
                     {s.hint}
                   </span>
                 </button>
@@ -247,7 +247,7 @@ export default function SellerProductForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-14 bg-gradient-to-l from-indigo-600 to-violet-600 text-white font-black text-base rounded-2xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-60"
+            className="w-full h-14 bg-gradient-to-l from-teal-700 to-emerald-800 text-white font-black text-base rounded-2xl shadow-lg shadow-teal-700/25 flex items-center justify-center gap-2 active:scale-[0.98] transition-transform disabled:opacity-60"
           >
             {isSubmitting ? (
               <Loader2 className="w-5 h-5 animate-spin" />

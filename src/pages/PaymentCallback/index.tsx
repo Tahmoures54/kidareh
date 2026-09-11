@@ -15,7 +15,7 @@ export default function PaymentCallback() {
   const bgGlow = 
     state.status === "success" ? "from-emerald-500/20 to-teal-500/20" : 
     state.status === "error" ? "from-rose-500/20 to-red-500/20" : 
-    "from-indigo-500/20 to-violet-500/20";
+    "from-teal-600/20 to-violet-500/20";
 
   return (
     <div className="min-h-[100dvh] flex items-center justify-center p-4 bg-[#f8fafc] dark:bg-gray-950 relative overflow-hidden transition-colors duration-500" dir="rtl">

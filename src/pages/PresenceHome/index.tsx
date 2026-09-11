@@ -7,6 +7,7 @@ import { compareCopy, pulseStats, searchListings, toFa } from "../../presence/en
 import type { ListingCategory, PresenceQuery } from "../../presence/types";
 import { ListingCard } from "../../components/presence/ListingCard";
 import PresenceMap from "../../components/presence/PresenceMap";
+import PresenceEmpty from "../../components/presence/EmptyState";
 import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
 
 const RADII = [
@@ -107,16 +108,23 @@ export default function PresenceHome() {
           >
             <Clock3 className="h-3 w-3" /> فقط باز
           </button>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as PresenceQuery["sort"])}
-            className="presence-chip rounded-full px-3 py-1.5 text-[11px] font-black outline-none"
-          >
-            <option value="nearest">نزدیک‌ترین</option>
-            <option value="cheapest">ارزان‌ترین</option>
-            <option value="trust">معتبرترین</option>
-            <option value="newest">تازه‌ترین موجودی</option>
-          </select>
+          {(
+            [
+              ["nearest", "نزدیک‌ترین"],
+              ["cheapest", "ارزان‌ترین"],
+              ["trust", "معتبرترین"],
+              ["newest", "تازه‌ترین"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setSort(key)}
+              className={`rounded-full px-3 py-1.5 text-[11px] font-black ${sort === key ? "bg-[var(--ink)] text-white" : "presence-chip"}`}
+            >
+              {label}
+            </button>
+          ))}
           <span className="text-[11px] font-black text-[var(--muted)]">{toFa(listings.length)} کالا</span>
         </div>
 
@@ -131,12 +139,16 @@ export default function PresenceHome() {
           ))}
         </div>
         {listings.length === 0 && (
-          <div className="presence-card mt-6 rounded-[28px] p-8 text-center">
-            <p className="font-black">در این شعاع کالایی نیست</p>
-            <p className="mt-2 text-sm font-bold text-[var(--muted)]">فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر.</p>
-            <button type="button" onClick={() => { setOpenNow(false); setRadiusKm(8); }} className="mt-4 rounded-2xl bg-[var(--ink)] px-4 py-2 text-xs font-black text-white">
-              نمایش کل شهر
-            </button>
+          <div className="mt-6">
+            <PresenceEmpty
+              title="در این شعاع کالایی نیست"
+              hint="فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
+              actionLabel="نمایش کل شهر"
+              onAction={() => {
+                setOpenNow(false);
+                setRadiusKm(8);
+              }}
+            />
           </div>
         )}
 

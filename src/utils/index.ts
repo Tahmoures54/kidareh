@@ -108,7 +108,7 @@ const badgeStyles: Record<BadgeType, string> = {
   "حراج آخر فصل": "bg-gradient-to-r from-orange-400/90 to-orange-600/90 text-white backdrop-blur-md border border-amber-300/40 shadow-md",
   "پرفروش‌ترین": "bg-gradient-to-r from-yellow-400/90 to-amber-500/90 text-amber-950 backdrop-blur-md border-2 border-amber-200/80 shadow-lg font-black",
   "موجود شد": "bg-teal-500/90 text-white backdrop-blur-md border border-teal-400/30 shadow-sm dark:bg-teal-600/80",
-  "تخفیف دانشجویی": "bg-indigo-500/90 text-white backdrop-blur-md border border-indigo-400/30 shadow-sm dark:bg-indigo-600/80",
+  "تخفیف دانشجویی": "bg-teal-600/90 text-white backdrop-blur-md border border-teal-500/30 shadow-sm dark:bg-teal-700/80",
   "خرید عمده": "bg-slate-700/90 text-white backdrop-blur-md border border-slate-500/30 shadow-sm dark:bg-slate-800/80",
   "جدید": "bg-cyan-500/90 text-white backdrop-blur-md border border-cyan-400/30 shadow-sm dark:bg-cyan-600/80",
   "پیشنهاد ویژه": "bg-gradient-to-r from-fuchsia-500/90 to-purple-600/90 text-white backdrop-blur-md border border-white/20 shadow-lg shadow-fuchsia-500/20",

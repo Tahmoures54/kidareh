@@ -89,7 +89,7 @@ export default function RoleSelectionScreen({
                 }`}
               >
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-violet-500/5 transition-opacity duration-300 ${
+                  className={`absolute inset-0 bg-gradient-to-br from-[#0e6f63]/5 to-[#b68a3a]/5 transition-opacity duration-300 ${
                     isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-50"
                   }`}
                 />
@@ -97,7 +97,7 @@ export default function RoleSelectionScreen({
                   <div
                     className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 ${
                       isSelected
-                        ? "bg-gradient-to-br from-cyan-500 to-teal-600 shadow-lg shadow-cyan-500/30"
+                        ? "bg-gradient-to-br from-[#14161c] to-[#0e6f63] shadow-lg shadow-cyan-500/30"
                         : "bg-gray-100 dark:bg-slate-700 group-hover:bg-cyan-100 dark:group-hover:bg-cyan-900/30"
                     }`}
                   >
@@ -133,7 +133,7 @@ export default function RoleSelectionScreen({
         <motion.button
           onClick={onNext}
           whileTap={{ scale: 0.97 }}
-          className="w-full h-16 bg-gradient-to-r from-cyan-500 via-teal-400 to-violet-500 text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 flex items-center justify-center gap-3 group"
+          className="w-full h-16 bg-gradient-to-r from-[#14161c] to-[#0e6f63] text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 flex items-center justify-center gap-3 group"
         >
           بزن بریم
           <ArrowRight className="w-5 h-5 rotate-180 group-hover:-translate-x-1 transition-transform" />

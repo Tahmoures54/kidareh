@@ -61,7 +61,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <FlyTo center={origin} />
-        <Marker position={[origin.lat, origin.lng]} icon={pin("#2563eb", "تو")} />
+        <Marker position={[origin.lat, origin.lng]} icon={pin("#14161c", "تو")} />
         {path && path.length > 1 && (
           <Polyline
             positions={path.map((p) => [p.lat, p.lng] as [number, number])}
@@ -79,7 +79,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
                 <p className="text-xs font-black">{l.store.name}</p>
                 <p className="text-[11px]">{l.skuLabel}</p>
                 <p className="text-[11px] font-bold">{formatWalk(l.walkMinutes)}</p>
-                <Link to={`/p/${l.id}`} className="mt-1 inline-block text-[11px] font-black text-teal-700">
+                <Link to={`/p/${l.id}`} className="mt-1 inline-block text-[11px] font-black text-[var(--accent)]">
                   جزئیات کالا
                 </Link>
               </div>

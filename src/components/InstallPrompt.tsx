@@ -146,12 +146,12 @@ export default function InstallPrompt() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed bottom-4 left-4 right-4 z-50 max-w-md mx-auto"
+            className="fixed bottom-24 left-4 right-4 z-50 mx-auto max-w-md lg:bottom-4"
             dir="rtl"
           >
             <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-5 overflow-hidden">
               {/* Gradient background */}
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full opacity-10 blur-3xl" />
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-gradient-to-br from-teal-600 to-emerald-700 rounded-full opacity-10 blur-3xl" />
 
               {/* Close button */}
               <motion.button
@@ -169,7 +169,7 @@ export default function InstallPrompt() {
                 <motion.div
                   animate={{ y: [0, -4, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg"
+                  className="w-14 h-14 bg-gradient-to-br from-teal-700 to-emerald-800 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-lg"
                 >
                   <Sparkles className="w-7 h-7" />
                 </motion.div>
@@ -190,7 +190,7 @@ export default function InstallPrompt() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={handleInstall}
-                className="mt-4 w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:shadow-lg transition-all"
+                className="mt-4 w-full bg-gradient-to-r from-teal-700 to-emerald-800 text-white py-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 hover:shadow-lg transition-all"
               >
                 <Download className="w-4 h-4" />
                 نصب بر روی صفحه اصلی
@@ -219,7 +219,7 @@ export default function InstallPrompt() {
               className="bg-white rounded-3xl max-w-sm w-full shadow-2xl overflow-hidden"
             >
               {/* Header */}
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 text-center relative">
+              <div className="bg-gradient-to-r from-teal-700 to-emerald-800 text-white p-6 text-center relative">
                 <button
                   onClick={handleDismiss}
                   className="absolute top-4 left-4 text-white/60 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
@@ -244,7 +244,7 @@ export default function InstallPrompt() {
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 }}
-                  className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-2xl border border-blue-100"
+                  className="bg-gradient-to-br from-teal-50 to-emerald-50 p-4 rounded-2xl border border-blue-100"
                 >
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-black text-sm flex-shrink-0">
@@ -289,7 +289,7 @@ export default function InstallPrompt() {
                 <motion.div
                   animate={{ y: [0, 8, 0] }}
                   transition={{ duration: 2, repeat: Infinity }}
-                  className="flex justify-center text-indigo-500 pt-2"
+                  className="flex justify-center text-teal-600 pt-2"
                 >
                   <ArrowUp className="w-6 h-6 rotate-180" />
                 </motion.div>

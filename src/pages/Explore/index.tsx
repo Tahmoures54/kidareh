@@ -5,7 +5,7 @@ import { searchListings, toFa } from "../../presence/engine";
 import PresenceMap from "../../components/presence/PresenceMap";
 import { ListingCard } from "../../components/presence/ListingCard";
 import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
-import PageHero from "../../components/presence/PageHero";
+import PresenceEmpty from "../../components/presence/EmptyState";
 
 export default function ExplorePage() {
   const { origin } = usePresenceOrigin();
@@ -40,7 +40,7 @@ export default function ExplorePage() {
           Airbnb برای ویترین مغازه‌ها — نه دیوار آگهی، نه انبار مرکزی. {toFa(listings.length)} کالا در محدوده.
         </PageHero>
         {listings.map((listing) => (
-          <div key={listing.id} onMouseEnter={() => setSelected(listing.id)} onFocus={() => setSelected(listing.id)}>
+          <div key={listing.id} onMouseEnter={() => setSelected(listing.id)} onFocus={() => setSelected(listing.id)} onClick={() => setSelected(listing.id)}>
             <ListingCard
               listing={listing}
               compact
@@ -49,7 +49,7 @@ export default function ExplorePage() {
             />
           </div>
         ))}
-        {listings.length === 0 && <p className="py-10 text-center text-sm font-bold text-[var(--muted)]">چیزی روی نقشه پیدا نشد.</p>}
+        {listings.length === 0 && <PresenceEmpty title="چیزی روی نقشه پیدا نشد" hint="عبارت دیگری جستجو کن یا محله را عوض کن." />}
       </div>
     </div>
   );

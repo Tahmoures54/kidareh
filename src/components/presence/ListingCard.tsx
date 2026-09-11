@@ -1,10 +1,11 @@
-import React, { memo, useState } from "react";
+import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Clock3, Footprints, Minus, Plus, Radio } from "lucide-react";
 import type { EnrichedListing } from "../../presence/types";
 import { formatCompactToman, formatWalk, toFa } from "../../presence/engine";
 import { CATEGORY_META } from "../../presence/catalog";
 import { cn } from "../../utils";
+import PresenceImage from "./PresenceImage";
 
 interface Props {
   listing: EnrichedListing;
@@ -15,7 +16,6 @@ interface Props {
 
 export const ListingCard = memo(function ListingCard({ listing, compact, inTrip, onToggleTrip }: Props) {
   const cat = CATEGORY_META[listing.category];
-  const [broken, setBroken] = useState(false);
   return (
     <article
       className={cn(
@@ -24,18 +24,11 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
       )}
     >
       <Link to={`/p/${listing.id}`} className="absolute inset-0 z-10" aria-label={listing.name} />
-      <div className={cn("relative overflow-hidden bg-[#ddd6c8]", compact ? "aspect-[5/4]" : "aspect-[4/5]")}>
-        {!broken ? (
-          <img
-            src={listing.image}
-            alt=""
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
-            loading="lazy"
-            onError={() => setBroken(true)}
-          />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm font-black text-[var(--muted)]">بدون تصویر</div>
-        )}
+      <div className={cn("relative overflow-hidden bg-[var(--paper-2)]", compact ? "aspect-[5/4]" : "aspect-[4/5]")}>
+        <PresenceImage
+          src={listing.image}
+          className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/0 to-black/10" />
         <div className="absolute top-3 right-3 flex flex-wrap gap-1.5">
           {listing.openNow ? (
@@ -79,7 +72,7 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
         <div className="flex items-end justify-between gap-2 pt-1">
           <div>
             {listing.oldPrice ? (
-              <p className="text-[11px] font-bold text-[#9aa196] line-through">{formatCompactToman(listing.oldPrice)}</p>
+              <p className="text-[11px] font-bold text-[var(--muted)] line-through">{formatCompactToman(listing.oldPrice)}</p>
             ) : null}
             <p className="text-lg font-black tracking-tight text-[var(--ink)]">{formatCompactToman(listing.price)}</p>
           </div>

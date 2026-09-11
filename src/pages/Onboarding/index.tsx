@@ -40,15 +40,12 @@ export default function OnboardingFlow() {
     setStep("phone");
   };
 
-  const handleBackFromRole = () => {
-    setStep("otp");
-  };
-
   const handleBackFromRegistration = () => {
     setStep("role");
   };
 
   return (
+    <div className="presence-root" dir="rtl">
     <AnimatePresence mode="wait">
       {step === "phone" && (
         <PhoneInputScreen key="phone" onPhoneVerified={handlePhoneVerified} />
@@ -81,5 +78,6 @@ export default function OnboardingFlow() {
         />
       )}
     </AnimatePresence>
+    </div>
   );
 }
