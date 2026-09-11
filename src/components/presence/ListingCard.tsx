@@ -19,12 +19,12 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
   return (
     <article
       className={cn(
-        "presence-card group relative overflow-hidden rounded-[28px] transition-transform duration-300 hover:-translate-y-0.5",
+        "presence-card group relative z-0 overflow-hidden rounded-[28px] transition-transform duration-300 hover:-translate-y-0.5",
         compact && "rounded-2xl"
       )}
     >
-      <Link to={`/p/${listing.id}`} className="absolute inset-0 z-10" aria-label={listing.name} />
-      <div className={cn("relative overflow-hidden bg-[var(--paper-2)]", compact ? "aspect-[5/4]" : "aspect-[4/5]")}>
+      <Link to={`/p/${listing.id}`} className="absolute inset-0 z-[1]" aria-label={listing.name} />
+      <div className={cn("relative overflow-hidden bg-[var(--paper-2)]", compact ? "aspect-[5/4]" : "aspect-[16/10] sm:aspect-[4/5]")}>
         <PresenceImage
           src={listing.image}
           className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.04]"

@@ -84,7 +84,7 @@ createRoot(rootElement).render(
         </GlobalErrorBoundary>
 
         {import.meta.env.DEV && (
-          <ReactQueryDevtools initialIsOpen={false} />
+          <ReactQueryDevtools initialIsOpen={false} buttonPosition="top-left" />
         )}
       </QueryClientProvider>
     </HelmetProvider>

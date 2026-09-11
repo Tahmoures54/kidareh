@@ -152,12 +152,12 @@ export default function PresenceShell() {
         پرش به محتوا
       </a>
       <InstallPrompt />
-      <div className="mx-auto flex min-h-[100dvh] max-w-[1440px]">
+      <div className="relative z-0 mx-auto flex min-h-[100dvh] max-w-[1440px] isolate">
         <aside className="sticky top-0 z-50 hidden h-[100dvh] w-[88px] shrink-0 border-l border-[var(--line)] bg-white/70 backdrop-blur-xl lg:block">
           {rail}
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-white/75 backdrop-blur-xl">
+          <header className="sticky top-0 z-[70] border-b border-[var(--line)] bg-white/90 backdrop-blur-xl">
             <div className="flex items-center gap-3 px-4 py-3">
               <Link
                 to="/"
@@ -221,14 +221,14 @@ export default function PresenceShell() {
               </button>
             </div>
           </header>
-          <main id="presence-main" className={cn("w-full flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
+          <main id="presence-main" className={cn("relative z-0 w-full flex-1 pb-32 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
             <Outlet />
           </main>
         </div>
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--line)] bg-white/92 backdrop-blur-xl lg:hidden"
+        className="presence-tabs fixed inset-x-0 bottom-0 z-[80] border-t border-[var(--line)] bg-white lg:hidden"
         aria-label="تب‌ها"
       >
         <div className="mx-auto flex max-w-lg items-stretch px-1 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1">

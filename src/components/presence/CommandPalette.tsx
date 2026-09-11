@@ -78,7 +78,7 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
                 className="h-10 flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[var(--muted)]"
                 aria-autocomplete="list"
               />
-              <kbd className="hidden rounded-lg border border-[var(--line)] px-2 py-1 text-[10px] font-black text-[var(--muted)] sm:inline-flex">ESC</kbd>
+              <kbd className="hidden rounded-lg border border-[var(--line)] px-2 py-1 text-[10px] font-black text-[var(--muted)] sm:inline-flex">بستن</kbd>
             </div>
             <div className="max-h-[50vh] overflow-y-auto p-2">
               {results.length === 0 ? (

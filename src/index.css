@@ -807,6 +807,11 @@ a {
   display: none;
 }
 
+.presence-tabs {
+  isolation: isolate;
+  z-index: 80;
+}
+
 .presence-legacy {
   background: var(--card);
   min-height: calc(100dvh - 8rem);
