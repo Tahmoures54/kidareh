@@ -128,6 +128,73 @@ function applyReferralCode(userId: number, code: string): void {
   }
 }
 
+function loadUserWithStore(userId: number) {
+  return db.prepare(`
+    SELECT u.*, s.id AS store_id, s.name AS store_name, s.category AS store_category,
+      s.image_url AS store_image, s.address, s.has_business_license, s.license_number,
+      s.city AS store_city, s.province AS store_province, s.blue_tick_expires_at,
+      rl.code AS referral_code
+    FROM users u
+    LEFT JOIN stores s ON u.id = s.user_id
+    LEFT JOIN referral_links rl ON u.id = rl.owner_user_id
+    WHERE u.id = ?`).get(userId) as any;
+}
+
+function ensureDefaultStore(user: { id: number; name?: string | null; phone?: string | null; city?: string | null; province?: string | null }) {
+  const existing = db.prepare("SELECT * FROM stores WHERE user_id = ?").get(user.id) as any;
+  if (existing) return existing;
+  const name = (user.name && String(user.name).trim()) || "فروشگاه من";
+  const city = (user.city && String(user.city).trim()) || "تهران";
+  const province = (user.province && String(user.province).trim()) || "تهران";
+  const result = db.prepare(`
+    INSERT INTO stores (user_id, name, category, address, phone, city, province, has_business_license, is_verified, created_at, updated_at)
+    VALUES (?, ?, 'عمومی', ?, ?, ?, ?, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`).run(
+    user.id,
+    name,
+    `شهر ${city}`,
+    user.phone || null,
+    city,
+    province
+  );
+  return db.prepare("SELECT * FROM stores WHERE id = ?").get(result.lastInsertRowid) as any;
+}
+
+export async function handleBecomeSeller(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user!.id;
+    const current = db.prepare("SELECT * FROM users WHERE id = ?").get(userId) as any;
+    if (!current) return res.status(404).json({ error: "کاربر یافت نشد" });
+    if (current.is_banned) {
+      return res.status(403).json({ error: "حساب کاربری شما مسدود شده است", reason: current.ban_reason || "نامشخص" });
+    }
+
+    const nextRole = current.role === "admin" ? "admin" : "seller";
+    const transaction = db.transaction(() => {
+      db.prepare("UPDATE users SET role = ?, is_profile_complete = 1, updated_at = CURRENT_TIMESTAMP WHERE id = ?")
+        .run(nextRole, userId);
+      return ensureDefaultStore(current);
+    });
+    const store = transaction();
+
+    const updatedUser = loadUserWithStore(userId);
+    const token = jwt.sign(
+      { id: updatedUser.id, phone: updatedUser.phone, role: updatedUser.role || "seller" },
+      SAFE_JWT_SECRET as string,
+      { expiresIn: "60m" }
+    );
+    res.cookie(SESSION_COOKIE, token, sessionCookieOptions());
+    return res.json({
+      success: true,
+      user: { ...updatedUser, is_profile_complete: !!updatedUser.is_profile_complete },
+      store,
+      message: "فروشگاه شما آماده است",
+    });
+  } catch (err) {
+    logger.error("Become seller error:", err);
+    return res.status(500).json({ error: "خطا در تبدیل حساب به فروشنده" });
+  }
+}
+
 function createMarketerCode(userId: number): string | null {
   try {
     const existing = db.prepare("SELECT code FROM referral_links WHERE owner_user_id = ?").get(userId) as any;
@@ -168,10 +235,14 @@ const completeProfileSchema = z.object({
   return true;
 }, { message: "وارد کردن شماره جواز کسب الزامی است", path: ["license_number"] })
 .refine((data) => {
-  if (data.role !== "seller") return !!data.national_code && /^\d{10}$/.test(data.national_code);
+  if (data.national_code) return /^\d{10}$/.test(data.national_code);
   return true;
-}, { message: "کد ملی معتبر (۱۰ رقمی) الزامی است", path: ["national_code"] })
-.refine((data) => !!data.province && !!data.city, { message: "انتخاب استان و شهر الزامی است", path: ["city"] });
+}, { message: "کد ملی باید ۱۰ رقم باشد", path: ["national_code"] })
+.refine((data) => !!data.province && !!data.city, { message: "انتخاب استان و شهر الزامی است", path: ["city"] })
+.refine((data) => {
+  if (data.role === "seller") return !!data.store_name?.trim() && data.store_name.trim().length >= 2;
+  return true;
+}, { message: "نام فروشگاه الزامی است", path: ["store_name"] });
 
 router.post("/send-otp", async (req, res) => {
   try {
@@ -274,14 +345,7 @@ router.post("/verify-otp", async (req, res) => {
 
 router.get("/me", requireAuth, (req: AuthRequest, res) => {
   try {
-    const user = db.prepare(`
-      SELECT u.*, s.name AS store_name, s.category AS store_category, s.image_url AS store_image,
-        s.address, s.has_business_license, s.license_number, s.city AS store_city, s.province AS store_province,
-        s.blue_tick_expires_at, rl.code AS referral_code
-      FROM users u
-      LEFT JOIN stores s ON u.id = s.user_id
-      LEFT JOIN referral_links rl ON u.id = rl.owner_user_id
-      WHERE u.id = ?`).get(req.user!.id) as any;
+    const user = loadUserWithStore(req.user!.id);
     if (!user) {
       clearSessionCookie(res);
       return res.status(404).json({ error: "کاربر یافت نشد" });
@@ -316,19 +380,28 @@ router.post("/complete-profile", requireAuth, (req: AuthRequest, res) => {
         .run(role, name, national_code || null, province || null, city || null, userId);
       if (role === "seller") {
         const existing = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(userId) as any;
+        const storeName = (store_name && store_name.trim()) || name;
+        const storeCategory = (store_category && store_category.trim()) || "عمومی";
+        const storeAddress = (address && address.trim()) || (city ? `شهر ${city}` : "آدرس هنوز ثبت نشده");
         if (existing) {
           db.prepare(`UPDATE stores SET name = ?, category = ?, address = ?, image_url = ?, has_business_license = ?, license_number = ?, city = ?, province = ?, lat = ?, lng = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`)
-            .run(store_name || null, store_category || null, address || null, store_image || null, has_business_license ? 1 : 0, finalLicenseNumber, city || null, province || null, lat ?? null, lng ?? null, userId);
+            .run(storeName, storeCategory, storeAddress, store_image || null, has_business_license ? 1 : 0, finalLicenseNumber, city || null, province || null, lat ?? null, lng ?? null, userId);
         } else {
           db.prepare(`INSERT INTO stores (user_id, name, category, address, image_url, has_business_license, license_number, city, province, lat, lng, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`)
-            .run(userId, store_name || null, store_category || null, address || null, store_image || null, has_business_license ? 1 : 0, finalLicenseNumber, city || null, province || null, lat ?? null, lng ?? null);
+            .run(userId, storeName, storeCategory, storeAddress, store_image || null, has_business_license ? 1 : 0, finalLicenseNumber, city || null, province || null, lat ?? null, lng ?? null);
         }
       }
       if (role === "marketer") createMarketerCode(userId);
-      if (role === "seller" && referral_code?.trim()) applyReferralCode(userId, referral_code.trim().toUpperCase());
+      if (referral_code?.trim()) applyReferralCode(userId, referral_code.trim().toUpperCase());
     });
     transaction();
-    const updatedUser = db.prepare(`SELECT u.*, s.name AS store_name, s.category AS store_category, s.image_url AS store_image, s.has_business_license, s.license_number, s.city AS store_city, s.province AS store_province, rl.code AS referral_code FROM users u LEFT JOIN stores s ON u.id = s.user_id LEFT JOIN referral_links rl ON u.id = rl.owner_user_id WHERE u.id = ?`).get(userId) as any;
+    const updatedUser = loadUserWithStore(userId);
+    const token = jwt.sign(
+      { id: updatedUser.id, phone: updatedUser.phone, role: updatedUser.role || role },
+      SAFE_JWT_SECRET as string,
+      { expiresIn: "60m" }
+    );
+    res.cookie(SESSION_COOKIE, token, sessionCookieOptions());
     return res.json({ user: { ...updatedUser, is_profile_complete: !!updatedUser.is_profile_complete }, success: true });
   } catch (err: any) {
     if (err?.name === "ZodError") return res.status(400).json({ error: err.errors[0].message, field: err.errors[0].path[0] });
@@ -336,6 +409,8 @@ router.post("/complete-profile", requireAuth, (req: AuthRequest, res) => {
     return res.status(500).json({ error: "خطای داخلی سرور" });
   }
 });
+
+router.post("/become-seller", requireAuth, handleBecomeSeller);
 
 router.post("/logout", (_req, res) => {
   clearSessionCookie(res);

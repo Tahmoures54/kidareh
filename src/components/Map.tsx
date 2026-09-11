@@ -202,7 +202,7 @@ function Map({ center, results, height = '65vh' }: MapProps) {
                     </p>
 
                     <Link
-                      to={`/product/${result.id}`}
+                      to={`/products/${result.id}`}
                       className="block w-full bg-gray-900 text-white text-center py-2.5 rounded-xl text-xs font-black hover:bg-black transition-colors"
                     >
                       مشاهده کالا

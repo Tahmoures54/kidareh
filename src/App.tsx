@@ -23,6 +23,7 @@ const Search = lazy(() => import("./pages/Search"));
 const Categories = lazy(() => import("./pages/Categories"));
 const Stores = lazy(() => import("./pages/Stores"));
 const Saved = lazy(() => import("./pages/Saved"));
+const Following = lazy(() => import("./pages/Following"));
 const Messages = lazy(() => import("./pages/Messages"));
 const ChatRoom = lazy(() => import("./pages/ChatRoom"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
@@ -161,6 +162,7 @@ export default function App() {
                   <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                   <Route path="complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
                   <Route path="saved" element={<ProtectedRoute><Saved /></ProtectedRoute>} />
+                  <Route path="following" element={<ProtectedRoute><Following /></ProtectedRoute>} />
                   <Route path="referral" element={<ProtectedRoute><ReferralPage /></ProtectedRoute>} />
                   <Route path="become-seller" element={<ProtectedRoute><BecomeSeller /></ProtectedRoute>} />
 

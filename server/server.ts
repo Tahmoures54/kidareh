@@ -22,7 +22,8 @@ import db from "./db.js";
 import { ensureMessagesRooms } from "./ensureMessagesRooms.js";
 import { bootstrapCache, closeRedis } from "./bootstrapCache.js";
 
-import authRoutes from "./routes/auth.js";
+import authRoutes, { handleBecomeSeller } from "./routes/auth.js";
+import { requireAuth } from "./middleware/auth.js";
 import aiRoutes from "./routes/ai.js";
 import productsRoutes from "./routes/products.js";
 import productsSearchRoutes from "./routes/products.search.route.js";
@@ -263,6 +264,7 @@ async function startServer() {
       }
     });
     app.use("/api/auth", authRoutes);
+    app.post("/api/user/become-seller", requireAuth, handleBecomeSeller);
     app.use("/api/ai", aiRoutes);
     app.use("/api/products", productsSearchRoutes);
     app.use("/api/products", productsRoutes);

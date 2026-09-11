@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { BadgeCheck, Clock3, Footprints, MessageCircle, Navigation, Radio, ShieldCheck } from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { buildRadar, enrichListing, formatToman, formatWalk, getListing, mapsWalkUrl, toFa } from "../../presence/engine";
@@ -33,6 +33,7 @@ export default function PresenceListingPage() {
   );
 
   if (!listing) {
+    if (/^\d+$/.test(id)) return <Navigate to={`/products/${id}`} replace />;
     return (
       <div className="px-6 py-20 text-center">
         <h1 className="text-xl font-black">این کالا در ویترین محله نیست</h1>

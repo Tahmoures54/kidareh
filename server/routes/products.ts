@@ -15,21 +15,9 @@ import {
   invalidateSearchCache,
 } from "../services/products.cached.js";
 import { applyProductTextSearch } from "../services/textSearch.js";
+import { normalizeProductStatus } from "../utils/productStatus.js";
 
 const router = Router();
-
-/** Must match products.status CHECK in db.ts */
-const PRODUCT_STATUSES = ["موجود", "فقط ۱ عدد", "ناموجود", "به‌زودی"] as const;
-type ProductStatus = (typeof PRODUCT_STATUSES)[number];
-
-function normalizeProductStatus(raw: unknown): ProductStatus | null {
-  if (typeof raw !== "string") return null;
-  const t = raw.trim();
-  if ((PRODUCT_STATUSES as readonly string[]).includes(t)) return t as ProductStatus;
-  // legacy / UI variants
-  if (t === "به زودی" || t === "بزودی") return "به‌زودی";
-  return null;
-}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -134,11 +122,29 @@ router.get("/", async (req, res) => {
 router.get("/seller", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const storeInfo = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(req.user!.id) as any;
-    if (!storeInfo) return res.json([]);
-    return res.json(db.prepare("SELECT * FROM products WHERE store_id = ? ORDER BY created_at DESC").all(storeInfo.id));
+    if (!storeInfo) return res.json({ products: [], store: null });
+    const products = db.prepare("SELECT * FROM products WHERE store_id = ? ORDER BY created_at DESC").all(storeInfo.id);
+    return res.json({ products, store_id: storeInfo.id });
   } catch (error) {
     logger.error("Seller products fetch error:", error);
     return res.status(500).json({ error: "خطا در دریافت کالاهای فروشنده" });
+  }
+});
+
+router.get("/followed", requireAuth, (req: AuthRequest, res: Response) => {
+  try {
+    const products = db.prepare(`
+      SELECT p.*, s.name as store_name, s.city as store_city, s.id as store_id
+      FROM store_followers sf
+      JOIN products p ON p.store_id = sf.store_id AND p.moderation_status = 'approved'
+      JOIN stores s ON s.id = sf.store_id
+      WHERE sf.user_id = ?
+      ORDER BY p.created_at DESC
+      LIMIT 100`).all(req.user!.id);
+    return res.json({ products });
+  } catch (error) {
+    logger.error("Followed products fetch error:", error);
+    return res.status(500).json({ error: "خطا در دریافت کالاهای دنبال‌شده" });
   }
 });
 
@@ -175,6 +181,56 @@ router.get("/admin/pending", requireAuth, requireRole(["admin"]), (_req: AuthReq
   } catch (error) {
     logger.error("Get pending products error:", error);
     return res.status(500).json({ error: "خطا در دریافت لیست انتظار" });
+  }
+});
+
+router.put("/:id", requireAuth, upload.single("image"), async (req: AuthRequest & { file?: Express.Multer.File }, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const storeInfo = db.prepare("SELECT id, city, province FROM stores WHERE user_id = ?").get(req.user!.id) as any;
+    if (!storeInfo) return res.status(403).json({ error: "فروشگاهی یافت نشد" });
+    const productInfo = db.prepare("SELECT * FROM products WHERE id = ?").get(id) as any;
+    if (!productInfo || productInfo.store_id !== storeInfo.id) return res.status(403).json({ error: "شما دسترسی به این کالا ندارید" });
+
+    const body = req.body || {};
+    const nextName = typeof body.name === "string" && body.name.trim().length >= 2 ? body.name.trim() : productInfo.name;
+    const rawPrice = body.price;
+    let nextPrice = productInfo.price;
+    if (rawPrice !== undefined && rawPrice !== null && rawPrice !== "") {
+      const parsed = typeof rawPrice === "string" ? parseInt(String(rawPrice).replace(/\D/g, ""), 10) : Number(rawPrice);
+      if (!Number.isFinite(parsed)) return res.status(400).json({ error: "قیمت نامعتبر است" });
+      nextPrice = parsed;
+    }
+    const nextStatus = body.status != null && body.status !== ""
+      ? normalizeProductStatus(body.status)
+      : productInfo.status;
+    if (body.status != null && body.status !== "" && !nextStatus) {
+      return res.status(400).json({ error: "وضعیت نامعتبر است" });
+    }
+    const nextDescription = body.description !== undefined ? (body.description || null) : productInfo.description;
+    const nextCategory = body.category !== undefined ? (body.category || null) : productInfo.category;
+
+    let imageUrl = productInfo.image_url;
+    if (req.file) {
+      if (!hasValidImageSignature(req.file)) {
+        return res.status(400).json({ error: "محتوای تصویر معتبر نیست" });
+      }
+      try { imageUrl = await uploadFile(req.file, "products"); }
+      catch (uploadError) {
+        logger.error("Image upload failed:", uploadError);
+        return res.status(500).json({ error: "خطا در آپلود تصویر محصول" });
+      }
+    } else if (typeof body.image_url === "string" && body.image_url && !body.image_url.startsWith("blob:")) {
+      imageUrl = body.image_url;
+    }
+
+    db.prepare(`UPDATE products SET name = ?, price = ?, status = ?, description = ?, category = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+      .run(nextName, nextPrice, nextStatus, nextDescription, nextCategory, imageUrl, id);
+    await invalidateProductCache(id);
+    return res.json({ success: true, id: Number(id) });
+  } catch (error) {
+    logger.error("Update product error:", error);
+    return res.status(500).json({ error: "خطا در بروزرسانی کالا" });
   }
 });
 
@@ -258,6 +314,16 @@ router.post("/:id/notify", requireAuth, (req: AuthRequest, res) => {
   } catch (error) {
     logger.error("Notify request error:", error);
     return res.status(500).json({ error: "خطا در ثبت درخواست" });
+  }
+});
+
+router.get("/:id/save-status", requireAuth, (req: AuthRequest, res: Response) => {
+  try {
+    const row = db.prepare("SELECT 1 as ok FROM saved_products WHERE user_id = ? AND product_id = ?").get(req.user!.id, req.params.id);
+    return res.json({ saved: !!row });
+  } catch (error) {
+    logger.error("Save status error:", error);
+    return res.status(500).json({ error: "خطا در وضعیت نشان" });
   }
 });
 

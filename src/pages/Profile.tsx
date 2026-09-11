@@ -10,7 +10,7 @@ import { useAuth } from "../context/AuthContext";
 import { apiRequest, ApiError } from "../utils/api";
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, isMarketer } = useAuth();
   const navigate = useNavigate();
   const [hasStore, setHasStore] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,6 +56,8 @@ export default function Profile() {
 
   const isAdmin = user.role === "admin";
   const isSeller = user.role === "seller" || isAdmin;
+  const roleLabel = isAdmin ? "مدیر" : isSeller ? "فروشنده" : isMarketer ? "بازاریاب" : "خریدار";
+  const displayName = user.name || (isAdmin ? "مدیر" : isSeller ? "فروشنده" : isMarketer ? "بازاریاب" : "دوست عزیز");
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-28 font-sans" dir="rtl">
@@ -99,7 +101,7 @@ export default function Profile() {
 
             <div className="flex-1 min-w-0">
               <h2 className="text-lg font-black mb-1 flex items-center gap-2 truncate">
-                {user.name || (isAdmin ? "مدیر" : isSeller ? "فروشنده" : "دوست عزیز")}
+                {displayName}
                 {isSeller && hasStore && (
                   <BadgeCheck className="w-5 h-5 text-sky-200 drop-shadow-sm shrink-0" />
                 )}
@@ -113,10 +115,14 @@ export default function Profile() {
       </header>
 
       <main className="max-w-2xl mx-auto px-4 -mt-12 relative z-10">
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           <Link to="/saved" className="bg-white dark:bg-gray-900 rounded-[1.5rem] p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 text-center active:scale-95 transition-transform">
             <Heart className="w-6 h-6 text-rose-500 mx-auto mb-2" />
             <span className="block text-[11px] text-gray-500 font-bold">علاقه‌مندی</span>
+          </Link>
+          <Link to="/following" className="bg-white dark:bg-gray-900 rounded-[1.5rem] p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 text-center active:scale-95 transition-transform">
+            <Users className="w-6 h-6 text-cyan-600 mx-auto mb-2" />
+            <span className="block text-[11px] text-gray-500 font-bold">دنبال‌شده‌ها</span>
           </Link>
           <Link to="/messages" className="bg-white dark:bg-gray-900 rounded-[1.5rem] p-4 shadow-sm border border-gray-100 dark:border-gray-800/60 text-center active:scale-95 transition-transform">
             <MessageCircle className="w-6 h-6 text-teal-500 mx-auto mb-2" />
@@ -138,7 +144,7 @@ export default function Profile() {
         </div>
 
         <div className="space-y-3">
-          <Link
+            <Link
             to="/referral"
             className="bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-500/10 dark:to-green-500/10 rounded-[1.5rem] p-4 flex items-center justify-between border border-emerald-200 dark:border-emerald-800/40 active:scale-[0.98] transition-transform shadow-sm"
           >
@@ -147,8 +153,12 @@ export default function Profile() {
                 <Users className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-emerald-900 dark:text-emerald-400">دعوت دوستان</h3>
-                <p className="text-[10px] text-emerald-700 dark:text-emerald-500/80 mt-0.5">معرفی کن و جایزه بگیر</p>
+                <h3 className="font-bold text-sm text-emerald-900 dark:text-emerald-400">
+                  {isMarketer ? "پنل بازاریاب" : "دعوت دوستان"}
+                </h3>
+                <p className="text-[10px] text-emerald-700 dark:text-emerald-500/80 mt-0.5">
+                  {isMarketer ? "کد دعوت، موجودی و برداشت" : "معرفی کن و جایزه بگیر"}
+                </p>
               </div>
             </div>
             <ChevronLeft className="w-5 h-5 text-emerald-400" />
@@ -266,12 +276,14 @@ export default function Profile() {
                 className={`text-[11px] font-black px-3 py-1.5 rounded-lg ${
                   isAdmin
                     ? "bg-violet-50 dark:bg-violet-500/10 text-violet-700 dark:text-violet-400"
-                    : isSeller
+                    : isMarketer
+                      ? "bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400"
+                      : isSeller
                       ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                 }`}
               >
-                {isAdmin ? "مدیر" : isSeller ? "فروشنده" : "خریدار"}
+                {roleLabel}
               </span>
             </div>
             {isSeller && (

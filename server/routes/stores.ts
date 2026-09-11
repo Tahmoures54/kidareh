@@ -45,6 +45,10 @@ function toNumberOrNull(v: any): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function numericRouteId(params: Record<string, string | undefined>): number {
+  return Number(params.id ?? params["id(\\d+)"]);
+}
+
 function normalizeStoreForDetail(store: any, products: any[]) {
   return {
     id: Number(store.id),
@@ -63,6 +67,8 @@ function normalizeStoreForDetail(store: any, products: any[]) {
     latitude: toNumberOrNull(store.lat),
     longitude: toNumberOrNull(store.lng),
     blue_tick_expires_at: store.blue_tick_expires_at ?? null,
+    owner_id: Number(store.user_id ?? 0),
+    follower_count: Number(store.follower_count ?? store.total_followers ?? 0),
     products: products.map((p) => ({
       id: Number(p.id),
       name: p.name,
@@ -111,16 +117,119 @@ router.get("/my/store", requireAuth, (req: AuthRequest, res: Response): void => 
       return;
     }
     const countRow = db.prepare("SELECT COUNT(*) as total FROM products WHERE store_id = ?").get(store.id) as any;
-    res.json({ ...store, total_products: countRow ? Number(countRow.total) : 0, lat: toNumberOrNull(store.lat), lng: toNumberOrNull(store.lng) });
+    const followersRow = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(store.id) as any;
+    const viewsRow = db.prepare("SELECT COALESCE(SUM(views), 0) as total FROM products WHERE store_id = ?").get(store.id) as any;
+    res.json({
+      ...store,
+      total_products: countRow ? Number(countRow.total) : 0,
+      follower_count: Number(followersRow?.count ?? store.total_followers ?? 0),
+      total_views: Number(viewsRow?.total ?? store.total_views ?? 0),
+      lat: toNumberOrNull(store.lat),
+      lng: toNumberOrNull(store.lng),
+    });
   } catch (error: any) {
     logger.error("Error fetching my store:", error.message);
     res.status(500).json({ error: "خطا در دریافت اطلاعات فروشگاه" });
   }
 });
 
+router.get("/my/stats", requireAuth, (req: AuthRequest, res: Response): void => {
+  try {
+    const store = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(req.user!.id) as any;
+    if (!store) {
+      res.status(404).json({ error: "فروشگاهی یافت نشد" });
+      return;
+    }
+    const productsRow = db.prepare(`
+      SELECT COUNT(*) as product_count,
+        COALESCE(SUM(views), 0) as total_views,
+        SUM(CASE WHEN moderation_status = 'pending' THEN 1 ELSE 0 END) as pending_count
+      FROM products WHERE store_id = ?`).get(store.id) as any;
+    const followersRow = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(store.id) as any;
+    res.json({
+      store_id: Number(store.id),
+      follower_count: Number(followersRow?.count ?? 0),
+      product_count: Number(productsRow?.product_count ?? 0),
+      total_views: Number(productsRow?.total_views ?? 0),
+      pending_count: Number(productsRow?.pending_count ?? 0),
+    });
+  } catch (error: any) {
+    logger.error("Error fetching my store stats:", error.message);
+    res.status(500).json({ error: "خطا در دریافت آمار فروشگاه" });
+  }
+});
+
+router.put("/my/store", requireAuth, requireRole(["seller", "admin"]), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const store = db.prepare("SELECT * FROM stores WHERE user_id = ?").get(req.user!.id) as any;
+    if (!store) {
+      res.status(404).json({ error: "شما هنوز فروشگاهی ثبت نکرده‌اید", action: "complete_profile" });
+      return;
+    }
+    const patchSchema = z.object({
+      name: z.string().trim().min(2).max(100).optional(),
+      description: z.string().trim().max(1000).optional().nullable(),
+      address: z.string().trim().min(5).max(500).optional(),
+      phone: z.string().trim().regex(/^09\d{9}$/, "شماره تماس معتبر نیست").optional(),
+      category: z.string().trim().max(100).optional(),
+      city: z.string().trim().max(100).optional().nullable(),
+      province: z.string().trim().max(100).optional().nullable(),
+    });
+    const patch = patchSchema.parse(req.body || {});
+    db.prepare(`UPDATE stores SET
+      name = ?, description = ?, address = ?, phone = ?, category = ?, city = ?, province = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?`).run(
+      patch.name ?? store.name,
+      patch.description !== undefined ? patch.description : store.description,
+      patch.address ?? store.address,
+      patch.phone ?? store.phone,
+      patch.category ?? store.category,
+      patch.city !== undefined ? patch.city : store.city,
+      patch.province !== undefined ? patch.province : store.province,
+      store.id
+    );
+    await invalidateStoreCache(store.id);
+    const updated = db.prepare("SELECT * FROM stores WHERE id = ?").get(store.id);
+    res.json({ success: true, store: updated });
+  } catch (err: any) {
+    if (err?.name === "ZodError") {
+      const first = err.issues?.[0];
+      res.status(400).json({ error: first?.message || "داده‌های ورودی نامعتبر است", field: first?.path?.[0] });
+      return;
+    }
+    logger.error("Update my store error:", err);
+    res.status(500).json({ error: "خطا در بروزرسانی فروشگاه" });
+  }
+});
+
+router.get("/following", requireAuth, (req: AuthRequest, res: Response): void => {
+  try {
+    const stores = db.prepare(`
+      SELECT s.id, s.name, s.category, s.image_url, s.city, s.province, s.address,
+        s.total_followers, sf.created_at as followed_at,
+        COUNT(DISTINCT p.id) as product_count
+      FROM store_followers sf
+      JOIN stores s ON s.id = sf.store_id
+      LEFT JOIN products p ON p.store_id = s.id AND p.moderation_status = 'approved'
+      WHERE sf.user_id = ?
+      GROUP BY s.id
+      ORDER BY sf.created_at DESC`).all(req.user!.id) as any[];
+    res.json({
+      stores: stores.map((s) => ({
+        ...s,
+        product_count: Number(s.product_count ?? 0),
+        follower_count: Number(s.total_followers ?? 0),
+      })),
+    });
+  } catch (error: any) {
+    logger.error("Following stores fetch error:", error.message);
+    res.status(500).json({ error: "خطا در دریافت فروشگاه‌های دنبال‌شده" });
+  }
+});
+
 router.get("/:id(\\d+)", (req: AuthRequest, res: Response): void => {
   try {
-    const id = Number(req.params.id);
+    const id = numericRouteId(req.params as Record<string, string | undefined>);
     if (!Number.isInteger(id) || id <= 0) {
       res.status(400).json({ error: "شناسه فروشگاه نامعتبر است." });
       return;
@@ -128,10 +237,12 @@ router.get("/:id(\\d+)", (req: AuthRequest, res: Response): void => {
     const store = db.prepare(`
       SELECT s.*, u.name as owner_name, u.phone as owner_phone,
         COUNT(DISTINCT p.id) as total_products, AVG(r.rating) as avg_rating, COUNT(DISTINCT r.id) as review_count,
+        COUNT(DISTINCT sf.id) as follower_count,
         COALESCE(strftime('%Y/%m', s.created_at), '') as joined
       FROM stores s JOIN users u ON s.user_id = u.id
       LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'
       LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'
+      LEFT JOIN store_followers sf ON sf.store_id = s.id
       WHERE s.id = ? GROUP BY s.id`).get(id) as any;
     if (!store) {
       res.status(404).json({ error: "فروشگاه مورد نظر یافت نشد." });
@@ -249,7 +360,7 @@ router.post("/", requireAuth, requireRole(["seller", "admin"]), async (req: Auth
 
 router.delete("/:id(\\d+)", requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const id = Number(req.params.id);
+    const id = numericRouteId(req.params as Record<string, string | undefined>);
     if (!Number.isInteger(id) || id <= 0) {
       res.status(400).json({ error: "شناسه فروشگاه نامعتبر است" });
       return;
@@ -276,7 +387,7 @@ router.delete("/:id(\\d+)", requireAuth, async (req: AuthRequest, res: Response)
 
 router.post("/:id(\\d+)/follow", requireAuth, (req: AuthRequest, res: Response) => {
   try {
-    const storeId = Number(req.params.id);
+    const storeId = numericRouteId(req.params as Record<string, string | undefined>);
     const userId = req.user!.id;
     const store = db.prepare("SELECT id FROM stores WHERE id = ?").get(storeId) as any;
     if (!store) return res.status(404).json({ error: "فروشگاه یافت نشد" });
@@ -294,12 +405,14 @@ router.post("/:id(\\d+)/follow", requireAuth, (req: AuthRequest, res: Response) 
 });
 
 router.get("/:id(\\d+)/follow-status", requireAuth, (req: AuthRequest, res: Response) => {
-  const follow = db.prepare("SELECT id FROM store_followers WHERE user_id = ? AND store_id = ?").get(req.user!.id, Number(req.params.id));
+  const storeId = numericRouteId(req.params as Record<string, string | undefined>);
+  const follow = db.prepare("SELECT id FROM store_followers WHERE user_id = ? AND store_id = ?").get(req.user!.id, storeId);
   return res.json({ following: !!follow });
 });
 
 router.get("/:id(\\d+)/followers/count", (req, res) => {
-  const row = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(Number(req.params.id)) as any;
+  const storeId = numericRouteId(req.params as Record<string, string | undefined>);
+  const row = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(storeId) as any;
   return res.json({ count: Number(row?.count ?? 0) });
 });
 

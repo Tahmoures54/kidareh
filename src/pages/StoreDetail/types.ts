@@ -26,6 +26,8 @@ export interface StoreData {
   longitude?: number;
   products?: Product[];
   blue_tick_expires_at?: string | null;
+  owner_id?: number;
+  follower_count?: number;
 }
 
 export type TabMode = "products" | "about";

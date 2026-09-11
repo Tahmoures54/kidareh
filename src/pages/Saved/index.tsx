@@ -79,7 +79,7 @@ export default function Saved() {
     setLoading(true);
     setError(null);
     try {
-      const data = await apiRequest<any[]>("/api/products/saved");
+      const data = await apiRequest<any[]>("/api/products/saved", { auth: true });
       const list = Array.isArray(data) ? data.map(normalizeProduct) : [];
       setProducts(list);
     } catch (e: any) {
@@ -129,9 +129,10 @@ export default function Saved() {
       return next;
     });
     try {
-      await apiRequest("/api/products/saved", {
+      await apiRequest("/api/products/save", {
         method: "POST",
-        body: JSON.stringify({ productId: Number(id), save: false }),
+        auth: true,
+        body: { productId: Number(id), save: false },
       });
     } catch {
       fetchSaved();
@@ -145,9 +146,10 @@ export default function Saved() {
     setSelectionMode(false);
     await Promise.allSettled(
       ids.map((id) =>
-        apiRequest("/api/products/saved", {
+        apiRequest("/api/products/save", {
           method: "POST",
-          body: JSON.stringify({ productId: Number(id), save: false }),
+          auth: true,
+          body: { productId: Number(id), save: false },
         })
       )
     );

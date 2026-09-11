@@ -35,6 +35,7 @@ export interface AuthContextType {
   isSeller: boolean;
   isAdmin: boolean;
   isSupport: boolean;
+  isMarketer: boolean;
   sendOtp: (phone: string) => Promise<void>;
   verifyOtp: (phone: string, code: string) => Promise<User>;
   logout: () => Promise<void>;
@@ -329,6 +330,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSeller: user?.role === "seller" || user?.role === "admin",
       isAdmin: user?.role === "admin",
       isSupport: user?.role === "support" || user?.role === "admin",
+      isMarketer: user?.role === "marketer",
       sendOtp,
       verifyOtp,
       logout,

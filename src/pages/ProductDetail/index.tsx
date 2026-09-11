@@ -126,13 +126,20 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!product?.store_id || !user) return;
-    apiRequest<{ following: boolean }>(`/api/stores/${product.store_id}/follow-status`)
+    apiRequest<{ following: boolean }>(`/api/stores/${product.store_id}/follow-status`, { auth: true })
       .then((r) => mounted.current && setFollowing(r.following))
       .catch(() => {});
     apiRequest<{ count: number }>(`/api/stores/${product.store_id}/followers/count`)
       .then((r) => mounted.current && setFollowers(r.count))
       .catch(() => {});
   }, [product?.store_id, user]);
+
+  useEffect(() => {
+    if (!id || !user) return;
+    apiRequest<{ saved: boolean }>(`/api/products/${id}/save-status`, { auth: true })
+      .then((r) => mounted.current && setSaved(!!r.saved))
+      .catch(() => {});
+  }, [id, user]);
 
   const images = useMemo(() => {
     if (!product) return [FALLBACK];
@@ -167,6 +174,7 @@ export default function ProductDetail() {
     try {
       await apiRequest("/api/products/save", {
         method: "POST",
+        auth: true,
         body: { productId: Number(id), save: next },
       });
       showToast(next ? "به علاقه‌مندی‌ها اضافه شد ❤️" : "از علاقه‌مندی‌ها برداشته شد");
@@ -187,6 +195,7 @@ export default function ProductDetail() {
     try {
       const res = await apiRequest<{ following: boolean }>(`/api/stores/${product.store_id}/follow`, {
         method: "POST",
+        auth: true,
       });
       setFollowing(res.following);
     } catch {
@@ -303,6 +312,7 @@ export default function ProductDetail() {
       <div className="bg-[var(--bg-primary)] rounded-t-[40px] -mt-8 relative z-20 px-5 pt-8 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
         <ProductInfo product={product} isAvailable={isProductAvailable} avgRating={avgRating} />
         <StoreCard
+          storeId={product.store_id}
           storeName={product.store_name || ""}
           storeCity={product.store_city || ""}
           followers={followers}

@@ -1,5 +1,4 @@
-// src/pages/SellerPanel/components/EditStoreSheet.tsx
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,7 +59,7 @@ export const EditStoreSheet = ({
               <div className="w-12 h-1.5 bg-[var(--border-light)] rounded-full mb-4" />
               <div className="w-full flex items-center justify-between">
                 <h3 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2">
-                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> ÊäÙíãÇÊ İÑæÔÇå
+                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> Ø§Ø·Ù„Ø§Ø¹Ø§Øª ÙØ±ÙˆØ´Ú¯Ø§Ù‡
                 </h3>
                 <button
                   type="button"
@@ -77,7 +76,7 @@ export const EditStoreSheet = ({
             >
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Store className="w-3.5 h-3.5" /> äÇã İÑæÔÇå
+                  <Store className="w-3.5 h-3.5" /> Ù†Ø§Ù… ÙØ±ÙˆØ´Ú¯Ø§Ù‡
                 </label>
                 <input {...register("name")} className="input-base" />
                 {errors.name && (
@@ -88,7 +87,7 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Phone className="w-3.5 h-3.5" /> ÔãÇÑå ÊãÇÓ
+                  <Phone className="w-3.5 h-3.5" /> Ø´Ù…Ø§Ø±Ù‡ ØªÙ…Ø§Ø³
                 </label>
                 <input {...register("phone")} dir="ltr" className="input-base text-left" />
                 {errors.phone && (
@@ -99,7 +98,7 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Package className="w-3.5 h-3.5" /> ÏÓÊåÈäÏí
+                  <Package className="w-3.5 h-3.5" /> Ø¯Ø³ØªÙ‡â€ŒØ¨Ù†Ø¯ÛŒ
                 </label>
                 <input {...register("category")} className="input-base" />
                 {errors.category && (
@@ -110,19 +109,23 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <AlignRight className="w-3.5 h-3.5" /> ÏÑÈÇÑå İÑæÔÇå
+                  <AlignRight className="w-3.5 h-3.5" /> Ø¯Ø±Ø¨Ø§Ø±Ù‡ ÙØ±ÙˆØ´Ú¯Ø§Ù‡
                 </label>
                 <textarea {...register("description")} rows={3} className="input-base resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">ÇÓÊÇä</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">Ø§Ø³ØªØ§Ù†</label>
                   <input {...register("province")} className="input-base" />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">ÔåÑ</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">Ø´Ù‡Ø±</label>
                   <input {...register("city")} className="input-base" />
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">Ø¢Ø¯Ø±Ø³</label>
+                <input {...register("address")} className="input-base" />
               </div>
               <div className="pt-4">
                 <button
@@ -132,11 +135,11 @@ export const EditStoreSheet = ({
                 >
                   {isPending ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" /> ĞÎíÑå...
+                      <Loader2 className="w-5 h-5 animate-spin" /> Ø°Ø®ÛŒØ±Ù‡â€¦
                     </>
                   ) : (
                     <>
-                      <Save className="w-5 h-5" /> ĞÎíÑå ÇØáÇÚÇÊ
+                      <Save className="w-5 h-5" /> Ø°Ø®ÛŒØ±Ù‡ Ø§Ø·Ù„Ø§Ø¹Ø§Øª
                     </>
                   )}
                 </button>

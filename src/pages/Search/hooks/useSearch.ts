@@ -290,7 +290,7 @@ export function useSearch() {
 
   // -------------------- Actions --------------------
   const handleShare = useCallback(async (product: ProductResult) => {
-    const url = `${window.location.origin}/product/${product.id}`;
+    const url = `${window.location.origin}/products/${product.id}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: product.name, text: product.name, url });

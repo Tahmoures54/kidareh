@@ -41,7 +41,7 @@ const Benefit = ({ icon: Icon, title, desc }: { icon: any; title: string; desc: 
 
 export default function BecomeSeller() {
   const navigate = useNavigate();
-  const { updateUser } = useAuth();
+  const { updateUser, refreshMe } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,12 +50,14 @@ export default function BecomeSeller() {
     setError(null);
 
     try {
-      await apiRequest("/api/user/become-seller", {
+      const res = await apiRequest<{ user?: any }>("/api/auth/become-seller", {
         method: "POST",
         auth: true,
       });
 
-      updateUser({ role: "seller" });
+      if (res?.user) updateUser(res.user);
+      else updateUser({ role: "seller" });
+      await refreshMe();
       navigate("/seller", { replace: true });
     } catch (err: unknown) {
       setError(friendlyError(err, "الان نشد. کمی بعد دوباره امتحان کن."));

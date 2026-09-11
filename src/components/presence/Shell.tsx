@@ -48,7 +48,7 @@ function liveHoldCount() {
 export default function PresenceShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, isSeller, isAdmin } = useAuth();
+  const { user, logout, isSeller, isAdmin, isMarketer } = useAuth();
   const { origin, setNeighborhood, useGps, gpsError } = usePresenceOrigin();
   const [palette, setPalette] = useState(false);
   const [menu, setMenu] = useState(false);
@@ -270,12 +270,20 @@ export default function PresenceShell() {
               <Link to="/saved" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 ذخیره‌شده‌ها
               </Link>
+              <Link to="/following" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                فروشگاه‌های دنبال‌شده
+              </Link>
               <Link to="/messages" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 پیام‌ها
               </Link>
               {isSeller && (
                 <Link to="/seller" className="min-h-12 rounded-2xl bg-[var(--accent)] px-4 py-3 text-sm font-black text-white">
                   مغازه‌ام
+                </Link>
+              )}
+              {(isMarketer || isSeller) && (
+                <Link to="/referral" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                  {isMarketer ? "پنل بازاریاب" : "دعوت دوستان"}
                 </Link>
               )}
               {isAdmin && (

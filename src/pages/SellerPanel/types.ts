@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export type ProductStatus = "موجود" | "موجودی کم" | "فقط ۱ عدد" | "ناموجود";
+export type ProductStatus = "موجود" | "فقط ۱ عدد" | "ناموجود";
 export type ChartPeriod = "weekly" | "monthly";
 export type FilterType = ProductStatus | "all";
 
@@ -17,6 +17,7 @@ export interface Product {
 }
 
 export interface StoreInfo {
+  id: number;
   name: string;
   description: string;
   address: string;
@@ -26,6 +27,9 @@ export interface StoreInfo {
   province?: string;
   image?: string;
   blue_tick_expires_at?: string | null;
+  total_products?: number;
+  follower_count?: number;
+  total_views?: number;
 }
 
 export interface ChartData {

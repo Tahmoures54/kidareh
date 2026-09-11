@@ -73,7 +73,7 @@ export const PremiumProductCard = memo(
       <motion.div variants={itemVariants} className="group relative">
         {/* لینک اصلی کل کارت را پوشش می‌دهد */}
         <Link
-          to={`/product/${product.id}`}
+          to={`/products/${product.id}`}
           className="absolute inset-0 z-0"
           aria-label={`مشاهده ${product.name}`}
         />

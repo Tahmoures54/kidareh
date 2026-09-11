@@ -34,7 +34,7 @@ export const ProductCard = memo(({ product, viewMode, onRemove, isSelected, onTo
         )}
       </AnimatePresence>
 
-      {!selectionMode && (
+      {!selectionMode && onRemove && (
         <div className="absolute top-3 left-3 z-30">
           <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowMenu(!showMenu); }} className="w-8 h-8 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl rounded-xl flex items-center justify-center text-[var(--text-secondary)] shadow-sm border border-white/50 dark:border-slate-700/50 active:scale-90 transition">
             <MoreVertical className="w-4 h-4" />
@@ -51,7 +51,7 @@ export const ProductCard = memo(({ product, viewMode, onRemove, isSelected, onTo
         </div>
       )}
 
-      <Link to={`/product/${product.id}`} onClick={(e) => selectionMode && e.preventDefault()} className={`flex ${isList ? "flex-row h-44" : "flex-col"} rounded-3xl overflow-hidden`}>
+      <Link to={`/products/${product.id}`} onClick={(e) => selectionMode && e.preventDefault()} className={`flex ${isList ? "flex-row h-44" : "flex-col"} rounded-3xl overflow-hidden`}>
         <div className={`relative bg-[var(--bg-tertiary)] overflow-hidden ${isList ? "w-44 h-full shrink-0" : "aspect-square w-full"}`}>
           <img src={product.image || FALLBACK} alt={product.name} loading="lazy" onError={e => ((e.currentTarget as HTMLImageElement).src = FALLBACK)} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
@@ -75,7 +75,7 @@ export const ProductCard = memo(({ product, viewMode, onRemove, isSelected, onTo
               <p className="text-base font-black text-[var(--brand-primary)]">{product.price.toLocaleString("fa-IR")} <span className="text-[10px] font-normal mr-1 text-[var(--text-muted)]">تومان</span></p>
             </div>
             
-            {!selectionMode && (
+            {!selectionMode && onRemove && (
               <motion.button 
                 whileTap={{ scale: 0.7 }}
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(product.id); }} 

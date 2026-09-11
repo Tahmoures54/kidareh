@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Store, CheckCircle2, BadgeCheck, Star } from "lucide-react";
+import { Store, BadgeCheck, Star, Loader2 } from "lucide-react";
 import { StoreData } from "../types";
 // دیگر نیازی به import fa نیست
 
@@ -7,9 +7,13 @@ interface Props {
   store: StoreData;
   hasBlueTick: boolean;
   followersCount: number;
+  following?: boolean;
+  followLoading?: boolean;
+  onFollow?: () => void;
+  isOwnStore?: boolean;
 }
 
-export const StoreHeader = memo(({ store, hasBlueTick, followersCount }: Props) => {
+export const StoreHeader = memo(({ store, hasBlueTick, followersCount, following, followLoading, onFollow, isOwnStore }: Props) => {
   return (
     <header className="relative bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white pt-24 pb-16 overflow-hidden px-5 rounded-b-[3rem] shadow-lg shadow-[var(--brand-glow)]">
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
@@ -59,6 +63,21 @@ export const StoreHeader = memo(({ store, hasBlueTick, followersCount }: Props) 
             <span className="text-[10px] text-white/70 mt-0.5">محصول</span>
           </div>
         </div>
+
+        {isOwnStore ? (
+          <p className="mt-5 text-xs font-black text-white/80">این فروشگاه شماست</p>
+        ) : onFollow ? (
+          <button
+            type="button"
+            onClick={onFollow}
+            disabled={followLoading}
+            className={`mt-5 min-h-12 min-w-[160px] rounded-2xl px-6 text-sm font-black ${
+              following ? "bg-white/15 text-white border border-white/25" : "bg-white text-[var(--brand-primary)]"
+            }`}
+          >
+            {followLoading ? <Loader2 className="mx-auto h-5 w-5 animate-spin" /> : following ? "دنبال شده" : "دنبال کردن"}
+          </button>
+        ) : null}
       </div>
     </header>
   );

@@ -24,6 +24,9 @@ export default function StoreDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<TabMode>("products");
+  const [following, setFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [distInfo, setDistInfo] = useState<DistInfo | null>(null);
 
@@ -44,6 +47,7 @@ export default function StoreDetail() {
         const data = await apiRequest<StoreData>(`/api/stores/${id}`);
         if (!mounted.current) return; // جلوگیری از آپدیت استیت روی کامپوننت غیرفعال
         setStore(data);
+        setFollowersCount(Number(data.follower_count ?? 0));
         document.title = `${data.name} — کی داره؟`;
       } catch (err) {
         if (!mounted.current) return;
@@ -54,6 +58,13 @@ export default function StoreDetail() {
     };
     fetchStore();
   }, [id]);
+
+  useEffect(() => {
+    if (!id || !user) return;
+    apiRequest<{ following: boolean }>(`/api/stores/${id}/follow-status`, { auth: true })
+      .then((r) => mounted.current && setFollowing(!!r.following))
+      .catch(() => {});
+  }, [id, user]);
 
   // Get User Location
   useEffect(() => {
@@ -76,6 +87,31 @@ export default function StoreDetail() {
       setDistInfo({ text: fmtDist(km), mins: String(mins) });
     }
   }, [userLoc, store]);
+
+  const isOwnStore = !!user && !!store?.owner_id && Number(user.id) === Number(store.owner_id);
+
+  const handleFollow = async () => {
+    if (!user || !id) {
+      navigate("/login");
+      return;
+    }
+    const was = following;
+    setFollowing(!was);
+    setFollowersCount((c) => Math.max(0, c + (was ? -1 : 1)));
+    setFollowLoading(true);
+    try {
+      const res = await apiRequest<{ following: boolean }>(`/api/stores/${id}/follow`, {
+        method: "POST",
+        auth: true,
+      });
+      setFollowing(!!res.following);
+    } catch {
+      setFollowing(was);
+      setFollowersCount((c) => Math.max(0, c + (was ? 1 : -1)));
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   // --- Render States ---
 
@@ -117,7 +153,11 @@ export default function StoreDetail() {
       <StoreHeader
         store={store}
         hasBlueTick={hasBlueTick}
-        followersCount={store.reviews * 12 || 0} // یک تقریب ساده برای تعداد فالوور
+        followersCount={followersCount}
+        following={following}
+        followLoading={followLoading}
+        onFollow={handleFollow}
+        isOwnStore={isOwnStore}
       />
 
       <main className="px-5 -mt-6 relative z-10">
@@ -155,7 +195,7 @@ export default function StoreDetail() {
             >
               <ProductsTab
                 products={store.products || []}
-                onProductClick={(productId) => navigate(`/product/${productId}`)}
+                onProductClick={(productId) => navigate(`/products/${productId}`)}
               />
             </motion.div>
           ) : (

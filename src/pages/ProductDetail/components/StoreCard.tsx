@@ -1,8 +1,10 @@
 import React, { memo } from "react";
+import { Link } from "react-router-dom";
 import { Store, BadgeCheck, Loader2, MapPin, Building2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface Props {
+  storeId?: number | string | null;
   storeName: string;
   storeCity: string;
   followers: number;
@@ -13,11 +15,11 @@ interface Props {
   onFollow: () => void;
 }
 
-export const StoreCard = memo(({ storeName, storeCity, followers, following, followLoading, hasBlueTick, distance, onFollow }: Props) => {
+export const StoreCard = memo(({ storeId, storeName, storeCity, followers, following, followLoading, hasBlueTick, distance, onFollow }: Props) => {
   return (
     <div className="bg-[var(--bg-secondary)] border border-[var(--border-light)] rounded-3xl p-5 shadow-sm">
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-3">
+        <Link to={storeId ? `/store/${storeId}` : "#"} className="flex items-center gap-3 min-w-0">
           <div className="w-12 h-12 bg-[var(--bg-tertiary)] rounded-2xl flex items-center justify-center relative border border-[var(--border-light)]">
             <Store className="w-6 h-6 text-[var(--text-muted)]" />
             {hasBlueTick && <BadgeCheck className="absolute -bottom-1 -right-1 w-5 h-5 text-blue-500 bg-[var(--bg-secondary)] rounded-full border-2 border-[var(--bg-secondary)]" />}
@@ -28,7 +30,7 @@ export const StoreCard = memo(({ storeName, storeCity, followers, following, fol
             </h3>
             <p className="text-[11px] text-[var(--text-muted)] font-bold mt-0.5">{followers.toLocaleString("fa-IR")} دنبال‌کننده</p>
           </div>
-        </div>
+        </Link>
         <motion.button 
           onClick={onFollow} 
           disabled={followLoading} 

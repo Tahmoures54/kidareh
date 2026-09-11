@@ -1,15 +1,15 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
-import { Loader2, Plus, Search } from "lucide-react";
+import { Loader2, Plus, Search, Share2, Eye, Users, Store, Pencil } from "lucide-react";
 import SellerProductForm from "./ProductForm";
 import { useSellerPanel } from "./hooks/useSellerPanel";
 import { ProductItem } from "./components/ProductItem";
+import { EditStoreSheet } from "./components/EditStoreSheet";
 import { FilterType } from "./types";
 
 const FILTERS: { id: FilterType; label: string }[] = [
   { id: "all", label: "همه" },
   { id: "موجود", label: "موجود" },
-  { id: "موجودی کم", label: "کم" },
   { id: "فقط ۱ عدد", label: "آخرین" },
   { id: "ناموجود", label: "ناموجود" },
 ];
@@ -33,15 +33,25 @@ function SellerShopHome() {
     statusFilter,
     setStatusFilter,
     productsLoading,
+    storeInfo,
+    storeLoading,
+    editingStore,
+    setEditingStore,
+    followersData,
+    viewsTotal,
+    pendingCount,
     lowStockCount,
     filteredProducts,
     updateStatusMut,
+    updateStoreMut,
     handleDeleteTrigger,
     handleShare,
+    handleShareStore,
     cycleStatus,
   } = useSellerPanel();
 
-  const shopName = user?.store_name || user?.name || "مغازه من";
+  const shopName = storeInfo?.name || user?.store_name || user?.name || "مغازه من";
+  const hasStore = !!storeInfo;
 
   return (
     <div className="px-4 py-5" dir="rtl">
@@ -59,9 +69,70 @@ function SellerShopHome() {
         <p className="text-sm font-black text-[var(--accent)]">مغازه‌ام</p>
         <h1 className="mt-1 text-2xl font-black leading-snug">{shopName}</h1>
         <p className="mt-2 text-sm font-bold leading-7 text-[var(--ink-soft)]">
-          کالا بگذار، موجودی را با یک لمس عوض کن. سخت نیست.
+          کالا بگذار، ویترین را به اشتراک بگذار، موجودی را با یک لمس عوض کن.
         </p>
       </header>
+
+      {storeLoading ? (
+        <div className="mb-4 flex justify-center py-6">
+          <Loader2 className="h-6 w-6 animate-spin text-[var(--accent)]" />
+        </div>
+      ) : !hasStore ? (
+        <div className="mb-4 rounded-[28px] border border-amber-200 bg-amber-50 p-5 text-center">
+          <Store className="mx-auto mb-2 h-8 w-8 text-amber-600" />
+          <p className="font-black text-amber-900">فروشگاه هنوز کامل نیست</p>
+          <p className="mt-1 text-sm font-bold leading-7 text-amber-800">
+            نام و آدرس مغازه را بنویس تا مشتری‌ها پیدایت کنند.
+          </p>
+          <Link
+            to="/complete-profile"
+            className="mt-3 inline-flex h-12 items-center rounded-2xl bg-amber-500 px-5 text-sm font-black text-white"
+          >
+            تکمیل فروشگاه
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="mb-4 grid grid-cols-3 gap-2">
+            <div className="presence-card rounded-2xl px-3 py-3 text-center">
+              <Eye className="mx-auto mb-1 h-4 w-4 text-[var(--accent)]" />
+              <p className="text-base font-black">{viewsTotal.toLocaleString("fa-IR")}</p>
+              <p className="text-[10px] font-bold text-[var(--muted)]">بازدید</p>
+            </div>
+            <div className="presence-card rounded-2xl px-3 py-3 text-center">
+              <Users className="mx-auto mb-1 h-4 w-4 text-[var(--accent)]" />
+              <p className="text-base font-black">{followersData.count.toLocaleString("fa-IR")}</p>
+              <p className="text-[10px] font-bold text-[var(--muted)]">دنبال‌کننده</p>
+            </div>
+            <div className="presence-card rounded-2xl px-3 py-3 text-center">
+              <Store className="mx-auto mb-1 h-4 w-4 text-[var(--accent)]" />
+              <p className="text-base font-black">{(storeInfo.total_products ?? filteredProducts.length).toLocaleString("fa-IR")}</p>
+              <p className="text-[10px] font-bold text-[var(--muted)]">کالا</p>
+            </div>
+          </div>
+          {pendingCount > 0 && (
+            <p className="mb-3 text-center text-xs font-bold text-amber-700">
+              {pendingCount.toLocaleString("fa-IR")} کالا منتظر تأیید است
+            </p>
+          )}
+          <div className="mb-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={handleShareStore}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-[var(--line)] bg-white text-sm font-black"
+            >
+              <Share2 className="h-4 w-4" /> اشتراک ویترین
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingStore(true)}
+              className="flex min-h-12 items-center justify-center gap-2 rounded-2xl border border-[var(--line)] bg-white text-sm font-black"
+            >
+              <Pencil className="h-4 w-4" /> ویرایش فروشگاه
+            </button>
+          </div>
+        </>
+      )}
 
       <Link
         to="/add-product"
@@ -135,6 +206,22 @@ function SellerShopHome() {
           </AnimatePresence>
         )}
       </div>
+
+      <EditStoreSheet
+        isOpen={editingStore}
+        onClose={() => setEditingStore(false)}
+        defaultValues={{
+          name: storeInfo?.name || "",
+          phone: storeInfo?.phone || user?.phone || "",
+          category: storeInfo?.category || "",
+          description: storeInfo?.description || "",
+          province: storeInfo?.province || "",
+          city: storeInfo?.city || "",
+          address: storeInfo?.address || "",
+        }}
+        onSave={(values) => updateStoreMut.mutate(values)}
+        isPending={updateStoreMut.isPending}
+      />
     </div>
   );
 }

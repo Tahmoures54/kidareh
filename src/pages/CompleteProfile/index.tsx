@@ -26,7 +26,7 @@ const stepVariants = {
 };
 
 export default function CompleteProfile() {
-  const { user, isLoading, logout, setUser } = useAuth();
+  const { isLoading, logout, updateUser } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -67,6 +67,10 @@ export default function CompleteProfile() {
       return setError("لطفاً استان و شهر خود را انتخاب کنید.");
     }
 
+    if (selectedRole !== "seller" && formData.name.trim().length < 2) {
+      return setError("لطفاً نام خود را وارد کنید.");
+    }
+
     setSubmitting(true);
     try {
       const payload: Record<string, unknown> = {
@@ -88,8 +92,10 @@ export default function CompleteProfile() {
         body: payload,
       });
 
-      if (res?.user) setUser(res.user);
-      navigate(selectedRole === "seller" ? "/seller" : "/");
+      if (res?.user) updateUser(res.user);
+      if (selectedRole === "seller") navigate("/seller");
+      else if (selectedRole === "marketer") navigate("/referral");
+      else navigate("/");
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "خطا در ارتباط با سرور";
       setError(message);
