@@ -151,6 +151,9 @@ export default function App() {
                   <Route path="categories" element={<Categories />} />
                   <Route path="categories/:slug" element={<Categories />} />
                   <Route path="stores" element={<Stores />} />
+                  <Route path="store/:id" element={<StoreDetail />} />
+                  <Route path="stores/:id" element={<StoreDetail />} />
+                  <Route path="products/:id" element={<ProductDetail />} />
                   <Route path="support" element={<SupportPage />} />
                   <Route path="terms" element={<TermsAndGuidePage />} />
                   <Route path="privacy" element={<Privacy />} />
@@ -177,9 +180,6 @@ export default function App() {
 
                 <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
                 <Route path="/onboarding" element={<GuestRoute><OnboardingFlow /></GuestRoute>} />
-                <Route path="/products/:id" element={<ProductDetail />} />
-                <Route path="/store/:id" element={<StoreDetail />} />
-                <Route path="/stores/:id" element={<StoreDetail />} />
                 <Route path="/chat/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
                 <Route path="/chat/:conversationId/:userId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />
                 <Route path="/payment-callback" element={<ProtectedRoute><PaymentCallback /></ProtectedRoute>} />

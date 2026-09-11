@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo, useRef } from "react";
+﻿import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react"; // یکپارچه شدن فریمورک
 
@@ -18,7 +18,6 @@ export default function StoreDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const mounted = useRef(true);
 
   const [store, setStore] = useState<StoreData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,40 +29,42 @@ export default function StoreDetail() {
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [distInfo, setDistInfo] = useState<DistInfo | null>(null);
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-
-  // Fetch Store Data
-  useEffect(() => {
+    let cancelled = false;
     const fetchStore = async () => {
       if (!id) return;
       setLoading(true);
       setError("");
       try {
         const data = await apiRequest<StoreData>(`/api/stores/${id}`);
-        if (!mounted.current) return; // جلوگیری از آپدیت استیت روی کامپوننت غیرفعال
+        if (cancelled) return;
         setStore(data);
         setFollowersCount(Number(data.follower_count ?? 0));
         document.title = `${data.name} — کی داره؟`;
-      } catch (err) {
-        if (!mounted.current) return;
+      } catch {
+        if (cancelled) return;
         setError("خطا در بارگذاری اطلاعات فروشگاه");
       } finally {
-        if (mounted.current) setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     fetchStore();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   useEffect(() => {
     if (!id || !user) return;
+    let cancelled = false;
     apiRequest<{ following: boolean }>(`/api/stores/${id}/follow-status`, { auth: true })
-      .then((r) => mounted.current && setFollowing(!!r.following))
+      .then((r) => {
+        if (!cancelled) setFollowing(!!r.following);
+      })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [id, user]);
 
   // Get User Location
@@ -148,7 +149,7 @@ export default function StoreDetail() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-[var(--bg-primary)] pb-28 font-sans"
+      className="presence-root min-h-screen bg-[var(--bg-primary)] pb-28 font-sans"
       dir="rtl"
     >
       <StoreHeader

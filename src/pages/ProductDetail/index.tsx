@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AlertCircle, Check } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -51,7 +51,6 @@ export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const mounted = useRef(true);
 
   const [product, setProduct] = useState<ProductData | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -68,12 +67,6 @@ export default function ProductDetail() {
   const [following, setFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
-
-  useEffect(() => {
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     navigator.geolocation?.getCurrentPosition(
@@ -93,18 +86,16 @@ export default function ProductDetail() {
     setError("");
     try {
       const data = await apiRequest<ProductData>(`/api/products/${id}`);
-      if (!mounted.current) return;
       setProduct(data);
       document.title = `${data.name} — کی‌داره`;
     } catch (err: unknown) {
-      if (!mounted.current) return;
       setError(
         err instanceof ApiError && err.status === 404
           ? "این کالا دیگه موجود نیست یا پاک شده."
           : "نت یه لحظه قطع شد. دوباره امتحان کن."
       );
     } finally {
-      if (mounted.current) setLoading(false);
+      setLoading(false);
     }
   }, [id]);
 
@@ -112,7 +103,6 @@ export default function ProductDetail() {
     if (!id) return;
     try {
       const data = await apiRequest<Review[]>(`/api/products/${id}/reviews`);
-      if (!mounted.current) return;
       setReviews(Array.isArray(data) ? data : []);
     } catch {
       /* optional */
@@ -126,19 +116,33 @@ export default function ProductDetail() {
 
   useEffect(() => {
     if (!product?.store_id || !user) return;
+    let cancelled = false;
     apiRequest<{ following: boolean }>(`/api/stores/${product.store_id}/follow-status`, { auth: true })
-      .then((r) => mounted.current && setFollowing(r.following))
+      .then((r) => {
+        if (!cancelled) setFollowing(r.following);
+      })
       .catch(() => {});
     apiRequest<{ count: number }>(`/api/stores/${product.store_id}/followers/count`)
-      .then((r) => mounted.current && setFollowers(r.count))
+      .then((r) => {
+        if (!cancelled) setFollowers(r.count);
+      })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [product?.store_id, user]);
 
   useEffect(() => {
     if (!id || !user) return;
+    let cancelled = false;
     apiRequest<{ saved: boolean }>(`/api/products/${id}/save-status`, { auth: true })
-      .then((r) => mounted.current && setSaved(!!r.saved))
+      .then((r) => {
+        if (!cancelled) setSaved(!!r.saved);
+      })
       .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [id, user]);
 
   const images = useMemo(() => {
@@ -302,7 +306,7 @@ export default function ProductDetail() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-[100dvh] bg-[var(--bg-primary)] pb-[120px] font-sans relative"
+      className="presence-root min-h-[100dvh] bg-[var(--bg-primary)] pb-[120px] font-sans relative"
       dir="rtl"
     >
       <AnimatePresence>{toast && <Toast msg={toast.msg} type={toast.type} />}</AnimatePresence>

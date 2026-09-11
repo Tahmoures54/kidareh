@@ -40,18 +40,13 @@ export default function Stores() {
   const [sortOpen, setSortOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
-  const mounted = useRef(true);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    mounted.current = true;
     document.title = "فروشگاه‌ها | کی‌داره";
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
-    return () => {
-      mounted.current = false;
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   useEffect(() => {
@@ -79,8 +74,6 @@ export default function Stores() {
           stores: StoreItem[];
           pagination?: { hasMore?: boolean };
         }>(`/api/stores?${qs.toString()}`, { auth: false });
-        if (!mounted.current) return;
-
         const incoming = Array.isArray(data?.stores) ? data.stores : [];
         setStores((prev) => {
           const merged = pageNum === 1 || !append ? incoming : [...prev, ...incoming];
@@ -91,11 +84,9 @@ export default function Stores() {
         setHasMore(Boolean(data?.pagination?.hasMore));
         setPage(pageNum);
       } catch {
-        if (!mounted.current) return;
         if (pageNum === 1) setError("نت یه لحظه قطع شد. دوباره امتحان کن.");
         else setMoreError(true);
       } finally {
-        if (!mounted.current) return;
         setLoading(false);
         setMoreLoading(false);
         setRefreshing(false);
