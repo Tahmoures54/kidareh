@@ -185,7 +185,8 @@ export default function CategoryPicker({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
