@@ -33,6 +33,8 @@ function listingCatsFor(token: string): ListingCategory[] | null {
   const slug = getCategoryGroupBySlug(token)?.slug || getCategoryGroupInfo(token).slug;
   return PRESENCE_GROUP_TO_LISTING[slug] ?? null;
 }
+
+const RADII = [
   { km: 0.8, label: "۸۰۰ م" },
   { km: 1.5, label: "۱٫۵ ک‌م" },
   { km: 3, label: "۳ ک‌م" },
