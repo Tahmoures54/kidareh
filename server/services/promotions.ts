@@ -10,6 +10,9 @@ export type PackageId =
   | "trial_boost_3d"
   | "search_boost_7d"
   | "search_boost_30d"
+  | "market_story_1d"
+  | "market_story_3d"
+  | "market_story_7d"
   | "homepage_banner_7d"
   | "homepage_banner_30d"
   | "visibility_bundle_7d"
@@ -24,6 +27,7 @@ export interface PromoPackage {
   features: {
     searchBoost?: boolean;
     homepageBanner?: boolean;
+    homepageStory?: boolean;
     blueTick?: boolean;
     productFeature?: boolean;
   };
@@ -62,6 +66,34 @@ export const PROMO_CATALOG: PromoPackage[] = [
     psychologyHook: "تعهد ماهانه با تخفیف نسبت به هفتگی",
   },
   {
+    id: "market_story_1d",
+    name: "استوری بازار (۲۴ ساعت)",
+    desc: "حلقه استوری بالای بازار شهر شما — مثل اینستاگرام، مشتری با یک لمس ویترین‌تان را می‌بیند",
+    price: 19000,
+    days: 1,
+    features: { homepageStory: true },
+    psychologyHook: "جای اول صفحه، ارزان‌تر از بنر، تکرار روزانه",
+  },
+  {
+    id: "market_story_3d",
+    name: "استوری بازار (۳ روز)",
+    desc: "سه روز استوری افقی بالای بازار همان شهر — تا وقتی مشتری اسکرول می‌کند شما را می‌بیند",
+    price: 45000,
+    days: 3,
+    features: { homepageStory: true },
+    psychologyHook: "حجم فروش بیشتر از برچسب؛ چند مغازه هم‌زمان در ردیف استوری",
+    trial: false,
+  },
+  {
+    id: "market_story_7d",
+    name: "استوری بازار (۷ روز)",
+    desc: "یک هفته حلقه استوری بالای بازار — کالاهای تأییدشده‌تان فریم‌به‌فریم پخش می‌شود",
+    price: 89000,
+    days: 7,
+    features: { homepageStory: true },
+    psychologyHook: "اجاره جای اینستاگرامی بازار محلی",
+  },
+  {
     id: "homepage_banner_7d",
     name: "بنر صفحه اصلی (۷ روز)",
     desc: "نمایش فروشگاه شما در بنر بالای صفحه اصلی برای کاربران همان شهر — با برچسب آگهی",
@@ -82,11 +114,11 @@ export const PROMO_CATALOG: PromoPackage[] = [
   {
     id: "visibility_bundle_7d",
     name: "بسته دیده شدن کامل (۷ روز)",
-    desc: "بنر صفحه اصلی + اولویت جستجو + نشان ویژه روی کالاها",
-    price: 129000,
+    desc: "استوری بالای بازار + بنر صفحه اصلی + اولویت جستجو",
+    price: 149000,
     days: 7,
-    features: { homepageBanner: true, searchBoost: true, productFeature: true },
-    psychologyHook: "باندل — ارزش بیشتر از خرید جداگانه",
+    features: { homepageStory: true, homepageBanner: true, searchBoost: true, productFeature: true },
+    psychologyHook: "باندل — استوری درآمد اصلی است، بنر و جستجو همراهش می‌آید",
   },
   {
     id: "blue_tick_30d",
@@ -119,6 +151,7 @@ export function ensurePromotionTables(): void {
       ends_at       TEXT    NOT NULL,
       impressions   INTEGER DEFAULT 0,
       clicks        INTEGER DEFAULT 0,
+      kind          TEXT    NOT NULL DEFAULT 'banner',
       created_at    TEXT    DEFAULT CURRENT_TIMESTAMP
     );
 
@@ -142,10 +175,21 @@ export function ensurePromotionTables(): void {
       ON store_promotions(store_id, status, ends_at);
   `);
 
+  try {
+    db.exec(`ALTER TABLE sponsored_slots ADD COLUMN kind TEXT NOT NULL DEFAULT 'banner'`);
+  } catch {
+    /* kind already exists */
+  }
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_sponsored_kind_city
+      ON sponsored_slots(kind, city, status, ends_at);
+  `);
+
   // default settings prices (optional override)
   const defaults: Array<[string, string, string]> = [
     ["PROMO_ENABLED", "true", "فعال بودن سیستم تبلیغات"],
     ["PROMO_MAX_BANNERS_PER_CITY", "5", "حداکثر بنر فعال همزمان در هر شهر"],
+    ["PROMO_MAX_STORIES_PER_CITY", "24", "حداکثر استوری فعال همزمان در هر شهر"],
   ];
   const stmt = db.prepare(
     `INSERT OR IGNORE INTO settings (key, value, description) VALUES (?, ?, ?)`
@@ -183,6 +227,152 @@ function addDays(base: Date, days: number): Date {
   return d;
 }
 
+function insertSponsoredSlot(input: {
+  storeId: number;
+  userId: number;
+  packageId: string;
+  city: string;
+  title: string;
+  imageUrl: string | null;
+  startsAt: string;
+  endsAt: string;
+  kind: "banner" | "story";
+  maxKey: string;
+  maxDefault: number;
+}): void {
+  const maxRow = db.prepare(`SELECT value FROM settings WHERE key = ?`).get(input.maxKey) as any;
+  const maxSlots = Number(maxRow?.value ?? input.maxDefault);
+  const activeCount = (
+    db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM sponsored_slots
+         WHERE city = ? AND status = 'active' AND ends_at > ?
+           AND COALESCE(kind, 'banner') = ?`
+      )
+      .get(input.city, input.startsAt, input.kind) as any
+  )?.c ?? 0;
+
+  if (activeCount >= maxSlots) {
+    logger.info(`City ${input.city} has ${activeCount} active ${input.kind}s (max ${maxSlots})`);
+  }
+
+  db.prepare(
+    `INSERT INTO sponsored_slots
+      (store_id, user_id, package_id, city, title, image_url, status, starts_at, ends_at, kind)
+     VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)`
+  ).run(
+    input.storeId,
+    input.userId,
+    input.packageId,
+    input.city,
+    input.title,
+    input.imageUrl,
+    input.startsAt,
+    input.endsAt,
+    input.kind
+  );
+}
+
+function firstProductImage(raw: unknown): string | null {
+  if (raw == null) return null;
+  const value = String(raw).trim();
+  if (!value) return null;
+  if (value.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed) && parsed[0]) return String(parsed[0]);
+    } catch {
+      /* keep raw */
+    }
+  }
+  return value;
+}
+
+export interface MarketStoryFrame {
+  id: string;
+  image: string;
+  title?: string;
+  caption?: string;
+  href?: string;
+  productId?: number;
+}
+
+export interface MarketStory {
+  id: string;
+  storeId: number;
+  name: string;
+  image: string | null;
+  href: string;
+  city: string;
+  category?: string;
+  verified: boolean;
+  blueTick: boolean;
+  isAd: true;
+  paid: boolean;
+  frames: MarketStoryFrame[];
+}
+
+function storyFramesForStore(
+  storeId: number,
+  storeImage: string | null,
+  storeName: string
+): MarketStoryFrame[] {
+  const rows = db
+    .prepare(
+      `SELECT id, name, image_url, price
+       FROM products
+       WHERE store_id = ? AND moderation_status = 'approved'
+       ORDER BY datetime(COALESCE(updated_at, created_at)) DESC, id DESC
+       LIMIT 6`
+    )
+    .all(storeId) as any[];
+
+  const frames: MarketStoryFrame[] = [];
+  for (const row of rows) {
+    const image = firstProductImage(row.image_url);
+    if (!image) continue;
+    const price = Number(row.price) || 0;
+    frames.push({
+      id: `p-${row.id}`,
+      image,
+      title: row.name,
+      caption: price > 0 ? `${price.toLocaleString("fa-IR")} تومان` : undefined,
+      href: `/products/${row.id}`,
+      productId: Number(row.id),
+    });
+  }
+  if (!frames.length && storeImage) {
+    frames.push({
+      id: `store-${storeId}`,
+      image: storeImage,
+      title: storeName,
+      href: `/store/${storeId}`,
+    });
+  }
+  return frames;
+}
+
+function toMarketStory(row: any, paid: boolean): MarketStory | null {
+  const image = row.image_url || row.cover_image_url || row.store_image || null;
+  const name = row.title || row.store_name;
+  const frames = storyFramesForStore(Number(row.store_id), image, name);
+  if (!frames.length) return null;
+  return {
+    id: String(row.id),
+    storeId: Number(row.store_id),
+    name,
+    image,
+    href: `/store/${row.store_id}`,
+    city: row.city,
+    category: row.category || undefined,
+    verified: Boolean(row.is_verified || row.has_business_license),
+    blueTick: Boolean(row.blue_tick_expires_at && new Date(row.blue_tick_expires_at) > new Date()),
+    isAd: true,
+    paid,
+    frames,
+  };
+}
+
 /** Activate package after successful payment */
 export function activatePromotionPackage(
   userId: number,
@@ -192,7 +382,7 @@ export function activatePromotionPackage(
   if (!pkg) return { ok: false, error: "پکیج نامعتبر" };
 
   const store = db
-    .prepare(`SELECT id, city, name, image_url, total_views FROM stores WHERE user_id = ?`)
+    .prepare(`SELECT id, city, name, image_url, cover_image_url, total_views FROM stores WHERE user_id = ?`)
     .get(userId) as any;
   if (!store) return { ok: false, error: "ابتدا فروشگاه خود را تکمیل کنید" };
 
@@ -243,38 +433,35 @@ export function activatePromotionPackage(
     }
 
     if (pkg.features.homepageBanner) {
-      const maxRow = db
-        .prepare(`SELECT value FROM settings WHERE key = 'PROMO_MAX_BANNERS_PER_CITY'`)
-        .get() as any;
-      const maxBanners = Number(maxRow?.value ?? 5);
-      const activeCount = (
-        db
-          .prepare(
-            `SELECT COUNT(*) AS c FROM sponsored_slots
-             WHERE city = ? AND status = 'active' AND ends_at > ?`
-          )
-          .get(store.city || "تهران", startsAt) as any
-      )?.c ?? 0;
-
-      if (activeCount >= maxBanners) {
-        // still allow — queue is rotation; just log
-        logger.info(`City ${store.city} has ${activeCount} active banners (max ${maxBanners})`);
-      }
-
-      db.prepare(
-        `INSERT INTO sponsored_slots
-          (store_id, user_id, package_id, city, title, image_url, status, starts_at, ends_at)
-         VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?)`
-      ).run(
-        store.id,
+      insertSponsoredSlot({
+        storeId: store.id,
         userId,
-        pkg.id,
-        store.city || "تهران",
-        store.name,
-        store.image_url || null,
+        packageId: pkg.id,
+        city: store.city || "تهران",
+        title: store.name,
+        imageUrl: store.image_url || null,
         startsAt,
-        endsAt
-      );
+        endsAt,
+        kind: "banner",
+        maxKey: "PROMO_MAX_BANNERS_PER_CITY",
+        maxDefault: 5,
+      });
+    }
+
+    if (pkg.features.homepageStory) {
+      insertSponsoredSlot({
+        storeId: store.id,
+        userId,
+        packageId: pkg.id,
+        city: store.city || "تهران",
+        title: store.name,
+        imageUrl: store.cover_image_url || store.image_url || null,
+        startsAt,
+        endsAt,
+        kind: "story",
+        maxKey: "PROMO_MAX_STORIES_PER_CITY",
+        maxDefault: 24,
+      });
     }
   });
 
@@ -297,6 +484,7 @@ export function getActiveSponsoredBanners(city: string, limit = 5) {
       JOIN stores s ON s.id = ss.store_id
       WHERE ss.status = 'active'
         AND ss.ends_at > ?
+        AND COALESCE(ss.kind, 'banner') = 'banner'
         AND (ss.city = ? OR ? = '')
       ORDER BY ss.created_at DESC
       LIMIT ?
@@ -317,6 +505,42 @@ export function getActiveSponsoredBanners(city: string, limit = 5) {
     endsAt: r.ends_at,
     isAd: true as const, // mandatory label for trust
   }));
+}
+
+/** Paid Instagram-style stories at the top of the city marketplace */
+export function getActiveMarketStories(city: string, limit = 24): MarketStory[] {
+  expireStalePromotions();
+  const now = new Date().toISOString();
+  const max = Math.min(30, Math.max(1, limit));
+  const rows = db
+    .prepare(
+      `
+      SELECT ss.id, ss.store_id, ss.title, ss.image_url, ss.city,
+             s.name AS store_name, s.category, s.image_url AS store_image,
+             s.cover_image_url, s.has_business_license, s.is_verified, s.blue_tick_expires_at
+      FROM sponsored_slots ss
+      JOIN stores s ON s.id = ss.store_id
+      WHERE ss.status = 'active'
+        AND ss.ends_at > ?
+        AND ss.kind = 'story'
+        AND (ss.city = ? OR ? = '')
+      ORDER BY ss.created_at DESC
+      LIMIT ?
+    `
+    )
+    .all(now, city || "", city || "", max) as any[];
+
+  const stories: MarketStory[] = [];
+  const seen = new Set<number>();
+  for (const row of rows) {
+    const storeId = Number(row.store_id);
+    if (seen.has(storeId)) continue;
+    const story = toMarketStory(row, true);
+    if (!story) continue;
+    seen.add(storeId);
+    stories.push(story);
+  }
+  return stories;
 }
 
 export function recordBannerImpression(slotId: number) {
@@ -343,13 +567,25 @@ export function getSellerPromoStats(userId: number) {
     )
     .all(store.id) as any[];
 
-  const banners = db
+  const slots = db
     .prepare(
-      `SELECT * FROM sponsored_slots WHERE store_id = ? ORDER BY created_at DESC LIMIT 20`
+      `SELECT * FROM sponsored_slots WHERE store_id = ? ORDER BY created_at DESC LIMIT 40`
     )
     .all(store.id) as any[];
 
   const nowViews = Number(store.total_views ?? 0);
+  const mapSlot = (b: any) => ({
+    id: b.id,
+    packageId: b.package_id,
+    status: b.status,
+    city: b.city,
+    kind: b.kind || "banner",
+    startsAt: b.starts_at,
+    endsAt: b.ends_at,
+    impressions: b.impressions,
+    clicks: b.clicks,
+    ctr: b.impressions > 0 ? Math.round((b.clicks / b.impressions) * 1000) / 10 : 0,
+  });
 
   return {
     storeId: store.id,
@@ -364,17 +600,8 @@ export function getSellerPromoStats(userId: number) {
       viewsDelta: nowViews - Number(p.views_at_start ?? 0),
       searchBoost: Boolean(p.search_boost),
     })),
-    banners: banners.map((b) => ({
-      id: b.id,
-      packageId: b.package_id,
-      status: b.status,
-      city: b.city,
-      startsAt: b.starts_at,
-      endsAt: b.ends_at,
-      impressions: b.impressions,
-      clicks: b.clicks,
-      ctr: b.impressions > 0 ? Math.round((b.clicks / b.impressions) * 1000) / 10 : 0,
-    })),
+    banners: slots.filter((b) => (b.kind || "banner") !== "story").map(mapSlot),
+    stories: slots.filter((b) => b.kind === "story").map(mapSlot),
   };
 }
 

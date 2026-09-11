@@ -1,4 +1,4 @@
-import React, { memo, useCallback } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import { Loader2, AlertCircle, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useHomeLogic } from "./useHomeLogic";
@@ -17,6 +17,11 @@ import EmptyState from "../../components/ui/EmptyState";
 import CityPicker from "../../components/location/CityPicker";
 import { SponsoredBanner } from "./components/SponsoredBanner";
 import { ValuePropsBanner } from "./components/ValuePropsBanner";
+import { FeedStories } from "../../components/feed/FeedStories";
+import { useMarketStories } from "../../hooks/useMarketStories";
+import { mergeMarketStories } from "../../lib/marketStories";
+import { presenceMarketStories } from "../../presence/stories";
+import { isTehranCity } from "../../data/processed/iranCities";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -92,6 +97,20 @@ const EndOfListMessage = memo(() => (
 ));
 
 EndOfListMessage.displayName = "EndOfListMessage";
+
+function MarketStoryRail({ city }: { city: string }) {
+  const { items } = useMarketStories(city);
+  const stories = useMemo(
+    () => mergeMarketStories(items, isTehranCity(city) ? presenceMarketStories() : [], 24),
+    [city, items]
+  );
+  if (!stories.length) return null;
+  return (
+    <div className="mb-3 overflow-hidden bg-white">
+      <FeedStories items={stories} />
+    </div>
+  );
+}
 
 // -------------------- Main Component --------------------
 export default function Home() {
@@ -174,6 +193,7 @@ export default function Home() {
         </div>
 
         <main className="flex-1 pb-24 pt-4">
+          <MarketStoryRail city={effectiveCity} />
           <SponsoredBanner city={effectiveCity} />
           <ValuePropsBanner />
 

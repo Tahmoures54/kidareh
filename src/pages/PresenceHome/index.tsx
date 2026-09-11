@@ -13,6 +13,10 @@ import { FeedColumn, FeedStack } from "../../components/feed/FeedColumn";
 import { FeedPost } from "../../components/feed/FeedPost";
 import { FeedStories, type StoryItem } from "../../components/feed/FeedStories";
 import { listingToFeedPost, productToFeedPost, type FeedPostData } from "../../lib/feedMappers";
+import { mergeMarketStories } from "../../lib/marketStories";
+import { presenceMarketStories } from "../../presence/stories";
+import { useMarketStories } from "../../hooks/useMarketStories";
+import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../utils/api";
 
 const PRESENCE_GROUP_TO_LISTING: Record<string, ListingCategory[]> = {
@@ -44,6 +48,7 @@ const RADII = [
 export default function PresenceHome() {
   const { origin } = usePresenceOrigin();
   const { location: cityLocation, isTehran } = useAppLocation();
+  const { isSeller } = useAuth();
   const [q, setQ] = useState("");
   const [marketCategory, setMarketCategory] = useState("all");
   const [radiusKm, setRadiusKm] = useState(3);
@@ -52,6 +57,7 @@ export default function PresenceHome() {
   const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const desktop = useMinWidth(1024);
+  const { items: paidStories } = useMarketStories(cityLocation.city);
 
   const pulse = useMemo(() => (isTehran ? pulseStats(origin) : { inWalk15: 0 }), [isTehran, origin]);
   const listingCats = useMemo(
@@ -115,36 +121,9 @@ export default function PresenceHome() {
   }, [listingPosts, q, shopPosts]);
 
   const stories = useMemo<StoryItem[]>(() => {
-    const items: StoryItem[] = [];
-    const seen = new Set<string>();
-    for (const listing of listings) {
-      if (seen.has(listing.store.id)) continue;
-      seen.add(listing.store.id);
-      items.push({
-        id: listing.store.id,
-        name: listing.store.name,
-        href: `/p/${listing.id}`,
-        image: listing.store.cover,
-        live: listing.openNow,
-      });
-      if (items.length >= 12) break;
-    }
-    if (items.length === 0) {
-      for (const post of shopPosts) {
-        if (!post.storeId || seen.has(String(post.storeId))) continue;
-        seen.add(String(post.storeId));
-        items.push({
-          id: String(post.storeId),
-          name: post.storeName,
-          href: `/store/${post.storeId}`,
-          image: post.storeAvatar || post.image,
-          live: false,
-        });
-        if (items.length >= 12) break;
-      }
-    }
-    return items;
-  }, [listings, shopPosts]);
+    const extra = isTehran ? presenceMarketStories() : [];
+    return mergeMarketStories(paidStories, extra, 24);
+  }, [isTehran, paidStories]);
 
   return (
     <div className="grid bg-white lg:grid-cols-[minmax(0,1fr)_420px]">
@@ -160,7 +139,10 @@ export default function PresenceHome() {
             />
           </label>
 
-          <FeedStories items={stories} />
+          <FeedStories
+            items={stories}
+            composer={isSeller ? { label: "استوری من", href: "/buy-badge" } : undefined}
+          />
 
           <div className="flex items-center gap-2 overflow-x-auto presence-hide-scroll px-3 pb-2">
             <button

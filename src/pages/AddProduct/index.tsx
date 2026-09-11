@@ -187,7 +187,7 @@ export default function AddProduct() {
               <span className="text-[10px] font-bold">خرید برچسب</span>
             </button>
 
-            {BADGES_LIST.map((badgeConfig) => {
+            {BADGES_LIST.filter((badgeConfig) => badgeConfig.category !== "story").map((badgeConfig) => {
               const count = state.inventory[badgeConfig.id] || 0;
               const disabled = count <= 0;
               const Icon = badgeConfig.icon;

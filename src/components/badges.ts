@@ -9,13 +9,14 @@ import {
   Package,
   BadgeCheck,
   Zap,
+  CircleFadingPlus,
   type LucideIcon,
 } from "lucide-react";
 
 export interface BadgeType {
   id: string;
   name: string;
-  category: "trial" | "boost" | "banner" | "trust";
+  category: "story" | "trial" | "boost" | "banner" | "trust";
   price: number;
   days: number;
   icon: LucideIcon;
@@ -26,6 +27,40 @@ export interface BadgeType {
 }
 
 export const BADGES_LIST: BadgeType[] = [
+  {
+    id: "market_story_1d",
+    name: "استوری بازار (۲۴ ساعت)",
+    category: "story",
+    price: 19000,
+    days: 1,
+    icon: CircleFadingPlus,
+    gradient: "from-amber-400 via-rose-500 to-fuchsia-600",
+    simpleDesc: "حلقه استوری بالای بازار، مثل اینستاگرام",
+    benefit: "مشتری با یک لمس ویترین‌تان را می‌بیند",
+  },
+  {
+    id: "market_story_3d",
+    name: "استوری بازار (۳ روز)",
+    category: "story",
+    price: 45000,
+    days: 3,
+    icon: CircleFadingPlus,
+    gradient: "from-rose-500 to-violet-600",
+    simpleDesc: "سه روز در ردیف افقی بالای بازار شهر شما",
+    benefit: "جای اول صفحه؛ بیشتر از برچسب دیده می‌شوید",
+    recommended: true,
+  },
+  {
+    id: "market_story_7d",
+    name: "استوری بازار (۷ روز)",
+    category: "story",
+    price: 89000,
+    days: 7,
+    icon: Sparkles,
+    gradient: "from-fuchsia-500 to-orange-500",
+    simpleDesc: "یک هفته استوری بالای بازار همان شهر",
+    benefit: "کالاهایتان فریم‌به‌فریم برای محله پخش می‌شود",
+  },
   {
     id: "trial_boost_3d",
     name: "آزمایش ۳ روزه",
@@ -86,12 +121,12 @@ export const BADGES_LIST: BadgeType[] = [
     id: "visibility_bundle_7d",
     name: "بسته کامل دیده شدن (۷ روز)",
     category: "boost",
-    price: 129000,
+    price: 149000,
     days: 7,
     icon: Package,
     gradient: "from-fuchsia-500 to-pink-600",
-    simpleDesc: "بنر + بالا آمدن در جستجو با هم",
-    benefit: "بهترین انتخاب برای هفته شلوغ",
+    simpleDesc: "استوری بالای بازار + بنر + بالا آمدن در جستجو",
+    benefit: "قوی‌ترین دیده شدن برای هفته شلوغ",
     recommended: true,
   },
   {
@@ -108,6 +143,7 @@ export const BADGES_LIST: BadgeType[] = [
 ];
 
 export const CATEGORY_LABELS: Record<BadgeType["category"], string> = {
+  story: "استوری بالای بازار",
   trial: "شروع آسان",
   boost: "دیده شدن در جستجو",
   banner: "تبلیغ صفحه اول",

@@ -106,7 +106,7 @@ export default function BecomeSeller() {
       >
         <Benefit icon={Package} title="کالا بذار" desc="اسم، قیمت و عکس کافیه. بقیه ساده‌ست." />
         <Benefit icon={TrendingUp} title="ببین چقدر دیده شدی" desc="بازدید و تماس‌ها رو توی پنل خودت ببین." />
-        <Benefit icon={ShieldCheck} title="بیشتر دیده شو" desc="با برچسب‌های ویژه، کالایت بالاتر می‌آد." />
+        <Benefit icon={ShieldCheck} title="بیشتر دیده شو" desc="استوری بالای بازار، مثل اینستاگرام، بیشتر از برچسب مشتری می‌آورد." />
       </motion.div>
 
       {error && (

@@ -67,16 +67,16 @@ export default function BuyBadge() {
     }
   };
 
-  const groups: BadgeType["category"][] = ["trial", "boost", "banner", "trust"];
+  const groups: BadgeType["category"][] = ["story", "trial", "boost", "banner", "trust"];
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-gray-950 pb-36 text-gray-900 dark:text-white" dir="rtl">
-      <PageHeader title="بیشتر دیده شوید" subtitle="ساده و شفاف — یک پکیج انتخاب کنید" />
+      <PageHeader title="بیشتر دیده شوید" subtitle="استوری بالای بازار بیشتر از برچسب مشتری می‌آورد" />
 
       <main className="px-4 py-5 space-y-5 max-w-lg mx-auto">
-        <HintCard title="چطور کار می‌کند؟" tone="blue">
-          یک گزینه را لمس کنید، بعد دکمهٔ پایین را بزنید. نیازی به تنظیمات پیچیده نیست.
-          اثر را در آمار فروشگاه‌تان می‌بینید.
+        <HintCard title="استوری یا برچسب؟" tone="blue">
+          استوری بالای بازار مثل اینستاگرام افقی حرکت می‌کند و ویترین‌تان را تمام‌صفحه نشان می‌دهد.
+          برچسب فقط روی کارت کالا می‌ماند. اگر می‌خواهید دیده شوید، اول استوری بخرید.
         </HintCard>
 
         {groups.map((cat) => {

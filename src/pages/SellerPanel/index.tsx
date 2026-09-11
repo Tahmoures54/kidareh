@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { AnimatePresence } from "motion/react";
-import { Loader2, Plus, Search, Share2, Eye, Users, Store, Pencil } from "lucide-react";
+import { Loader2, Plus, Search, Share2, Eye, Users, Store, Pencil, Sparkles } from "lucide-react";
 import SellerProductForm from "./ProductForm";
 import { useSellerPanel } from "./hooks/useSellerPanel";
 import { ProductItem } from "./components/ProductItem";
@@ -116,6 +116,18 @@ function SellerShopHome() {
             </p>
           )}
           <div className="mb-4 grid grid-cols-2 gap-2">
+            <Link
+              to="/buy-badge"
+              className="col-span-2 flex min-h-14 items-center justify-between rounded-2xl bg-gradient-to-l from-fuchsia-600 via-rose-500 to-amber-400 px-4 text-white shadow-lg shadow-rose-500/20"
+            >
+              <span className="text-right">
+                <span className="block text-sm font-black">استوری بالای بازار</span>
+                <span className="block text-[11px] font-bold text-white/85">
+                  مثل اینستاگرام؛ مغازه‌تان بالای صفحه می‌ماند
+                </span>
+              </span>
+              <Sparkles className="h-5 w-5 shrink-0" />
+            </Link>
             <button
               type="button"
               onClick={handleShareStore}

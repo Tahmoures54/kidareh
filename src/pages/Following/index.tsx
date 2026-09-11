@@ -64,10 +64,22 @@ export default function Following() {
     () =>
       stores.map((store) => ({
         id: String(store.id),
+        storeId: store.id,
         name: store.name,
         href: `/store/${store.id}`,
         image: store.image_url,
         live: true,
+        isAd: false,
+        frames: store.image_url
+          ? [
+              {
+                id: `store-${store.id}`,
+                image: store.image_url,
+                title: store.name,
+                href: `/store/${store.id}`,
+              },
+            ]
+          : [],
       })),
     [stores]
   );

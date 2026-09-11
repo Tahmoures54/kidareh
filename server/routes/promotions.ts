@@ -9,6 +9,7 @@ import {
   PROMO_CATALOG,
   ensurePromotionTables,
   getActiveSponsoredBanners,
+  getActiveMarketStories,
   recordBannerClick,
   recordBannerImpression,
   getSellerPromoStats,
@@ -37,6 +38,39 @@ router.get("/catalog", (_req, res: Response) => {
       trial: !!p.trial,
     })),
   });
+});
+
+/** GET /api/promotions/stories?city=تهران — paid shop stories (labeled ads) */
+router.get("/stories", (req, res: Response) => {
+  try {
+    const city = String(req.query.city || "تهران");
+    const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 24));
+    const stories = getActiveMarketStories(city, limit);
+    for (const story of stories) {
+      const id = Number(story.id);
+      if (Number.isFinite(id)) recordBannerImpression(id);
+    }
+    res.json({ stories, city, labeled: true });
+  } catch (err) {
+    logger.error("stories error:", err);
+    res.status(500).json({ error: "خطا در دریافت استوری‌ها" });
+  }
+});
+
+/** POST /api/promotions/stories/:id/view */
+router.post("/stories/:id/view", (req, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return res.json({ ok: true });
+  recordBannerImpression(id);
+  res.json({ ok: true });
+});
+
+/** POST /api/promotions/stories/:id/click */
+router.post("/stories/:id/click", (req, res: Response) => {
+  const id = Number(req.params.id);
+  if (!Number.isFinite(id)) return res.json({ ok: true });
+  recordBannerClick(id);
+  res.json({ ok: true });
 });
 
 /** GET /api/promotions/banners?city=تهران — homepage sponsored (labeled ads) */
