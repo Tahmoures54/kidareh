@@ -24,8 +24,8 @@ export default function ExplorePage() {
   useEffect(() => setQuery(q), [q]);
 
   return (
-    <div className="grid min-h-[calc(100dvh-73px)] lg:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="relative z-0 h-[46vh] lg:h-auto">
+    <div className="grid min-h-[calc(100dvh-73px)] lg:grid-cols-[24rem_minmax(0,1fr)]">
+      <div className="order-1 relative z-0 h-[46vh] lg:order-2 lg:h-auto">
         <PresenceMap origin={origin} listings={listings} selectedId={selected} height="100%" />
         <div className="absolute top-3 right-3 left-3 z-10">
           <input
@@ -36,7 +36,7 @@ export default function ExplorePage() {
           />
         </div>
       </div>
-      <div className="max-h-[54vh] space-y-3 overflow-y-auto p-4 lg:max-h-[calc(100dvh-73px)]">
+      <div className="order-2 max-h-[54vh] space-y-3 overflow-y-auto p-4 lg:order-1 lg:max-h-[calc(100dvh-73px)]">
         <PageHero kicker="LIVE MAP" title="نقشهٔ موجودی زنده">
           Airbnb برای ویترین مغازه‌ها — نه دیوار آگهی، نه انبار مرکزی. {toFa(listings.length)} کالا در محدوده.
         </PageHero>

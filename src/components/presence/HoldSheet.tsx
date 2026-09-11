@@ -91,6 +91,7 @@ export default function HoldSheet({ listing, open, onClose, onCreated }: Props) 
             exit={{ opacity: 0 }}
             onClick={close}
           />
+          <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[81] flex justify-center">
           <motion.div
             role="dialog"
             aria-modal="true"
@@ -98,7 +99,7 @@ export default function HoldSheet({ listing, open, onClose, onCreated }: Props) 
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 40, opacity: 0 }}
-            className="presence-card fixed bottom-0 left-1/2 z-[81] w-full max-w-lg -translate-x-1/2 rounded-t-[32px] p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+            className="presence-card pointer-events-auto w-full max-w-lg rounded-t-[32px] p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
           >
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-black/10" />
             <div className="mb-4 flex items-start justify-between gap-3">
@@ -164,6 +165,7 @@ export default function HoldSheet({ listing, open, onClose, onCreated }: Props) 
               </>
             )}
           </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
