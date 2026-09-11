@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Command, Compass, Footprints, Map as MapIcon, Radio, Search, Store } from "lucide-react";
+import { Compass, Footprints, Map as MapIcon, Radio, Search, Store } from "lucide-react";
 import { formatCompactToman, formatWalk, searchListings } from "../../presence/engine";
 import type { PresenceOrigin } from "../../presence/types";
 import PresenceImage from "./PresenceImage";
@@ -21,12 +21,11 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
   const results = useMemo(() => searchListings(origin, { q, inStock: true }).slice(0, 8), [origin, q]);
 
   useEffect(() => {
-    if (open) {
-      setQ("");
-      setActive(0);
-      const t = window.setTimeout(() => inputRef.current?.focus(), 40);
-      return () => window.clearTimeout(t);
-    }
+    if (!open) return undefined;
+    setQ("");
+    setActive(0);
+    const t = window.setTimeout(() => inputRef.current?.focus(), 40);
+    return () => window.clearTimeout(t);
   }, [open]);
 
   useEffect(() => setActive(0), [q]);
@@ -62,7 +61,7 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
           <button type="button" className="absolute inset-0 bg-[var(--ink)]/45 backdrop-blur-md" aria-label="بستن جستجو" onClick={onClose} />
           <motion.div
             role="dialog"
-            aria-label="جستجوی فرمان"
+                aria-label="جستجو در محله"
             initial={{ y: 16, opacity: 0, scale: 0.98 }}
             animate={{ y: 0, opacity: 1, scale: 1 }}
             exit={{ y: 10, opacity: 0 }}
@@ -125,12 +124,10 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
                 </button>
               </div>
             </div>
-            <div className="flex items-center justify-between border-t border-[var(--line)] px-4 py-2 text-[10px] font-bold text-[var(--muted)]">
+            <div className="flex items-center justify-between border-t border-[var(--line)] px-4 py-2 text-[11px] font-bold text-[var(--muted)]">
+              <span>جستجو در محله</span>
               <span className="inline-flex items-center gap-1">
-                <Command className="h-3 w-3" />K · ↑↓ ورود
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <Compass className="h-3 w-3" /> موجودی زنده محله
+                <Compass className="h-3 w-3" /> موجودی زنده
               </span>
             </div>
           </motion.div>

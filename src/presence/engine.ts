@@ -261,11 +261,10 @@ export function pulseStats(origin: PresenceOrigin, at?: Date) {
 
 export function compareCopy() {
   return [
-    { axis: "زمان تا کالا", digikala: "۲ تا ۵ روز ارسال", divar: "نامشخص", kidareh: "۷ تا ۲۰ دقیقه پیاده" },
-    { axis: "دیدن کالا", digikala: "بعد از پرداخت", divar: "عکس نامطمئن", kidareh: "قبل از پرداخت، در ویترین" },
-    { axis: "قیمت محله", digikala: "یک انبار مرکزی", divar: "چانه‌زنی پنهان", kidareh: "رادار قیمت فروشگاه‌های اطراف" },
-    { axis: "موجودی", digikala: "انبار", divar: "شاید باشد", kidareh: "زنده، با دقیقهٔ به‌روزرسانی" },
-    { axis: "اعتماد", digikala: "برند پلتفرم", divar: "فروشنده ناشناس", kidareh: "فروشگاه تأییدشده + کد تحویل" },
+    { axis: "کی می‌رسی به کالا؟", digikala: "چند روز پست", divar: " معلوم نیست", kidareh: "چند دقیقه پیاده" },
+    { axis: "قبل از پول می‌بینی؟", digikala: "نه، اول پرداخت", divar: "فقط عکس", kidareh: "بله، در مغازه" },
+    { axis: "قیمت چند مغازه؟", digikala: "یک انبار", divar: "چانه پنهان", kidareh: "قیمت زنده محله" },
+    { axis: "موجود است؟", digikala: "انبار", divar: "شاید باشد", kidareh: "الان در ویترین" },
   ];
 }
 

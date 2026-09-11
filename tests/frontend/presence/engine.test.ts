@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_ORIGIN } from "@/presence/catalog";
 import {
   buildRadar,
+  compareCopy,
   createHold,
   haversineKm,
   makePickupCode,
@@ -70,5 +71,15 @@ describe("presence engine", () => {
     expect(hold.holdMinutes).toBe(45);
     expect(hold.status).toBe("requested");
     expect(makePickupCode("seed-a")).not.toBe(makePickupCode("seed-b"));
+  });
+
+  it("compare copy stays short Persian for shopkeepers", () => {
+    const rows = compareCopy();
+    expect(rows.length).toBeGreaterThanOrEqual(3);
+    for (const row of rows) {
+      expect(row.axis).toMatch(/[آ-ی]/);
+      expect(row.kidareh).toMatch(/[آ-ی]/);
+      expect(row.axis).not.toMatch(/[A-Za-z]{4,}/);
+    }
   });
 });

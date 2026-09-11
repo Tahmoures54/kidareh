@@ -2,20 +2,43 @@
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../context/AuthContext";
-import { ChartPeriod, FilterType, ProductStatus, StoreFormValues } from "../types";
-import { 
-  fetchSellerProducts, 
-  updateProduct, 
-  deleteProduct,
-  CreateProductPayload 
-} from "../../../services/products.service";
+import { FilterType, Product, ProductStatus, StoreFormValues } from "../types";
+import { fetchSellerProducts, updateProduct, deleteProduct } from "../../../services/products.service";
 
 const STATUS_FLOW: Record<ProductStatus, ProductStatus> = {
   موجود: "موجودی کم",
-  "موجودی کم": "فقط ۳ عدد",
-  "فقط ۳ عدد": "ناموجود",
+  "موجودی کم": "فقط ۱ عدد",
+  "فقط ۱ عدد": "ناموجود",
   ناموجود: "موجود",
 };
+
+export function normalizeStatus(status: string | undefined): ProductStatus {
+  if (status === "فقط ۳ عدد") return "فقط ۱ عدد";
+  if (status === "موجود" || status === "موجودی کم" || status === "فقط ۱ عدد" || status === "ناموجود") {
+    return status;
+  }
+  return "موجود";
+}
+
+export function nextStatus(status: string | undefined): ProductStatus {
+  return STATUS_FLOW[normalizeStatus(status)];
+}
+
+function normalizeProduct(raw: Record<string, unknown>): Product {
+  const status = normalizeStatus(typeof raw.status === "string" ? raw.status : undefined);
+  const image = (typeof raw.image_url === "string" && raw.image_url) || (typeof raw.image === "string" && raw.image) || null;
+  return {
+    id: Number(raw.id),
+    name: String(raw.name ?? ""),
+    price: Number(raw.price ?? 0),
+    status,
+    views: Number(raw.views ?? 0),
+    isPublic: status !== "ناموجود",
+    badge: typeof raw.badge === "string" ? raw.badge : null,
+    image,
+    image_url: image,
+  };
+}
 
 export function useSellerPanel() {
   const { user, logout } = useAuth();
@@ -25,13 +48,12 @@ export function useSellerPanel() {
   const [toast, setToast] = useState<string | null>(null);
   const [editingStore, setEditingStore] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>("weekly");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<FilterType>("all");
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    document.title = "پنل فروشنده | کی‌داره";
+    document.title = "مغازه‌ام | کی‌داره";
   }, []);
 
   const handleShowToast = useCallback((msg: string) => {
@@ -39,67 +61,62 @@ export function useSellerPanel() {
     setToast(msg);
   }, []);
 
-  // --- Data Fetching (React Query) ---
   const { data: productsData, isLoading: productsLoading } = useQuery({
     queryKey: ["sellerProducts", user?.id],
-    queryFn: fetchSellerProducts,
+    queryFn: ({ signal }) => fetchSellerProducts(signal),
     enabled: !!user,
   });
 
-  const products = useMemo(() => productsData?.products || [], [productsData]);
+  const products = useMemo<Product[]>(() => {
+    const list = productsData?.products ?? [];
+    return list.map((item) => normalizeProduct(item as unknown as Record<string, unknown>));
+  }, [productsData]);
 
-  // TODO: این هوک‌ها نیز باید به React Query متصل شوند (فعلاً روی مقادیر پیش‌فرض می‌مانند)
-  const storeInfo = null; // useQuery برای اطلاعات فروشگاه
+  const storeInfo = null;
   const storeLoading = false;
-  const chartData: any[] = []; // useQuery برای آمار
+  const chartData: unknown[] = [];
   const contactsData = { count: 0 };
   const followersData = { count: 0 };
 
-  // --- Mutations ---
   const invalidateProducts = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["sellerProducts"] });
   }, [queryClient]);
 
   const updateStatusMut = useMutation({
-    mutationFn: (vars: { id: number; status: ProductStatus }) => 
-      updateProduct(vars.id, { status: vars.status }),
+    mutationFn: (vars: { id: number; status: ProductStatus }) => updateProduct(vars.id, { status: vars.status }),
     onSuccess: () => {
-      handleShowToast("وضعیت بروز شد");
+      handleShowToast("وضعیت عوض شد");
       invalidateProducts();
     },
-    onError: () => handleShowToast("خطا در تغییر وضعیت")
+    onError: () => handleShowToast("وضعیت عوض نشد. دوباره بزن"),
   });
 
   const toggleVisibilityMut = useMutation({
-    mutationFn: (vars: { id: number; isPublic: boolean }) => 
-      updateProduct(vars.id, { status: vars.isPublic ? "موجود" : "ناموجود" }), // فرض بر این که عمومی/خصوصی با وضعیت مدیریت می‌شود
+    mutationFn: (vars: { id: number; isPublic: boolean }) =>
+      updateProduct(vars.id, { status: vars.isPublic ? "موجود" : "ناموجود" }),
     onSuccess: () => {
       handleShowToast("نمایش تغییر کرد");
       invalidateProducts();
-    }
+    },
   });
 
   const deleteProductMut = useMutation({
     mutationFn: (id: number) => deleteProduct(id),
     onSuccess: () => {
-      handleShowToast("کالا برای همیشه حذف شد");
+      handleShowToast("کالا حذف شد");
       setDeletingId(null);
       invalidateProducts();
-    }
+    },
   });
 
   const updateStoreMut = useMutation({
-    mutationFn: async (values: StoreFormValues) => {
-      // await updateStoreInfo(values); -> سرویس مربوطه فراخوانی شود
-      return new Promise(res => setTimeout(res, 500)); // شبیه‌سازی موقت
-    },
+    mutationFn: async (_values: StoreFormValues) => new Promise((res) => setTimeout(res, 500)),
     onSuccess: () => {
       setEditingStore(false);
       handleShowToast("اطلاعات فروشگاه به‌روز شد");
-    }
+    },
   });
 
-  // --- Handlers ---
   const handleDeleteTrigger = useCallback(
     (id: number) => {
       if (deletingId !== id) {
@@ -114,7 +131,7 @@ export function useSellerPanel() {
   );
 
   const handleShare = useCallback(
-    async (product: any) => {
+    async (product: Product) => {
       const url = `${window.location.origin}/product/${product.id}`;
       if (navigator.share) {
         await navigator.share({ title: product.name, url });
@@ -131,18 +148,22 @@ export function useSellerPanel() {
     navigate("/login");
   }, [logout, navigate]);
 
-  // --- Derived data ---
-  const totalViews = useMemo(() => products.reduce((a, p) => a + (p.views || 0), 0), [products]);
+  const cycleStatus = useCallback(
+    (product: Product) => {
+      updateStatusMut.mutate({ id: product.id, status: nextStatus(product.status) });
+    },
+    [updateStatusMut]
+  );
+
   const lowStockCount = useMemo(
-    () => products.filter((p) => p.status === "موجودی کم" || p.status === "فقط ۳ عدد").length,
+    () => products.filter((p) => p.status === "موجودی کم" || p.status === "فقط ۱ عدد").length,
     [products]
   );
-  const hasBlueTick = false; // از storeInfo محاسبه شود
 
   const filteredProducts = useMemo(
     () =>
       products.filter((p) => {
-        const matchQ = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchQ = !searchQuery || p.name.includes(searchQuery);
         const matchS = statusFilter === "all" || p.status === statusFilter;
         return matchQ && matchS;
       }),
@@ -150,11 +171,34 @@ export function useSellerPanel() {
   );
 
   return {
-    user, toast, setToast, editingStore, setEditingStore, deletingId,
-    chartPeriod, setChartPeriod, searchQuery, setSearchQuery, statusFilter, setStatusFilter,
-    products, productsLoading, storeInfo, storeLoading, chartData, contactsData, followersData,
-    totalViews, lowStockCount, hasBlueTick, filteredProducts,
-    updateStatusMut, toggleVisibilityMut, deleteProductMut, updateStoreMut,
-    handleShowToast, handleDeleteTrigger, handleShare, handleLogout, statusFlow: STATUS_FLOW,
+    user,
+    toast,
+    setToast,
+    editingStore,
+    setEditingStore,
+    deletingId,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    products,
+    productsLoading,
+    storeInfo,
+    storeLoading,
+    chartData,
+    contactsData,
+    followersData,
+    lowStockCount,
+    filteredProducts,
+    updateStatusMut,
+    toggleVisibilityMut,
+    deleteProductMut,
+    updateStoreMut,
+    handleShowToast,
+    handleDeleteTrigger,
+    handleShare,
+    handleLogout,
+    cycleStatus,
+    statusFlow: STATUS_FLOW,
   };
 }

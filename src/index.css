@@ -713,26 +713,26 @@ a {
   }
 }
 
-/* ====================== PRESENCE OS ====================== */
+/* ====================== PRESENCE OS — فیروزه آسمان ایران ====================== */
 .presence-root {
-  --paper: #f3efe6;
-  --paper-2: #ebe6db;
-  --ink: #14161c;
-  --ink-soft: #3d433c;
-  --muted: #6b7168;
-  --line: rgba(20, 22, 28, 0.09);
-  --line-strong: rgba(20, 22, 28, 0.16);
-  --accent: #0e6f63;
-  --accent-2: #165c54;
-  --gold: #b68a3a;
-  --danger: #b42318;
-  --ok: #157a4b;
-  --card: rgba(255, 252, 246, 0.92);
+  --paper: #e8f7f6;
+  --paper-2: #d4eeec;
+  --ink: #0a3d3a;
+  --ink-soft: #165c57;
+  --muted: #4d7a75;
+  --line: rgba(0, 166, 147, 0.16);
+  --line-strong: rgba(10, 61, 58, 0.22);
+  --accent: #00a693;
+  --accent-2: #00897a;
+  --gold: #e6b84f;
+  --danger: #c62828;
+  --ok: #1b8a5a;
+  --card: rgba(255, 255, 255, 0.9);
   font-family: var(--font-body);
   background:
-    radial-gradient(1200px 500px at 10% -10%, rgba(14, 111, 99, 0.08), transparent 50%),
-    radial-gradient(900px 400px at 110% 0%, rgba(182, 138, 58, 0.08), transparent 45%),
-    var(--paper);
+    radial-gradient(1200px 520px at 8% -12%, rgba(0, 166, 147, 0.22), transparent 52%),
+    radial-gradient(880px 420px at 108% -4%, rgba(230, 184, 79, 0.16), transparent 46%),
+    linear-gradient(180deg, #f3fcfb 0%, var(--paper) 38%, #dff4f2 100%);
   color: var(--ink);
   min-height: 100dvh;
   width: 100%;
@@ -751,13 +751,13 @@ a {
 .presence-card {
   background: var(--card);
   border: 1px solid var(--line);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 18px 40px -28px rgba(20, 22, 28, 0.35);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.85) inset, 0 18px 40px -28px rgba(0, 102, 94, 0.28);
   backdrop-filter: blur(18px);
 }
 
 .presence-chip {
   border: 1px solid var(--line);
-  background: rgba(255, 252, 246, 0.7);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .presence-btn {
@@ -765,9 +765,10 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  min-height: 2.75rem;
   height: 2.75rem;
   border-radius: 1rem;
-  font-size: 0.8125rem;
+  font-size: 0.875rem;
   font-weight: 900;
   transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
 }
@@ -781,7 +782,7 @@ a {
   z-index: 0;
 }
 .presence-map .leaflet-container {
-  background: #d9e2d6;
+  background: #c5ebe8;
   font-family: var(--font-body);
   z-index: 0;
 }

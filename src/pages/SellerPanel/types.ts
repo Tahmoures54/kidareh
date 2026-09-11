@@ -13,6 +13,7 @@ export interface Product {
   isPublic: boolean;
   badge?: string | null;
   image?: string | null;
+  image_url?: string | null;
 }
 
 export interface StoreInfo {

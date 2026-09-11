@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 
 interface Props {
@@ -17,7 +16,7 @@ export default function PresenceEmpty({ title, hint, actionTo, actionLabel, onAc
       {actionTo && actionLabel ? (
         <Link
           to={actionTo}
-          className="mt-4 inline-flex h-11 items-center rounded-2xl bg-[var(--ink)] px-4 text-xs font-black text-white"
+          className="mt-4 inline-flex h-12 items-center rounded-2xl bg-[var(--accent)] px-5 text-sm font-black text-white"
         >
           {actionLabel}
         </Link>
@@ -26,7 +25,7 @@ export default function PresenceEmpty({ title, hint, actionTo, actionLabel, onAc
         <button
           type="button"
           onClick={onAction}
-          className="mt-4 inline-flex h-11 items-center rounded-2xl bg-[var(--ink)] px-4 text-xs font-black text-white"
+          className="mt-4 inline-flex h-12 items-center rounded-2xl bg-[var(--accent)] px-5 text-sm font-black text-white"
         >
           {actionLabel}
         </button>

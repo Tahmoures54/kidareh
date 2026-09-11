@@ -96,8 +96,8 @@ export const Header = memo(
             {isSeller && (
               <Link
                 to="/seller"
-                aria-label="پنل فروشنده"
-                title="پنل فروشنده"
+                aria-label="مغازه‌ام"
+                title="مغازه‌ام"
                 className={ICON_BUTTON_CLASS}
               >
                 <StoreIcon className="w-5 h-5" />

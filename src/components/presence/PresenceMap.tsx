@@ -94,18 +94,18 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
           />
           <InvalidateSize />
           <FlyTo center={center} />
-          <Marker position={[center.lat, center.lng]} icon={pin("#14161c", "تو")} />
+          <Marker position={[center.lat, center.lng]} icon={pin("#0a3d3a", "تو")} />
           {line.length > 1 && (
             <Polyline
               positions={line.map((p) => [p.lat, p.lng] as [number, number])}
-              pathOptions={{ color: "#0e6f63", weight: 4, opacity: 0.85 }}
+              pathOptions={{ color: "#00A693", weight: 4, opacity: 0.9 }}
             />
           )}
           {uniqueStores.map((l) => (
             <Marker
               key={l.storeId}
               position={[l.store.lat, l.store.lng]}
-              icon={pin(l.id === selectedId ? "#b68a3a" : "#0e6f63", formatCompactToman(l.price))}
+              icon={pin(l.id === selectedId ? "#e6b84f" : "#00A693", formatCompactToman(l.price))}
             >
               <Popup>
                 <div dir="rtl" className="min-w-[160px] text-right">

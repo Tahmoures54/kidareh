@@ -54,7 +54,7 @@ export default function Login() {
             initial={{ scale: 0, rotate: -30 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[32px] bg-[var(--ink)] text-white shadow-xl"
+            className="relative mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-[32px] bg-[var(--accent)] text-white shadow-xl shadow-[var(--accent)]/30"
           >
             <motion.div animate={{ y: state.isSuccess ? 0 : [0, -3, 0] }} transition={{ duration: 2, repeat: state.isSuccess ? 0 : Infinity }}>
               {state.isSuccess ? (

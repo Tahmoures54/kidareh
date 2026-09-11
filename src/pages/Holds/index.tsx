@@ -40,7 +40,7 @@ export default function HoldsPage() {
         next[h.id] = await QRCode.toDataURL(`kidareh:pickup:${h.pickupCode}`, {
           margin: 1,
           width: 200,
-          color: { dark: "#14161c", light: "#0000" },
+          color: { dark: "#0a3d3a", light: "#0000" },
         });
       }
       if (!cancelled) setQr(next);
@@ -52,8 +52,8 @@ export default function HoldsPage() {
 
   return (
     <div className="presence-page px-4 py-6">
-      <PageHero kicker="RESERVE & COLLECT" title="رزروهای حضوری">
-        کالا را نگه می‌دارند، تو پیاده می‌رسی، با QR تحویل می‌گیری. هیچ پولی تا دیدن کالا کم نمی‌شود.
+      <PageHero kicker="رزرو حضوری" title="کالا را نگه می‌دارند">
+        بدون پرداخت رزرو کن، پیاده برو، با کد تحویل بگیر.
       </PageHero>
       <div className="mt-6 space-y-4">
         {live.length === 0 && (
@@ -79,7 +79,7 @@ export default function HoldsPage() {
                   تا {new Date(h.expiresAt).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" })}
                 </p>
                 <div className="mt-3 flex gap-2">
-                  <Link to={`/p/${h.listingId}`} className="rounded-xl bg-[var(--ink)] px-3 py-2 text-[11px] font-black text-white">کالا</Link>
+                  <Link to={`/p/${h.listingId}`} className="rounded-xl bg-[var(--accent)] px-3 py-2.5 text-xs font-black text-white">کالا</Link>
                   <button
                     type="button"
                     onClick={() => {

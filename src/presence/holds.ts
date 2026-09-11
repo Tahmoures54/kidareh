@@ -64,6 +64,6 @@ export function markLocalReady(id: string): HoldRecord | null {
 
 export const HOLD_OPTIONS = [
   { minutes: 30, label: "۳۰ دقیقه", hint: "نزدیکم، پیاده می‌آیم" },
-  { minutes: 45, label: "۴۵ دقیقه", hint: "استاندارد سیلیکون‌ولی" },
+  { minutes: 45, label: "۴۵ دقیقه", hint: "معمول محله" },
   { minutes: 90, label: "۹۰ دقیقه", hint: "ترافیک یا چند توقف" },
 ] as const;

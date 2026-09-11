@@ -82,7 +82,7 @@ export default function PhoneInputScreen({ onPhoneVerified }: PhoneInputScreenPr
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
-            className="w-20 h-20 bg-gradient-to-br from-[#14161c] to-[#0e6f63] rounded-[28px] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-cyan-500/30"
+            className="w-20 h-20 bg-gradient-to-br from-[#00A693] to-[#00897a] rounded-[28px] flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-cyan-500/30"
           >
             <Smartphone className="w-10 h-10 text-white" />
           </motion.div>
@@ -115,7 +115,7 @@ export default function PhoneInputScreen({ onPhoneVerified }: PhoneInputScreenPr
         >
           {/* Phone Input */}
           <div className="relative group">
-            <div className="absolute -inset-1 bg-gradient-to-r from-[#0e6f63] to-[#b68a3a] rounded-[24px] blur-md opacity-0 group-focus-within:opacity-30 transition-all duration-500" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-[#00A693] to-[#e6b84f] rounded-[24px] blur-md opacity-0 group-focus-within:opacity-30 transition-all duration-500" />
             <div className="relative bg-white dark:bg-slate-800 rounded-[22px] border border-slate-100 dark:border-slate-700/50 p-1.5 transition-colors group-focus-within:border-cyan-300 dark:group-focus-within:border-cyan-700">
               <div className="flex items-center px-4">
                 <Smartphone className="w-5 h-5 text-slate-400 group-focus-within:text-cyan-500 transition-colors" />
@@ -160,7 +160,7 @@ export default function PhoneInputScreen({ onPhoneVerified }: PhoneInputScreenPr
             type="submit"
             whileTap={{ scale: 0.97 }}
             disabled={loading || !validatePhone(phone)}
-            className="w-full h-16 bg-gradient-to-r from-[#14161c] to-[#0e6f63] text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-3 group"
+            className="w-full h-16 bg-gradient-to-r from-[#00A693] to-[#00897a] text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-3 group"
           >
             {loading ? (
               <motion.div className="flex items-center gap-2">

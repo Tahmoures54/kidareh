@@ -16,8 +16,8 @@ export default function RadarPage() {
 
   return (
     <div className="presence-page px-4 py-5 sm:px-6">
-      <PageHero kicker="PRICE RADAR" title="رادار قیمت محله">
-        همان کالا، چند فروشگاه، قیمت زنده. دیجی‌کالا یک انبار دارد؛ دیوار قیمت را پنهان می‌کند. اینجا اختلاف را می‌بینی و پیاده به ارزان‌ترین می‌روی.
+      <PageHero kicker="مقایسه قیمت" title="کجا ارزان‌تر است؟">
+        همان کالا در چند مغازه. ارزان‌ترین را ببین و پیاده برو.
       </PageHero>
       <div className="space-y-4">
         {groups.map((group) => {
@@ -71,7 +71,7 @@ export default function RadarPage() {
                             )}
                             {index === 0 && <span className="rounded-full bg-[var(--accent)] px-2 py-0.5 text-white">بهترین قیمت</span>}
                             {item.id === group.nearest.id && (
-                              <span className="rounded-full bg-[var(--ink)] px-2 py-0.5 text-white">نزدیک‌ترین</span>
+                              <span className="rounded-full bg-[var(--accent-2)] px-2 py-0.5 text-white">نزدیک‌ترین</span>
                             )}
                           </p>
                         </div>
@@ -83,7 +83,7 @@ export default function RadarPage() {
                             <p className="text-[11px] font-bold text-[var(--ok)]">کمینه محله</p>
                           )}
                         </div>
-                        <ArrowLeft className="h-4 w-4 text-[#c5c1b6]" />
+                        <ArrowLeft className="h-4 w-4 text-[var(--muted)]" />
                       </Link>
                     );
                   })}

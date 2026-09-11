@@ -41,14 +41,14 @@ export default function PresenceHome() {
     <div className="grid lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="px-4 py-5 sm:px-6">
         <section className="presence-card overflow-hidden rounded-[32px] p-5 sm:p-7">
-          <p className="text-[11px] font-black text-[var(--accent)]">خرید حضوری محله</p>
+          <p className="text-sm font-black text-[var(--accent)]">خرید حضوری محله</p>
           <h1 className="mt-2 max-w-xl text-3xl font-black leading-[1.25] tracking-tight sm:text-4xl">
             ببین کی داره.
             <br />
             همین الان حضوری بگیر.
           </h1>
           <p className="mt-3 max-w-lg text-sm font-bold leading-7 text-[var(--ink-soft)]">
-            دیجی‌کالا منتظر ارسال می‌ماند. دیوار به شانس تکیه می‌کند. کی‌داره موجودی زندهٔ مغازه‌های همین محله را نشان می‌دهد — با دقیقهٔ پیاده، رادار قیمت، و کد برداشت.
+            کالا را در مغازه همین اطراف پیدا کن، پیاده برو، ببین، بعد پول بده. بدون پست و بدون انتظار.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             {[
@@ -76,7 +76,7 @@ export default function PresenceHome() {
           <button
             type="button"
             onClick={() => setCategory("all")}
-            className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${category === "all" ? "bg-[var(--ink)] text-white" : "presence-chip"}`}
+            className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-black ${category === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
           >
             همه
           </button>
@@ -85,7 +85,7 @@ export default function PresenceHome() {
               key={key}
               type="button"
               onClick={() => setCategory(key)}
-              className={`shrink-0 rounded-full px-4 py-2 text-xs font-black ${category === key ? "bg-[var(--ink)] text-white" : "presence-chip"}`}
+              className={`shrink-0 rounded-full px-4 py-2.5 text-sm font-black ${category === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
             >
               {CATEGORY_META[key].emoji} {CATEGORY_META[key].label}
             </button>
@@ -98,7 +98,7 @@ export default function PresenceHome() {
               key={r.km}
               type="button"
               onClick={() => setRadiusKm(r.km)}
-              className={`rounded-full px-3 py-1.5 text-[11px] font-black ${radiusKm === r.km ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+              className={`rounded-full px-3 py-2 text-[12px] font-black ${radiusKm === r.km ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
             >
               {r.label}
             </button>
@@ -106,7 +106,7 @@ export default function PresenceHome() {
           <button
             type="button"
             onClick={() => setOpenNow((v) => !v)}
-            className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-black ${openNow ? "bg-[var(--ok)] text-white" : "presence-chip"}`}
+            className={`inline-flex items-center gap-1 rounded-full px-3 py-2 text-[12px] font-black ${openNow ? "bg-[var(--ok)] text-white" : "presence-chip"}`}
           >
             <Clock3 className="h-3 w-3" /> فقط باز
           </button>
@@ -122,7 +122,7 @@ export default function PresenceHome() {
               key={key}
               type="button"
               onClick={() => setSort(key)}
-              className={`rounded-full px-3 py-1.5 text-[11px] font-black ${sort === key ? "bg-[var(--ink)] text-white" : "presence-chip"}`}
+              className={`rounded-full px-3 py-2 text-[12px] font-black ${sort === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
             >
               {label}
             </button>
@@ -155,16 +155,16 @@ export default function PresenceHome() {
         )}
 
         <section className="mt-10 overflow-hidden rounded-[28px] border border-[var(--line)]">
-          <div className="bg-[var(--ink)] px-5 py-4 text-white">
-            <p className="text-[11px] font-black tracking-[0.2em] text-[var(--gold)]">WHY NOT DIGIKALA / DIVAR</p>
-            <h2 className="mt-1 text-lg font-black">استاندارد سیلیکون‌ولی برای خرید حضوری ایران</h2>
+          <div className="bg-[var(--accent)] px-5 py-4 text-white">
+            <p className="text-sm font-black text-white/90">چرا کی‌داره؟</p>
+            <h2 className="mt-1 text-lg font-black">ببین، بعد بخر — از مغازه همین محله</h2>
           </div>
           <div className="grid sm:grid-cols-2">
             {compare.map((row) => (
-              <div key={row.axis} className="border-t border-[var(--line)] p-4">
-                <p className="text-[11px] font-black text-[var(--muted)]">{row.axis}</p>
-                <p className="mt-2 text-xs font-bold text-[#9aa196]">دیجی‌کالا: {row.digikala}</p>
-                <p className="text-xs font-bold text-[#9aa196]">دیوار: {row.divar}</p>
+              <div key={row.axis} className="border-t border-[var(--line)] bg-white/70 p-4">
+                <p className="text-sm font-black text-[var(--ink)]">{row.axis}</p>
+                <p className="mt-2 text-xs font-bold text-[var(--muted)]">دیجی‌کالا: {row.digikala}</p>
+                <p className="text-xs font-bold text-[var(--muted)]">دیوار: {row.divar}</p>
                 <p className="mt-1 text-sm font-black text-[var(--accent)]">کی‌داره: {row.kidareh}</p>
               </div>
             ))}
@@ -182,7 +182,7 @@ export default function PresenceHome() {
               {toFa(listings.length)} کالا روی نقشهٔ {origin.label}
             </p>
             <div className="mt-2 flex gap-2">
-              <Link to="/explore" className="flex-1 rounded-xl bg-[var(--ink)] py-2 text-center text-[11px] font-black text-white">
+              <Link to="/explore" className="flex-1 rounded-xl bg-[var(--accent)] py-3 text-center text-sm font-black text-white">
                 نقشه تمام‌صفحه
               </Link>
               <Link to="/radar" className="flex items-center justify-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-[11px] font-black text-white">

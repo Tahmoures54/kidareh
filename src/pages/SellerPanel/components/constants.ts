@@ -1,15 +1,20 @@
-// src/pages/SellerPanel/components/constants.ts
 import { ProductStatus } from "../types";
 
-export const FALLBACK_IMAGE = "https://placehold.co/300x300/1f2937/a1a1aa?text=No+Image";
+export const FALLBACK_IMAGE = "https://placehold.co/300x300/e8f7f6/00A693?text=%D8%A8%D8%AF%D9%88%D9%86+%D8%B9%DA%A9%D8%B3";
+
+const inStock = "bg-emerald-50 text-emerald-700 border-emerald-200";
+const low = "bg-amber-50 text-amber-700 border-amber-200";
+const last = "bg-orange-50 text-orange-700 border-orange-200";
+const out = "bg-rose-50 text-rose-700 border-rose-200";
 
 export const STATUS_STYLE: Record<ProductStatus, string> = {
-  "ãæÌæÏ":
-    "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20",
-  "ãæÌæÏí ˜ã":
-    "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-500/20",
-  "İŞØ ? ÚÏÏ":
-    "bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/20",
-  "äÇãæÌæÏ":
-    "bg-[var(--bg-tertiary)] text-[var(--text-muted)] border-[var(--border-light)]",
+  "Ù…ÙˆØ¬ÙˆØ¯": inStock,
+  "Ù…ÙˆØ¬ÙˆØ¯ÛŒ Ú©Ù…": low,
+  "ÙÙ‚Ø· Û± Ø¹Ø¯Ø¯": last,
+  "Ù†Ø§Ù…ÙˆØ¬ÙˆØ¯": out,
+};
+
+export const STATUS_STYLE_ANY: Record<string, string> = {
+  ...STATUS_STYLE,
+  "ÙÙ‚Ø· Û³ Ø¹Ø¯Ø¯": last,
 };

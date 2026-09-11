@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   Compass,
@@ -13,6 +13,7 @@ import {
   Search,
   LogOut,
   ShieldCheck,
+  LocateFixed,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
@@ -26,7 +27,7 @@ import { cn } from "../../utils";
 const TABS = [
   { to: "/", label: "محله", icon: Compass, end: true },
   { to: "/explore", label: "نقشه", icon: MapIcon },
-  { to: "/radar", label: "رادار", icon: Radio },
+  { to: "/radar", label: "قیمت", icon: Radio },
   { to: "/trip", label: "مسیر", icon: Route },
   { to: "/holds", label: "رزرو", icon: QrCode },
 ] as const;
@@ -101,7 +102,7 @@ export default function PresenceShell() {
       <nav className="flex h-full flex-col items-center gap-2 py-4" aria-label="ناوبری اصلی">
         <Link
           to="/"
-          className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--ink)] text-sm font-black text-[var(--paper)]"
+          className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-black text-white shadow-md shadow-[var(--accent)]/25"
         >
           کی
         </Link>
@@ -112,20 +113,21 @@ export default function PresenceShell() {
             end={"end" in tab ? tab.end : false}
             className={({ isActive }) =>
               cn(
-                "relative flex h-12 w-12 flex-col items-center justify-center rounded-2xl text-[var(--muted)] transition",
+                "relative flex h-14 w-14 flex-col items-center justify-center rounded-2xl text-[var(--muted)] transition",
                 isActive && "bg-white text-[var(--accent)] shadow-sm"
               )
             }
             aria-label={tab.label}
           >
             <tab.icon className="h-5 w-5" />
+            <span className="mt-0.5 text-[10px] font-black">{tab.label}</span>
             {tab.to === "/trip" && tripCount > 0 && (
-              <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--ink)] px-1 text-[9px] font-black text-white">
+              <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9px] font-black text-white">
                 {tripCount}
               </span>
             )}
             {tab.to === "/holds" && holdCount > 0 && (
-              <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent)] px-1 text-[9px] font-black text-white">
+              <span className="absolute -top-1 -left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--gold)] px-1 text-[9px] font-black text-[var(--ink)]">
                 {holdCount}
               </span>
             )}
@@ -146,30 +148,30 @@ export default function PresenceShell() {
 
   return (
     <div className="presence-root" dir="rtl">
-      <a href="#presence-main" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[80] focus:rounded-xl focus:bg-[var(--ink)] focus:px-3 focus:py-2 focus:text-xs focus:font-black focus:text-white">
+      <a href="#presence-main" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[80] focus:rounded-xl focus:bg-[var(--accent)] focus:px-3 focus:py-2 focus:text-xs focus:font-black focus:text-white">
         پرش به محتوا
       </a>
       <InstallPrompt />
       <div className="mx-auto flex min-h-[100dvh] max-w-[1440px]">
-        <aside className="sticky top-0 z-50 hidden h-[100dvh] w-[84px] shrink-0 border-l border-[var(--line)] bg-[var(--paper)]/90 backdrop-blur-xl lg:block">
+        <aside className="sticky top-0 z-50 hidden h-[100dvh] w-[88px] shrink-0 border-l border-[var(--line)] bg-white/70 backdrop-blur-xl lg:block">
           {rail}
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--paper)]/85 backdrop-blur-xl">
+          <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-white/75 backdrop-blur-xl">
             <div className="flex items-center gap-3 px-4 py-3">
               <Link
                 to="/"
-                className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--ink)] text-xs font-black text-white lg:hidden"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] text-xs font-black text-white shadow-md shadow-[var(--accent)]/25 lg:hidden"
               >
                 کی
               </Link>
               <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-black tracking-[0.18em] text-[var(--accent)]">KIDAREH PRESENCE</p>
+                <p className="text-[12px] font-black text-[var(--accent)]">کی‌داره · خرید حضوری</p>
                 <div className="flex items-center gap-2">
                   <select
                     value={origin.neighborhoodId ?? ""}
                     onChange={(e) => setNeighborhood(e.target.value as (typeof NEIGHBORHOODS)[number]["id"])}
-                    className="max-w-[180px] truncate rounded-xl bg-transparent text-sm font-black outline-none"
+                    className="max-w-[200px] truncate rounded-xl bg-transparent py-1 text-sm font-black outline-none"
                     aria-label="انتخاب محله"
                   >
                     <option value="">موقعیت فعلی</option>
@@ -179,8 +181,13 @@ export default function PresenceShell() {
                       </option>
                     ))}
                   </select>
-                  <button type="button" onClick={useGps} className="text-[11px] font-black text-[var(--accent)]">
-                    GPS
+                  <button
+                    type="button"
+                    onClick={useGps}
+                    className="inline-flex min-h-11 items-center gap-1 rounded-xl px-2 text-[12px] font-black text-[var(--accent)]"
+                  >
+                    <LocateFixed className="h-3.5 w-3.5" />
+                    اینجا
                   </button>
                 </div>
                 {gpsError && <p className="text-[10px] font-bold text-[var(--danger)]">{gpsError}</p>}
@@ -188,44 +195,43 @@ export default function PresenceShell() {
               <button
                 type="button"
                 onClick={() => setPalette(true)}
-                className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--line)] bg-white/80 text-[var(--muted)] md:hidden"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--line)] bg-white text-[var(--muted)] md:hidden"
                 aria-label="جستجو"
               >
-                <Search className="h-4 w-4" />
+                <Search className="h-5 w-5" />
               </button>
               <button
                 type="button"
                 onClick={() => setPalette(true)}
-                className="hidden h-11 min-w-[220px] items-center gap-2 rounded-2xl border border-[var(--line)] bg-white/80 px-3 text-xs font-bold text-[var(--muted)] md:flex"
+                className="hidden h-12 min-w-[220px] items-center gap-2 rounded-2xl border border-[var(--line)] bg-white px-3 text-sm font-bold text-[var(--muted)] md:flex"
               >
                 <Search className="h-4 w-4" />
                 جستجو در محله
-                <span className="mr-auto rounded-md border border-[var(--line)] px-1.5 py-0.5 text-[10px] font-black">⌘K</span>
               </button>
-              <Link to="/stores" className="hidden h-11 items-center gap-1 rounded-2xl px-3 text-xs font-black text-[var(--ink-soft)] sm:inline-flex">
+              <Link to="/stores" className="hidden h-12 items-center gap-1 rounded-2xl px-3 text-sm font-black text-[var(--ink-soft)] sm:inline-flex">
                 <Store className="h-4 w-4" /> فروشگاه‌ها
               </Link>
               <button
                 type="button"
                 onClick={() => (user ? setMenu(true) : navigate("/login"))}
-                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[var(--ink)] shadow-sm"
+                className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[var(--ink)] shadow-sm"
                 aria-label={user ? "حساب" : "ورود"}
               >
-                <User className="h-4 w-4" />
+                <User className="h-5 w-5" />
               </button>
             </div>
           </header>
-          <main className={cn("w-full flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
+          <main id="presence-main" className={cn("w-full flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
             <Outlet />
           </main>
         </div>
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--line)] bg-[var(--paper)]/92 backdrop-blur-xl lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-[var(--line)] bg-white/92 backdrop-blur-xl lg:hidden"
         aria-label="تب‌ها"
       >
-        <div className="mx-auto flex max-w-lg items-center px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1">
+        <div className="mx-auto flex max-w-lg items-stretch px-1 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1">
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
@@ -233,18 +239,18 @@ export default function PresenceShell() {
               end={"end" in tab ? tab.end : false}
               className={({ isActive }) =>
                 cn(
-                  "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[10px] font-black",
-                  isActive ? "text-[var(--accent)]" : "text-[#8a9086]"
+                  "relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[12px] font-black",
+                  isActive ? "text-[var(--accent)]" : "text-[var(--muted)]"
                 )
               }
             >
-              <tab.icon className="h-5 w-5" />
+              <tab.icon className="h-6 w-6" />
               {tab.label}
               {tab.to === "/trip" && tripCount > 0 && (
-                <span className="absolute top-1 left-1/2 h-1.5 w-1.5 rounded-full bg-[var(--ink)]" />
+                <span className="absolute top-1.5 left-1/2 h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
               )}
               {tab.to === "/holds" && holdCount > 0 && (
-                <span className="absolute top-1 left-[calc(50%+10px)] h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+                <span className="absolute top-1.5 left-[calc(50%+12px)] h-1.5 w-1.5 rounded-full bg-[var(--gold)]" />
               )}
             </NavLink>
           ))}
@@ -255,32 +261,32 @@ export default function PresenceShell() {
         <div className="fixed inset-0 z-[60]">
           <button type="button" className="absolute inset-0 bg-black/35" aria-label="بستن منو" onClick={() => setMenu(false)} />
           <div className="presence-card absolute bottom-0 left-0 right-0 mx-auto max-w-md rounded-t-[32px] p-5 pb-8">
-            <p className="text-sm font-black">{user?.name || "حساب کاربری"}</p>
-            <p className="text-xs font-bold text-[var(--muted)]">{user?.phone}</p>
+            <p className="text-base font-black">{user?.store_name || user?.name || "حساب کاربری"}</p>
+            <p className="text-sm font-bold text-[var(--muted)]">{user?.phone}</p>
             <div className="mt-4 grid gap-2">
-              <Link to="/profile" className="rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+              <Link to="/profile" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 پروفایل
               </Link>
-              <Link to="/saved" className="rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+              <Link to="/saved" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 ذخیره‌شده‌ها
               </Link>
-              <Link to="/messages" className="rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+              <Link to="/messages" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 پیام‌ها
               </Link>
               {isSeller && (
-                <Link to="/seller" className="rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
-                  پنل فروشنده
+                <Link to="/seller" className="min-h-12 rounded-2xl bg-[var(--accent)] px-4 py-3 text-sm font-black text-white">
+                  مغازه‌ام
                 </Link>
               )}
               {isAdmin && (
-                <Link to="/admin" className="inline-flex items-center gap-2 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                <Link to="/admin" className="inline-flex min-h-12 items-center gap-2 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                   <ShieldCheck className="h-4 w-4" /> ادمین
                 </Link>
               )}
               <button
                 type="button"
                 onClick={handleLogout}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-black text-rose-700"
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-black text-rose-700"
               >
                 <LogOut className="h-4 w-4" /> خروج
               </button>

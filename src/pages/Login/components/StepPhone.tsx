@@ -69,7 +69,7 @@ const StepPhone = memo(({ phone, setPhone, onSubmit, loading, error }: StepPhone
         type="submit"
         whileTap={{ scale: 0.97 }}
         disabled={loading || !validatePhone(phone)}
-        className="group flex h-16 w-full items-center justify-center gap-3 rounded-[22px] bg-[var(--ink)] text-base font-black text-white shadow-xl disabled:opacity-40"
+        className="group flex h-16 w-full items-center justify-center gap-3 rounded-[22px] bg-[var(--accent)] text-base font-black text-white shadow-xl shadow-[var(--accent)]/25 disabled:opacity-40"
       >
         {loading ? (
           <span className="flex items-center gap-2">

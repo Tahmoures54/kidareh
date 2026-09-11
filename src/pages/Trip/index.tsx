@@ -22,8 +22,8 @@ export default function TripPage() {
         <PresenceMap origin={origin} listings={plan.stops.map((s) => s.listing)} path={path} />
       </div>
       <div className="order-2 space-y-4 p-5 lg:order-1">
-        <PageHero kicker="WALKING ERRAND" title="مسیر خرید حضوری">
-          چند فروشگاه، یک پیاده‌روی بهینه. کالاها را از محله بردار، مسیر کوتاه‌ترین تور را بگیر، برو و ببین.
+        <PageHero kicker="خرید پیاده" title="چند مغازه، یک مسیر">
+          کالاها را به مسیر اضافه کن. کوتاه‌ترین پیاده‌روی تا همه مغازه‌ها ساخته می‌شود.
         </PageHero>
         {plan.stops.length === 0 ? (
           <PresenceEmpty
@@ -42,7 +42,7 @@ export default function TripPage() {
             <ol className="space-y-3">
               {plan.stops.map((stop, i) => (
                 <li key={stop.listing.id} className="presence-card flex gap-3 rounded-3xl p-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--ink)] text-sm font-black text-white">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-black text-white">
                     {toFa(i + 1)}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -84,8 +84,8 @@ export default function TripPage() {
             </button>
           </>
         )}
-        <p className="inline-flex items-center gap-1 text-[11px] font-bold text-[var(--muted)]">
-          <Footprints className="h-3.5 w-3.5" /> الگوریتم نزدیک‌ترین همسایه — مناسب تور ۲ تا ۸ توقف محله
+        <p className="inline-flex items-center gap-1 text-[12px] font-bold text-[var(--muted)]">
+          <Footprints className="h-3.5 w-3.5" /> مسیر کوتاه برای چند خرید در یک محله
         </p>
       </div>
     </div>

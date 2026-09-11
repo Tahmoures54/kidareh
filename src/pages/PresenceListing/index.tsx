@@ -59,7 +59,7 @@ export default function PresenceListingPage() {
                 key={src}
                 type="button"
                 onClick={() => setImg(i)}
-                className={`h-14 w-14 overflow-hidden rounded-2xl border ${i === img ? "border-[var(--ink)]" : "border-transparent opacity-70"}`}
+                className={`h-14 w-14 overflow-hidden rounded-2xl border ${i === img ? "border-[var(--accent)]" : "border-transparent opacity-70"}`}
               >
                 <PresenceImage src={src} className="h-full w-full object-cover" />
               </button>
@@ -82,7 +82,7 @@ export default function PresenceListingPage() {
         <p className="mt-4 text-sm font-bold leading-8 text-[var(--ink-soft)]">{listing.description}</p>
         <ul className="mt-4 flex flex-wrap gap-2">
           {listing.specs.map((s) => (
-            <li key={s} className="rounded-full bg-[var(--ink)] px-3 py-1 text-[11px] font-black text-white">
+            <li key={s} className="rounded-full bg-[var(--accent)] px-3 py-1.5 text-[12px] font-black text-white">
               {s}
             </li>
           ))}
@@ -109,9 +109,9 @@ export default function PresenceListingPage() {
             <div className="rounded-2xl bg-[var(--paper)] p-3">پاسخ {toFa(listing.store.responseMins)} دقیقه</div>
             <div className="rounded-2xl bg-[var(--paper)] p-3">{listing.warranty}</div>
           </div>
-          <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--ink)] p-3 text-xs font-bold leading-6 text-[var(--paper)]">
+          <div className="mt-4 flex items-start gap-2 rounded-2xl bg-[var(--accent)] p-3 text-xs font-bold leading-6 text-white">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[var(--gold)]" />
-            تضمین بازدید: کالا را در ویترین می‌بینی، روشن می‌کنی، بعد پول می‌دهی. این چیزی است که دیجی‌کالا ندارد و دیوار تضمینش نمی‌کند.
+            کالا را در مغازه می‌بینی و روشن می‌کنی، بعد پول می‌دهی. پست در کار نیست.
           </div>
         </section>
 
@@ -141,7 +141,7 @@ export default function PresenceListingPage() {
             href={maps}
             target="_blank"
             rel="noreferrer"
-            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] text-sm font-black text-white"
+            className="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl bg-[var(--accent-2)] text-sm font-black text-white"
           >
             <Navigation className="h-4 w-4" /> مسیر پیاده
           </a>
@@ -179,7 +179,7 @@ export default function PresenceListingPage() {
             href={maps}
             target="_blank"
             rel="noreferrer"
-            className="flex h-12 items-center justify-center rounded-2xl bg-[var(--ink)] px-4 text-white"
+            className="flex h-12 items-center justify-center rounded-2xl bg-[var(--accent-2)] px-4 text-white"
             aria-label="مسیر پیاده"
           >
             <Navigation className="h-4 w-4" />

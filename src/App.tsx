@@ -49,7 +49,7 @@ const LegacyHome = lazy(() => import("./pages/Home"));
 function PageLoader() {
   return (
     <div className="presence-root flex min-h-screen flex-col items-center justify-center gap-3" dir="rtl">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--ink)] text-sm font-black text-[var(--paper)]">
+      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-black text-white">
         <Loader2 className="h-5 w-5 animate-spin" />
       </div>
       <p className="text-xs font-black text-[var(--muted)]">در حال آماده‌سازی محله…</p>

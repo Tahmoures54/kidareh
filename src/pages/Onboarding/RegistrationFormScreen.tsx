@@ -314,7 +314,7 @@ export default function RegistrationFormScreen({
             type="submit"
             whileTap={{ scale: 0.97 }}
             disabled={loading}
-            className="w-full h-16 bg-gradient-to-r from-[#14161c] to-[#0e6f63] text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-3 group mt-4"
+            className="w-full h-16 bg-gradient-to-r from-[#00A693] to-[#00897a] text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 disabled:opacity-40 disabled:shadow-none transition-all flex items-center justify-center gap-3 group mt-4"
           >
             {loading ? (
               <motion.div className="flex items-center gap-2">

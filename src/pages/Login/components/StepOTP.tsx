@@ -102,7 +102,7 @@ const StepOTP = memo(({
           className={`flex h-16 w-full items-center justify-center gap-2 rounded-[22px] text-base font-black shadow-xl transition-all
             ${isSuccess
               ? "bg-[var(--ok)] text-white"
-              : "bg-[var(--ink)] text-white disabled:opacity-40"}`}
+              : "bg-[var(--accent)] text-white disabled:opacity-40"}`}
         >
           {isSuccess ? (
             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="flex items-center gap-2">

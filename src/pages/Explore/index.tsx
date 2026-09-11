@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
-import { searchListings, toFa } from "../../presence/engine";
+import { searchListings } from "../../presence/engine";
 import PresenceMap from "../../components/presence/PresenceMap";
 import { ListingCard } from "../../components/presence/ListingCard";
 import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
@@ -37,8 +37,8 @@ export default function ExplorePage() {
         </div>
       </div>
       <div className="order-2 max-h-[54vh] space-y-3 overflow-y-auto p-4 lg:order-1 lg:max-h-[calc(100dvh-73px)]">
-        <PageHero kicker="LIVE MAP" title="نقشهٔ موجودی زنده">
-          Airbnb برای ویترین مغازه‌ها — نه دیوار آگهی، نه انبار مرکزی. {toFa(listings.length)} کالا در محدوده.
+        <PageHero kicker="نقشه محله" title="کجا هست و کی داره">
+          مغازه‌های اطراف را روی نقشه ببین. هر پین یک کالا است که الان موجود است.
         </PageHero>
         {listings.map((listing) => (
           <div key={listing.id} onMouseEnter={() => setSelected(listing.id)} onFocus={() => setSelected(listing.id)} onClick={() => setSelected(listing.id)}>

@@ -59,7 +59,7 @@ export default function HoldSheet({ listing, open, onClose, onCreated }: Props) 
       const dataUrl = await QRCode.toDataURL(`kidareh:pickup:${hold.pickupCode}`, {
         margin: 1,
         width: 280,
-        color: { dark: "#14161c", light: "#00000000" },
+        color: { dark: "#0a3d3a", light: "#00000000" },
       });
       setQr(dataUrl);
       setCreated(hold);
@@ -104,7 +104,7 @@ export default function HoldSheet({ listing, open, onClose, onCreated }: Props) 
             <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-black/10" />
             <div className="mb-4 flex items-start justify-between gap-3">
               <div>
-                <p className="text-[11px] font-black tracking-wide text-[var(--accent)]">RESERVE & COLLECT</p>
+                <p className="text-[11px] font-black text-[var(--accent)]">رزرو حضوری</p>
                 <h2 className="mt-1 text-lg font-black">{created ? "کالا برای تو نگه داشته شد" : "بدون پرداخت، نگه دار"}</h2>
                 <p className="mt-1 text-xs font-bold text-[var(--muted)]">
                   {listing.store.name} · {formatWalk(listing.walkMinutes)}
@@ -153,7 +153,7 @@ export default function HoldSheet({ listing, open, onClose, onCreated }: Props) 
                   type="button"
                   disabled={busy}
                   onClick={submit}
-                  className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--ink)] text-sm font-black text-white disabled:opacity-40"
+                  className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] text-sm font-black text-white disabled:opacity-40"
                 >
                   <QrCode className="h-4 w-4" />
                   {busy ? "در حال رزرو…" : listing.openNow ? "رزرو و ساخت کد تحویل" : "رزرو برای ساعت باز شدن"}
