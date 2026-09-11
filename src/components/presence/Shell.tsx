@@ -205,7 +205,7 @@ export default function PresenceShell() {
           {rail}
         </aside>
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-[70] border-b border-[var(--line)] bg-white/90 backdrop-blur-xl">
+          <header className={cn("sticky top-0 border-b border-[var(--line)] bg-white/90 backdrop-blur-xl", pickerOpen ? "z-10" : "z-[70]")}>
             <div className="flex items-center gap-3 px-4 py-3">
               <Link
                 to="/"
@@ -293,7 +293,10 @@ export default function PresenceShell() {
       </div>
 
       <nav
-        className="presence-tabs fixed inset-x-0 bottom-0 z-[80] border-t border-[var(--line)] bg-white lg:hidden"
+        className={cn(
+          "presence-tabs fixed inset-x-0 bottom-0 border-t border-[var(--line)] bg-white lg:hidden",
+          pickerOpen ? "z-10" : "z-[80]"
+        )}
         aria-label="تب‌ها"
       >
         <div className="mx-auto flex max-w-lg items-stretch px-1 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1">

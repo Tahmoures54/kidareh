@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, ChevronLeft, LocateFixed, MapPin, Search, X } from "lucide-react";
 import {
   IRAN_CITIES_BY_PROVINCE,
@@ -39,6 +40,8 @@ export default function CityPicker({
   const [province, setProvince] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const popular = useMemo(() => getPopularIranCities(), []);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -46,7 +49,7 @@ export default function CityPicker({
     setProvince(null);
     const timer = window.setTimeout(() => inputRef.current?.focus(), 250);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -55,7 +58,7 @@ export default function CityPicker({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open]);
 
   const results = useMemo(() => searchIranCities(query, 60), [query]);
   const provinceCities = useMemo(
@@ -66,10 +69,17 @@ export default function CityPicker({
 
   if (!open) return null;
 
-  return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center md:items-center" dir="rtl" role="dialog" aria-modal="true" aria-label="انتخاب شهر">
+  return createPortal(
+    <div
+      className="fixed inset-0 flex items-end justify-center md:items-center"
+      style={{ zIndex: 400 }}
+      dir="rtl"
+      role="dialog"
+      aria-modal="true"
+      aria-label="انتخاب شهر"
+    >
       <button type="button" className="absolute inset-0 bg-black/45" aria-label="بستن" onClick={onClose} />
-      <div className="relative flex max-h-[92dvh] w-full max-w-lg flex-col rounded-t-[28px] bg-white shadow-2xl md:max-h-[85vh] md:rounded-[28px]">
+      <div className="relative flex h-[96dvh] w-full max-w-lg flex-col rounded-t-[28px] bg-white shadow-2xl md:h-[85vh] md:rounded-[28px]">
         <div className="flex justify-center pt-3 md:hidden">
           <div className="h-1.5 w-12 rounded-full bg-slate-200" />
         </div>
@@ -96,6 +106,7 @@ export default function CityPicker({
                 setProvince(null);
               }}
               placeholder="جستجوی شهر یا استان…"
+              aria-label="جستجوی شهر"
               className="h-full flex-1 bg-transparent text-sm font-bold outline-none"
             />
             {query && (
@@ -137,6 +148,7 @@ export default function CityPicker({
               <button
                 type="button"
                 onClick={() => setProvince(null)}
+                aria-label="همه استان‌ها"
                 className="mb-3 inline-flex items-center gap-1 text-sm font-black text-[var(--brand-primary)]"
               >
                 <ChevronLeft className="h-4 w-4 rotate-180" />
@@ -182,6 +194,7 @@ export default function CityPicker({
                     <button
                       type="button"
                       onClick={() => setProvince(group.province)}
+                      aria-label={`استان ${group.province}`}
                       className="flex w-full items-center justify-between rounded-2xl px-3 py-3 text-right text-sm font-black hover:bg-[var(--paper)]"
                     >
                       <span>{group.province}</span>
@@ -197,7 +210,8 @@ export default function CityPicker({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
