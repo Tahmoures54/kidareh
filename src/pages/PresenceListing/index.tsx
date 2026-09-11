@@ -8,6 +8,7 @@ import PresenceMap from "../../components/presence/PresenceMap";
 import PresenceImage from "../../components/presence/PresenceImage";
 import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
 import { CATEGORY_META } from "../../presence/catalog";
+import { useMinWidth } from "../../hooks/useMinWidth";
 
 export default function PresenceListingPage() {
   const { id = "" } = useParams();
@@ -18,6 +19,7 @@ export default function PresenceListingPage() {
   const [holdOpen, setHoldOpen] = useState(false);
   const [inTrip, setInTrip] = useState(() => listTripIds().includes(id));
   const [img, setImg] = useState(0);
+  const desktop = useMinWidth(1024);
 
   useEffect(() => onTripChange(() => setInTrip(listTripIds().includes(id))), [id]);
   useEffect(() => {
@@ -158,9 +160,11 @@ export default function PresenceListingPage() {
           {inTrip ? "از مسیر خرید حذف کن" : "افزودن به مسیر چندتوقفی"}
         </button>
       </div>
-      <aside className="hidden h-[calc(100dvh-73px)] lg:block">
-        <PresenceMap origin={origin} listings={[listing]} selectedId={listing.id} />
-      </aside>
+      {desktop && (
+        <aside className="h-[calc(100dvh-73px)]">
+          <PresenceMap origin={origin} listings={[listing]} selectedId={listing.id} />
+        </aside>
+      )}
 
       <div className="fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-40 border-t border-[var(--line)] bg-[var(--paper)]/95 p-3 backdrop-blur-xl lg:hidden">
         <div className="mx-auto flex max-w-lg gap-2">

@@ -15,7 +15,7 @@ export default function RadarPage() {
   const [openSku, setOpenSku] = useState(sku ?? groups[0]?.sku);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-5 sm:px-6">
+    <div className="presence-page px-4 py-5 sm:px-6">
       <PageHero kicker="PRICE RADAR" title="رادار قیمت محله">
         همان کالا، چند فروشگاه، قیمت زنده. دیجی‌کالا یک انبار دارد؛ دیوار قیمت را پنهان می‌کند. اینجا اختلاف را می‌بینی و پیاده به ارزان‌ترین می‌روی.
       </PageHero>

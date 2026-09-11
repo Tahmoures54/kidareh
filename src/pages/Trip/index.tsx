@@ -17,11 +17,11 @@ export default function TripPage() {
   const maps = mapsMultiStopUrl(origin, plan.stops.map((s) => ({ lat: s.listing.store.lat, lng: s.listing.store.lng })));
 
   return (
-    <div className="grid lg:grid-cols-[minmax(0,1fr)_420px]">
-      <div className="h-[40vh] lg:h-[calc(100dvh-73px)]">
+    <div className="grid lg:grid-cols-[26rem_minmax(0,1fr)]">
+      <div className="order-1 h-[40vh] lg:order-2 lg:h-[calc(100dvh-73px)]">
         <PresenceMap origin={origin} listings={plan.stops.map((s) => s.listing)} path={path} />
       </div>
-      <div className="space-y-4 p-5">
+      <div className="order-2 space-y-4 p-5 lg:order-1">
         <PageHero kicker="WALKING ERRAND" title="مسیر خرید حضوری">
           چند فروشگاه، یک پیاده‌روی بهینه. کالاها را از محله بردار، مسیر کوتاه‌ترین تور را بگیر، برو و ببین.
         </PageHero>

@@ -51,7 +51,7 @@ export default function HoldsPage() {
   }, [live]);
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-6">
+    <div className="presence-page px-4 py-6">
       <PageHero kicker="RESERVE & COLLECT" title="رزروهای حضوری">
         کالا را نگه می‌دارند، تو پیاده می‌رسی، با QR تحویل می‌گیری. هیچ پولی تا دیدن کالا کم نمی‌شود.
       </PageHero>

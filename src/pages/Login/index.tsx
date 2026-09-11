@@ -21,7 +21,8 @@ export default function Login() {
   }
 
   return (
-    <div className="presence-root relative mx-auto flex min-h-[100dvh] w-full max-w-md flex-col overflow-hidden" dir="rtl">
+    <div className="presence-root flex min-h-[100dvh] justify-center" dir="rtl">
+      <div className="relative flex w-full max-w-md flex-col overflow-hidden">
       <div className="pointer-events-none absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--accent)]/15 blur-[100px]" />
       <div className="pointer-events-none absolute bottom-0 left-0 h-80 w-80 -translate-x-1/2 translate-y-1/2 rounded-full bg-[var(--gold)]/12 blur-[120px]" />
 
@@ -132,6 +133,7 @@ export default function Login() {
           <p className="text-[11px] font-bold text-[var(--muted)]">ورود امن با پیامک — بدون پسورد</p>
         </div>
       </footer>
+      </div>
     </div>
   );
 }

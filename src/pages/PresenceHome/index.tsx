@@ -9,6 +9,7 @@ import { ListingCard } from "../../components/presence/ListingCard";
 import PresenceMap from "../../components/presence/PresenceMap";
 import PresenceEmpty from "../../components/presence/EmptyState";
 import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
+import { useMinWidth } from "../../hooks/useMinWidth";
 
 const RADII = [
   { km: 0.8, label: "۸۰۰ م" },
@@ -25,6 +26,7 @@ export default function PresenceHome() {
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
   const [trip, setTrip] = useState<string[]>(() => listTripIds());
+  const desktop = useMinWidth(1024);
 
   useEffect(() => onTripChange(() => setTrip(listTripIds())), []);
 
@@ -170,7 +172,8 @@ export default function PresenceHome() {
         </section>
       </div>
 
-      <aside className="sticky top-[73px] z-0 hidden h-[calc(100dvh-73px)] border-r border-[var(--line)] lg:block">
+      {desktop && (
+      <aside className="sticky top-[73px] z-0 h-[calc(100dvh-73px)] border-r border-[var(--line)]">
         <div className="relative h-full">
           <PresenceMap origin={origin} listings={listings} />
           <div className="absolute bottom-4 right-4 left-4 z-10 presence-card rounded-2xl p-3">
@@ -189,6 +192,7 @@ export default function PresenceHome() {
           </div>
         </div>
       </aside>
+      )}
     </div>
   );
 }

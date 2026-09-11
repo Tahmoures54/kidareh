@@ -5,6 +5,7 @@ import { searchListings, toFa } from "../../presence/engine";
 import PresenceMap from "../../components/presence/PresenceMap";
 import { ListingCard } from "../../components/presence/ListingCard";
 import { listTripIds, onTripChange, toggleTrip } from "../../presence/tripBasket";
+import PageHero from "../../components/presence/PageHero";
 import PresenceEmpty from "../../components/presence/EmptyState";
 
 export default function ExplorePage() {

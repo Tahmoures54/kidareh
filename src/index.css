@@ -812,6 +812,11 @@ a {
   border-radius: 1.5rem 1.5rem 0 0;
 }
 
+.presence-page {
+  width: min(48rem, 100%);
+  margin-inline: auto;
+}
+
 .presence-meter {
   height: 6px;
   overflow: hidden;
