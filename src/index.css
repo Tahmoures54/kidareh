@@ -814,7 +814,7 @@ a {
 
 .presence-page {
   width: min(48rem, 100%);
-  margin-inline: auto;
+  margin: 0 auto;
 }
 
 .presence-meter {

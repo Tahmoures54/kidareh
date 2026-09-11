@@ -41,7 +41,7 @@ export default function PresenceHome() {
     <div className="grid lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="px-4 py-5 sm:px-6">
         <section className="presence-card overflow-hidden rounded-[32px] p-5 sm:p-7">
-          <p className="text-[11px] font-black tracking-[0.22em] text-[var(--accent)]">PRESENCE OS</p>
+          <p className="text-[11px] font-black text-[var(--accent)]">خرید حضوری محله</p>
           <h1 className="mt-2 max-w-xl text-3xl font-black leading-[1.25] tracking-tight sm:text-4xl">
             ببین کی داره.
             <br />
