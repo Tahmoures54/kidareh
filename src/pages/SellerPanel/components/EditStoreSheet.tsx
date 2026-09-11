@@ -68,7 +68,7 @@ export const EditStoreSheet = ({
               <div className="w-12 h-1.5 bg-[var(--border-light)] rounded-full mb-4" />
               <div className="w-full flex items-center justify-between">
                 <h3 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2">
-                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> ?????? ???????
+                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> ویرایش فروشگاه
                 </h3>
                 <button
                   type="button"
@@ -85,7 +85,7 @@ export const EditStoreSheet = ({
             >
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Store className="w-3.5 h-3.5" /> ??? ???????
+                  <Store className="w-3.5 h-3.5" /> نام فروشگاه
                 </label>
                 <input {...register("name")} className="input-base" />
                 {errors.name && (
@@ -96,7 +96,7 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Phone className="w-3.5 h-3.5" /> ????? ????
+                  <Phone className="w-3.5 h-3.5" /> شماره تماس
                 </label>
                 <input {...register("phone")} dir="ltr" className="input-base text-left" />
                 {errors.phone && (
@@ -109,7 +109,7 @@ export const EditStoreSheet = ({
                 <CategoryField
                   value={watch("category") || ""}
                   onChange={(value) => setValue("category", value, { shouldValidate: true })}
-                  label="?????????"
+                  label="دسته‌بندی"
                   required
                 />
                 {errors.category && (
@@ -120,20 +120,20 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <AlignRight className="w-3.5 h-3.5" /> ????? ???????
+                  <AlignRight className="w-3.5 h-3.5" /> توضیح فروشگاه
                 </label>
                 <textarea {...register("description")} rows={3} className="input-base resize-none" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">?????</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">استان</label>
                   <select
                     {...register("province", {
                       onChange: () => setValue("city", ""),
                     })}
                     className="input-base"
                   >
-                    <option value="">?????? ?????</option>
+                    <option value="">انتخاب استان</option>
                     {iranProvinceNames.map((name) => (
                       <option key={name} value={name}>
                         {name}
@@ -142,9 +142,9 @@ export const EditStoreSheet = ({
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">???</label>
+                  <label className="text-xs font-bold text-[var(--text-secondary)] ml-1">شهر</label>
                   <select {...register("city")} className="input-base" disabled={!province}>
-                    <option value="">{province ? "?????? ???" : "??? ?????"}</option>
+                    <option value="">{province ? "انتخاب شهر" : "اول استان"}</option>
                     {!cityInList && city ? <option value={city}>{city}</option> : null}
                     {provinceCities.map((item) => (
                       <option key={`${item.name}-${item.province}`} value={item.name}>
@@ -156,7 +156,7 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] ml-1 flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5" /> ????
+                  <MapPin className="w-3.5 h-3.5" /> آدرس
                 </label>
                 <input {...register("address")} className="input-base" />
               </div>
@@ -168,11 +168,11 @@ export const EditStoreSheet = ({
                 >
                   {isPending ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" /> ?????
+                      <Loader2 className="w-5 h-5 animate-spin" /> در حال ذخیره…
                     </>
                   ) : (
                     <>
-                      <Save className="w-5 h-5" /> ????? ???????
+                      <Save className="w-5 h-5" /> ذخیره فروشگاه
                     </>
                   )}
                 </button>
