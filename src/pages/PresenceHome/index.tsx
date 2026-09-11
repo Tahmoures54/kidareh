@@ -242,11 +242,19 @@ export default function PresenceHome() {
           {posts.length === 0 ? (
             <div className="px-3 py-6">
               <PresenceEmpty
-                title={isTehran ? "در این شعاع کالایی نیست" : `هنوز آگهی در ${cityLocation.city} نیست`}
+                title={
+                  marketCategory !== "all"
+                    ? "در این دسته کالایی نیست"
+                    : isTehran
+                      ? "در این شعاع کالایی نیست"
+                      : `هنوز آگهی در ${cityLocation.city} نیست`
+                }
                 hint={
-                  isTehran
-                    ? "فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
-                    : "فروشگاه‌های همین شهر را ببین یا از هدر شهر دیگری انتخاب کن."
+                  marketCategory !== "all"
+                    ? "دسته دیگری را بزن یا از «همه دسته‌ها» زیردسته دقیق‌تر را باز کن."
+                    : isTehran
+                      ? "فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
+                      : "فروشگاه‌های همین شهر را ببین یا از هدر شهر دیگری انتخاب کن."
                 }
                 actionLabel={isTehran ? "نمایش کل شهر" : "فروشگاه‌های این شهر"}
                 actionTo={isTehran ? undefined : "/stores"}

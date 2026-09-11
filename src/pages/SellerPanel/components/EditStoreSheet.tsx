@@ -68,7 +68,7 @@ export const EditStoreSheet = ({
               <div className="w-12 h-1.5 bg-[var(--border-light)] rounded-full mb-4" />
               <div className="w-full flex items-center justify-between">
                 <h3 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2">
-                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> ??????? ???????
+                  <Store className="w-5 h-5 text-[var(--brand-primary)]" /> ?????? ???????
                 </h3>
                 <button
                   type="button"
@@ -120,7 +120,7 @@ export const EditStoreSheet = ({
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <AlignRight className="w-3.5 h-3.5" /> ?????? ???????
+                  <AlignRight className="w-3.5 h-3.5" /> ????? ???????
                 </label>
                 <textarea {...register("description")} rows={3} className="input-base resize-none" />
               </div>
@@ -168,7 +168,7 @@ export const EditStoreSheet = ({
                 >
                   {isPending ? (
                     <>
-                      <Loader2 className="w-5 h-5 animate-spin" /> ??????
+                      <Loader2 className="w-5 h-5 animate-spin" /> ?????
                     </>
                   ) : (
                     <>
