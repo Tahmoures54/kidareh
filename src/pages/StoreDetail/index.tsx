@@ -100,11 +100,12 @@ export default function StoreDetail() {
     setFollowersCount((c) => Math.max(0, c + (was ? -1 : 1)));
     setFollowLoading(true);
     try {
-      const res = await apiRequest<{ following: boolean }>(`/api/stores/${id}/follow`, {
+      const res = await apiRequest<{ following: boolean; follower_count?: number }>(`/api/stores/${id}/follow`, {
         method: "POST",
         auth: true,
       });
       setFollowing(!!res.following);
+      if (typeof res.follower_count === "number") setFollowersCount(res.follower_count);
     } catch {
       setFollowing(was);
       setFollowersCount((c) => Math.max(0, c + (was ? 1 : -1)));

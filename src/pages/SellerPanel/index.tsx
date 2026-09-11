@@ -130,6 +130,12 @@ function SellerShopHome() {
             >
               <Pencil className="h-4 w-4" /> ویرایش فروشگاه
             </button>
+            <Link
+              to={`/store/${storeInfo.id}`}
+              className="col-span-2 flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-[var(--paper)] text-sm font-black"
+            >
+              <Eye className="h-4 w-4" /> دیدن ویترین عمومی
+            </Link>
           </div>
         </>
       )}

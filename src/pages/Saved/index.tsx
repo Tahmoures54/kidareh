@@ -39,6 +39,7 @@ function normalizeProduct(raw: any): SavedProduct & Record<string, any> {
     : [];
   const image =
     raw.image ||
+    raw.image_url ||
     (Array.isArray(images) && images[0]) ||
     "https://placehold.co/400x400/1e293b/94a3b8?text=No+Image";
 

@@ -78,7 +78,7 @@ try {
 // 4. Schema Version
 // ============================================================================
 
-const SCHEMA_VERSION = 10; 
+const SCHEMA_VERSION = 11; 
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -660,6 +660,19 @@ const runMigrations = () => {
     safeAlter(`ALTER TABLE users ADD COLUMN province TEXT`, "users.province");
     safeAlter(`ALTER TABLE users ADD COLUMN city TEXT`, "users.city");
     db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(10);
+  }
+
+  if (current < 11) {
+    try {
+      db.exec(`
+        DROP TRIGGER IF EXISTS products_fts_au;
+        DROP TRIGGER IF EXISTS stores_fts_au;
+        UPDATE products SET moderation_status = 'approved' WHERE moderation_status = 'pending';
+      `);
+    } catch (err: any) {
+      logger.warn("v11 product auto-approve skipped:", err?.message);
+    }
+    db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(11);
   }
 
   logger.info(`✅ Schema up to date (v${SCHEMA_VERSION})`);

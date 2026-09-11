@@ -1,5 +1,5 @@
 ﻿import { useState, useMemo, useCallback, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../context/AuthContext";
 import { FilterType, Product, ProductStatus, StoreFormValues, StoreInfo } from "../types";
@@ -43,6 +43,7 @@ function normalizeProduct(raw: Record<string, unknown>): Product {
 export function useSellerPanel() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const [toast, setToast] = useState<string | null>(null);
@@ -55,6 +56,13 @@ export function useSellerPanel() {
     window.scrollTo(0, 0);
     document.title = "مغازه‌ام | کی‌داره";
   }, []);
+
+  useEffect(() => {
+    const msg = (location.state as { successMsg?: string } | null)?.successMsg;
+    if (!msg) return;
+    setToast(msg);
+    navigate(".", { replace: true, state: {} });
+  }, [location.state, navigate]);
 
   const handleShowToast = useCallback((msg: string) => {
     if (navigator.vibrate) navigator.vibrate(40);

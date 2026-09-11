@@ -389,15 +389,20 @@ router.post("/:id(\\d+)/follow", requireAuth, (req: AuthRequest, res: Response) 
   try {
     const storeId = numericRouteId(req.params as Record<string, string | undefined>);
     const userId = req.user!.id;
-    const store = db.prepare("SELECT id FROM stores WHERE id = ?").get(storeId) as any;
+    const store = db.prepare("SELECT id, user_id FROM stores WHERE id = ?").get(storeId) as any;
     if (!store) return res.status(404).json({ error: "فروشگاه یافت نشد" });
+    if (Number(store.user_id) === Number(userId)) {
+      return res.status(400).json({ error: "فروشگاه خودتان را نمی‌توانید دنبال کنید", following: false });
+    }
     const existing = db.prepare("SELECT id FROM store_followers WHERE user_id = ? AND store_id = ?").get(userId, storeId) as any;
     if (existing) {
       db.prepare("DELETE FROM store_followers WHERE id = ?").run(existing.id);
-      return res.json({ following: false, message: "دیگر دنبال نمی‌کنید" });
+      const count = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(storeId) as any;
+      return res.json({ following: false, follower_count: Number(count?.count ?? 0), message: "دیگر دنبال نمی‌کنید" });
     }
     db.prepare("INSERT INTO store_followers (user_id, store_id) VALUES (?, ?)").run(userId, storeId);
-    return res.json({ following: true, message: "فروشگاه دنبال شد" });
+    const count = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(storeId) as any;
+    return res.json({ following: true, follower_count: Number(count?.count ?? 0), message: "فروشگاه دنبال شد" });
   } catch (error) {
     logger.error("Follow error:", error);
     return res.status(500).json({ error: "خطا در انجام عملیات" });

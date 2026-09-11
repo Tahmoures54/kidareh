@@ -267,6 +267,12 @@ export default function PresenceShell() {
               <Link to="/profile" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 پروفایل
               </Link>
+              <Link to="/stores" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                فروشگاه‌ها
+              </Link>
+              <Link to="/search" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                جستجوی کالا
+              </Link>
               <Link to="/saved" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 ذخیره‌شده‌ها
               </Link>

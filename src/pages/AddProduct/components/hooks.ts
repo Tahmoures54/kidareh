@@ -179,7 +179,7 @@ export function useAddProduct(user: any) {
         localStorage.setItem("lastCategory", finalCategory);
         navigate("/seller", {
           state: {
-            successMsg: "کالایت ثبت شد ✅ بعد از بررسی کوتاه، روی سایت دیده می‌شه.",
+            successMsg: "کالایت روی ویترین قرار گرفت",
           },
         });
       } else {

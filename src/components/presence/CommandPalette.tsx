@@ -122,6 +122,20 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
                 >
                   <Radio className="h-4 w-4" /> رادار قیمت
                 </button>
+                <button
+                  type="button"
+                  onClick={() => go(q ? `/search?q=${encodeURIComponent(q)}` : "/stores")}
+                  className="flex items-center gap-2 rounded-2xl px-3 py-3 text-xs font-black text-[var(--accent)] hover:bg-[var(--paper)]"
+                >
+                  <Store className="h-4 w-4" /> فروشگاه‌ها
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go("/following")}
+                  className="flex items-center gap-2 rounded-2xl px-3 py-3 text-xs font-black text-[var(--accent)] hover:bg-[var(--paper)]"
+                >
+                  <Compass className="h-4 w-4" /> دنبال‌شده‌ها
+                </button>
               </div>
             </div>
             <div className="flex items-center justify-between border-t border-[var(--line)] px-4 py-2 text-[11px] font-bold text-[var(--muted)]">

@@ -105,7 +105,10 @@ export default function SellerProductForm() {
         await createProduct(payload);
       }
       queryClient.invalidateQueries({ queryKey: ["sellerProducts"] });
-      navigate("/seller");
+      queryClient.invalidateQueries({ queryKey: ["myStoreStats"] });
+      navigate("/seller", {
+        state: { successMsg: isEditMode ? "کالا به‌روز شد" : "کالایت روی ویترین قرار گرفت" },
+      });
     } catch (err: any) {
       setServerError(err.message || "ثبت نشد. اینترنت را چک کنید و دوباره بزنید.");
     } finally {
@@ -123,7 +126,7 @@ export default function SellerProductForm() {
       <main className="px-4 py-5 max-w-lg mx-auto space-y-5">
         {!isEditMode && (
           <HintCard title="نکته برای فروش بیشتر" tone="amber">
-            عکس واضح از خود کالا بگیرید. نام کوتاه و قیمت درست بنویسید. بعد از ثبت، ادمین تأیید می‌کند.
+            عکس واضح از خود کالا بگیرید. نام کوتاه و قیمت درست بنویسید. بعد از ثبت، روی ویترین دیده می‌شود.
           </HintCard>
         )}
 

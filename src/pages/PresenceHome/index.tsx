@@ -61,6 +61,20 @@ export default function PresenceHome() {
               </span>
             ))}
           </div>
+          <div className="mt-5 grid grid-cols-2 gap-2">
+            <Link
+              to="/stores"
+              className="flex min-h-12 items-center justify-center rounded-2xl bg-[var(--accent)] px-3 text-sm font-black text-white"
+            >
+              فروشگاه‌های واقعی
+            </Link>
+            <Link
+              to="/search"
+              className="flex min-h-12 items-center justify-center rounded-2xl border border-[var(--line)] bg-white px-3 text-sm font-black"
+            >
+              جستجوی کالا
+            </Link>
+          </div>
           <label className="mt-5 flex h-14 items-center gap-3 rounded-2xl bg-[var(--paper)] px-4">
             <Sparkles className="h-4 w-4 text-[var(--accent)]" />
             <input

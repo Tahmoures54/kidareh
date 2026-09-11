@@ -158,7 +158,8 @@ export default function ProductDetail() {
   }, [reviews]);
 
   const isProductAvailable =
-    (product?.status || "").toLowerCase() === "موجود" ||
+    product?.status === "موجود" ||
+    product?.status === "فقط ۱ عدد" ||
     (product?.status || "").toLowerCase() === "available";
 
   const hasBlueTick = useMemo(() => {
@@ -188,16 +189,23 @@ export default function ProductDetail() {
 
   const handleFollow = async () => {
     if (!user || !product?.store_id) return navigate("/login");
+    if (user.store_id && Number(user.store_id) === Number(product.store_id)) {
+      return showToast("این فروشگاه خودت است", "error");
+    }
     const was = following;
     setFollowing(!was);
     setFollowers((c) => c + (was ? -1 : 1));
     setFollowLoading(true);
     try {
-      const res = await apiRequest<{ following: boolean }>(`/api/stores/${product.store_id}/follow`, {
-        method: "POST",
-        auth: true,
-      });
+      const res = await apiRequest<{ following: boolean; follower_count?: number }>(
+        `/api/stores/${product.store_id}/follow`,
+        {
+          method: "POST",
+          auth: true,
+        }
+      );
       setFollowing(res.following);
+      if (typeof res.follower_count === "number") setFollowers(res.follower_count);
     } catch {
       setFollowing(was);
       setFollowers((c) => c + (was ? 1 : -1));

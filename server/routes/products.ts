@@ -16,6 +16,7 @@ import {
 } from "../services/products.cached.js";
 import { applyProductTextSearch } from "../services/textSearch.js";
 import { normalizeProductStatus } from "../utils/productStatus.js";
+import { invalidateStoreCache } from "../services/cache.js";
 
 const router = Router();
 
@@ -407,11 +408,13 @@ router.post("/", requireAuth, upload.single("image"), async (req: AuthRequest & 
         return res.status(500).json({ error: "خطا در آپلود تصویر محصول" });
       }
     }
-    const result = db.prepare(`INSERT INTO products (store_id, name, price, status, badge, moderation_status, image_url, description, category, city, province, created_at) VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
-      .run(storeInfo.id, name, parsedPrice, status, badge || null, imageUrl, description || null, category || null, storeInfo.city || null, storeInfo.province || null);
+    const city = (storeInfo.city && String(storeInfo.city).trim()) || "تهران";
+    const province = (storeInfo.province && String(storeInfo.province).trim()) || "تهران";
+    const result = db.prepare(`INSERT INTO products (store_id, name, price, status, badge, moderation_status, image_url, description, category, city, province, created_at) VALUES (?, ?, ?, ?, ?, 'approved', ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`)
+      .run(storeInfo.id, name, parsedPrice, status, badge || null, imageUrl, description || null, category || null, city, province);
     logger.info(`New product created: ${result.lastInsertRowid} by user ${req.user!.id}`);
-    await invalidateSearchCache();
-    return res.status(201).json({ success: true, productId: result.lastInsertRowid, message: "محصول با موفقیت ثبت شد و در انتظار تایید است" });
+    await invalidateStoreCache(storeInfo.id);
+    return res.status(201).json({ success: true, productId: result.lastInsertRowid, message: "محصول روی ویترین قرار گرفت" });
   } catch (error: any) {
     if (error.name === "ZodError") return res.status(400).json({ error: error.errors[0].message, field: error.errors[0].path[0] });
     logger.error("Create Product Error:", error);
