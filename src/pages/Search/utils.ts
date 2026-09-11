@@ -33,5 +33,6 @@ export const getActiveFilterCount = (filters: SearchFilters) => {
   if (filters.selectedRadius !== "all") count++;
   if (filters.onlyAvailable) count++;
   if (filters.sortBy !== "newest") count++;
+  if (filters.category) count++;
   return count;
 };

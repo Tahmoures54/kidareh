@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Compass, Footprints, Map as MapIcon, Radio, Search, Store } from "lucide-react";
+import { Compass, Footprints, Layers, Map as MapIcon, Radio, Search, Store } from "lucide-react";
 import { formatCompactToman, formatWalk, searchListings } from "../../presence/engine";
 import type { PresenceOrigin } from "../../presence/types";
 import PresenceImage from "./PresenceImage";
@@ -148,6 +148,13 @@ export default function CommandPalette({ open, onClose, origin }: Props) {
                   className="flex items-center gap-2 rounded-2xl px-3 py-3 text-xs font-black text-[var(--accent)] hover:bg-[var(--paper)]"
                 >
                   <Store className="h-4 w-4" /> فروشگاه‌ها
+                </button>
+                <button
+                  type="button"
+                  onClick={() => go("/categories")}
+                  className="flex items-center gap-2 rounded-2xl px-3 py-3 text-xs font-black text-[var(--accent)] hover:bg-[var(--paper)]"
+                >
+                  <Layers className="h-4 w-4" /> دسته‌بندی‌ها
                 </button>
                 <button
                   type="button"

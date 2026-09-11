@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  X, Store, Phone, Package, AlignRight, Save, Loader2, MapPin
+  X, Store, Phone, AlignRight, Save, Loader2, MapPin
 } from "lucide-react";
 import { StoreFormValues, storeFormSchema } from "../types";
 import { citiesInProvince, iranProvinceNames } from "../../../data/processed/iranCities";
+import CategoryField from "../../../components/category/CategoryField";
 
 interface EditStoreSheetProps {
   isOpen: boolean;
@@ -105,10 +106,12 @@ export const EditStoreSheet = ({
                 )}
               </div>
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
-                  <Package className="w-3.5 h-3.5" /> ?????????
-                </label>
-                <input {...register("category")} className="input-base" />
+                <CategoryField
+                  value={watch("category") || ""}
+                  onChange={(value) => setValue("category", value, { shouldValidate: true })}
+                  label="?????????"
+                  required
+                />
                 {errors.category && (
                   <span className="text-[10px] text-rose-500 font-bold">
                     {errors.category.message}

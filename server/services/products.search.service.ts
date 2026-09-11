@@ -13,6 +13,7 @@ import {
 } from "./cache.js";
 import { searchProductIdsFts, isFtsReady } from "./fts.js";
 import { buildLikePattern, normalizePersian } from "./persianText.js";
+import { applyProductCategoryFilter } from "../utils/categoryFilter.js";
 
 export interface SearchCursor {
   id: number;
@@ -86,7 +87,7 @@ export async function searchProductsService(
       radiusKm: params.radiusKm ?? "",
       lat: params.lat != null ? Math.round(params.lat * 1000) / 1000 : "",
       lng: params.lng != null ? Math.round(params.lng * 1000) / 1000 : "",
-      v: "fts2-featured",
+      v: "fts3-categories",
     })
   );
 
@@ -147,9 +148,10 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
     }
   }
 
-  if (category) {
-    whereValues.push(category);
-    where.push(`p.category = ?`);
+  const categoryFilter = applyProductCategoryFilter(category);
+  if (categoryFilter.sql) {
+    where.push(categoryFilter.sql);
+    whereValues.push(...categoryFilter.params);
   }
 
   if (scope === "city" && city) {

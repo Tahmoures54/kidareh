@@ -1,29 +1,18 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Search, X, LayoutGrid, Package, Sparkles, Layers } from "lucide-react";
 
-import { categoriesData } from "@data/processed/categories";
+import { CATEGORY_GROUP_COUNT, CATEGORY_TYPE_COUNT, filterCategoryGroups } from "@data/processed/categories";
 import { CategoryGroup } from "./types";
 import GroupCard from "./components/GroupCard";
 
 export default function Categories() {
   const navigate = useNavigate();
+  const { slug } = useParams();
   const [query, setQuery] = useState("");
 
-  const filtered = useMemo<CategoryGroup[]>(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return categoriesData as CategoryGroup[];
-
-    return (categoriesData as CategoryGroup[])
-      .map((g) => ({
-        ...g,
-        types: g.types.filter(
-          (t) => t.text.toLowerCase().includes(q) || t.value.toLowerCase().includes(q)
-        ),
-      }))
-      .filter((g) => g.types.length > 0 || g.group.toLowerCase().includes(q));
-  }, [query]);
+  const filtered = useMemo<CategoryGroup[]>(() => filterCategoryGroups(query) as CategoryGroup[], [query]);
 
   const totalTypes = useMemo(() => filtered.reduce((s, g) => s + g.types.length, 0), [filtered]);
 
@@ -45,7 +34,9 @@ export default function Categories() {
               <Layers className="w-6 h-6 text-teal-600 dark:text-teal-400" />
               دسته‌بندی‌ها
             </h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">چی می‌خوای؟ از اینجا پیدا کن</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mt-0.5">
+              {CATEGORY_GROUP_COUNT.toLocaleString("fa-IR")} گروه · {CATEGORY_TYPE_COUNT.toLocaleString("fa-IR")} زیردسته
+            </p>
           </div>
         </div>
 
@@ -55,7 +46,7 @@ export default function Categories() {
           </div>
           <input
             type="text"
-            placeholder="جستجوی دسته… مثلاً موبایل"
+            placeholder="جستجوی دسته… موبایل، خودرو، سیمان، مسکن"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="w-full bg-gray-100 dark:bg-gray-900 border border-transparent rounded-2xl pl-12 pr-11 py-3.5 text-sm font-bold text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:bg-white dark:focus:bg-gray-800 focus:border-teal-500/50 dark:focus:border-teal-400/50 focus:ring-4 focus:ring-teal-500/10 transition-all outline-none"
@@ -157,7 +148,7 @@ export default function Categories() {
 
               <motion.div layout className="space-y-3">
                 {filtered.map((g, i) => (
-                  <GroupCard key={g.group} group={g} index={i} isSearchActive={query.length > 0} />
+                  <GroupCard key={g.slug || g.group} group={g} index={i} isSearchActive={query.length > 0 || g.slug === slug} />
                 ))}
               </motion.div>
             </motion.div>

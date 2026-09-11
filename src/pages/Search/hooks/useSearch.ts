@@ -55,6 +55,7 @@ const DEFAULT_FILTERS: Omit<SearchFilters, "scope"> = {
   selectedRadius: "all",
   onlyAvailable: false,
   sortBy: "newest",
+  category: "",
 };
 
 export function useSearch() {
@@ -80,6 +81,7 @@ export function useSearch() {
     const scopeName = params.get("scopeName") || freshScope.name;
     return {
       ...DEFAULT_FILTERS,
+      category: params.get("category") || "",
       scope: withCityFields({
         type: scopeType,
         id: scopeId,
@@ -95,6 +97,7 @@ export function useSearch() {
 
   // -------------------- Computed --------------------
   const hasQuery = !!debouncedQuery.trim();
+  const showingResults = hasQuery || !!filters.category;
   const activeFilterCount = useMemo(() => getActiveFilterCount(filters), [filters]);
 
   // -------------------- Toast --------------------
@@ -120,6 +123,11 @@ export function useSearch() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const categoryParam = params.get("category") || "";
+  useEffect(() => {
+    setFilters((prev) => (prev.category === categoryParam ? prev : { ...prev, category: categoryParam }));
+  }, [categoryParam]);
+
   // Debounce
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -132,11 +140,21 @@ export function useSearch() {
   useEffect(() => {
     const currentQ = params.get("q") || "";
     const currentScope = params.get("scope");
-    if (debouncedQuery === currentQ && filters.scope.type === currentScope) return;
+    const currentCategory = params.get("category") || "";
+    if (
+      debouncedQuery === currentQ &&
+      filters.scope.type === currentScope &&
+      (filters.category || "") === currentCategory
+    ) {
+      return;
+    }
 
     const next = new URLSearchParams(params);
     if (debouncedQuery) next.set("q", debouncedQuery);
     else next.delete("q");
+
+    if (filters.category) next.set("category", filters.category);
+    else next.delete("category");
 
     next.set("scope", filters.scope.type);
     if (filters.scope.id) next.set("scopeId", filters.scope.id);
@@ -146,7 +164,7 @@ export function useSearch() {
 
     setParams(next, { replace: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedQuery, filters.scope.type, filters.scope.id, filters.scope.name]);
+  }, [debouncedQuery, filters.scope.type, filters.scope.id, filters.scope.name, filters.category]);
 
   // -------------------- Init --------------------
   useEffect(() => {
@@ -266,6 +284,7 @@ export function useSearch() {
     refetch 
   } = useInfiniteProducts({
     q: debouncedQuery || undefined,
+    category: filters.category || undefined,
     limit: 20,
     sort: filters.sortBy === "expensive" ? "newest" : filters.sortBy,
     onlyAvailable: filters.onlyAvailable,
@@ -391,6 +410,7 @@ export function useSearch() {
     filters, setFilters,
     inputRef,
     hasQuery,
+    showingResults,
     activeFilterCount,
     isLoading, isFetchingNextPage, hasNextPage, fetchNextPage,
     error, refetch,

@@ -16,6 +16,7 @@ import {
 } from "../services/products.cached.js";
 import { applyProductTextSearch } from "../services/textSearch.js";
 import { normalizeProductStatus } from "../utils/productStatus.js";
+import { applyProductCategoryFilter } from "../utils/categoryFilter.js";
 import { invalidateStoreCache } from "../services/cache.js";
 
 const router = Router();
@@ -77,7 +78,12 @@ router.get("/", async (req, res) => {
     const params: any[] = [];
     const countParams: any[] = [];
 
-    if (category) { baseConditions += " AND p.category = ?"; params.push(category); countParams.push(category); }
+    const categoryFilter = applyProductCategoryFilter(category as string | undefined);
+    if (categoryFilter.sql) {
+      baseConditions += ` AND ${categoryFilter.sql}`;
+      params.push(...categoryFilter.params);
+      countParams.push(...categoryFilter.params);
+    }
     if (q) {
       const r = applyProductTextSearch(String(q), baseConditions, params, countParams);
       baseConditions = r.baseConditions;

@@ -46,9 +46,10 @@ const EXTRA_RAIL = [
 function isPresencePath(pathname: string) {
   return (
     pathname === "/" ||
-    ["/explore", "/radar", "/trip", "/holds", "/reservations", "/search", "/saved", "/following"].includes(pathname) ||
+    ["/explore", "/radar", "/trip", "/holds", "/reservations", "/search", "/saved", "/following", "/categories"].includes(pathname) ||
     pathname.startsWith("/p/") ||
-    pathname.startsWith("/product/")
+    pathname.startsWith("/product/") ||
+    pathname.startsWith("/categories/")
   );
 }
 
@@ -337,6 +338,9 @@ export default function PresenceShell() {
               </Link>
               <Link to="/stores" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 فروشگاه‌ها
+              </Link>
+              <Link to="/categories" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
+                دسته‌بندی‌ها
               </Link>
               <Link to="/search" className="min-h-12 rounded-2xl bg-[var(--paper)] px-4 py-3 text-sm font-black">
                 جستجوی کالا

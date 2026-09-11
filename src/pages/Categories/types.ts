@@ -7,7 +7,13 @@ export interface CategoryType {
 
 export interface CategoryGroup {
   id?: string | number;
+  slug?: string;
   group: string;
+  short?: string;
+  icon?: string;
+  color?: string;
+  gradient?: string;
+  description?: string;
   types: CategoryType[];
 }
 

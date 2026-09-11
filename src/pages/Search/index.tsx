@@ -24,12 +24,12 @@ import { FeedColumn } from "../../components/feed/FeedColumn";
 import { FeedPost } from "../../components/feed/FeedPost";
 import { productToFeedPost } from "../../lib/feedMappers";
 
-import { useSearch, getInitialScope } from "./hooks/useSearch";
+import { getCategoryDisplayName } from "../../data/processed/categories";
+import { useSearch } from "./hooks/useSearch";
 import { SearchSkeleton } from "./components/SearchSkeleton";
 import { FilterSheet } from "./components/FilterSheet";
 import { IdleSection } from "./components/IdleSection";
 import { SPRING_TRANSITION, SORT_OPTIONS } from "./components/constants";
-import { SortType } from "./types";
 
 export default function Search() {
   const navigate = useNavigate();
@@ -40,7 +40,7 @@ export default function Search() {
     toastMsg,
     recents,
     filters, setFilters,
-    inputRef, hasQuery, activeFilterCount,
+    inputRef, showingResults, activeFilterCount,
     isLoading, isFetchingNextPage, hasNextPage, fetchNextPage,
     error, refetch,
     sortedProducts, userLoc,
@@ -160,7 +160,7 @@ export default function Search() {
 
         {/* Row 2: Sort Chips + View Toggle (فقط وقتی query دارد) */}
         <AnimatePresence>
-          {hasQuery && (
+          {showingResults && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -227,18 +227,34 @@ export default function Search() {
       <main className="px-4 py-4 pb-28">
 
         {/* Idle State */}
-        {!hasQuery && (
+        {!showingResults && (
           <IdleSection
             recents={recents}
             onRecentClick={commitSearch}
             onClearRecents={clearRecents}
             onSuggestionClick={commitSearch}
+            onCategoryClick={(category) => setFilters((prev) => ({ ...prev, category }))}
             onRemoveRecent={removeRecent}
           />
         )}
 
+        {filters.category && showingResults && (
+          <div className="mb-3 flex items-center gap-2">
+            <span className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600">
+              {getCategoryDisplayName(filters.category)}
+            </span>
+            <button
+              type="button"
+              onClick={() => setFilters((prev) => ({ ...prev, category: "" }))}
+              className="text-xs font-bold text-gray-500"
+            >
+              حذف دسته
+            </button>
+          </div>
+        )}
+
         {/* Error */}
-        {hasQuery && error && (
+        {showingResults && error && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -258,16 +274,16 @@ export default function Search() {
         )}
 
         {/* Loading Skeleton */}
-        {hasQuery && isLoading && sortedProducts.length === 0 && (
+        {showingResults && isLoading && sortedProducts.length === 0 && (
           <SearchSkeleton />
         )}
 
         {/* Empty Result */}
-        {hasQuery && !isLoading && !error && sortedProducts.length === 0 && (
+        {showingResults && !isLoading && !error && sortedProducts.length === 0 && (
           <div className="pt-10 flex flex-col items-center text-center">
             <EmptyState
               title="نتیجه‌ای پیدا نشد"
-              description={`کالایی برای «${query}» در ${scopeLabel} یافت نشد.`}
+              description={`کالایی برای «${query || getCategoryDisplayName(filters.category)}» در ${scopeLabel} یافت نشد.`}
             />
             {filters.scope.type !== "country" && (
               <motion.button
@@ -283,7 +299,7 @@ export default function Search() {
         )}
 
         {/* List View */}
-        {hasQuery && !error && sortedProducts.length > 0 && viewMode === "list" && (
+        {showingResults && !error && sortedProducts.length > 0 && viewMode === "list" && (
           <>
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-bold text-gray-500 dark:text-gray-400">
@@ -327,7 +343,7 @@ export default function Search() {
         )}
 
         {/* Map View */}
-        {hasQuery && !error && sortedProducts.length > 0 && viewMode === "map" && (
+        {showingResults && !error && sortedProducts.length > 0 && viewMode === "map" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}

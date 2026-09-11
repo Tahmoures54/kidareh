@@ -23,4 +23,5 @@ export interface SearchFilters {
   onlyAvailable: boolean;
   sortBy: SortType;
   scope: LocationScope;
+  category: string;
 }

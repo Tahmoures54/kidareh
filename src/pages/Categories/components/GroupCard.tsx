@@ -18,7 +18,7 @@ const GroupCard = React.memo(({ group, index, isSearchActive }: GroupCardProps) 
     if (isSearchActive) setOpen(true);
   }, [isSearchActive]);
 
-  const cfg = GROUP_CONFIG[group.group] || DEFAULT_CONFIG;
+  const cfg = GROUP_CONFIG[group.slug || ""] || GROUP_CONFIG[group.group] || DEFAULT_CONFIG;
   const Icon = cfg.icon;
 
   return (
@@ -34,8 +34,12 @@ const GroupCard = React.memo(({ group, index, isSearchActive }: GroupCardProps) 
         aria-expanded={open}
         className="w-full flex items-center gap-4 p-4 active:bg-gray-50 dark:active:bg-gray-800/50 transition-colors focus:outline-none"
       >
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${cfg.gradient} shadow-inner`}>
-          <Icon className="w-6 h-6 text-white drop-shadow-sm" />
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${group.gradient || cfg.gradient} shadow-inner`}>
+          {group.icon ? (
+            <span className="text-2xl leading-none">{group.icon}</span>
+          ) : (
+            <Icon className="w-6 h-6 text-white drop-shadow-sm" />
+          )}
         </div>
 
         <div className="flex-1 text-right">
@@ -81,6 +85,15 @@ const GroupCard = React.memo(({ group, index, isSearchActive }: GroupCardProps) 
           >
             <div className="px-4 pb-4">
               <div className="h-px w-full bg-gray-100 dark:bg-gray-800 mb-3" />
+              {group.slug && (
+                <Link
+                  to={`/search?category=${encodeURIComponent(group.slug)}`}
+                  className="mb-2.5 flex items-center justify-between p-3 bg-teal-50 dark:bg-teal-500/10 border border-teal-100 dark:border-teal-500/20 rounded-2xl"
+                >
+                  <span className="text-xs font-black text-teal-800 dark:text-teal-200">همهٔ {group.short || group.group}</span>
+                  <ChevronLeft className="w-4 h-4 text-teal-500" />
+                </Link>
+              )}
               <div className="grid grid-cols-2 gap-2.5">
                 {group.types.map((type, i) => (
                   <motion.div
