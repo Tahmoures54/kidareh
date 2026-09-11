@@ -150,8 +150,10 @@ export default function CategoryPicker({
                     type="button"
                     onClick={() => pick(item.value, item.text)}
                     className={cn(
-                      "rounded-full px-3 py-2 text-xs font-black",
-                      selected === item.value ? "bg-[var(--accent)] text-white" : "bg-[var(--paper)] text-[var(--ink)]"
+                      "rounded-full border px-3 py-2 text-xs font-black",
+                      selected === item.value
+                        ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                        : "border-slate-200 bg-slate-100 text-slate-800"
                     )}
                   >
                     {item.text}
