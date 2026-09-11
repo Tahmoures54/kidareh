@@ -18,9 +18,9 @@ import timeout from "connect-timeout";
 import jwt from "jsonwebtoken";
 
 import logger from "./logger.js";
-import db, { getStats, createBackup } from "./db.js";
+import db from "./db.js";
 import { ensureMessagesRooms } from "./ensureMessagesRooms.js";
-import { bootstrapCache, closeRedis, cacheStatus } from "./bootstrapCache.js";
+import { bootstrapCache, closeRedis } from "./bootstrapCache.js";
 
 import authRoutes from "./routes/auth.js";
 import aiRoutes from "./routes/ai.js";
@@ -34,6 +34,8 @@ import referralRoutes from "./routes/referral.js";
 import messagesRoutes from "./routes/messages.js";
 import supportRoutes from "./routes/support.js";
 import promotionsRoutes from "./routes/promotions.js";
+import presenceRoutes from "./routes/presence.js";
+import reservationsRoutes from "./routes/reservations.js";
 import { ensurePromotionTables } from "./services/promotions.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -272,6 +274,8 @@ async function startServer() {
     app.use("/api/messages", messagesRoutes);
     app.use("/api/support", supportRoutes);
     app.use("/api/promotions", promotionsRoutes);
+    app.use("/api/presence", presenceRoutes);
+    app.use("/api/reservations", reservationsRoutes);
 
     if (isProd) {
       const publicPath = fs.existsSync(path.join(ROOT_DIR, "dist/public")) ? path.join(ROOT_DIR, "dist/public") : path.join(ROOT_DIR, "dist");

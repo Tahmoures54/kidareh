@@ -163,10 +163,9 @@ body {
   background-color: #050709; 
 }
 
-/* تنظیم برای وسط قرار گرفتن اپلیکیشن در مانیتور دسکتاپ */
+/* تنظیم برای اپ تمام‌عرض — Presence OS */
 #root {
-  display: flex;
-  justify-content: center;
+  display: block;
   width: 100%;
   min-height: 100dvh;
 }
@@ -712,4 +711,55 @@ a {
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
   }
+}
+
+/* ====================== PRESENCE OS ====================== */
+.presence-root {
+  --paper: #f3efe6;
+  --paper-2: #ebe6db;
+  --ink: #14161c;
+  --ink-soft: #3d433c;
+  --muted: #6b7168;
+  --line: rgba(20, 22, 28, 0.09);
+  --line-strong: rgba(20, 22, 28, 0.16);
+  --accent: #0e6f63;
+  --accent-2: #165c54;
+  --gold: #b68a3a;
+  --danger: #b42318;
+  --ok: #157a4b;
+  --card: rgba(255, 252, 246, 0.86);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, rgba(14, 111, 99, 0.08), transparent 50%),
+    radial-gradient(900px 400px at 110% 0%, rgba(182, 138, 58, 0.08), transparent 45%),
+    var(--paper);
+  color: var(--ink);
+  min-height: 100dvh;
+}
+
+.presence-root * {
+  font-family: var(--font-body);
+}
+
+.presence-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 18px 40px -28px rgba(20, 22, 28, 0.35);
+  backdrop-filter: blur(18px);
+}
+
+.presence-chip {
+  border: 1px solid var(--line);
+  background: rgba(255, 252, 246, 0.7);
+}
+
+.presence-map .leaflet-container {
+  background: #d9e2d6;
+  font-family: var(--font-body);
+}
+
+.presence-hide-scroll {
+  scrollbar-width: none;
+}
+.presence-hide-scroll::-webkit-scrollbar {
+  display: none;
 }

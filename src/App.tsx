@@ -13,8 +13,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import { SettingsProvider } from "./context/SettingsContext";
 import { SupportProvider } from "./context/SupportContext";
 
-import Layout from "./components/Layout";
-import Home from "./pages/Home";
+import PresenceShell from "./components/presence/Shell";
+import PresenceHome from "./pages/PresenceHome";
 
 const Login = lazy(() => import("./pages/Login"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
@@ -39,6 +39,12 @@ const TermsAndGuidePage = lazy(() => import("./pages/TermsAndGuide"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const BecomeSeller = lazy(() => import("./pages/BecomeSeller"));
 const OnboardingFlow = lazy(() => import("./pages/Onboarding"));
+const RadarPage = lazy(() => import("./pages/Radar"));
+const ExplorePage = lazy(() => import("./pages/Explore"));
+const TripPage = lazy(() => import("./pages/Trip"));
+const HoldsPage = lazy(() => import("./pages/Holds"));
+const PresenceListing = lazy(() => import("./pages/PresenceListing"));
+const LegacyHome = lazy(() => import("./pages/Home"));
 
 function PageLoader() {
   return (
@@ -128,8 +134,15 @@ export default function App() {
             <ScrollToTop />
             <Suspense fallback={<PageLoader />}>
               <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Home />} />
+                <Route path="/" element={<PresenceShell />}>
+                  <Route index element={<PresenceHome />} />
+                  <Route path="explore" element={<ExplorePage />} />
+                  <Route path="radar" element={<RadarPage />} />
+                  <Route path="trip" element={<TripPage />} />
+                  <Route path="holds" element={<HoldsPage />} />
+                  <Route path="reservations" element={<HoldsPage />} />
+                  <Route path="p/:id" element={<PresenceListing />} />
+                  <Route path="legacy" element={<LegacyHome />} />
                   <Route path="search" element={<Search />} />
                   <Route path="categories" element={<Categories />} />
                   <Route path="categories/:slug" element={<Categories />} />
@@ -159,7 +172,8 @@ export default function App() {
 
                 <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
                 <Route path="/onboarding" element={<GuestRoute><OnboardingFlow /></GuestRoute>} />
-                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/p/:id" element={<PresenceListing />} />
+                <Route path="/product/:id" element={<PresenceListing />} />
                 <Route path="/products/:id" element={<ProductDetail />} />
                 <Route path="/store/:id" element={<StoreDetail />} />
                 <Route path="/stores/:id" element={<StoreDetail />} />
