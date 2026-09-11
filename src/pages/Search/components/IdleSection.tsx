@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { motion } from "framer-motion";
 import { Search as SearchIcon, Clock, TrendingUp, X } from "lucide-react";
 import { SUGGESTED_TERMS } from "./constants";
+import { categoriesData } from "../../../data/processed/categories";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -18,6 +19,7 @@ interface IdleSectionProps {
   onRecentClick: (term: string) => void;
   onClearRecents: () => void;
   onSuggestionClick: (term: string) => void;
+  onCategoryClick?: (category: string) => void;
   onRemoveRecent?: (term: string) => void;
 }
 
@@ -26,6 +28,7 @@ export const IdleSection = memo(({
   onRecentClick,
   onClearRecents,
   onSuggestionClick,
+  onCategoryClick,
   onRemoveRecent,
 }: IdleSectionProps) => (
   <motion.div
@@ -88,6 +91,24 @@ export const IdleSection = memo(({
         </div>
       </motion.section>
     )}
+
+    <motion.section variants={itemVariants}>
+      <h3 className="font-black text-sm flex items-center gap-2 mb-3 text-gray-800 dark:text-gray-200">
+        دسته‌بندی‌ها
+      </h3>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+        {categoriesData.map((group) => (
+          <button
+            key={group.slug}
+            type="button"
+            onClick={() => onCategoryClick?.(group.slug)}
+            className="shrink-0 rounded-full bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-3 py-2 text-xs font-black shadow-sm"
+          >
+            {group.icon} {group.short}
+          </button>
+        ))}
+      </div>
+    </motion.section>
 
     {/* Trending */}
     <motion.section variants={itemVariants}>

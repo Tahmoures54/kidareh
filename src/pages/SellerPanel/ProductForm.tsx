@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ImagePlus, Loader2, Tag, X } from "lucide-react";
+import CategoryField from "../../components/category/CategoryField";
 import { useAuth } from "../../context/AuthContext";
 import { createProduct, updateProduct, fetchSellerProducts } from "../../services/products.service";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -59,7 +60,7 @@ export default function SellerProductForm() {
     formState: { errors },
   } = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
-    defaultValues: { status: "موجود" },
+    defaultValues: { status: "موجود", category: "" },
   });
 
   const status = watch("status");
@@ -194,13 +195,11 @@ export default function SellerProductForm() {
           </div>
 
           <div>
-            <label className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">
-              دسته‌بندی (اختیاری)
-            </label>
-            <input
-              {...register("category")}
-              placeholder="مثال: پوشاک"
-              className="w-full h-14 px-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-teal-600"
+            <CategoryField
+              value={watch("category") || ""}
+              onChange={(value) => setValue("category", value)}
+              label="دسته‌بندی"
+              placeholder="مثلاً پوشاک یا لوازم خانگی"
             />
           </div>
 

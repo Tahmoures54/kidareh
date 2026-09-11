@@ -2,6 +2,7 @@ import React, { memo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SlidersHorizontal, X, RotateCcw, Building, Map, Globe } from "lucide-react";
 import { LocationScopeType, SearchFilters } from "../types";
+import CategoryField from "../../../components/category/CategoryField";
 import { SPRING_TRANSITION, RADIUS_OPTIONS } from "./constants";
 
 interface FilterSheetProps {
@@ -46,7 +47,7 @@ export const FilterSheet = memo(({ open, filters, onChange, onClose, onReset }: 
   return (
     <AnimatePresence>
       {open && (
-        <div className="fixed inset-0 z-[80]" dir="rtl">
+        <div className="fixed inset-0 z-[200]" dir="rtl">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -91,6 +92,25 @@ export const FilterSheet = memo(({ open, filters, onChange, onClose, onReset }: 
             </div>
 
             <div className="p-5 space-y-6">
+
+              <div>
+                <label className="text-xs font-bold text-gray-500 mb-3 block">دسته‌بندی</label>
+                <CategoryField
+                  value={filters.category}
+                  onChange={(category) => onChange({ category })}
+                  label=""
+                  placeholder="همه دسته‌ها"
+                />
+                {filters.category && (
+                  <button
+                    type="button"
+                    onClick={() => onChange({ category: "" })}
+                    className="mt-2 text-xs font-bold text-rose-500"
+                  >
+                    حذف دسته
+                  </button>
+                )}
+              </div>
               
               {/* Scope */}
               <div>

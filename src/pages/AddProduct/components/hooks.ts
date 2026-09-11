@@ -28,7 +28,7 @@ export function useAddProduct(user: any) {
   const [desc, setDesc] = useState("");
   const [category, setCategory] = useState(() => {
     const autoAssigned = getProductCategoryFromStoreCategory(user?.store_category);
-    return autoAssigned !== "General" ? autoAssigned : localStorage.getItem("lastCategory") || "";
+    return autoAssigned && autoAssigned !== "other" ? autoAssigned : localStorage.getItem("lastCategory") || "";
   });
   const [status, setStatus] = useState<"موجود" | "ناموجود" | "فقط ۱ عدد" | "به‌زودی">("موجود");
   const [badge, setBadge] = useState<string | null>(null);
@@ -54,7 +54,7 @@ export function useAddProduct(user: any) {
   useEffect(() => {
     if (user?.store_category) {
       const autoAssigned = getProductCategoryFromStoreCategory(user.store_category);
-      if (autoAssigned && autoAssigned !== "General") setCategory(autoAssigned);
+      if (autoAssigned && autoAssigned !== "other") setCategory(autoAssigned);
     }
   }, [user?.store_category]);
 
@@ -137,7 +137,7 @@ export function useAddProduct(user: any) {
       return showToast("اسم کالا حداقل ۳ حرف باشه.");
     }
 
-    const finalCategory = category || "General";
+    const finalCategory = category || "other";
 
     setSubmitting(true);
     try {

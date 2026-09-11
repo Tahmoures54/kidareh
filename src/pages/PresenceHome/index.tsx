@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Clock3, Footprints, Radio, Sparkles } from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { useAppLocation } from "../../hooks/useAppLocation";
-import { CATEGORY_META } from "../../presence/catalog";
+import { categoriesData, getCategoryGroupBySlug, getCategoryGroupInfo } from "../../data/processed/categories";
 import { compareCopy, pulseStats, searchListings, toFa } from "../../presence/engine";
 import type { ListingCategory, PresenceQuery } from "../../presence/types";
 import PresenceMap from "../../components/presence/PresenceMap";
@@ -14,6 +14,25 @@ import { FeedPost } from "../../components/feed/FeedPost";
 import { FeedStories, type StoryItem } from "../../components/feed/FeedStories";
 import { listingToFeedPost, productToFeedPost, type FeedPostData } from "../../lib/feedMappers";
 import { apiRequest } from "../../utils/api";
+
+const PRESENCE_GROUP_TO_LISTING: Record<string, ListingCategory[]> = {
+  digital: ["digital", "audio", "gaming"],
+  appliances: ["home"],
+  home: ["home"],
+  fashion: ["fashion"],
+  beauty: ["beauty"],
+  culture: ["sport", "books"],
+  "mother-child": ["kids"],
+  others: ["tools"],
+  industrial: ["tools"],
+  construction: ["tools"],
+  office: ["tools"],
+};
+
+function listingCatsFor(token: string): ListingCategory[] | null {
+  const slug = getCategoryGroupBySlug(token)?.slug || getCategoryGroupInfo(token).slug;
+  return PRESENCE_GROUP_TO_LISTING[slug] ?? null;
+}
 
 const RADII = [
   { km: 0.8, label: "۸۰۰ م" },
@@ -26,7 +45,7 @@ export default function PresenceHome() {
   const { origin } = usePresenceOrigin();
   const { location: cityLocation, isTehran } = useAppLocation();
   const [q, setQ] = useState("");
-  const [category, setCategory] = useState<ListingCategory | "all">("all");
+  const [marketCategory, setMarketCategory] = useState("all");
   const [radiusKm, setRadiusKm] = useState(3);
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
@@ -35,19 +54,33 @@ export default function PresenceHome() {
   const desktop = useMinWidth(1024);
 
   const pulse = useMemo(() => (isTehran ? pulseStats(origin) : { inWalk15: 0 }), [isTehran, origin]);
-  const listings = useMemo(
-    () =>
-      isTehran
-        ? searchListings(origin, { q, category, radiusKm, openNow, sort, inStock: true, verifiedOnly: false })
-        : [],
-    [isTehran, origin, q, category, radiusKm, openNow, sort]
+  const listingCats = useMemo(
+    () => (marketCategory === "all" ? ("all" as const) : listingCatsFor(marketCategory)),
+    [marketCategory]
   );
+  const listings = useMemo(() => {
+    if (!isTehran) return [];
+    const raw = searchListings(origin, {
+      q,
+      category: "all",
+      radiusKm,
+      openNow,
+      sort,
+      inStock: true,
+      verifiedOnly: false,
+    });
+    if (listingCats === "all") return raw;
+    if (!listingCats) return [];
+    return raw.filter((item) => listingCats.includes(item.category));
+  }, [isTehran, origin, q, listingCats, radiusKm, openNow, sort]);
   const compare = compareCopy();
 
   useEffect(() => {
     let cancelled = false;
     apiRequest<{ products?: Record<string, unknown>[] }>(
-      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}`
+      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${
+        marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""
+      }`
     )
       .then((res) => {
         if (cancelled) return;
@@ -60,7 +93,7 @@ export default function PresenceHome() {
     return () => {
       cancelled = true;
     };
-  }, [cityLocation.city]);
+  }, [cityLocation.city, marketCategory]);
 
   const listingPosts = useMemo(() => listings.map(listingToFeedPost), [listings]);
   const posts = useMemo(() => {
@@ -129,25 +162,31 @@ export default function PresenceHome() {
 
           <FeedStories items={stories} />
 
-          {isTehran && (
           <div className="flex items-center gap-2 overflow-x-auto presence-hide-scroll px-3 pb-2">
             <button
               type="button"
-              onClick={() => setCategory("all")}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${category === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+              onClick={() => setMarketCategory("all")}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${marketCategory === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
             >
               همه
             </button>
-            {(Object.keys(CATEGORY_META) as ListingCategory[]).map((key) => (
+            {categoriesData.map((group) => (
               <button
-                key={key}
+                key={group.slug}
                 type="button"
-                onClick={() => setCategory(key)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${category === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+                onClick={() => setMarketCategory(group.slug)}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${marketCategory === group.slug ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
               >
-                {CATEGORY_META[key].emoji} {CATEGORY_META[key].label}
+                {group.icon} {group.short}
               </button>
             ))}
+            <Link
+              to="/categories"
+              className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black presence-chip"
+            >
+              همه دسته‌ها
+            </Link>
+            {isTehran && (
             <button
               type="button"
               onClick={() => setShowFilters((v) => !v)}
@@ -155,8 +194,8 @@ export default function PresenceHome() {
             >
               فیلتر
             </button>
+            )}
           </div>
-          )}
 
           {showFilters && isTehran && (
           <div className="flex flex-wrap items-center gap-2 px-3 pb-2">
@@ -203,11 +242,19 @@ export default function PresenceHome() {
           {posts.length === 0 ? (
             <div className="px-3 py-6">
               <PresenceEmpty
-                title={isTehran ? "در این شعاع کالایی نیست" : `هنوز آگهی در ${cityLocation.city} نیست`}
+                title={
+                  marketCategory !== "all"
+                    ? "در این دسته کالایی نیست"
+                    : isTehran
+                      ? "در این شعاع کالایی نیست"
+                      : `هنوز آگهی در ${cityLocation.city} نیست`
+                }
                 hint={
-                  isTehran
-                    ? "فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
-                    : "فروشگاه‌های همین شهر را ببین یا از هدر شهر دیگری انتخاب کن."
+                  marketCategory !== "all"
+                    ? "دسته دیگری را بزن یا از «همه دسته‌ها» زیردسته دقیق‌تر را باز کن."
+                    : isTehran
+                      ? "فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
+                      : "فروشگاه‌های همین شهر را ببین یا از هدر شهر دیگری انتخاب کن."
                 }
                 actionLabel={isTehran ? "نمایش کل شهر" : "فروشگاه‌های این شهر"}
                 actionTo={isTehran ? undefined : "/stores"}

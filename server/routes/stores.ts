@@ -13,6 +13,7 @@ import {
   invalidateStoreCache,
 } from "../services/cache.js";
 import { applyStoreTextSearch } from "../services/textSearch.js";
+import { applyStoreCategoryFilter } from "../utils/categoryFilter.js";
 
 const router = Router();
 
@@ -278,7 +279,11 @@ router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
 
     let countSql = "SELECT COUNT(DISTINCT s.id) as total FROM stores s WHERE 1=1" + text.sqlFragment;
     const countParams: any[] = [...text.params];
-    if (category) { countSql += " AND s.category = ?"; countParams.push(category); }
+    const categoryFilter = applyStoreCategoryFilter(category);
+    if (categoryFilter.sql) {
+      countSql += ` AND ${categoryFilter.sql}`;
+      countParams.push(...categoryFilter.params);
+    }
     if (city) { countSql += " AND s.city = ?"; countParams.push(city); }
     if (province) { countSql += " AND s.province = ?"; countParams.push(province); }
     if (verified === "true") countSql += " AND (COALESCE(s.has_business_license, 0) = 1 OR COALESCE(s.is_verified, 0) = 1)";
@@ -293,7 +298,11 @@ router.get("/", async (req: AuthRequest, res: Response): Promise<void> => {
       LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'
       WHERE 1=1` + text.sqlFragment;
     const params: any[] = [...text.params];
-    if (category) { sql += " AND s.category = ?"; params.push(category); }
+    const categoryFilterSql = applyStoreCategoryFilter(category);
+    if (categoryFilterSql.sql) {
+      sql += ` AND ${categoryFilterSql.sql}`;
+      params.push(...categoryFilterSql.params);
+    }
     if (city) { sql += " AND s.city = ?"; params.push(city); }
     if (province) { sql += " AND s.province = ?"; params.push(province); }
     if (verified === "true") sql += " AND (COALESCE(s.has_business_license, 0) = 1 OR COALESCE(s.is_verified, 0) = 1)";

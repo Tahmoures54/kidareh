@@ -21,7 +21,7 @@ import { BADGES_LIST } from "../../components/badges";
 import { fmtPrice } from "./utils";
 import { useAddProduct } from "./components/hooks";
 import { Toast } from "../../components/ui/Toast";
-import SegmentedControl from "./components/SegmentedControl";
+import CategoryField from "../../components/category/CategoryField";
 
 export default function AddProduct() {
   const navigate = useNavigate();
@@ -108,6 +108,13 @@ export default function AddProduct() {
             />
           </div>
         </div>
+
+        <CategoryField
+          value={state.category}
+          onChange={setters.setCategory}
+          label="دسته‌بندی"
+          placeholder="مثلاً لوازم خانگی یا سیمان"
+        />
 
         <div className="grid grid-cols-2 gap-4">
           <div>
