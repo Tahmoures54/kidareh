@@ -50,7 +50,12 @@ describe("marketplace categories", () => {
 
   it("expands group slugs into filter tokens that match legacy Persian labels", () => {
     const applianceTokens = getCategoryFilterValues("appliances");
-    expect(applianceTokens).toEqual(expect.arrayContaining(["home_appliances", "لوازم خانگی", "خانه"]));
+    expect(applianceTokens).toEqual(expect.arrayContaining(["home_appliances", "لوازم خانگی"]));
+    expect(applianceTokens).not.toContain("خانه");
+    expect(applianceTokens).not.toContain("خوراکی");
+
+    const homeTokens = getCategoryFilterValues("home");
+    expect(homeTokens).toEqual(expect.arrayContaining(["furniture", "خانه"]));
 
     const carTokens = getCategoryFilterValues("cars");
     expect(carTokens).toEqual(expect.arrayContaining(["cars", "ماشین"]));

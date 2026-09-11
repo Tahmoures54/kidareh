@@ -63,7 +63,7 @@ export const categoriesData: CategoryGroup[] = [
     description: "لوازم برقی بزرگ و کوچک خانه",
     aliases: ["لوازم خانگی", "لوازم برقی", "appliances", "home"],
     types: [
-      { value: "home_appliances", text: "لوازم برقی بزرگ (یخچال، لباسشویی)", aliases: ["خانه", "یخچال", "لباسشویی", "ظرفشویی", "اجاق", "appliances", "لوازم خانگی"] },
+      { value: "home_appliances", text: "لوازم برقی بزرگ (یخچال، لباسشویی)", aliases: ["یخچال", "لباسشویی", "ظرفشویی", "اجاق", "appliances", "لوازم خانگی"] },
       { value: "small_appliances", text: "لوازم برقی کوچک آشپزخانه", aliases: ["چای‌ساز", "مخلوط‌کن", "مایکروویو", "توستر"] },
       { value: "kitchen_appliances", text: "تجهیزات توکار (هود، سینک، گاز)", aliases: ["هود", "گاز رومیزی", "فر توکار"] },
       { value: "climate_hvac", text: "سرمایش، گرمایش و کولر", aliases: ["کولر", "اسپلیت", "بخاری", "شوفاژ"] },
@@ -81,7 +81,7 @@ export const categoriesData: CategoryGroup[] = [
     color: "bg-orange-500 text-orange-50",
     gradient: "from-orange-400 to-amber-600",
     description: "مبلمان، فرش، ظروف و دکور",
-    aliases: ["خانه و زندگی", "دکوراسیون", "مبلمان"],
+    aliases: ["خانه و زندگی", "دکوراسیون", "مبلمان", "خانه"],
     types: [
       { value: "furniture", text: "مبلمان و صنایع چوبی", aliases: ["مبل", "میز", "صندلی", "furniture"] },
       { value: "mattress_bedding", text: "تشک، کالای خواب و بالش", aliases: ["تشک", "روتختی"] },

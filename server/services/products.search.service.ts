@@ -87,7 +87,7 @@ export async function searchProductsService(
       radiusKm: params.radiusKm ?? "",
       lat: params.lat != null ? Math.round(params.lat * 1000) / 1000 : "",
       lng: params.lng != null ? Math.round(params.lng * 1000) / 1000 : "",
-      v: "fts3-categories",
+      v: "fts5-categories",
     })
   );
 
