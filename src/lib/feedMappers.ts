@@ -26,18 +26,26 @@ export interface FeedPostData {
   sku?: string;
 }
 
-const FALLBACK =
-  "https://placehold.co/800x1000/e8f7f6/00A693?text=Kidareh";
+function usableImage(src?: string | null): src is string {
+  if (!src) return false;
+  const value = String(src).trim();
+  if (!value) return false;
+  if (/placehold\.co/i.test(value)) return false;
+  if (/text=No\+Image|text=Kidareh/i.test(value)) return false;
+  return true;
+}
 
 function firstImage(...candidates: Array<string | null | undefined>): string {
   for (const value of candidates) {
-    if (value && String(value).trim()) return String(value);
+    if (usableImage(value)) return value;
   }
-  return FALLBACK;
+  return "";
 }
 
 export function listingToFeedPost(listing: EnrichedListing): FeedPostData {
-  const images = listing.images?.length ? listing.images : [listing.image];
+  const images = [listing.image, ...(listing.images || []), listing.store.cover].filter(
+    (src, index, arr): src is string => usableImage(src) && arr.indexOf(src) === index
+  );
   return {
     key: feedKey("listing", listing.id),
     kind: "listing",
@@ -97,8 +105,8 @@ export function productToFeedPost(raw: Record<string, any>, storeFallback?: {
     storeVerified: Boolean(raw.is_verified || raw.verified || storeFallback?.verified),
     storeAvatar: raw.store_image_url || raw.store_image || storeFallback?.image || null,
     storeId,
-    image: firstImage(raw.image, raw.image_url, images[0]),
-    images: images.length ? images : undefined,
+    image: firstImage(raw.image, raw.image_url, images[0], raw.store_image_url, raw.store_image, storeFallback?.image),
+    images: images.filter(usableImage),
     title: raw.name || raw.title || "کالا",
     caption: raw.description,
     priceLabel,

@@ -12,7 +12,37 @@ import {
 import { useFeedPost } from "../../hooks/useFeedPost";
 import type { FeedPostData } from "../../lib/feedMappers";
 import { cn } from "../../utils";
-import PresenceImage from "../presence/PresenceImage";
+
+function FeedMedia({
+  sources,
+  title,
+  storeName,
+}: {
+  sources: string[];
+  title: string;
+  storeName: string;
+}) {
+  const [index, setIndex] = useState(0);
+  const src = sources[index];
+  if (!src) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-[var(--brand-primary)] to-[#0b5f58] px-8 text-white">
+        <p className="text-xs font-black tracking-wide text-white/70">{storeName}</p>
+        <p className="mt-3 text-center text-2xl font-black leading-snug">{title}</p>
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt={title}
+      className="h-full w-full object-cover"
+      loading="lazy"
+      referrerPolicy="no-referrer"
+      onError={() => setIndex((i) => i + 1)}
+    />
+  );
+}
 
 interface Props {
   post: FeedPostData;
@@ -26,8 +56,8 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
   const [menu, setMenu] = useState(false);
   const [photoIndex, setPhotoIndex] = useState(0);
   const lastTap = useRef(0);
-  const photos = post.images?.length ? post.images : [post.image];
-  const photo = photos[Math.min(photoIndex, photos.length - 1)] || post.image;
+  const photos = [post.image, ...(post.images || []), post.storeAvatar || ""]
+    .filter((src, index, arr): src is string => Boolean(src) && arr.indexOf(src) === index);
 
   const onMediaClick = (event: React.MouseEvent) => {
     const now = Date.now();
@@ -125,7 +155,12 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
           onClick={onMediaClick}
           aria-label={post.title}
         >
-          <PresenceImage src={photo} alt={post.title} className="h-full w-full object-cover" />
+          <FeedMedia
+            key={`${post.key}-${photoIndex}`}
+            sources={photos.slice(photoIndex)}
+            title={post.title}
+            storeName={post.storeName}
+          />
         </button>
         {burst > 0 && (
           <Heart

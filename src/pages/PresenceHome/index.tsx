@@ -29,6 +29,7 @@ export default function PresenceHome() {
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
   const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   const desktop = useMinWidth(1024);
 
   const pulse = useMemo(() => pulseStats(origin), [origin]);
@@ -63,7 +64,10 @@ export default function PresenceHome() {
         )
       : shopPosts;
     const seen = new Set<string>();
-    return [...shops, ...listingPosts].filter((post) => {
+    const mixed = listingPosts.length
+      ? [...listingPosts.slice(0, 1), ...shops, ...listingPosts.slice(1)]
+      : shops;
+    return mixed.filter((post) => {
       if (seen.has(post.key)) return false;
       seen.add(post.key);
       return true;
@@ -92,34 +96,23 @@ export default function PresenceHome() {
     <div className="grid bg-white lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="min-w-0">
         <FeedColumn>
-          <section className="px-3 pt-3">
-            <div className="flex items-end justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-black text-[var(--accent)]">فید محله</p>
-                <h1 className="text-xl font-black tracking-tight">ببین کی داره</h1>
-              </div>
-              <p className="text-[11px] font-black text-[var(--muted)]">
-                {toFa(pulse.inWalk15)} کالا تا ۱۵ دقیقه
-              </p>
-            </div>
-            <label className="mt-3 flex h-12 items-center gap-3 rounded-2xl bg-[var(--paper)] px-3">
-              <Sparkles className="h-4 w-4 text-[var(--accent)]" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="جستجو در پست‌ها…"
-                className="h-full flex-1 bg-transparent text-sm font-bold outline-none"
-              />
-            </label>
-          </section>
+          <label className="mx-3 mt-3 flex h-11 items-center gap-3 rounded-2xl bg-[var(--paper)] px-3">
+            <Sparkles className="h-4 w-4 text-[var(--accent)]" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="جستجو در پست‌ها…"
+              className="h-full flex-1 bg-transparent text-sm font-bold outline-none"
+            />
+          </label>
 
           <FeedStories items={stories} />
 
-          <div className="flex gap-2 overflow-x-auto presence-hide-scroll px-3 pb-1">
+          <div className="flex items-center gap-2 overflow-x-auto presence-hide-scroll px-3 pb-2">
             <button
               type="button"
               onClick={() => setCategory("all")}
-              className={`shrink-0 rounded-full px-3 py-2 text-[12px] font-black ${category === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${category === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
             >
               همه
             </button>
@@ -128,14 +121,22 @@ export default function PresenceHome() {
                 key={key}
                 type="button"
                 onClick={() => setCategory(key)}
-                className={`shrink-0 rounded-full px-3 py-2 text-[12px] font-black ${category === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+                className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${category === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
               >
                 {CATEGORY_META[key].emoji} {CATEGORY_META[key].label}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => setShowFilters((v) => !v)}
+              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${showFilters ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+            >
+              فیلتر
+            </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 px-3 py-2">
+          {showFilters && (
+          <div className="flex flex-wrap items-center gap-2 px-3 pb-2">
             {RADII.map((r) => (
               <button
                 key={r.km}
@@ -170,7 +171,9 @@ export default function PresenceHome() {
                 {label}
               </button>
             ))}
+            <span className="text-[11px] font-black text-[var(--muted)]">{toFa(pulse.inWalk15)} تا ۱۵ دقیقه</span>
           </div>
+          )}
         </FeedColumn>
 
         <FeedColumn>
