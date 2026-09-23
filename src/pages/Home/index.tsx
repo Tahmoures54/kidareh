@@ -123,6 +123,8 @@ export default function Home() {
     effectiveDisplay,
     effectiveProvince,
     gpsEnabled,
+    userLat,
+    userLng,
     manualLocation,
     search,
     setSearch,
@@ -164,6 +166,14 @@ export default function Home() {
   const productsCount = allProducts.length;
 
   const [nearbyStores, setNearbyStores] = useState<any[]>([]);
+
+  const distanceKm = useCallback((lat: number, lng: number) => {
+    const toRad = (v: number) => (v * Math.PI) / 180;
+    const dLat = toRad(lat - userLat);
+    const dLng = toRad(lng - userLng);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(userLat)) * Math.cos(toRad(lat)) * Math.sin(dLng / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }, [userLat, userLng]);
   const [storesLoading, setStoresLoading] = useState(false);
 
   useEffect(() => {
@@ -173,9 +183,16 @@ export default function Home() {
       setStoresLoading(true);
       try {
         const data = await apiRequest<{ stores?: any[] }>(
-          "/api/stores?city=" + encodeURIComponent(effectiveCity) + "&limit=8"
+          "/api/stores?city=" + encodeURIComponent(effectiveCity) + "&limit=50"
         );
-        if (active) setNearbyStores(data?.stores || []);
+        if (active) {
+          const stores = Array.isArray(data?.stores) ? data.stores : [];
+          const ranked = stores.map((store: any) => ({
+            ...store,
+            distance_km: store.lat != null && store.lng != null ? distanceKm(Number(store.lat), Number(store.lng)) : Number.POSITIVE_INFINITY,
+          })).sort((a: any, b: any) => a.distance_km - b.distance_km);
+          setNearbyStores(ranked);
+        }
       } catch {
         if (active) setNearbyStores([]);
       } finally {
@@ -184,7 +201,7 @@ export default function Home() {
     };
     loadStores();
     return () => { active = false; };
-  }, [effectiveCity]);
+  }, [effectiveCity, distanceKm]);
 
   return (
     <HomeErrorBoundary>
@@ -306,6 +323,7 @@ export default function Home() {
                       </div>
                       <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500">
                         <span>{store.product_count || 0} کالا</span>
+                        {Number.isFinite(store.distance_km) && <span>{store.distance_km < 1 ? `${Math.round(store.distance_km * 1000)} متر` : `${store.distance_km.toFixed(1)} کیلومتر`}</span>}
                         <span className="flex items-center gap-1 text-[#087b8b]">{store.is_verified || store.has_business_license ? <ShieldCheck className="h-3.5 w-3.5" /> : null} مشاهده <ArrowLeft className="h-3 w-3" /></span>
                       </div>
                     </a>
