@@ -61,10 +61,10 @@ export const EditStoreSheet = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: "100%", opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 inset-x-0 z-50 max-w-lg mx-auto bg-[var(--bg-secondary)] rounded-t-[2.5rem] shadow-2xl border-t border-[var(--border-light)] overflow-hidden flex flex-col max-h-[85vh]"
+            className="fixed bottom-0 inset-x-0 z-50 mx-auto w-full max-w-2xl bg-[var(--bg-secondary)] rounded-t-[2.5rem] lg:bottom-1/2 lg:max-w-4xl lg:translate-y-1/2 lg:rounded-[2rem] shadow-2xl border border-[var(--border-light)] overflow-hidden flex flex-col max-h-[92vh]"
             dir="rtl"
           >
-            <div className="flex-shrink-0 flex flex-col items-center pt-4 pb-2 border-b border-[var(--border-light)] px-5">
+            <div className="flex-shrink-0 flex flex-col items-center pt-4 pb-3 border-b border-[var(--border-light)] px-5 lg:px-7">
               <div className="w-12 h-1.5 bg-[var(--border-light)] rounded-full mb-4" />
               <div className="w-full flex items-center justify-between">
                 <h3 className="text-lg font-black text-[var(--text-primary)] flex items-center gap-2">
@@ -81,7 +81,7 @@ export const EditStoreSheet = ({
             </div>
             <form
               onSubmit={handleSubmit(onSave)}
-              className="flex-1 overflow-y-auto px-5 py-4 space-y-4"
+              className="flex-1 overflow-y-auto px-5 py-5 space-y-4 lg:px-7 lg:py-6 lg:grid lg:grid-cols-2 lg:gap-5 lg:space-y-0"
             >
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
@@ -118,7 +118,7 @@ export const EditStoreSheet = ({
                   </span>
                 )}
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 lg:col-span-2">
                 <label className="text-xs font-bold text-[var(--text-secondary)] flex items-center gap-1.5 ml-1">
                   <AlignRight className="w-3.5 h-3.5" /> توضیح فروشگاه
                 </label>
@@ -154,13 +154,13 @@ export const EditStoreSheet = ({
                   </select>
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 lg:col-span-2">
                 <label className="text-xs font-bold text-[var(--text-secondary)] ml-1 flex items-center gap-1">
                   <MapPin className="w-3.5 h-3.5" /> آدرس
                 </label>
                 <input {...register("address")} className="input-base" />
               </div>
-              <div className="pt-4">
+              <div className="pt-4 lg:col-span-2 lg:border-t lg:border-[var(--border-light)] lg:mt-1 lg:pt-5">
                 <button
                   type="submit"
                   disabled={isPending}
