@@ -226,7 +226,7 @@ export default function StoreDetail() {
           }
         }}
         onMessageClick={() =>
-          navigate(user ? `/messages?store=${store.id}` : "/login")
+          navigate(user ? `/chat/${store.id}` : "/login")
         }
         onPhoneClick={(e) => {
           if (!store.phone) e.preventDefault();
