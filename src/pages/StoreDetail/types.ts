@@ -28,6 +28,7 @@ export interface StoreData {
   blue_tick_expires_at?: string | null;
   owner_id?: number;
   follower_count?: number;
+  opening_hours?: string | null;
 }
 
 export type TabMode = "products" | "about";
