@@ -118,23 +118,23 @@ export default function SellerProductForm() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-28" dir="rtl">
+    <div className="min-h-screen bg-[var(--bg-primary)] pb-28" dir="rtl">
       <PageHeader
         title={isEditMode ? "ویرایش کالا" : "کالای جدید"}
         subtitle="فقط چند مورد ساده را پر کنید"
       />
 
-      <main className="px-4 py-5 max-w-lg mx-auto space-y-5">
+      <main className="mx-auto max-w-[1180px] px-4 py-5 lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:px-8 lg:py-8">
         {!isEditMode && (
           <HintCard title="نکته برای فروش بیشتر" tone="amber">
             عکس واضح از خود کالا بگیرید. نام کوتاه و قیمت درست بنویسید. بعد از ثبت، روی ویترین دیده می‌شود.
           </HintCard>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 rounded-[28px] border border-[var(--line)] bg-white p-5 shadow-[0_20px_60px_-45px_rgba(8,76,103,.5)] lg:p-7"
           {/* عکس */}
-          <div className="flex flex-col items-center">
-            <label className="cursor-pointer relative w-36 h-36 rounded-3xl bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden active:scale-[0.98] transition-transform">
+          <div className="flex flex-col items-center rounded-3xl bg-[var(--paper)] p-5 lg:flex-row lg:gap-5">
+            <label className="cursor-pointer relative h-40 w-40 rounded-3xl bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden active:scale-[0.98] transition-transform">
               {imageUrl ? (
                 <>
                   <img src={imageUrl} alt="پیش‌نمایش" className="w-full h-full object-cover" />
@@ -170,7 +170,7 @@ export default function SellerProductForm() {
               <input
                 {...register("name")}
                 placeholder="مثال: کفش ورزشی سایز ۴۲"
-                className="w-full h-14 pr-10 pl-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl text-base outline-none focus:border-teal-600"
+                className="w-full h-14 pr-10 pl-4 bg-white border border-[var(--line)] rounded-2xl text-base outline-none focus:border-[var(--accent)] focus:ring-4 focus:ring-[#08a6a6]/10"
               />
             </div>
             {errors.name && (
@@ -219,13 +219,13 @@ export default function SellerProductForm() {
             <label className="text-sm font-bold text-slate-600 dark:text-slate-300 mb-2 block">
               وضعیت الان
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-3">
               {STATUS_OPTIONS.map((s) => (
                 <button
                   key={s.value}
                   type="button"
                   onClick={() => setValue("status", s.value, { shouldValidate: true })}
-                  className={`py-3 rounded-2xl border text-center transition-all ${
+                  className={`min-h-16 rounded-2xl border text-center transition-all ${
                     status === s.value
                       ? "bg-[var(--accent)] border-[var(--accent)] text-white shadow-md"
                       : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200"
