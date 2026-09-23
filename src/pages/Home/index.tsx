@@ -1,5 +1,5 @@
-import React, { memo, useCallback, useMemo } from "react";
-import { Loader2, AlertCircle, X } from "lucide-react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, AlertCircle, X, MapPin, Store, ShieldCheck, ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useHomeLogic } from "./useHomeLogic";
 import { HOME_CONFIG } from "./constants";
@@ -22,6 +22,8 @@ import { useMarketStories } from "../../hooks/useMarketStories";
 import { mergeMarketStories } from "../../lib/marketStories";
 import { presenceMarketStories } from "../../presence/stories";
 import { isTehranCity } from "../../data/processed/iranCities";
+import Map from "../../components/Map";
+import { apiRequest } from "../../utils/api";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -161,6 +163,29 @@ export default function Home() {
 
   const productsCount = allProducts.length;
 
+  const [nearbyStores, setNearbyStores] = useState<any[]>([]);
+  const [storesLoading, setStoresLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const loadStores = async () => {
+      if (!effectiveCity) return;
+      setStoresLoading(true);
+      try {
+        const data = await apiRequest<{ stores?: any[] }>(
+          "/api/stores?city=" + encodeURIComponent(effectiveCity) + "&limit=8"
+        );
+        if (active) setNearbyStores(data?.stores || []);
+      } catch {
+        if (active) setNearbyStores([]);
+      } finally {
+        if (active) setStoresLoading(false);
+      }
+    };
+    loadStores();
+    return () => { active = false; };
+  }, [effectiveCity]);
+
   return (
     <HomeErrorBoundary>
       <div
@@ -253,6 +278,51 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          {nearbyStores.length > 0 && (
+            <section className="mb-7 px-4 lg:px-0">
+              <div className="mb-4 flex items-end justify-between gap-4">
+                <div>
+                  <div className="mb-1 flex items-center gap-2 text-xs font-black text-[#0788ad]">
+                    <Store className="h-4 w-4" /> بازار محلی
+                  </div>
+                  <h2 className="text-2xl font-black text-[#073f56]">فروشگاه‌های نزدیک شما</h2>
+                  <p className="mt-1 text-xs font-bold text-slate-500">مستقیم با فروشگاه آشنا شو و برای خرید حضوری تصمیم بگیر.</p>
+                </div>
+                <span className="hidden rounded-full bg-[#e8f9f7] px-3 py-1.5 text-xs font-black text-[#087b8b] sm:block">{nearbyStores.length} فروشگاه</span>
+              </div>
+              <div className="grid gap-4 lg:grid-cols-[1.05fr_.95fr]">
+                <div className="grid grid-cols-2 gap-3">
+                  {nearbyStores.slice(0, 4).map((store) => (
+                    <a key={store.id} href={"/stores/" + store.id} className="group rounded-[20px] border border-slate-200 bg-white p-3 shadow-[0_12px_35px_-28px_rgba(8,76,103,.5)] transition-all hover:-translate-y-1 hover:border-[#08a6a6]/30 hover:shadow-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-[#e3faf7] to-[#e5f6ff] text-[#0788ad]">
+                          {store.image_url ? <img src={store.image_url} alt="" className="h-full w-full object-cover" loading="lazy" /> : <Store className="h-5 w-5" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-sm font-black text-[#073f56] group-hover:text-[#0788ad]">{store.name}</h3>
+                          <p className="mt-1 flex items-center gap-1 truncate text-[11px] font-bold text-slate-500"><MapPin className="h-3 w-3 shrink-0" />{store.address || store.city}</p>
+                        </div>
+                      </div>
+                      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] font-bold text-slate-500">
+                        <span>{store.product_count || 0} کالا</span>
+                        <span className="flex items-center gap-1 text-[#087b8b]">{store.is_verified || store.has_business_license ? <ShieldCheck className="h-3.5 w-3.5" /> : null} مشاهده <ArrowLeft className="h-3 w-3" /></span>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                <div className="min-h-[330px] overflow-hidden rounded-[24px] border border-slate-200 bg-slate-100 shadow-[0_18px_45px_-34px_rgba(8,76,103,.5)]">
+                  {(() => {
+                    const located = nearbyStores.filter((s) => s.lat != null && s.lng != null);
+                    if (!located.length) return <div className="flex h-full min-h-[330px] items-center justify-center p-8 text-center text-sm font-bold text-slate-500"><div><MapPin className="mx-auto mb-3 h-8 w-8 text-[#08a6a6]" /><p>هنوز موقعیت دقیق همه فروشگاه‌ها ثبت نشده است.</p></div></div>;
+                    const center = { lat: Number(located[0].lat), lng: Number(located[0].lng) };
+                    const results = located.map((s) => ({ id: s.id, name: s.name, price: 0, store: s.name, latitude: Number(s.lat), longitude: Number(s.lng), badge: s.is_verified || s.has_business_license ? "تأییدشده" : undefined }));
+                    return <Map center={center} results={results} height="330px" />;
+                  })()}
+                </div>
+              </div>
+            </section>
+          )}
 
           <div className="px-4 mb-4 lg:px-0">
             <SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} />
