@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
-import { apiRequest } from "../../../utils/api";   // ✅ اصلاح: ../../../ به جای ../../
+import { apiRequest } from "../../../utils/api";
 import { Msg, MsgStatus } from "./types";
 
+type RoomInfo = { roomId: string; success?: boolean };
+
 export function useChatRoom(id: string | undefined, productId: string | null, user: any) {
-  // States
   const [socket, setSocket] = useState<Socket | null>(null);
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -12,10 +13,8 @@ export function useChatRoom(id: string | undefined, productId: string | null, us
   const [typing, setTyping] = useState(false);
   const [histLoad, setHistLoad] = useState(false);
   const [storeName, setStoreName] = useState("در حال دریافت...");
-  const [nearBot, setNearBot] = useState(true);
+  const [roomId, setRoomId] = useState("");
   const [showScroll, setShowScroll] = useState(false);
-
-  // Refs
   const endRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -26,141 +25,137 @@ export function useChatRoom(id: string | undefined, productId: string | null, us
     return () => { mounted.current = false; };
   }, []);
 
-  const roomId = useMemo(() => {
-    if (!user?.id || !id) return "";
-    return `chat_${user.id}_${id}`;
-  }, [user?.id, id]);
+  const resolveRoom = useCallback(async () => {
+    if (!id || !user?.id) return "";
+    const store = await apiRequest<any>(`/api/stores/${id}`, { auth: false });
+    if (!store?.owner_id || Number(store.owner_id) === Number(user.id)) {
+      throw new Error("فروشگاه یا مالک گفتگو معتبر نیست");
+    }
+    if (mounted.current) setStoreName(store.name || "فروشگاه کی‌داره");
+    const room = await apiRequest<RoomInfo>("/api/messages/rooms", {
+      method: "POST",
+      auth: true,
+      body: { receiverId: Number(store.owner_id), productId: productId ? Number(productId) : undefined },
+    });
+    if (!room?.roomId) throw new Error("اتاق گفتگو ایجاد نشد");
+    if (mounted.current) setRoomId(room.roomId);
+    return room.roomId;
+  }, [id, user?.id, productId]);
 
-  /* ── Fetch Store Info ── */
-  useEffect(() => {
-    if (!id) return;
-    apiRequest(`/api/stores/${id}`, { auth: false })
-      .then((d: any) => { if (mounted.current && d?.name) setStoreName(d.name); })
-      .catch(() => setStoreName("فروشگاه کی‌داره"));
-  }, [id]);
-
-  /* ── Fetch History ── */
-  const fetchHistory = useCallback(async () => {
-    if (!roomId) return;
+  const fetchHistory = useCallback(async (rid: string) => {
     setHistLoad(true);
     try {
-      const data = await apiRequest<Msg[]>(`/api/messages/room/${roomId}`, { auth: true });
+      const data = await apiRequest<{ messages: Msg[]; roomId: string }>(`/api/messages/${encodeURIComponent(rid)}`, { auth: true });
       if (!mounted.current) return;
-      if (Array.isArray(data)) {
-        setMessages(data.map(m => ({
-          ...m,
-          status: "sent" as MsgStatus,
-          timestamp: m.timestamp || new Date(m.createdAt!).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
-        })));
-      }
-    } catch {}
-    finally { if (mounted.current) setHistLoad(false); }
-  }, [roomId]);
+      setMessages(Array.isArray(data?.messages) ? data.messages.map(m => ({
+        ...m,
+        status: "sent" as MsgStatus,
+        timestamp: m.timestamp || new Date((m as any).created_at || m.createdAt || Date.now()).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
+      })) : []);
+    } catch {
+      if (mounted.current) setMessages([]);
+    } finally {
+      if (mounted.current) setHistLoad(false);
+    }
+  }, []);
 
-  /* ── Socket Connection ── */
   useEffect(() => {
+    let cancelled = false;
     if (!user || !id) return;
-    const base = (import.meta.env.VITE_API_URL as string)?.trim() || window.location.origin;
-    const s = io(base, {
-      withCredentials: true,
-      transports: ["websocket", "polling"],
-      reconnection: true, reconnectionAttempts: Infinity,
-      reconnectionDelay: 1000, timeout: 15000,
-    });
-    setSocket(s);
+    (async () => {
+      try {
+        const rid = await resolveRoom();
+        if (!rid || cancelled || !mounted.current) return;
+        await fetchHistory(rid);
 
-    s.on("connect", () => {
-      setConnected(true);
-      if (roomId) s.emit("join_room", roomId);
-      if (productId && roomId) s.emit("product_context", { roomId, productId });
-    });
-    s.on("disconnect", () => setConnected(false));
-    s.on("receive_message", (d: Msg) => {
-      if (!mounted.current) return;
-      setMessages(prev => prev.some(m => m.id === d.id) ? prev : [...prev, { ...d, status: "sent" }]);
-      setTyping(false);
-      if(navigator.vibrate) navigator.vibrate(50);
-    });
-    s.on("message_read", (mid: string) => {
-      setMessages(prev => prev.map(m => m.id === mid ? { ...m, status: "read" } : m));
-    });
-    s.on("typing", () => {
-      setTyping(true);
-      setTimeout(() => { if (mounted.current) setTyping(false); }, 3000);
-    });
-
-    fetchHistory();
-
+        const base = (import.meta.env.VITE_API_URL as string)?.trim() || window.location.origin;
+        const accessToken = typeof window !== "undefined" ? window.localStorage.getItem("kidareh_access_token") : null;
+        const s = io(base, {
+          auth: accessToken ? { token: accessToken } : undefined,
+          withCredentials: true,
+          transports: ["websocket", "polling"],
+          reconnection: true,
+          reconnectionAttempts: Infinity,
+          reconnectionDelay: 1000,
+          timeout: 15000,
+        });
+        setSocket(s);
+        s.on("connect", () => {
+          setConnected(true);
+          s.emit("join_room", rid);
+        });
+        s.on("disconnect", () => setConnected(false));
+        s.on("receive_message", (d: Msg) => {
+          if (!mounted.current) return;
+          setMessages(prev => prev.some(m => String(m.id) === String(d.id)) ? prev : [...prev, { ...d, status: "sent" }]);
+          setTyping(false);
+        });
+        s.on("message_read", (d: any) => {
+          const mid = typeof d === "string" ? d : d?.messageId;
+          if (mid) setMessages(prev => prev.map(m => String(m.id) === String(mid) ? { ...m, status: "read" } : m));
+        });
+        s.on("user_typing", () => {
+          setTyping(true);
+          window.setTimeout(() => mounted.current && setTyping(false), 3000);
+        });
+        s.on("user_stop_typing", () => setTyping(false));
+      } catch {
+        if (mounted.current) setConnected(false);
+      }
+    })();
     return () => {
-      s.off("connect"); s.off("disconnect");
-      s.off("receive_message"); s.off("message_read"); s.off("typing");
-      s.disconnect();
-      setSocket(null); setConnected(false);
+      cancelled = true;
+      setConnected(false);
+      setSocket(prev => {
+        prev?.disconnect();
+        return null;
+      });
     };
-  }, [id, user, roomId, productId, fetchHistory]);
+  }, [id, user?.id, productId, resolveRoom, fetchHistory]);
 
-  /* ── Scrolling Logic ── */
   useEffect(() => {
-    if (nearBot) endRef.current?.scrollIntoView({ behavior: "smooth" });
-    else setShowScroll(true);
-  }, [messages, nearBot, typing]);
+    if (messages.length) endRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, typing]);
 
   const handleScroll = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
-    const nb = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
-    setNearBot(nb);
-    setShowScroll(!nb);
+    const near = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+    setShowScroll(!near);
   }, []);
 
-  /* ── Send Logic ── */
   const sendMsg = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!input.trim() || !user || !roomId) return;
-
+    e?.preventDefault();
+    const text = input.trim();
+    if (!text || !user || !roomId) return;
     const mid = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
-    const ts = new Date().toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" });
-    const msg: Msg & { roomId: string } = {
-      id: mid, roomId,
-      senderId: String(user.phone ?? user.id),
-      text: input.trim(),
-      timestamp: ts,
-      status: "sending",
-      createdAt: new Date().toISOString(),
-    };
-
+    const msg: any = { id: mid, roomId, senderId: String(user.id), text, content: text, timestamp: new Date().toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }), status: "sending", createdAt: new Date().toISOString() };
     setMessages(prev => [...prev, msg]);
     setInput("");
-    
     if (textareaRef.current) textareaRef.current.style.height = "auto";
-
-    const ok = (status: MsgStatus) => setMessages(prev => prev.map(m => m.id === mid ? { ...m, status } : m));
-
+    const mark = (status: MsgStatus) => setMessages(prev => prev.map(m => String(m.id) === mid ? { ...m, status } : m));
     if (socket && connected) {
-      socket.emit("send_message", msg, (ack?: { ok?: boolean }) => {
-        ok(ack?.ok === false ? "error" : "sent");
-      });
+      socket.emit("send_message", msg, (ack: any) => mark(ack?.ok === false ? "error" : "sent"));
     } else {
       try {
-        await apiRequest("/api/messages", { method: "POST", auth: true, body: { roomId, content: msg.text } });
-        ok("sent");
-      } catch { ok("error"); }
+        const rid = roomId;
+        const room = await apiRequest<any>(`/api/messages/${encodeURIComponent(rid)}`, { auth: true });
+        const receiverId = Number(room?.messages?.[0]?.sender_id || 0);
+        if (!receiverId) throw new Error("گیرنده گفتگو مشخص نیست");
+        await apiRequest("/api/messages", { method: "POST", auth: true, body: { roomId: rid, receiverId, content: text, productId: productId ? Number(productId) : undefined } });
+        mark("sent");
+      } catch { mark("error"); }
     }
   };
 
   const retry = useCallback((m: Msg) => {
-    if (!roomId) return;
+    if (!roomId || !user) return;
+    const payload: any = { ...m, roomId, senderId: String(user.id), text: (m as any).text || (m as any).content || "" };
     setMessages(prev => prev.map(x => x.id === m.id ? { ...x, status: "sending" } : x));
-    const ok = (s: MsgStatus) => setMessages(prev => prev.map(x => x.id === m.id ? { ...x, status: s } : x));
     if (socket && connected) {
-      socket.emit("send_message", { ...m, roomId }, (ack?: { ok?: boolean }) => {
-        ok(ack?.ok === false ? "error" : "sent");
-      });
-    } else {
-      apiRequest("/api/messages", { method: "POST", auth: true, body: { roomId, content: m.text } })
-        .then(() => ok("sent")).catch(() => ok("error"));
+      socket.emit("send_message", payload, (ack: any) => setMessages(prev => prev.map(x => x.id === m.id ? { ...x, status: ack?.ok === false ? "error" : "sent" } : x)));
     }
-  }, [roomId, socket, connected]);
+  }, [roomId, socket, connected, user]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
