@@ -316,6 +316,9 @@ export default function ProductDetail() {
 
       <FloatingHeader saved={saved} saveLoading={saveLoading} onShare={handleShare} onSave={handleSave} />
 
+      <div className="mx-auto w-full max-w-[1280px] lg:px-6">
+      <div className="lg:grid lg:grid-cols-[1.08fr_.92fr] lg:items-start lg:gap-7 lg:pt-8">
+      <div className="overflow-hidden rounded-[28px] lg:border lg:border-slate-200 lg:bg-white lg:p-3 lg:shadow-[0_20px_60px_-40px_rgba(8,76,103,.5)]">
       <ImageCarousel
         images={images}
         name={product.name}
@@ -324,7 +327,8 @@ export default function ProductDetail() {
         setGalleryOpen={setGalleryOpen}
       />
 
-      <div className="bg-[var(--bg-primary)] rounded-t-[40px] -mt-8 relative z-20 px-5 pt-8 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.3)]">
+      </div>
+      <div className="bg-[var(--bg-primary)] rounded-t-[40px] -mt-8 relative z-20 px-5 pt-8 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.3)] lg:mt-0 lg:rounded-[28px] lg:border lg:border-slate-200 lg:bg-white lg:p-7 lg:shadow-[0_20px_60px_-40px_rgba(8,76,103,.5)]">
         <ProductInfo product={product} isAvailable={isProductAvailable} avgRating={avgRating} />
         <StoreCard
           storeId={product.store_id}
@@ -337,6 +341,8 @@ export default function ProductDetail() {
           distance={distance}
           onFollow={handleFollow}
         />
+      </div>
+      </div>
       </div>
 
       <BottomActionBar
