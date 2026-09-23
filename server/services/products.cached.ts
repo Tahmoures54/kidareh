@@ -81,7 +81,7 @@ export async function getCachedProductDetail(id: string | number) {
       FROM products p
       LEFT JOIN stores s ON p.store_id = s.id
       LEFT JOIN users u ON s.user_id = u.id
-      WHERE p.id = ?
+      WHERE p.id = ? AND p.moderation_status = 'approved'
     `
         )
         .get(id) ?? null
