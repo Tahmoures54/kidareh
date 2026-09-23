@@ -46,6 +46,10 @@ export const EditStoreSheet = ({
   const lat = watch("lat");
   const lng = watch("lng");
   const [mapQuery, setMapQuery] = useState("");
+  const openingHoursRaw = watch("opening_hours");
+  const openingHours = (() => { try { return openingHoursRaw ? JSON.parse(openingHoursRaw) : {}; } catch { return {}; } })();
+  const weekDays = [{ key: "sat", label: "شنبه" }, { key: "sun", label: "یکشنبه" }, { key: "mon", label: "دوشنبه" }, { key: "tue", label: "سه‌شنبه" }, { key: "wed", label: "چهارشنبه" }, { key: "thu", label: "پنجشنبه" }, { key: "fri", label: "جمعه" }];
+  const updateOpeningDay = (key: string, patch: { closed?: boolean; open?: string; close?: string }) => { const current = { ...openingHours, [key]: { open: "09:00", close: "21:00", ...(openingHours[key] || {}), ...patch } }; setValue("opening_hours", JSON.stringify(current), { shouldDirty: true }); };
   const [mapSearching, setMapSearching] = useState(false);
   const [mapMessage, setMapMessage] = useState<string | null>(null);
   const mapCenter: [number, number] = lat != null && lng != null ? [lat, lng] : [35.6892, 51.3890];
@@ -174,6 +178,32 @@ export const EditStoreSheet = ({
                 </label>
                 <input {...register("address")} className="input-base" />
               </div>
+              <div className="lg:col-span-2 rounded-2xl border border-[var(--line)] bg-white p-4">
+                <div className="mb-3">
+                  <p className="text-sm font-black text-[var(--ink)]">ساعات کاری فروشگاه</p>
+                  <p className="mt-1 text-[10px] font-bold text-[var(--ink-soft)]">ساعت کاری را ثبت کنید تا مشتری بداند چه زمانی می‌تواند حضوری مراجعه کند.</p>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {weekDays.map((day) => {
+                    const value = openingHours[day.key] || {};
+                    const closed = value.closed === true;
+                    return <div key={day.key} className="rounded-xl border border-[var(--line)] bg-[#f8fcfd] p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="text-xs font-black text-[var(--ink)]">{day.label}</span>
+                        <label className="flex items-center gap-1 text-[10px] font-bold text-[var(--ink-soft)]">
+                          <input type="checkbox" checked={closed} onChange={(e) => updateOpeningDay(day.key, { closed: e.target.checked })} />
+                          تعطیل
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input type="time" value={value.open || "09:00"} disabled={closed} onChange={(e) => updateOpeningDay(day.key, { open: e.target.value })} className="input-base text-left" />
+                        <input type="time" value={value.close || "21:00"} disabled={closed} onChange={(e) => updateOpeningDay(day.key, { close: e.target.value })} className="input-base text-left" />
+                      </div>
+                    </div>;
+                  })}
+                </div>
+              </div>
+
               <div className="lg:col-span-2 rounded-2xl border border-[var(--line)] bg-[#f4fbfc] p-3">
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <div>
