@@ -187,17 +187,56 @@ export default function Home() {
           onGps={useGps}
         />
 
-        <div className="sticky top-14 z-30 bg-[var(--bg-primary)] shadow-sm">
-          <SearchBar value={search} onChange={setSearch} placeholder="چی لازم داری؟ همین دور و بر…" />
-          <CategorySlider activeCategory={activeCategory} onSelectCategory={setActiveCategory} />
+        <div className="sticky top-0 z-30 bg-[var(--bg-primary)]/95 shadow-sm backdrop-blur-xl">
+          <div className="mx-auto w-full max-w-[1180px] px-4 pt-3 lg:pt-5">
+            <section className="relative overflow-hidden rounded-[28px] border border-[var(--line)] bg-gradient-to-br from-[#e9fbff] via-white to-[#dff7f4] p-5 shadow-[0_20px_55px_-35px_rgba(8,76,103,.35)] lg:p-8">
+              <div className="absolute -left-20 -top-24 h-56 w-56 rounded-full bg-[#42a9d8]/15 blur-3xl" />
+              <div className="absolute -right-20 -bottom-24 h-56 w-56 rounded-full bg-[#08a6a6]/15 blur-3xl" />
+              <div className="relative grid items-center gap-6 lg:grid-cols-[1.25fr_.75fr]">
+                <div>
+                  <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#08a6a6]/15 bg-white/75 px-3 py-1.5 text-xs font-black text-[#087b8b]">
+                    <span className="h-2 w-2 rounded-full bg-[#08a6a6]" />
+                    بازار محلی · {effectiveCity}
+                  </div>
+                  <h1 className="max-w-2xl text-2xl font-black leading-tight text-[#073f56] lg:text-4xl">
+                    هر چیزی که لازم داری، نزدیک خودت پیدا کن
+                  </h1>
+                  <p className="mt-2 max-w-xl text-sm font-bold leading-7 text-[#55798a] lg:text-base">
+                    قیمت را ببین، فروشگاه را پیدا کن و اگر خواستی حضوری تحویل بگیر.
+                  </p>
+                  <div className="mt-5 max-w-2xl rounded-2xl bg-white/90 p-1.5 shadow-[0_12px_35px_-22px_rgba(8,76,103,.35)]">
+                    <SearchBar value={search} onChange={setSearch} placeholder="مثلاً لاستیک، موبایل، لوازم خودرو…" />
+                  </div>
+                </div>
+                <div className="hidden lg:grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-white/80 bg-white/75 p-4">
+                    <div className="text-xs font-black text-[#55798a]">خرید محلی</div>
+                    <div className="mt-1 text-lg font-black text-[#073f56]">نزدیک و سریع</div>
+                  </div>
+                  <div className="rounded-2xl border border-white/80 bg-white/75 p-4">
+                    <div className="text-xs font-black text-[#55798a]">فروشگاه‌ها</div>
+                    <div className="mt-1 text-lg font-black text-[#073f56]">مستقیم ببین</div>
+                  </div>
+                  <div className="col-span-2 rounded-2xl border border-white/80 bg-white/75 p-4">
+                    <div className="text-xs font-black text-[#55798a]">کی‌داره چه کمکی می‌کند؟</div>
+                    <div className="mt-1 text-sm font-black leading-6 text-[#087b8b]">کالای موردنیازت را در بازار اطراف تو پیدا می‌کند.</div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <div className="mt-3">
+              <CategorySlider activeCategory={activeCategory} onSelectCategory={setActiveCategory} />
+            </div>
+          </div>
         </div>
 
         <main className="flex-1 pb-24 pt-4">
-          <MarketStoryRail city={effectiveCity} />
+          <div className="mx-auto w-full max-w-[1180px]">
+            <MarketStoryRail city={effectiveCity} />
           <SponsoredBanner city={effectiveCity} />
           <ValuePropsBanner />
 
-          <div className="px-4 mb-4">
+          <div className="px-4 mb-4 lg:px-0">
             <SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} />
           </div>
 
@@ -211,7 +250,7 @@ export default function Home() {
             {error && <ErrorBanner onRetry={refetch} />}
           </AnimatePresence>
 
-          <div className="px-4">
+          <div className="px-4 lg:px-0">
             {!isLoading && productsCount > 0 && (
               <ResultHeader
                 count={productsCount}
@@ -282,6 +321,7 @@ export default function Home() {
                 )}
               </>
             )}
+          </div>
           </div>
         </main>
       </div>
