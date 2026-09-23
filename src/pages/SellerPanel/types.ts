@@ -45,6 +45,8 @@ export const storeFormSchema = z.object({
   province: z.string().optional(),
   city: z.string().optional(),
   address: z.string().optional(),
+  lat: z.number().min(-90).max(90).nullable().optional(),
+  lng: z.number().min(-180).max(180).nullable().optional(),
 });
 
 export type StoreFormValues = z.infer<typeof storeFormSchema>;
