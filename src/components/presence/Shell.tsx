@@ -124,9 +124,10 @@ export default function PresenceShell() {
       <nav className="flex h-full flex-col items-center gap-2 py-4" aria-label="ناوبری اصلی">
         <Link
           to="/"
-          className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-black text-white shadow-md shadow-[var(--accent)]/25"
+          className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-black text-white shadow-md shadow-[var(--accent)]/25 lg:h-14 lg:w-full lg:justify-start lg:gap-3 lg:px-4 lg:text-base"
         >
-          کی
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 text-sm font-black">کی</span>
+          <span className="hidden lg:inline">کی‌داره</span>
         </Link>
         {TABS.map((tab) => (
           <NavLink
