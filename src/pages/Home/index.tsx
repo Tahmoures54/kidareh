@@ -236,6 +236,24 @@ export default function Home() {
           <SponsoredBanner city={effectiveCity} />
           <ValuePropsBanner />
 
+          <section className="mb-5 px-4 lg:px-0">
+            <div className="rounded-[24px] border border-[#08a6a6]/15 bg-gradient-to-l from-[#e5faf8] via-white to-[#e7f7ff] p-5 shadow-[0_18px_45px_-34px_rgba(8,76,103,.45)] lg:p-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-sm font-black text-[#087b8b]">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#08a6a6]" />
+                    اطراف شما چه خبر؟
+                  </div>
+                  <h2 className="mt-1 text-xl font-black text-[#073f56] lg:text-2xl">کالاها را بر اساس محدوده ببین</h2>
+                  <p className="mt-1 text-xs font-bold text-[#55798a]">اول بازار نزدیک خودت، بعد اگر خواستی کل ایران.</p>
+                </div>
+                <div className="w-full sm:w-72">
+                  <SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} />
+                </div>
+              </div>
+            </div>
+          </section>
+
           <div className="px-4 mb-4 lg:px-0">
             <SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} />
           </div>
