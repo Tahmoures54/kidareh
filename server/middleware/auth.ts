@@ -43,9 +43,14 @@ const SAFE_JWT_SECRET: string = JWT_SECRET;
 // ══════════════════════════════════════════════
 
 function extractToken(req: Request): string | null {
-  // Browser authentication is intentionally cookie-only. Do not accept
-  // Authorization headers so a stolen browser token cannot be persisted in
-  // localStorage and replayed by arbitrary frontend JavaScript.
+  // Web: HttpOnly session cookie.
+  // Mobile/API clients: short-lived Bearer access token stored by the app
+  // in secure platform storage. This keeps the browser cookie model intact
+  // while allowing the Flutter app to use the same API.
+  const authorization = req.get("authorization") || "";
+  const bearer = authorization.match(/^Bearer\\s+(.+)$/i);
+  if (bearer?.[1]) return bearer[1].trim();
+
   if ("cookies" in req) {
     const cookies = (req as any).cookies || {};
     return (cookies[process.env.NODE_ENV === "production" ? "__Host-kidareh_session" : "kidareh_session"] as string) || null;
