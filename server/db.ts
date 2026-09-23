@@ -78,7 +78,7 @@ try {
 // 4. Schema Version
 // ============================================================================
 
-const SCHEMA_VERSION = 12; 
+const SCHEMA_VERSION = 13; 
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -678,6 +678,20 @@ const runMigrations = () => {
   if (current < 12) {
     safeAlter(`ALTER TABLE stores ADD COLUMN opening_hours TEXT`, "stores.opening_hours");
     db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(12);
+  }
+
+  if (current < 13) {
+    try {
+      db.exec(`
+        CREATE INDEX IF NOT EXISTS idx_products_moderation_city ON products(moderation_status, city);
+        CREATE INDEX IF NOT EXISTS idx_products_store_moderation ON products(store_id, moderation_status, created_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_messages_rooms_user1_updated ON messages_rooms(user1_id, updated_at DESC);
+        CREATE INDEX IF NOT EXISTS idx_messages_rooms_user2_updated ON messages_rooms(user2_id, updated_at DESC);
+      `);
+    } catch (err: any) {
+      logger.warn("v13 index migration skipped:", err?.message);
+    }
+    db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(13);
   }
 
   logger.info(`✅ Schema up to date (v${SCHEMA_VERSION})`);
