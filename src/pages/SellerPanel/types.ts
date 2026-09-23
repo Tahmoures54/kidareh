@@ -25,6 +25,8 @@ export interface StoreInfo {
   category: string;
   city?: string;
   province?: string;
+  lat?: number | null;
+  lng?: number | null;
   image?: string;
   blue_tick_expires_at?: string | null;
   total_products?: number;
