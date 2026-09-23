@@ -14,6 +14,7 @@ export function useChatRoom(id: string | undefined, productId: string | null, us
   const [histLoad, setHistLoad] = useState(false);
   const [storeName, setStoreName] = useState("در حال دریافت...");
   const [roomId, setRoomId] = useState("");
+  const [receiverId, setReceiverId] = useState(0);
   const [showScroll, setShowScroll] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -31,7 +32,10 @@ export function useChatRoom(id: string | undefined, productId: string | null, us
     if (!store?.owner_id || Number(store.owner_id) === Number(user.id)) {
       throw new Error("فروشگاه یا مالک گفتگو معتبر نیست");
     }
-    if (mounted.current) setStoreName(store.name || "فروشگاه کی‌داره");
+    if (mounted.current) {
+      setStoreName(store.name || "فروشگاه کی‌داره");
+      setReceiverId(Number(store.owner_id));
+    }
     const room = await apiRequest<RoomInfo>("/api/messages/rooms", {
       method: "POST",
       auth: true,
@@ -69,9 +73,7 @@ export function useChatRoom(id: string | undefined, productId: string | null, us
         await fetchHistory(rid);
 
         const base = (import.meta.env.VITE_API_URL as string)?.trim() || window.location.origin;
-        const accessToken = typeof window !== "undefined" ? window.localStorage.getItem("kidareh_access_token") : null;
         const s = io(base, {
-          auth: accessToken ? { token: accessToken } : undefined,
           withCredentials: true,
           transports: ["websocket", "polling"],
           reconnection: true,
@@ -139,8 +141,6 @@ export function useChatRoom(id: string | undefined, productId: string | null, us
     } else {
       try {
         const rid = roomId;
-        const room = await apiRequest<any>(`/api/messages/${encodeURIComponent(rid)}`, { auth: true });
-        const receiverId = Number(room?.messages?.[0]?.sender_id || 0);
         if (!receiverId) throw new Error("گیرنده گفتگو مشخص نیست");
         await apiRequest("/api/messages", { method: "POST", auth: true, body: { roomId: rid, receiverId, content: text, productId: productId ? Number(productId) : undefined } });
         mark("sent");
