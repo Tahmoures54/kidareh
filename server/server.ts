@@ -88,6 +88,8 @@ const CORS_OPTIONS: CorsOptions = (() => {
   const allowlist = new Set(getAllowedOrigins());
   return {
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Kidareh-Client", "X-Requested-With"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     origin(origin, callback) {
       if (!origin || !isProd || allowlist.has(origin)) return callback(null, true);
       logger.warn(`CORS blocked: ${origin}`);
@@ -142,7 +144,7 @@ function setupSocket(io: Server) {
     const cookieHeader = socket.handshake.headers.cookie || "";
     const cookieName = isProd ? "__Host-kidareh_session" : "kidareh_session";
     const match = cookieHeader.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${cookieName}=`));
-    const token = match ? decodeURIComponent(match.slice(cookieName.length + 1)) : "";
+    const token = socketToken || (match ? decodeURIComponent(match.slice(cookieName.length + 1)) : "");
     if (!token) return next(new Error("Authentication required"));
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role: string };
