@@ -41,6 +41,11 @@ const kavenegarApi = KAVENEGAR_API_KEY
 
 const SESSION_COOKIE = isProduction ? "__Host-kidareh_session" : "kidareh_session";
 
+function isMobileClient(req: Request): boolean {
+  const client = String(req.get("x-kidareh-client") || "").toLowerCase();
+  return client === "mobile" || client === "flutter" || client === "app";
+}
+
 function sessionCookieOptions(): CookieOptions {
   return {
     httpOnly: true,
@@ -333,7 +338,7 @@ router.post("/verify-otp", async (req, res) => {
     res.cookie(SESSION_COOKIE, token, sessionCookieOptions());
     return res.json({
       user: { ...user, is_profile_complete: !!user.is_profile_complete },
-      ...(process.env.LEGACY_EXPOSE_TOKEN === "true" ? { token } : {}),
+      ...(isMobileClient(req) || process.env.LEGACY_EXPOSE_TOKEN === "true" ? { accessToken: token } : {}),
       success: true,
     });
   } catch (err: any) {
@@ -426,7 +431,10 @@ router.post("/refresh", requireAuth, (req: AuthRequest, res) => {
       { expiresIn: "60m" }
     );
     res.cookie(SESSION_COOKIE, newToken, sessionCookieOptions());
-    return res.json({ success: true });
+    return res.json({
+      success: true,
+      ...(isMobileClient(req) ? { accessToken: newToken } : {}),
+    });
   } catch (err) {
     logger.error("Refresh token error:", err);
     return res.status(500).json({ error: "خطای سرور" });
