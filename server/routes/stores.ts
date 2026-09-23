@@ -175,10 +175,12 @@ router.put("/my/store", requireAuth, requireRole(["seller", "admin"]), async (re
       category: z.string().trim().max(100).optional(),
       city: z.string().trim().max(100).optional().nullable(),
       province: z.string().trim().max(100).optional().nullable(),
+      lat: z.number().min(-90).max(90).nullable().optional(),
+      lng: z.number().min(-180).max(180).nullable().optional(),
     });
     const patch = patchSchema.parse(req.body || {});
     db.prepare(`UPDATE stores SET
-      name = ?, description = ?, address = ?, phone = ?, category = ?, city = ?, province = ?, updated_at = CURRENT_TIMESTAMP
+      name = ?, description = ?, address = ?, phone = ?, category = ?, city = ?, province = ?, lat = ?, lng = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?`).run(
       patch.name ?? store.name,
       patch.description !== undefined ? patch.description : store.description,
@@ -187,6 +189,8 @@ router.put("/my/store", requireAuth, requireRole(["seller", "admin"]), async (re
       patch.category ?? store.category,
       patch.city !== undefined ? patch.city : store.city,
       patch.province !== undefined ? patch.province : store.province,
+      patch.lat !== undefined ? patch.lat : toNumberOrNull(store.lat),
+      patch.lng !== undefined ? patch.lng : toNumberOrNull(store.lng),
       store.id
     );
     await invalidateStoreCache(store.id);
