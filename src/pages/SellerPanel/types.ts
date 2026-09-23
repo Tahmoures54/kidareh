@@ -27,6 +27,7 @@ export interface StoreInfo {
   province?: string;
   lat?: number | null;
   lng?: number | null;
+  opening_hours?: string | null;
   image?: string;
   blue_tick_expires_at?: string | null;
   total_products?: number;
@@ -49,6 +50,7 @@ export const storeFormSchema = z.object({
   address: z.string().optional(),
   lat: z.number().min(-90).max(90).nullable().optional(),
   lng: z.number().min(-180).max(180).nullable().optional(),
+  opening_hours: z.string().max(5000).nullable().optional(),
 });
 
 export type StoreFormValues = z.infer<typeof storeFormSchema>;
