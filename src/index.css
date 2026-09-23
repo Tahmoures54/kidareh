@@ -1128,3 +1128,216 @@ body.story-open .presence-root header {
     scroll-behavior: auto !important;
   }
 }
+
+/* =========================================================
+   KIDAREH DESKTOP PRO — Sky of Iran / Turquoise
+   Desktop-first visual system; mobile behavior remains intact.
+   ========================================================= */
+@media (min-width: 1024px) {
+  .presence-root {
+    --paper: #eaf8fb;
+    --paper-2: #d8f0f5;
+    --ink: #083b52;
+    --ink-soft: #0c6078;
+    --muted: #55798a;
+    --line: rgba(8, 115, 145, 0.14);
+    --line-strong: rgba(8, 76, 103, 0.22);
+    --accent: #08a6a6;
+    --accent-2: #0788ad;
+    --sky: #3ea8d8;
+    --card: rgba(255,255,255,.94);
+    background:
+      radial-gradient(900px 500px at 82% -10%, rgba(62,168,216,.22), transparent 60%),
+      radial-gradient(760px 420px at 12% -8%, rgba(8,166,166,.18), transparent 58%),
+      linear-gradient(180deg, #f5fcff 0%, #eaf8fb 45%, #e4f4f8 100%);
+  }
+
+  .presence-root > .relative {
+    max-width: 1600px !important;
+    padding-inline: 18px;
+    gap: 18px;
+  }
+
+  .presence-root > .relative > aside {
+    width: 248px !important;
+    border: 1px solid var(--line);
+    border-radius: 28px;
+    height: calc(100dvh - 36px) !important;
+    top: 18px !important;
+    background: rgba(255,255,255,.78) !important;
+    box-shadow: 0 20px 60px rgba(8,76,103,.08);
+    overflow: hidden;
+  }
+
+  .presence-root > .relative > aside nav {
+    align-items: stretch !important;
+    padding: 18px 14px !important;
+  }
+
+  .presence-root > .relative > aside nav > a:first-child {
+    width: 100% !important;
+    height: 62px !important;
+    margin-bottom: 16px !important;
+    justify-content: flex-start !important;
+    padding-inline: 18px;
+    gap: 10px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #079fb0, #1789c2) !important;
+    box-shadow: 0 12px 28px rgba(7,145,178,.22);
+    font-size: 18px !important;
+  }
+
+  .presence-root > .relative > aside nav > a:first-child::after {
+    content: "کی‌داره";
+    font-size: 18px;
+    font-weight: 900;
+    margin-inline-start: 2px;
+  }
+
+  .presence-root > .relative > aside nav > a:not(:first-child) {
+    width: 100% !important;
+    height: 50px !important;
+    min-height: 50px;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    gap: 12px;
+    padding-inline: 14px;
+    border-radius: 16px;
+    font-size: 13px !important;
+  }
+
+  .presence-root > .relative > aside nav > a:not(:first-child) span {
+    margin-top: 0 !important;
+    font-size: 13px !important;
+  }
+
+  .presence-root > .relative > aside nav > a:not(:first-child):hover {
+    background: rgba(8,166,166,.07);
+    color: var(--accent);
+    transform: translateX(-2px);
+  }
+
+  .presence-root > .relative > aside nav > a[aria-current="page"] {
+    background: linear-gradient(90deg, rgba(8,166,166,.14), rgba(62,168,216,.08)) !important;
+    color: var(--accent) !important;
+    box-shadow: inset -3px 0 0 var(--accent);
+  }
+
+  .presence-root > .relative > aside nav > div {
+    width: 100% !important;
+  }
+
+  .presence-root > .relative > aside nav > div > a {
+    width: 100% !important;
+    height: 46px !important;
+    justify-content: flex-start !important;
+    padding-inline: 14px;
+    gap: 12px;
+    border-radius: 15px;
+  }
+
+  .presence-root > .relative > div {
+    min-width: 0;
+    border-radius: 28px;
+  }
+
+  .presence-root > .relative > div > header {
+    top: 18px;
+    margin-bottom: 18px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: rgba(255,255,255,.84) !important;
+    box-shadow: 0 12px 40px rgba(8,76,103,.07);
+  }
+
+  .presence-root > .relative > div > header > div {
+    min-height: 76px;
+    padding-inline: 22px !important;
+  }
+
+  .presence-root > .relative > div > header .min-w-0.flex-1 {
+    flex: 0 0 auto;
+    min-width: 180px;
+  }
+
+  .presence-root > .relative > div > header .hidden.h-12.min-w-\[220px\] {
+    min-width: min(420px, 34vw);
+    flex: 1 1 320px;
+    background: #f8fdff;
+    border-color: rgba(8,166,166,.18);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+  }
+
+  .presence-root > .relative > div > header .hidden.h-12.items-center {
+    border-radius: 14px;
+  }
+
+  .presence-root > .relative > div > main {
+    padding-bottom: 24px !important;
+  }
+
+  .presence-root .presence-page {
+    width: min(1180px, calc(100% - 40px));
+    margin-inline: auto;
+  }
+
+  .presence-root .presence-card {
+    border-radius: 24px;
+    box-shadow: 0 14px 45px -28px rgba(8,76,103,.25);
+  }
+
+  .presence-root .presence-btn {
+    border-radius: 14px;
+  }
+
+  /* Desktop content grids should breathe instead of behaving like a phone canvas. */
+  .presence-root .grid {
+    max-width: 1180px;
+    margin-inline: auto;
+  }
+
+  /* Keep social/feed media intentionally narrow while the application shell is wide. */
+  .presence-root .feed-column {
+    width: min(620px, 100%);
+  }
+
+  /* Strong but restrained glass treatment. */
+  .presence-root .presence-chip,
+  .presence-root .presence-card {
+    backdrop-filter: blur(18px) saturate(125%);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+  }
+}
+
+/* Wide desktop: give the marketplace more working space. */
+@media (min-width: 1440px) {
+  .presence-root > .relative {
+    max-width: 1720px !important;
+    padding-inline: 24px;
+  }
+
+  .presence-root > .relative > aside {
+    width: 268px !important;
+  }
+
+  .presence-root .presence-page,
+  .presence-root .grid {
+    max-width: 1280px;
+  }
+}
+
+/* Medium desktop/tablet landscape: keep the rail compact before full desktop. */
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .presence-root > .relative > aside {
+    width: 208px !important;
+  }
+
+  .presence-root > .relative > aside nav > a:not(:first-child) {
+    padding-inline: 10px;
+    gap: 9px;
+  }
+
+  .presence-root > .relative > aside nav > a:not(:first-child) span {
+    font-size: 12px !important;
+  }
+}
