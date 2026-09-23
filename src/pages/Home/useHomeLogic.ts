@@ -135,6 +135,8 @@ export const useHomeLogic = () => {
     effectiveDisplay,
     effectiveProvince,
     gpsEnabled,
+    userLat: location.lat,
+    userLng: location.lng,
     manualLocation: location.source === "manual"
       ? { city: location.city, display: location.display, province: location.province }
       : null,
