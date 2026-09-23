@@ -144,7 +144,8 @@ function setupSocket(io: Server) {
     const cookieHeader = socket.handshake.headers.cookie || "";
     const cookieName = isProd ? "__Host-kidareh_session" : "kidareh_session";
     const match = cookieHeader.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${cookieName}=`));
-    const token = socketToken || (match ? decodeURIComponent(match.slice(cookieName.length + 1)) : "");
+    const handshakeToken = typeof socket.handshake.auth?.token === "string" ? socket.handshake.auth.token : "";
+    const token = handshakeToken || (match ? decodeURIComponent(match.slice(cookieName.length + 1)) : "");
     if (!token) return next(new Error("Authentication required"));
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role: string };
