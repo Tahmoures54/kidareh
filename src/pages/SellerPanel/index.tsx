@@ -54,7 +54,7 @@ function SellerShopHome() {
   const hasStore = !!storeInfo;
 
   return (
-    <div className="px-4 py-5" dir="rtl">
+    <div className="min-h-screen bg-[var(--bg-primary)] px-4 py-5 lg:px-8 lg:py-8" dir="rtl">
       {toast && (
         <button
           type="button"
@@ -65,12 +65,17 @@ function SellerShopHome() {
         </button>
       )}
 
-      <header className="mb-5">
+      <div className="mx-auto max-w-[1280px]">
+      <header className="mb-5 lg:mb-7 lg:flex lg:items-end lg:justify-between">
         <p className="text-sm font-black text-[var(--accent)]">مغازه‌ام</p>
         <h1 className="mt-1 text-2xl font-black leading-snug">{shopName}</h1>
         <p className="mt-2 text-sm font-bold leading-7 text-[var(--ink-soft)]">
           کالا بگذار، ویترین را به اشتراک بگذار، موجودی را با یک لمس عوض کن.
         </p>
+        <div className="hidden lg:block rounded-2xl border border-[#08a6a6]/15 bg-gradient-to-l from-[#e5faf8] to-[#e7f7ff] px-5 py-3 text-right">
+          <p className="text-xs font-black text-[#087b8b]">مدیریت هوشمند ویترین</p>
+          <p className="mt-1 text-[11px] font-bold text-[#55798a]">موجودی، بازدید و کالاها را از یکجا کنترل کن.</p>
+        </div>
       </header>
 
       {storeLoading ? (
@@ -93,7 +98,7 @@ function SellerShopHome() {
         </div>
       ) : (
         <>
-          <div className="mb-4 grid grid-cols-3 gap-2">
+          <div className="mb-5 grid grid-cols-3 gap-3 lg:grid-cols-3">
             <div className="presence-card rounded-2xl px-3 py-3 text-center">
               <Eye className="mx-auto mb-1 h-4 w-4 text-[var(--accent)]" />
               <p className="text-base font-black">{viewsTotal.toLocaleString("fa-IR")}</p>
@@ -190,7 +195,7 @@ function SellerShopHome() {
         ))}
       </div>
 
-      <div className="mt-4 space-y-3 relative z-0">
+      <div className="mt-5 grid gap-3 lg:grid-cols-2 relative z-0">
         {productsLoading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-[var(--accent)]" />
@@ -225,6 +230,7 @@ function SellerShopHome() {
         )}
       </div>
 
+      </div>
       <EditStoreSheet
         isOpen={editingStore}
         onClose={() => setEditingStore(false)}
