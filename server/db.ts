@@ -78,7 +78,7 @@ try {
 // 4. Schema Version
 // ============================================================================
 
-const SCHEMA_VERSION = 11; 
+const SCHEMA_VERSION = 12; 
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -673,6 +673,11 @@ const runMigrations = () => {
       logger.warn("v11 product auto-approve skipped:", err?.message);
     }
     db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(11);
+  }
+
+  if (current < 12) {
+    safeAlter(`ALTER TABLE stores ADD COLUMN opening_hours TEXT`, "stores.opening_hours");
+    db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(12);
   }
 
   logger.info(`✅ Schema up to date (v${SCHEMA_VERSION})`);
