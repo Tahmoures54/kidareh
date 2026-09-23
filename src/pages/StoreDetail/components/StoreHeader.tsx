@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Store, BadgeCheck, Star, Loader2 } from "lucide-react";
+import { Store, BadgeCheck, Star, Loader2, Clock3 } from "lucide-react";
 import { StoreData } from "../types";
 // دیگر نیازی به import fa نیست
 
@@ -14,6 +14,12 @@ interface Props {
 }
 
 export const StoreHeader = memo(({ store, hasBlueTick, followersCount, following, followLoading, onFollow, isOwnStore }: Props) => {
+  const hours = (() => { try { return store.opening_hours ? JSON.parse(store.opening_hours) : {}; } catch { return {}; } })();
+  const dayKey = ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()];
+  const today = hours[dayKey];
+  const now = new Date(); const minutes = now.getHours() * 60 + now.getMinutes();
+  const toMinutes = (v?: string) => { if (!v) return -1; const [h,m] = v.split(":").map(Number); return h * 60 + m; };
+  const isOpen = !!today && today.closed !== true && minutes >= toMinutes(today.open) && minutes < toMinutes(today.close);
   return (
     <header className="relative bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white pt-24 pb-16 overflow-hidden px-5 rounded-b-[3rem] shadow-lg shadow-[var(--brand-glow)] lg:rounded-b-[42px] lg:pt-28 lg:pb-12">
       <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 pointer-events-none" />
@@ -46,6 +52,13 @@ export const StoreHeader = memo(({ store, hasBlueTick, followersCount, following
         <p className="text-[11px] font-bold text-white/80 bg-white/15 border border-white/20 backdrop-blur-md px-4 py-1.5 rounded-full mb-6">
           {store.category || "فروشگاه عمومی"}
         </p>
+
+        <div className="mb-6 flex items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-black border ${isOpen ? "bg-emerald-400/20 border-emerald-200/30 text-white" : "bg-white/10 border-white/20 text-white/80"}`}>
+            <Clock3 className="h-3.5 w-3.5" /> {isOpen ? "اکنون باز است" : "اکنون بسته است"}
+          </span>
+          {today && today.closed !== true && <span className="text-[10px] font-bold text-white/70">{today.open} تا {today.close}</span>}
+        </div>
 
         {/* Stats */}
         <div className="flex w-full max-w-sm px-2 justify-between items-center bg-black/20 backdrop-blur-xl border border-white/10 rounded-3xl py-4 shadow-inner">
