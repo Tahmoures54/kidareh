@@ -244,6 +244,7 @@ function SellerShopHome() {
           address: storeInfo?.address || "",
           lat: storeInfo?.lat ?? null,
           lng: storeInfo?.lng ?? null,
+          opening_hours: storeInfo?.opening_hours ?? null,
         }}
         onSave={(values) => updateStoreMut.mutate(values)}
         isPending={updateStoreMut.isPending}
