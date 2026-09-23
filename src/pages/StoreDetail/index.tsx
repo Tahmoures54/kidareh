@@ -162,9 +162,9 @@ export default function StoreDetail() {
         isOwnStore={isOwnStore}
       />
 
-      <main className="px-5 -mt-6 relative z-10">
+      <main className="mx-auto max-w-[1280px] px-5 -mt-6 relative z-10 lg:px-6">
         {/* Tabs */}
-        <div className="bg-[var(--bg-secondary)] p-1.5 rounded-2xl flex relative shadow-inner border border-[var(--border-light)] mb-6">
+        <div className="bg-[var(--bg-secondary)] p-1.5 rounded-2xl flex relative shadow-inner border border-[var(--border-light)] mb-6 lg:max-w-[620px] lg:mx-auto">
           {(["products", "about"] as const).map((tab) => (
             <button
               key={tab}
