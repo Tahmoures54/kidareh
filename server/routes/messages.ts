@@ -255,10 +255,26 @@ router.post("/", requireAuth, (req: AuthRequest, res: Response) => {
       return res.status(404).json({ error: "گیرنده یافت نشد" });
     }
 
-    const roomId = data.roomId || ensureRoom(userId, data.receiverId, data.productId);
-
-    // Ensure membership
-    ensureRoom(userId, data.receiverId, data.productId);
+    let roomId: string;
+    if (data.roomId) {
+      const room = db
+        .prepare(`SELECT room_id, user1_id, user2_id FROM messages_rooms WHERE room_id = ?`)
+        .get(data.roomId) as { room_id: string; user1_id: number; user2_id: number } | undefined;
+      if (!room || (room.user1_id !== userId && room.user2_id !== userId)) {
+        return res.status(403).json({ error: "دسترسی به این گفتگو ندارید" });
+      }
+      const expectedReceiver = room.user1_id === userId ? room.user2_id : room.user1_id;
+      if (expectedReceiver !== data.receiverId) {
+        return res.status(400).json({ error: "گیرنده با این گفتگو مطابقت ندارد" });
+      }
+      roomId = room.room_id;
+      if (data.productId) {
+        db.prepare(`UPDATE messages_rooms SET product_id = COALESCE(product_id, ?), updated_at = CURRENT_TIMESTAMP WHERE room_id = ?`)
+          .run(data.productId, roomId);
+      }
+    } else {
+      roomId = ensureRoom(userId, data.receiverId, data.productId);
+    }
 
     const result = db
       .prepare(
