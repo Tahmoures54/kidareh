@@ -247,7 +247,7 @@ export default function ProductDetail() {
 
   const handleMessage = () => {
     if (!user) return navigate("/login");
-    if (product?.store_id) navigate(`/chat/${product.store_id}`);
+    if (product?.store_id && product?.owner_id) navigate(`/chat/${product.store_id}?product=${product.id}`);
     else navigate("/messages");
   };
 
