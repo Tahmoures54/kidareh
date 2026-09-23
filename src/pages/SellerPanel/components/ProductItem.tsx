@@ -25,9 +25,9 @@ export const ProductItem = React.memo(({ product, isUpdating, isDeleting, onStat
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0 }}
-      className="presence-card relative flex gap-3 rounded-[22px] p-3 pl-14"
+      className="presence-card relative flex gap-3 rounded-[22px] p-3 pl-14 lg:min-h-[132px] lg:p-4 lg:pl-14 lg:transition-all lg:hover:-translate-y-0.5 lg:hover:border-[#08a6a6]/25 lg:hover:shadow-[0_18px_40px_-30px_rgba(8,76,103,.55)]"
     >
-      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl bg-[var(--paper-2)]">
+      <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl lg:h-28 lg:w-28 lg:rounded-2xl bg-[var(--paper-2)]">
         <img
           src={photo}
           alt={product.name}
