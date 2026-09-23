@@ -3,11 +3,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  X, Store, Phone, AlignRight, Save, Loader2, MapPin
+  X, Store, Phone, AlignRight, Save, Loader2, MapPin, LocateFixed
 } from "lucide-react";
 import { StoreFormValues, storeFormSchema } from "../types";
 import { citiesInProvince, iranProvinceNames } from "../../../data/processed/iranCities";
 import CategoryField from "../../../components/category/CategoryField";
+import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 interface EditStoreSheetProps {
   isOpen: boolean;
@@ -40,6 +43,14 @@ export const EditStoreSheet = ({
   const city = watch("city") || "";
   const provinceCities = citiesInProvince(province);
   const cityInList = provinceCities.some((item) => item.name === city);
+  const lat = watch("lat");
+  const lng = watch("lng");
+  const mapCenter: [number, number] = lat != null && lng != null ? [lat, lng] : [35.6892, 51.3890];
+  const markerIcon = L.divIcon({ className: "kidareh-store-picker", html: `<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;background:#08a6a6;border:3px solid white;box-shadow:0 5px 15px rgba(0,0,0,.25);transform:rotate(-45deg)"><div style="width:8px;height:8px;border-radius:50%;background:white;position:absolute;left:8px;top:8px"></div></div>`, iconSize: [30, 30], iconAnchor: [15, 30] });
+  function LocationPicker() {
+    useMapEvents({ click(event) { setValue("lat", Number(event.latlng.lat.toFixed(6)), { shouldDirty: true }); setValue("lng", Number(event.latlng.lng.toFixed(6)), { shouldDirty: true }); } });
+    return lat != null && lng != null ? <Marker position={[lat, lng]} icon={markerIcon} /> : null;
+  }
 
   useEffect(() => {
     reset(defaultValues);
@@ -159,6 +170,24 @@ export const EditStoreSheet = ({
                   <MapPin className="w-3.5 h-3.5" /> آدرس
                 </label>
                 <input {...register("address")} className="input-base" />
+              </div>
+              <div className="lg:col-span-2 rounded-2xl border border-[var(--line)] bg-[#f4fbfc] p-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-black text-[var(--ink)] flex items-center gap-2"><MapPin className="w-4 h-4 text-[var(--accent)]" /> موقعیت روی نقشه</p>
+                    <p className="mt-1 text-[10px] font-bold text-[var(--ink-soft)]">روی نقشه کلیک کن تا محل دقیق فروشگاه ثبت شود.</p>
+                  </div>
+                  {lat != null && lng != null && <span className="text-[10px] font-black text-[var(--accent)]" dir="ltr">{lat.toFixed(5)}, {lng.toFixed(5)}</span>}
+                </div>
+                <div className="relative h-64 overflow-hidden rounded-2xl border border-white shadow-sm">
+                  <MapContainer center={mapCenter} zoom={lat != null && lng != null ? 16 : 5} scrollWheelZoom style={{ height: "100%", width: "100%" }}>
+                    <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
+                    <LocationPicker />
+                  </MapContainer>
+                  <div className="pointer-events-none absolute bottom-3 right-3 z-[500] rounded-xl bg-white/90 px-3 py-2 text-[10px] font-black text-[var(--ink)] shadow-lg backdrop-blur">
+                    <LocateFixed className="ml-1 inline h-3.5 w-3.5 text-[var(--accent)]" /> برای انتخاب محل کلیک کن
+                  </div>
+                </div>
               </div>
               <div className="pt-4 lg:col-span-2 lg:border-t lg:border-[var(--border-light)] lg:mt-1 lg:pt-5">
                 <button
