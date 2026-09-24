@@ -180,7 +180,7 @@ export function useAddProduct(user: any) {
         const productId = Number(data?.product?.id ?? data?.id);
         analytics.trackEvent({ name: "seller_first_product_completed", category: "growth", label: "add_product", value: Number.isFinite(productId) ? productId : undefined });
         localStorage.setItem("lastCategory", finalCategory);
-        navigate("/seller", {
+        navigate("/seller?firstProduct=1", {
           state: {
             successMsg: "کالایت ثبت شد؛ حالا ویترینت را به مشتری‌ها نشان بده.",
             productId: Number.isFinite(productId) ? productId : undefined,
