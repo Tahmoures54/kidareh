@@ -27,8 +27,9 @@ export function updateProductSeo(product: ProductData, url: string) {
   const title = `${product.name} — کی‌داره`;
   const description =
     product.description?.trim().slice(0, 180) ||
-    (product.price ? `قیمت ${product.name}: ${product.price.toLocaleString("fa-IR")} تومان. ${DEFAULT_DESCRIPTION}` : DEFAULT_DESCRIPTION);
-  const image = product.images?.find(Boolean) || product.image_url || "https://kidareh.com/og-image-1200x630.jpg";
+    (Number(product.price) > 0 ? `قیمت ${product.name}: ${Number(product.price).toLocaleString("fa-IR")} تومان. ${DEFAULT_DESCRIPTION}` : DEFAULT_DESCRIPTION);
+  const rawImage = product.images?.find(Boolean) || product.image_url || "https://kidareh.com/og-image-1200x630.jpg";
+  const image = /^https?:\\/\\//i.test(rawImage) ? rawImage : new URL(rawImage, "https://kidareh.com/").href;
 
   document.title = title;
   upsertCanonical(url);
