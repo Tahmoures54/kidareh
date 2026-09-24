@@ -252,7 +252,6 @@ export default function ProductDetail() {
 
   const handleMessage = () => {
     trackEvent("store_message_click", { category: "conversion", label: String(product?.id || "") });
-    if (!available) return showToast("این کالا فعلاً موجود نیست؛ می‌توانید از فروشگاه درباره موجودی سؤال کنید.", "error");
     if (!user) return navigate("/login");
     if (product?.store_id) navigate(`/chat/${product.store_id}?product=${product.id}`);
     else navigate("/messages");
