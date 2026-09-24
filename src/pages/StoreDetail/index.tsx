@@ -10,6 +10,8 @@ import { BottomActionBar } from "../../components/ui/BottomActionBar"; // مسی
 import { StoreSkeleton } from "./components/Skeleton";
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../utils/api";
+import { analytics } from "../../utils/analytics";
+import { shareFeedItem } from "../../lib/feedShare";
 
 // توابعی که قبلاً اینجا بودند، باید در این فایل باشند:
 import { calcDist, fmtDist } from "./utils"; 
@@ -41,6 +43,7 @@ export default function StoreDetail() {
         setStore(data);
         setFollowersCount(Number(data.follower_count ?? 0));
         document.title = `${data.name} — کی داره؟`;
+        analytics.trackEvent({ name: "store_view", category: "growth", label: String(data.id) });
       } catch {
         if (cancelled) return;
         setError("خطا در بارگذاری اطلاعات فروشگاه");
@@ -90,6 +93,19 @@ export default function StoreDetail() {
   }, [userLoc, store]);
 
   const isOwnStore = !!user && !!store?.owner_id && Number(user.id) === Number(store.owner_id);
+
+  const handleShareStore = async () => {
+    analytics.trackEvent({ name: "store_share_click", category: "growth", label: String(store?.id ?? id) });
+    if (!store) return;
+    const result = await shareFeedItem({
+      title: store.name,
+      text: `${store.name} — فروشگاه حضوری در ${store.city || "کی‌داره"}`,
+      url: window.location.origin + "/store/" + store.id,
+    });
+    if (result === "shared" || result === "copied") {
+      analytics.trackEvent({ name: "store_shared", category: "growth", label: result });
+    }
+  };
 
   const handleFollow = async () => {
     if (!user || !id) {
@@ -159,6 +175,7 @@ export default function StoreDetail() {
         following={following}
         followLoading={followLoading}
         onFollow={handleFollow}
+        onShare={handleShareStore}
         isOwnStore={isOwnStore}
       />
 
