@@ -4,6 +4,7 @@ import { Product, StoreData } from "../types";
 import { FeedStack } from "../../../components/feed/FeedColumn";
 import { FeedPost } from "../../../components/feed/FeedPost";
 import { productToFeedPost } from "../../../lib/feedMappers";
+import { isProductAvailable } from "../../../utils/productAvailability";
 
 export const ProductsTab = memo(({
   products,
@@ -19,8 +20,19 @@ export const ProductsTab = memo(({
     </div>
   );
 
+  const availableCount = products.filter((product) => isProductAvailable(product.status)).length;
+
   return (
     <div className="-mx-5 bg-white">
+      <div className="mx-5 mb-3 flex items-center justify-between gap-3 rounded-2xl border border-[var(--border-light)] bg-[var(--bg-secondary)] px-4 py-3" aria-label="خلاصه موجودی فروشگاه">
+        <div className="min-w-0">
+          <p className="text-sm font-black text-[var(--text-primary)]">ویترین فروشگاه</p>
+          <p className="mt-0.5 text-[11px] font-bold text-[var(--text-muted)]">{products.length.toLocaleString("fa-IR")} کالا ثبت شده</p>
+        </div>
+        <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-[11px] font-black text-emerald-700">
+          {availableCount.toLocaleString("fa-IR")} کالا موجود
+        </span>
+      </div>
       <FeedStack>
         {products.map((product) => (
           <FeedPost
