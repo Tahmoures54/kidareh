@@ -17,7 +17,7 @@ import {
 import { applyProductTextSearch } from "../services/textSearch.js";
 import { normalizeProductStatus } from "../utils/productStatus.js";
 import { applyProductCategoryFilter } from "../utils/categoryFilter.js";
-import { invalidateStoreCache } from "../services/cache.js";
+import { invalidateStoreCache, invalidateStatsCache } from "../services/cache.js";
 
 const router = Router();
 
@@ -235,6 +235,7 @@ router.put("/:id", requireAuth, upload.single("image"), async (req: AuthRequest 
       .run(nextName, nextPrice, nextStatus, nextDescription, nextCategory, imageUrl, id);
     await invalidateProductCache(id);
     await invalidateStoreCache(storeInfo.id);
+    await invalidateStatsCache();
     return res.json({ success: true, id: Number(id), product: { id: Number(id) } });
   } catch (error) {
     logger.error("Update product error:", error);
@@ -271,6 +272,7 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     db.prepare("DELETE FROM products WHERE id = ?").run(id);
     await invalidateProductCache(id);
     await invalidateStoreCache(storeInfo.id);
+    await invalidateStatsCache();
     return res.json({ success: true, message: "محصول با موفقیت حذف شد" });
   } catch (error) {
     logger.error("Delete product error:", error);
@@ -280,8 +282,11 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
 
 router.post("/:id/approve", requireAuth, requireRole(["admin"]), async (req: AuthRequest, res: Response) => {
   try {
+    const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(req.params.id) as any;
     db.prepare("UPDATE products SET moderation_status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
     await invalidateProductCache(req.params.id);
+    if (productInfo?.store_id) await invalidateStoreCache(productInfo.store_id);
+    await invalidateStatsCache();
     return res.json({ success: true, message: "محصول تایید شد" });
   } catch (error) {
     logger.error("Approve product error:", error);
@@ -292,8 +297,11 @@ router.post("/:id/approve", requireAuth, requireRole(["admin"]), async (req: Aut
 router.post("/:id/reject", requireAuth, requireRole(["admin"]), async (req: AuthRequest, res: Response) => {
   try {
     const { reason } = req.body;
+    const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(req.params.id) as any;
     db.prepare("UPDATE products SET moderation_status = 'rejected', rejection_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(reason || "نامشخص", req.params.id);
     await invalidateProductCache(req.params.id);
+    if (productInfo?.store_id) await invalidateStoreCache(productInfo.store_id);
+    await invalidateStatsCache();
     return res.json({ success: true, message: "محصول رد شد" });
   } catch (error) {
     logger.error("Reject product error:", error);
@@ -423,6 +431,7 @@ router.post("/", requireAuth, upload.single("image"), async (req: AuthRequest & 
       .run(storeInfo.id, name, parsedPrice, status, badge || null, imageUrl, description || null, category || null, city, province);
     logger.info(`New product created: ${result.lastInsertRowid} by user ${req.user!.id}`);
     await invalidateStoreCache(storeInfo.id);
+    await invalidateStatsCache();
     return res.status(201).json({ success: true, productId: result.lastInsertRowid, id: Number(result.lastInsertRowid), product: { id: Number(result.lastInsertRowid) }, message: "محصول روی ویترین قرار گرفت" });
   } catch (error: any) {
     if (error.name === "ZodError") return res.status(400).json({ error: error.errors[0].message, field: error.errors[0].path[0] });
