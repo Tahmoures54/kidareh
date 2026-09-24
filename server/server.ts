@@ -126,28 +126,29 @@ function escapeHtml(value: unknown): string {
 function productShareHtml(baseHtml: string, product: any, url: string): string {
   const name = String(product.name || "کالا");
   const price = Number(product.price);
-  const priceText = price > 0 ? \`قیمت \${price.toLocaleString("fa-IR")} تومان\` : "قیمت توافقی";
+  const priceText = price > 0 ? "قیمت " + price.toLocaleString("fa-IR") + " تومان" : "قیمت توافقی";
   const status = String(product.status || "وضعیت نامشخص");
   const store = String(product.store_name || "فروشگاه");
   const city = String(product.store_city || "");
   const description = String(product.description || "").trim();
-  const suffix = city ? \` در \${city}\` : "";
-  const fallbackDescription = \`\${priceText} — \${status} — در \${store}\${suffix}. ببین کی داره، حضوری بگیر.\`;
+  const suffix = city ? " در " + city : "";
+  const fallbackDescription = priceText + " — " + status + " — در " + store + suffix + ". ببین کی داره، حضوری بگیر.";
   const metaDescription = (description || fallbackDescription).slice(0, 180);
   const rawImage = String(product.image_url || "https://kidareh.com/og-image-1200x630.jpg");
   const image = /^https?:\\/\\//i.test(rawImage) ? rawImage : new URL(rawImage, process.env.APP_URL || "https://kidareh.com").href;
+  const title = name + " — کی‌داره";
   let html = baseHtml;
   const replacements: Array<[string, string]> = [
-    ["<title>کی‌داره | ببین کی داره، حضوری بگیر</title>", \`<title>\${escapeHtml(name)} — کی‌داره</title>\`],
-    ['<meta name="description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', \`<meta name="description" content="\${escapeHtml(metaDescription)}">\`],
-    ['<meta property="og:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', \`<meta property="og:title" content="\${escapeHtml(name)} — کی‌داره">\`],
-    ['<meta property="og:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', \`<meta property="og:description" content="\${escapeHtml(metaDescription)}">\`],
-    ['<meta property="og:url" content="https://kidareh.com/">', \`<meta property="og:url" content="\${escapeHtml(url)}">\`],
-    ['<meta property="og:image" content="https://kidareh.com/og-image-1200x630.jpg">', \`<meta property="og:image" content="\${escapeHtml(image)}">\`],
-    ['<meta name="twitter:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', \`<meta name="twitter:title" content="\${escapeHtml(name)} — کی‌داره">\`],
-    ['<meta name="twitter:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', \`<meta name="twitter:description" content="\${escapeHtml(metaDescription)}">\`],
-    ['<meta name="twitter:image" content="https://kidareh.com/og-image-1200x630.jpg">', \`<meta name="twitter:image" content="\${escapeHtml(image)}">\`],
-    ['<link rel="canonical" href="https://kidareh.com/">', \`<link rel="canonical" href="\${escapeHtml(url)}">\`],
+    ["<title>کی‌داره | ببین کی داره، حضوری بگیر</title>", "<title>" + escapeHtml(title) + "</title>"],
+    ['<meta name="description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="description" content="' + escapeHtml(metaDescription) + '">'],
+    ['<meta property="og:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta property="og:title" content="' + escapeHtml(title) + '">'],
+    ['<meta property="og:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta property="og:description" content="' + escapeHtml(metaDescription) + '">'],
+    ['<meta property="og:url" content="https://kidareh.com/">', '<meta property="og:url" content="' + escapeHtml(url) + '">'],
+    ['<meta property="og:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta property="og:image" content="' + escapeHtml(image) + '">'],
+    ['<meta name="twitter:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta name="twitter:title" content="' + escapeHtml(title) + '">'],
+    ['<meta name="twitter:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="twitter:description" content="' + escapeHtml(metaDescription) + '">'],
+    ['<meta name="twitter:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta name="twitter:image" content="' + escapeHtml(image) + '">'],
+    ['<link rel="canonical" href="https://kidareh.com/">', '<link rel="canonical" href="' + escapeHtml(url) + '">'],
   ];
   for (const [from, to] of replacements) html = html.replace(from, to);
   return html;
@@ -333,7 +334,7 @@ async function startServer() {
           if (!product) return res.status(404).sendFile(indexPath);
           const baseHtml = fs.readFileSync(indexPath, "utf8");
           const origin = process.env.APP_URL || "https://kidareh.com";
-          const url = new URL(\`/products/\${req.params.id}\`, origin).href;
+          const url = new URL("/products/" + req.params.id, origin).href;
           res.type("html").send(productShareHtml(baseHtml, product, url));
         } catch (error) {
           logger.error("Product share HTML error:", error);
@@ -342,10 +343,9 @@ async function startServer() {
       });
 
       app.use(express.static(publicPath, { maxAge: "1d" }));
-      app.get("*", (req: Request, res: Response) => { fs.existsSync(path.join(ROOT_DIR, "dist/public")) ? path.join(ROOT_DIR, "dist/public") : path.join(ROOT_DIR, "dist");
       app.get("*", (req: Request, res: Response) => {
         if (req.url.startsWith("/api/")) return res.status(404).json({ error: "API not found" });
-        res.sendFile(path.join(publicPath, "index.html"));
+        res.sendFile(indexPath);
       });
     }
 
