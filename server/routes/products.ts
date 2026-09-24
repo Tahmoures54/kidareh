@@ -163,7 +163,7 @@ router.get("/saved", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const savedItems = db.prepare(`
       SELECT p.*, s.name as store_name, sp.created_at as addedAt
-      FROM saved_products sp JOIN products p ON sp.product_id = p.id
+      FROM saved_products sp JOIN products p ON sp.product_id = p.id AND p.moderation_status = 'approved'
       LEFT JOIN stores s ON p.store_id = s.id WHERE sp.user_id = ? ORDER BY sp.created_at DESC`).all(req.user!.id);
     return res.json(savedItems);
   } catch (error: any) {
