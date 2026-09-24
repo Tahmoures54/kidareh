@@ -38,6 +38,7 @@ import promotionsRoutes from "./routes/promotions.js";
 import presenceRoutes from "./routes/presence.js";
 import reservationsRoutes from "./routes/reservations.js";
 import { ensurePromotionTables } from "./services/promotions.js";
+import { getCachedProductDetail } from "./services/products.cached.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,6 +113,45 @@ const authLimiter = rateLimit({
   max: isProd ? 5 : 50,
   message: { error: "تعداد درخواست‌های ارسال کد بیش از حد است. ۲ دقیقه صبر کنید." },
 });
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function productShareHtml(baseHtml: string, product: any, url: string): string {
+  const name = String(product.name || "کالا");
+  const price = Number(product.price);
+  const priceText = price > 0 ? \`قیمت \${price.toLocaleString("fa-IR")} تومان\` : "قیمت توافقی";
+  const status = String(product.status || "وضعیت نامشخص");
+  const store = String(product.store_name || "فروشگاه");
+  const city = String(product.store_city || "");
+  const description = String(product.description || "").trim();
+  const suffix = city ? \` در \${city}\` : "";
+  const fallbackDescription = \`\${priceText} — \${status} — در \${store}\${suffix}. ببین کی داره، حضوری بگیر.\`;
+  const metaDescription = (description || fallbackDescription).slice(0, 180);
+  const rawImage = String(product.image_url || "https://kidareh.com/og-image-1200x630.jpg");
+  const image = /^https?:\\/\\//i.test(rawImage) ? rawImage : new URL(rawImage, process.env.APP_URL || "https://kidareh.com").href;
+  let html = baseHtml;
+  const replacements: Array<[string, string]> = [
+    ["<title>کی‌داره | ببین کی داره، حضوری بگیر</title>", \`<title>\${escapeHtml(name)} — کی‌داره</title>\`],
+    ['<meta name="description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', \`<meta name="description" content="\${escapeHtml(metaDescription)}">\`],
+    ['<meta property="og:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', \`<meta property="og:title" content="\${escapeHtml(name)} — کی‌داره">\`],
+    ['<meta property="og:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', \`<meta property="og:description" content="\${escapeHtml(metaDescription)}">\`],
+    ['<meta property="og:url" content="https://kidareh.com/">', \`<meta property="og:url" content="\${escapeHtml(url)}">\`],
+    ['<meta property="og:image" content="https://kidareh.com/og-image-1200x630.jpg">', \`<meta property="og:image" content="\${escapeHtml(image)}">\`],
+    ['<meta name="twitter:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', \`<meta name="twitter:title" content="\${escapeHtml(name)} — کی‌داره">\`],
+    ['<meta name="twitter:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', \`<meta name="twitter:description" content="\${escapeHtml(metaDescription)}">\`],
+    ['<meta name="twitter:image" content="https://kidareh.com/og-image-1200x630.jpg">', \`<meta name="twitter:image" content="\${escapeHtml(image)}">\`],
+    ['<link rel="canonical" href="https://kidareh.com/">', \`<link rel="canonical" href="\${escapeHtml(url)}">\`],
+  ];
+  for (const [from, to] of replacements) html = html.replace(from, to);
+  return html;
+}
 
 function ensureDirectories() {
   const dirs = ["data/uploads/products", "data/uploads/avatars", "data/uploads/stores", "data/logs", "data/backup", "data/database"];
@@ -284,7 +324,25 @@ async function startServer() {
 
     if (isProd) {
       const publicPath = fs.existsSync(path.join(ROOT_DIR, "dist/public")) ? path.join(ROOT_DIR, "dist/public") : path.join(ROOT_DIR, "dist");
+      const indexPath = path.join(publicPath, "index.html");
+
+      app.get("/products/:id", async (req: Request, res: Response) => {
+        try {
+          if (!/^\\d+$/.test(req.params.id)) return res.sendFile(indexPath);
+          const product = await getCachedProductDetail(req.params.id);
+          if (!product) return res.status(404).sendFile(indexPath);
+          const baseHtml = fs.readFileSync(indexPath, "utf8");
+          const origin = process.env.APP_URL || "https://kidareh.com";
+          const url = new URL(\`/products/\${req.params.id}\`, origin).href;
+          res.type("html").send(productShareHtml(baseHtml, product, url));
+        } catch (error) {
+          logger.error("Product share HTML error:", error);
+          res.sendFile(indexPath);
+        }
+      });
+
       app.use(express.static(publicPath, { maxAge: "1d" }));
+      app.get("*", (req: Request, res: Response) => { fs.existsSync(path.join(ROOT_DIR, "dist/public")) ? path.join(ROOT_DIR, "dist/public") : path.join(ROOT_DIR, "dist");
       app.get("*", (req: Request, res: Response) => {
         if (req.url.startsWith("/api/")) return res.status(404).json({ error: "API not found" });
         res.sendFile(path.join(publicPath, "index.html"));
