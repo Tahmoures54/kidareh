@@ -53,7 +53,7 @@ function numericRouteId(params: Record<string, string | undefined>): number {
   return Number(params.id ?? params["id(\\d+)"]);
 }
 
-function normalizeStoreForDetail(store: any, products: any[]) {
+export function normalizeStoreForDetail(store: any, products: any[]) {
   return {
     id: Number(store.id),
     name: store.name ?? "",
