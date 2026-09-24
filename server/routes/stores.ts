@@ -12,6 +12,7 @@ import {
   CacheKeys,
   CacheTTL,
   invalidateStoreCache,
+  invalidateStatsCache,
 } from "../services/cache.js";
 import { applyStoreTextSearch } from "../services/textSearch.js";
 import { applyStoreCategoryFilter } from "../utils/categoryFilter.js";
@@ -199,6 +200,7 @@ router.put("/my/store", requireAuth, requireRole(["seller", "admin"]), async (re
       store.id
     );
     await invalidateStoreCache(store.id);
+    await invalidateStatsCache();
     const updated = db.prepare("SELECT * FROM stores WHERE id = ?").get(store.id);
     res.json({ success: true, store: updated });
   } catch (err: any) {
@@ -371,6 +373,7 @@ router.post("/", requireAuth, requireRole(["seller", "admin"]), async (req: Auth
     const result = db.prepare(`INSERT INTO stores (user_id, name, description, address, phone, category, image_url, lat, lng, city, province, has_business_license, is_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`)
       .run(userId, name, description, address, phone, category, image_url || null, lat, lng, city, province);
     await invalidateStoreCache(result.lastInsertRowid);
+    await invalidateStatsCache();
     res.status(201).json({ success: true, message: "فروشگاه شما با موفقیت ثبت شد.", storeId: Number(result.lastInsertRowid) });
   } catch (err: any) {
     if (err?.name === "ZodError") {
@@ -403,6 +406,7 @@ router.delete("/:id(\\d+)", requireAuth, async (req: AuthRequest, res: Response)
     }
     db.prepare("DELETE FROM stores WHERE id = ?").run(id);
     await invalidateStoreCache(id);
+    await invalidateStatsCache();
     res.json({ success: true, message: "فروشگاه با موفقیت حذف شد" });
   } catch (err) {
     logger.error("Delete Store Error:", err);
