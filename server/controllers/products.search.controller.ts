@@ -42,19 +42,19 @@ function base64UrlDecode(str: string): string {
   return Buffer.from(base64, "base64").toString("utf-8");
 }
 
-function decodeCursor(cursor?: string): { id: number } | null {
+function decodeCursor(cursor?: string): { offset: number } | null {
   if (!cursor) return null;
   try {
     const json = base64UrlDecode(cursor);
     const parsed = JSON.parse(json);
-    if (!parsed || typeof parsed.id !== "number") return null;
-    return parsed as { id: number };
+    if (!parsed || parsed.v !== 2 || !Number.isInteger(parsed.offset) || parsed.offset < 0 || parsed.offset > 100000) return null;
+    return { offset: parsed.offset };
   } catch {
     return null;
   }
 }
 
-function encodeCursor(payload: { id: number }): string {
+function encodeCursor(payload: { v: 2; offset: number }): string {
   return base64UrlEncode(JSON.stringify(payload));
 }
 
@@ -100,8 +100,7 @@ export async function searchProducts(
     // Build next cursor
     const hasMore = result.rows.length > parsed.limit;
     const sliced = hasMore ? result.rows.slice(0, parsed.limit) : result.rows;
-    const last = sliced[sliced.length - 1];
-    const nextCursor = hasMore && last ? encodeCursor({ id: last.id }) : null;
+    const nextCursor = hasMore ? encodeCursor({ v: 2, offset: (cursor?.offset ?? 0) + parsed.limit }) : null;
 
     return res.json({
       products: sliced,
