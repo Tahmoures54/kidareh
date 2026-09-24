@@ -13,6 +13,7 @@ import {
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../utils/api";
 import { friendlyError } from "../../utils/friendlyError";
+import { analytics } from "../../utils/analytics";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -46,6 +47,7 @@ export default function BecomeSeller() {
   const [error, setError] = useState<string | null>(null);
 
   const handleUpgrade = async () => {
+    analytics.trackEvent({ name: "seller_registration_started", category: "growth", label: "become_seller" });
     setIsLoading(true);
     setError(null);
 
@@ -58,7 +60,8 @@ export default function BecomeSeller() {
       if (res?.user) updateUser(res.user);
       else updateUser({ role: "seller" });
       await refreshMe();
-      navigate("/seller", { replace: true });
+      analytics.trackEvent({ name: "seller_registration_completed", category: "growth", label: "become_seller" });
+      navigate("/add-product", { replace: true, state: { fromSellerRegistration: true } });
     } catch (err: unknown) {
       setError(friendlyError(err, "الان نشد. کمی بعد دوباره امتحان کن."));
     } finally {
@@ -86,7 +89,7 @@ export default function BecomeSeller() {
         transition={{ delay: 0.1 }}
         className="text-2xl font-black mb-3 text-center"
       >
-        می‌خوای فروشنده بشی؟
+        فروشگاهت را ثبت کن
       </motion.h1>
 
       <motion.p
@@ -95,7 +98,7 @@ export default function BecomeSeller() {
         transition={{ delay: 0.2 }}
         className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-8 text-center leading-relaxed"
       >
-        با یه کلیک حسابت فروشنده می‌شه. بعد می‌تونی کالا بذاری تا همسایه‌ها پیدات کنن.
+        فروشگاهت را رایگان ثبت کن. همین الان اولین کالایت را بگذار تا خریدارهای اطرافت بتوانند پیدایت کنند.
       </motion.p>
 
       <motion.div
@@ -133,7 +136,7 @@ export default function BecomeSeller() {
               داره آماده می‌شه…
             </>
           ) : (
-            "فروشنده شو"
+            "ثبت فروشگاه"
           )}
         </button>
 
