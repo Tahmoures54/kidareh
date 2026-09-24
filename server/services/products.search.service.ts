@@ -16,7 +16,8 @@ import { buildLikePattern, normalizePersian } from "./persianText.js";
 import { applyProductCategoryFilter } from "../utils/categoryFilter.js";
 
 export interface SearchCursor {
-  id: number;
+  /** Stable pagination offset. Sorting can change the order, so an id-only cursor is not safe. */
+  offset: number;
 }
 
 export interface SearchParams {
@@ -74,7 +75,7 @@ export async function searchProductsService(
   const cacheKey = CacheKeys.search(
     hashParams({
       limit: params.limit,
-      cursor: params.cursor?.id ?? "",
+      cursor: params.cursor?.offset ?? 0,
       q: normalizePersian(params.q ?? ""),
       category: params.category ?? "",
       city: params.city ?? "",
@@ -178,10 +179,7 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
     where.push(`p.price <= ?`);
   }
 
-  if (cursor?.id != null) {
-    whereValues.push(cursor.id);
-    where.push(`p.id < ?`);
-  }
+  const offset = Math.max(0, cursor?.offset ?? 0);
 
   const hasCoords = lat != null && lng != null;
 
@@ -254,10 +252,10 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
     LEFT JOIN stores s ON s.id = p.store_id
     ${whereClause}
     ORDER BY ${orderBy}
-    LIMIT ?
+    LIMIT ? OFFSET ?
   `;
 
-  sqlParams.push(limitPlusOne);
+  sqlParams.push(limitPlusOne, offset);
 
   const rows = db.prepare(sql).all(...sqlParams) as ProductRow[];
 
