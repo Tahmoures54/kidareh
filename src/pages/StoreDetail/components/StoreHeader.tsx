@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Store, BadgeCheck, Star, Loader2, Clock3 } from "lucide-react";
+import { Store, BadgeCheck, Star, Loader2, Clock3, Share2 } from "lucide-react";
 import { StoreData } from "../types";
 // دیگر نیازی به import fa نیست
 
@@ -10,10 +10,11 @@ interface Props {
   following?: boolean;
   followLoading?: boolean;
   onFollow?: () => void;
+  onShare?: () => void;
   isOwnStore?: boolean;
 }
 
-export const StoreHeader = memo(({ store, hasBlueTick, followersCount, following, followLoading, onFollow, isOwnStore }: Props) => {
+export const StoreHeader = memo(({ store, hasBlueTick, followersCount, following, followLoading, onFollow, onShare, isOwnStore }: Props) => {
   const hours = (() => { try { return store.opening_hours ? JSON.parse(store.opening_hours) : {}; } catch { return {}; } })();
   const dayKey = ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()];
   const today = hours[dayKey];
@@ -79,7 +80,12 @@ export const StoreHeader = memo(({ store, hasBlueTick, followersCount, following
         </div>
 
         </div>
-        <div className="lg:w-[420px]">
+        <div className="lg:w-[420px] flex flex-col items-center lg:items-end gap-2">
+        {onShare && (
+          <button type="button" onClick={onShare} className="min-h-12 min-w-[160px] inline-flex items-center justify-center gap-2 rounded-2xl bg-white/15 text-white border border-white/25 px-6 text-sm font-black backdrop-blur-sm" aria-label="اشتراک‌گذاری ویترین">
+            <Share2 className="h-4 w-4" /> اشتراک ویترین
+          </button>
+        )}
         {isOwnStore ? (
           <p className="mt-5 text-xs font-black text-white/80">این فروشگاه شماست</p>
         ) : onFollow ? (
