@@ -72,13 +72,15 @@ export default function StoreDetail() {
     };
   }, [id, user]);
 
-  // Get User Location
+  // فقط وقتی فروشگاه مختصات معتبر دارد، موقعیت کاربر را درخواست کن.
+  // این کار از درخواست بی‌دلیل permission در صفحه‌هایی که فاصله قابل محاسبه نیست جلوگیری می‌کند.
   useEffect(() => {
-    navigator.geolocation?.getCurrentPosition(
+    if (!store || !hasLocation || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
       (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       () => {}
     );
-  }, []);
+  }, [store, hasLocation]);
 
   const hasBlueTick = useMemo(
     () => (store?.blue_tick_expires_at ? new Date(store.blue_tick_expires_at) > new Date() : false),
@@ -87,12 +89,14 @@ export default function StoreDetail() {
 
   // Calculate Distance
   useEffect(() => {
-    if (userLoc && store?.latitude && store?.longitude) {
-      const km = calcDist(userLoc.lat, userLoc.lng, store.latitude, store.longitude);
-      const mins = Math.round((km / 40) * 60); // فرض سرعت ۴۰ کیلومتر بر ساعت
-      setDistInfo({ text: fmtDist(km), mins: String(mins) });
+    if (!userLoc || !hasLocation || !store) {
+      setDistInfo(null);
+      return;
     }
-  }, [userLoc, store]);
+    const km = calcDist(userLoc.lat, userLoc.lng, Number(store.latitude), Number(store.longitude));
+    const mins = Math.round((km / 40) * 60);
+    setDistInfo({ text: fmtDist(km), mins: String(mins) });
+  }, [userLoc, hasLocation, store]);
 
   const isOwnStore = !!user && !!store?.owner_id && Number(user.id) === Number(store.owner_id);
 
