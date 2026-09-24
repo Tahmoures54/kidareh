@@ -10,7 +10,6 @@ export const ProductsTab = memo(({
   store,
 }: {
   products: Product[];
-  onProductClick?: (id: number) => void;
   store: StoreData;
 }) => {
   if (products.length === 0) return (
