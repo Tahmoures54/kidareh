@@ -215,10 +215,6 @@ export default function StoreDetail() {
               <ProductsTab
                 products={store.products || []}
                 store={store}
-                onProductClick={(productId) => {
-                  analytics.trackEvent({ name: "store_product_open", category: "conversion", label: String(productId) });
-                  navigate(`/products/${productId}`);
-                }}
               />
             </motion.div>
           ) : (
