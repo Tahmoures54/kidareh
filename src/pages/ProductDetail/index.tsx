@@ -16,6 +16,7 @@ import { setProductSaved } from "../../lib/feedStorage";
 import { updateProductSeo } from "../../utils/productSeo";
 import { shareFeedItem, shareTextForPost } from "../../lib/feedShare";
 import { useAnalytics } from "../../hooks/useAnalytics";
+import { isProductAvailable } from "../../utils/productAvailability";
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
 
@@ -167,10 +168,7 @@ export default function ProductDetail() {
     return (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1);
   }, [reviews]);
 
-  const isProductAvailable =
-    product?.status === "موجود" ||
-    product?.status === "فقط ۱ عدد" ||
-    (product?.status || "").toLowerCase() === "available";
+  const available = isProductAvailable(product?.status);
 
   const hasBlueTick = useMemo(() => {
     if (!product?.blue_tick_expires_at) return false;
@@ -337,7 +335,7 @@ export default function ProductDetail() {
 
       </div>
       <div className="bg-[var(--bg-primary)] rounded-t-[40px] -mt-8 relative z-20 px-5 pt-8 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.3)] lg:mt-0 lg:rounded-[28px] lg:border lg:border-slate-200 lg:bg-white lg:p-7 lg:shadow-[0_20px_60px_-40px_rgba(8,76,103,.5)]">
-        <ProductInfo product={product} isAvailable={isProductAvailable} avgRating={avgRating} />
+        <ProductInfo product={product} isAvailable={available} avgRating={avgRating} />
         <StoreCard
 
           storeId={product.store_id}
