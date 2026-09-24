@@ -5,6 +5,7 @@ import { useFeedPost } from "../../hooks/useFeedPost";
 import type { FeedPostData } from "../../lib/feedMappers";
 import { cn } from "../../utils";
 import { analytics } from "../../utils/analytics";
+import { isProductAvailable } from "../../utils/productAvailability";
 
 function FeedMedia({ sources, title, storeName }: { sources: string[]; title: string; storeName: string }) {
   const [index, setIndex] = useState(0);
@@ -31,6 +32,7 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
     lastTap.current = now;
   };
   const handleSave = async () => { const wasSaved = saved; await save(); if (wasSaved && onRemoved) onRemoved(post); };
+  const available = isProductAvailable(post.status);
   const handleProductOpen = () => {
     analytics.trackEvent({ name: "store_product_open", category: "growth", label: post.kind, value: post.productId });
   };
@@ -67,7 +69,7 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
         {post.meta && <div className="flex flex-wrap items-center gap-2 text-xs font-black"><span className="inline-flex items-center gap-1 rounded-full bg-[var(--paper-2)] px-2.5 py-1.5 text-[var(--ink-soft)]"><MapPin className="h-3.5 w-3.5 text-[var(--brand-primary)]" />{post.meta}</span>{post.status && <span className="rounded-full bg-emerald-50 px-2.5 py-1.5 text-emerald-700">{post.status}</span>}</div>}
         {post.caption && <p className="line-clamp-2 text-[13px] font-bold leading-6 text-[var(--ink-soft)]"><span className="font-black text-[var(--ink)]">{post.storeName} </span>{post.caption}</p>}
         <div className="grid grid-cols-2 gap-2 pt-1">
-          <Link to={post.href} onClick={handleProductOpen} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--brand-primary)] px-3 text-xs font-black text-white"><MapPin className="h-4 w-4" /> مشاهده کالا و آدرس</Link>
+          <Link to={post.href} onClick={handleProductOpen} className={cn("inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-black text-white", available ? "bg-[var(--brand-primary)]" : "bg-slate-700")}><MapPin className="h-4 w-4" /> {available ? "مشاهده کالا و آدرس" : "مشاهده کالا"}</Link>
           <button type="button" onClick={() => { analytics.trackEvent({ name: "store_product_message_click", category: "growth", label: String(post.storeId ?? "") }); openMessage(); }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--line)] px-3 text-xs font-black"><MessageCircle className="h-4 w-4" /> پیام به فروشنده</button>
         </div>
         {flash && <p className="text-[12px] font-bold text-[var(--brand-primary)]" role="status">{flash}</p>}
