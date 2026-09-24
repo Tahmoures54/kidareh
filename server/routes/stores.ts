@@ -7,6 +7,7 @@ import { requireAuth, requireRole, type AuthRequest } from "../middleware/auth.j
 import {
   cacheGet,
   cacheSet,
+  cacheGetOrSet,
   hashParams,
   CacheKeys,
   CacheTTL,
@@ -236,32 +237,39 @@ router.get("/following", requireAuth, (req: AuthRequest, res: Response): void =>
   }
 });
 
-router.get("/:id(\\d+)", (req: AuthRequest, res: Response): void => {
+router.get("/:id(\\d+)", async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const id = numericRouteId(req.params as Record<string, string | undefined>);
     if (!Number.isInteger(id) || id <= 0) {
       res.status(400).json({ error: "شناسه فروشگاه نامعتبر است." });
       return;
     }
-    const store = db.prepare(`
-      SELECT s.*, u.name as owner_name, u.phone as owner_phone,
-        COUNT(DISTINCT p.id) as total_products, AVG(r.rating) as avg_rating, COUNT(DISTINCT r.id) as review_count,
-        COUNT(DISTINCT sf.id) as follower_count,
-        COALESCE(strftime('%Y/%m', s.created_at), '') as joined
-      FROM stores s JOIN users u ON s.user_id = u.id
-      LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'
-      LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'
-      LEFT JOIN store_followers sf ON sf.store_id = s.id
-      WHERE s.id = ? GROUP BY s.id`).get(id) as any;
-    if (!store) {
+    const cacheKey = CacheKeys.store(id);
+    let found = false;
+    const payload = await cacheGetOrSet(cacheKey, CacheTTL.STORES, async () => {
+      const store = db.prepare(`
+        SELECT s.*, u.name as owner_name, u.phone as owner_phone,
+          COUNT(DISTINCT p.id) as total_products, AVG(r.rating) as avg_rating, COUNT(DISTINCT r.id) as review_count,
+          COUNT(DISTINCT sf.id) as follower_count,
+          COALESCE(strftime('%Y/%m', s.created_at), '') as joined
+        FROM stores s JOIN users u ON s.user_id = u.id
+        LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'
+        LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'
+        LEFT JOIN store_followers sf ON sf.store_id = s.id
+        WHERE s.id = ? GROUP BY s.id`).get(id) as any;
+      if (!store) return null;
+      const products = db.prepare(`
+        SELECT p.id, p.name, p.price, p.status, p.badge, p.views, p.image_url, p.created_at
+        FROM products p WHERE p.store_id = ? AND p.moderation_status = 'approved'
+        ORDER BY CASE WHEN p.badge IS NOT NULL AND p.badge <> '' THEN 0 ELSE 1 END, p.created_at DESC, p.id DESC LIMIT 50`).all(id) as any[];
+      return normalizeStoreForDetail(store, products);
+    });
+    if (!payload) {
       res.status(404).json({ error: "فروشگاه مورد نظر یافت نشد." });
       return;
     }
-    const products = db.prepare(`
-      SELECT p.id, p.name, p.price, p.status, p.badge, p.views, p.image_url, p.created_at
-      FROM products p WHERE p.store_id = ? AND p.moderation_status = 'approved'
-      ORDER BY CASE WHEN p.badge IS NOT NULL AND p.badge <> '' THEN 0 ELSE 1 END, p.created_at DESC, p.id DESC LIMIT 50`).all(id) as any[];
-    res.json(normalizeStoreForDetail(store, products));
+    res.setHeader("X-Cache", "HIT");
+    res.json(payload);
   } catch (err) {
     logger.error("Fetch Store Error:", err);
     res.status(500).json({ error: "خطا در دریافت اطلاعات فروشگاه." });
@@ -414,10 +422,12 @@ router.post("/:id(\\d+)/follow", requireAuth, (req: AuthRequest, res: Response) 
     const existing = db.prepare("SELECT id FROM store_followers WHERE user_id = ? AND store_id = ?").get(userId, storeId) as any;
     if (existing) {
       db.prepare("DELETE FROM store_followers WHERE id = ?").run(existing.id);
+      void invalidateStoreCache(storeId);
       const count = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(storeId) as any;
       return res.json({ following: false, follower_count: Number(count?.count ?? 0), message: "دیگر دنبال نمی‌کنید" });
     }
     db.prepare("INSERT INTO store_followers (user_id, store_id) VALUES (?, ?)").run(userId, storeId);
+    void invalidateStoreCache(storeId);
     const count = db.prepare("SELECT COUNT(*) as count FROM store_followers WHERE store_id = ?").get(storeId) as any;
     return res.json({ following: true, follower_count: Number(count?.count ?? 0), message: "فروشگاه دنبال شد" });
   } catch (error) {
