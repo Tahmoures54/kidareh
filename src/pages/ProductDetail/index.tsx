@@ -14,6 +14,7 @@ import { StoreCard } from "./components/StoreCard";
 import { BottomActionBar } from "../../components/ui/BottomActionBar";
 import { setProductSaved } from "../../lib/feedStorage";
 import { updateProductSeo } from "../../utils/productSeo";
+import { shareFeedItem, shareTextForPost } from "../../lib/feedShare";
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
 
@@ -223,17 +224,15 @@ export default function ProductDetail() {
   };
 
   const handleShare = async () => {
+    if (!product) return;
     const url = window.location.href;
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: product?.name, url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        showToast("لینک کپی شد");
-      }
-    } catch {
-      /* cancelled */
-    }
+    const result = await shareFeedItem({
+      title: product.name,
+      url,
+      text: shareTextForPost(product.name, product.store_name),
+    });
+    if (result === "copied") showToast("لینک کالا کپی شد");
+    if (result === "failed") showToast("اشتراک‌گذاری انجام نشد", "error");
   };
 
   const handleNavigate = () => {
