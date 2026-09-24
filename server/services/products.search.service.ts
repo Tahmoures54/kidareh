@@ -261,19 +261,25 @@ function searchProductsFromDb(params: SearchParams): SearchResult {
 
   const rows = db.prepare(sql).all(...sqlParams) as ProductRow[];
 
+  // The search result itself is the expensive part. For a non-empty first
+  // page the UI does not need an exact COUNT(*); avoid a second full scan.
+  // Keep COUNT(*) only for zero-result recovery, where the total is useful
+  // for distinguishing "nothing exists" from an unexpected query issue.
   let total: number | null = null;
-  try {
-    const countValues: unknown[] = [...whereValues, ...radiusValues];
-    const countSql = `
-      SELECT COUNT(*) AS total
-      FROM products p
-      LEFT JOIN stores s ON s.id = p.store_id
-      ${whereClause}
-    `;
-    const c = db.prepare(countSql).get(...countValues) as { total: number } | undefined;
-    total = c?.total ?? null;
-  } catch {
-    total = null;
+  if (rows.length === 0) {
+    try {
+      const countValues: unknown[] = [...whereValues, ...radiusValues];
+      const countSql = `
+        SELECT COUNT(*) AS total
+        FROM products p
+        LEFT JOIN stores s ON s.id = p.store_id
+        ${whereClause}
+      `;
+      const c = db.prepare(countSql).get(...countValues) as { total: number } | undefined;
+      total = c?.total ?? 0;
+    } catch {
+      total = null;
+    }
   }
 
   return { rows, total, engine };
