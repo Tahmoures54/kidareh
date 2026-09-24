@@ -135,7 +135,7 @@ function productShareHtml(baseHtml: string, product: any, url: string): string {
   const fallbackDescription = priceText + " — " + status + " — در " + store + suffix + ". ببین کی داره، حضوری بگیر.";
   const metaDescription = (description || fallbackDescription).slice(0, 180);
   const rawImage = String(product.image_url || "https://kidareh.com/og-image-1200x630.jpg");
-  const image = /^https?:\\/\\//i.test(rawImage) ? rawImage : new URL(rawImage, process.env.APP_URL || "https://kidareh.com").href;
+  const image = /^https?:\/\//i.test(rawImage) ? rawImage : new URL(rawImage, process.env.APP_URL || "https://kidareh.com").href;
   const title = name + " — کی‌داره";
   let html = baseHtml;
   const replacements: Array<[string, string]> = [
@@ -329,7 +329,7 @@ async function startServer() {
 
       app.get("/products/:id", async (req: Request, res: Response) => {
         try {
-          if (!/^\\d+$/.test(req.params.id)) return res.sendFile(indexPath);
+          if (!/^\d+$/.test(req.params.id)) return res.sendFile(indexPath);
           const product = await getCachedProductDetail(req.params.id);
           if (!product) return res.status(404).sendFile(indexPath);
           const baseHtml = fs.readFileSync(indexPath, "utf8");
