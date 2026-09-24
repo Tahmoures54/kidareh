@@ -6,6 +6,8 @@ import { useSellerPanel } from "./hooks/useSellerPanel";
 import { ProductItem } from "./components/ProductItem";
 import { EditStoreSheet } from "./components/EditStoreSheet";
 import { FilterType } from "./types";
+import { analytics } from "../../utils/analytics";
+import { shareFeedItem, shareTextForPost } from "../../lib/feedShare";
 
 const FILTERS: { id: FilterType; label: string }[] = [
   { id: "all", label: "همه" },
@@ -23,6 +25,8 @@ export default function SellerPanel() {
 }
 
 function SellerShopHome() {
+  const [params] = useSearchParams();
+  const firstProduct = params.get("firstProduct") === "1";
   const {
     user,
     toast,
@@ -53,6 +57,16 @@ function SellerShopHome() {
   const shopName = storeInfo?.name || user?.store_name || user?.name || "مغازه من";
   const hasStore = !!storeInfo;
 
+  const handleFirstProductShare = async () => {
+    if (!storeInfo?.id) return;
+    analytics.trackEvent({ name: "seller_first_product_share_click", category: "growth", label: "seller_welcome" });
+    const result = await shareFeedItem({ title: shopName, text: shareTextForPost(shopName), url: window.location.origin + "/store/" + storeInfo.id });
+    if (result === "shared" || result === "copied") {
+      analytics.trackEvent({ name: "seller_first_product_shared", category: "growth", label: result });
+      setToast({ msg: result === "shared" ? "ویترینت برای اشتراک‌گذاری آماده شد." : "لینک ویترین کپی شد.", type: "success", id: Date.now() });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] px-4 py-5 lg:px-8 lg:py-8" dir="rtl">
       {toast && (
@@ -66,6 +80,21 @@ function SellerShopHome() {
       )}
 
       <div className="mx-auto max-w-[1280px]">
+      {firstProduct && hasStore && (
+        <section className="mb-5 rounded-[28px] border border-[var(--accent)]/20 bg-[var(--surface)] p-5" aria-labelledby="first-product-success">
+          <p className="text-xs font-black text-[var(--accent)]">اولین کالا ثبت شد ✓</p>
+          <h2 id="first-product-success" className="mt-1 text-lg font-black">حالا مشتری‌ها را به ویترینت بیاور</h2>
+          <p className="mt-1 text-sm font-bold leading-6 text-[var(--muted)]">لینک ویترین را برای مشتری‌ها و همکارانت بفرست. کالاهای جدیدت هم در همان ویترین دیده می‌شوند.</p>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={handleFirstProductShare} className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-4 text-sm font-black text-white">
+              <Share2 className="h-4 w-4" /> اشتراک ویترین
+            </button>
+            <Link to="/add-product" onClick={() => analytics.trackEvent({ name: "seller_first_product_next_click", category: "growth", label: "add_another_product" })} className="flex min-h-12 items-center justify-center rounded-xl border border-[var(--line)] bg-white px-4 text-sm font-black">
+              کالای بعدی
+            </Link>
+          </div>
+        </section>
+      )}
       <header className="mb-5 lg:mb-7 lg:flex lg:items-end lg:justify-between">
         <p className="text-sm font-black text-[var(--accent)]">مغازه‌ام</p>
         <h1 className="mt-1 text-2xl font-black leading-snug">{shopName}</h1>
