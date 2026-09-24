@@ -224,12 +224,18 @@ function setupSocket(io: Server) {
         if (String(d.senderId) !== userId) return ack?.({ ok: false, error: "sender mismatch" });
         await handleWithAuth(d.roomId, () => {
           try {
-            let receiverId = d.receiverId != null ? Number(d.receiverId) : 0;
-            if (!receiverId) {
-              const room = db.prepare(`SELECT user1_id, user2_id FROM messages_rooms WHERE room_id = ?`).get(d.roomId) as any;
-              if (room) receiverId = Number(room.user1_id) === Number(d.senderId) ? Number(room.user2_id) : Number(room.user1_id);
+            const room = db.prepare(`SELECT user1_id, user2_id FROM messages_rooms WHERE room_id = ?`).get(d.roomId) as any;
+            let receiverId = 0;
+            if (room) {
+              receiverId = Number(room.user1_id) === Number(d.senderId)
+                ? Number(room.user2_id)
+                : Number(room.user1_id);
             }
             if (!receiverId) { ack?.({ ok: false, error: "receiver unknown" }); return; }
+            if (d.receiverId != null && Number(d.receiverId) !== receiverId) {
+              ack?.({ ok: false, error: "receiver mismatch" });
+              return;
+            }
             const result = db.prepare(`INSERT INTO messages (room_id, sender_id, receiver_id, content, is_read, created_at) VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`).run(d.roomId, Number(d.senderId), receiverId, d.text);
             db.prepare(`UPDATE messages_rooms SET updated_at = CURRENT_TIMESTAMP WHERE room_id = ?`).run(d.roomId);
             const payload = { id: result.lastInsertRowid, roomId: d.roomId, senderId: d.senderId, text: d.text, content: d.text, timestamp: new Date().toISOString(), status: "sent" };
