@@ -13,6 +13,7 @@ import { ProductInfo } from "./components/ProductInfo";
 import { StoreCard } from "./components/StoreCard";
 import { BottomActionBar } from "../../components/ui/BottomActionBar";
 import { setProductSaved } from "../../lib/feedStorage";
+import { updateProductSeo } from "../../utils/productSeo";
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
 
@@ -88,7 +89,7 @@ export default function ProductDetail() {
     try {
       const data = await apiRequest<ProductData>(`/api/products/${id}`);
       setProduct(data);
-      document.title = `${data.name} — کی‌داره`;
+      updateProductSeo(data, window.location.href);
     } catch (err: unknown) {
       setError(
         err instanceof ApiError && err.status === 404
