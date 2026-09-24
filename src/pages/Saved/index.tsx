@@ -13,6 +13,7 @@ import { listingToFeedPost, productToFeedPost, type FeedPostData } from "../../l
 import { listSavedListingIds, onFeedChange, setProductSaved, syncSavedProductIds } from "../../lib/feedStorage";
 import { enrichListing, getListing } from "../../presence/engine";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
+import { isProductAvailable } from "../../utils/productAvailability";
 
 interface SavedProduct {
   id: number | string;
@@ -121,7 +122,7 @@ export default function Saved() {
     () => ({
       all: products.length + listingPosts.length,
       price_drop: products.filter((p) => p.hasPriceDrop).length,
-      available: products.filter((p) => p.status === "موجود" || !p.status).length,
+      available: products.filter((p) => isProductAvailable(p.status)).length,
     }),
     [listingPosts.length, products]
   );
@@ -130,7 +131,7 @@ export default function Saved() {
     let list = [...products];
     if (filter === "price_drop") list = list.filter((p) => p.hasPriceDrop);
     if (filter === "available")
-      list = list.filter((p) => p.status === "موجود" || !p.status);
+      list = list.filter((p) => isProductAvailable(p.status));
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter(
