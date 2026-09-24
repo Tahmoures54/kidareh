@@ -235,6 +235,8 @@ export default function StoreDetail() {
       <BottomActionBar
         storeId={store.id}
         phone={store.phone}
+        hasLocation={hasLocation}
+        hasPhone={hasPhone}
         onNavigate={() => {
           analytics.trackEvent({ name: "store_directions_click", category: "conversion", label: String(store.id) });
           if (store.latitude && store.longitude) {
