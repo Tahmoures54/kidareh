@@ -215,7 +215,10 @@ export default function StoreDetail() {
               <ProductsTab
                 products={store.products || []}
                 store={store}
-                onProductClick={(productId) => navigate(`/products/${productId}`)}
+                onProductClick={(productId) => {
+                  analytics.trackEvent({ name: "store_product_open", category: "conversion", label: String(productId) });
+                  navigate(`/products/${productId}`);
+                }}
               />
             </motion.div>
           ) : (
@@ -235,18 +238,25 @@ export default function StoreDetail() {
         storeId={store.id}
         phone={store.phone}
         onNavigate={() => {
+          analytics.trackEvent({ name: "store_directions_click", category: "conversion", label: String(store.id) });
           if (store.latitude && store.longitude) {
             window.open(
               `https://www.google.com/maps/dir/?api=1&destination=${store.latitude},${store.longitude}`,
-              "_blank"
+              "_blank",
+              "noopener,noreferrer"
             );
           }
         }}
-        onMessageClick={() =>
-          navigate(user ? `/chat/${store.id}` : "/login")
-        }
+        onMessageClick={() => {
+          analytics.trackEvent({ name: "store_message_click", category: "conversion", label: String(store.id) });
+          navigate(user ? `/chat/${store.id}` : "/login");
+        }}
         onPhoneClick={(e) => {
-          if (!store.phone) e.preventDefault();
+          if (!store.phone) {
+            e.preventDefault();
+            return;
+          }
+          analytics.trackEvent({ name: "store_call_click", category: "conversion", label: String(store.id) });
         }}
       />
     </motion.div>
