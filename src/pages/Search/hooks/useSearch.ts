@@ -20,6 +20,7 @@ import {
   getActiveFilterCount,
 } from "../utils";
 import { FALLBACK } from "../components/constants";
+import { isProductAvailable } from "../../../utils/productAvailability";
 
 const DEBOUNCE = 350;
 
@@ -343,7 +344,7 @@ export function useSearch() {
   const sortedProducts = useMemo(() => {
     let res = [...processedProducts];
     
-    if (filters.onlyAvailable) res = res.filter((p) => p.status === "موجود");
+    if (filters.onlyAvailable) res = res.filter((p) => isProductAvailable(p.status));
     if (filters.minPrice) res = res.filter((p) => Number(p.price || 0) >= Number(filters.minPrice));
     if (filters.maxPrice) res = res.filter((p) => Number(p.price || 0) <= Number(filters.maxPrice));
     
