@@ -2,6 +2,7 @@ import React, { useState, memo } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Store, TrendingDown, Trash2, MapPin, MoreVertical, Share2, Check } from "lucide-react";
+import { isProductAvailable } from "../../utils/productAvailability";
 
 const FALLBACK = "https://placehold.co/400x400/1e293b/94a3b8?text=No+Image";
 
@@ -14,6 +15,7 @@ export const ProductCard = memo(({ product, viewMode, onRemove, isSelected, onTo
   const pct = discount(product.price, product.oldPrice);
   const [showMenu, setShowMenu] = useState(false);
   const isList = viewMode === "list";
+  const available = isProductAvailable(product.status);
 
   return (
     <motion.div
@@ -57,7 +59,7 @@ export const ProductCard = memo(({ product, viewMode, onRemove, isSelected, onTo
           <div className="absolute bottom-0 inset-x-0 h-16 bg-gradient-to-t from-black/40 to-transparent pointer-events-none" />
           
           {pct > 0 && <span className="absolute bottom-2.5 right-2.5 bg-rose-500/90 backdrop-blur-sm text-white text-[10px] font-black px-2.5 py-1 rounded-xl flex items-center gap-1 shadow-md border border-white/10"><TrendingDown className="w-3 h-3" /> {pct}٪ تخفیف</span>}
-          <span className={`absolute top-2.5 right-2.5 text-[10px] font-black px-2.5 py-1 rounded-xl backdrop-blur-md shadow-sm border border-white/10 ${product.status === "موجود" ? "bg-emerald-500/90 text-white" : "bg-black/60 text-white"} ${selectionMode ? "opacity-0" : ""}`}>{product.status}</span>
+          <span className={`absolute top-2.5 right-2.5 text-[10px] font-black px-2.5 py-1 rounded-xl backdrop-blur-md shadow-sm border border-white/10 ${available ? "bg-emerald-500/90 text-white" : "bg-black/60 text-white"} ${selectionMode ? "opacity-0" : ""}`}>{product.status}</span>
         </div>
 
         <div className={`p-4 flex flex-col justify-between bg-[var(--bg-secondary)] ${isList ? "flex-1 py-3" : ""}`}>
