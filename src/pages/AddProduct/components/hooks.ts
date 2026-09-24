@@ -5,6 +5,7 @@ import { compressImage } from "../../../utils/imageCompression";
 import { apiRequest, ApiError } from "../../../utils/api";
 import { getProductCategoryFromStoreCategory } from "../../../utils/categoryMapping";
 import { friendlyError } from "../../../utils/friendlyError";
+import { analytics } from "../../../utils/analytics";
 
 function dataUrlToBlob(dataUrl: string): Blob {
   const [header, data] = dataUrl.split(",");
@@ -176,10 +177,14 @@ export function useAddProduct(user: any) {
       }
 
       if (data?.success) {
+        const productId = Number(data?.product?.id ?? data?.id);
+        analytics.trackEvent({ name: "seller_first_product_completed", category: "growth", label: "add_product", value: Number.isFinite(productId) ? productId : undefined });
         localStorage.setItem("lastCategory", finalCategory);
         navigate("/seller", {
           state: {
-            successMsg: "کالایت روی ویترین قرار گرفت",
+            successMsg: "کالایت ثبت شد؛ حالا ویترینت را به مشتری‌ها نشان بده.",
+            productId: Number.isFinite(productId) ? productId : undefined,
+            firstProduct: true,
           },
         });
       } else {
