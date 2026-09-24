@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Search, MapPin, Store, Sparkles, ArrowLeft } from "lucide-react";
+import { analytics } from "../utils/analytics";
 
 export default function PresenceHome() {
   return (
@@ -56,6 +57,7 @@ export default function PresenceHome() {
           </div>
           <Link
             to="/become-seller"
+            onClick={() => analytics.trackEvent({ name: "seller_registration_click", category: "growth", label: "home_cta" })}
             className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-black text-white transition hover:opacity-90"
           >
             ثبت فروشگاه
