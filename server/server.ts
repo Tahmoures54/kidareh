@@ -39,6 +39,8 @@ import presenceRoutes from "./routes/presence.js";
 import reservationsRoutes from "./routes/reservations.js";
 import { ensurePromotionTables } from "./services/promotions.js";
 import { getCachedProductDetail } from "./services/products.cached.js";
+import { cacheGetOrSet, CacheKeys, CacheTTL } from "./services/cache.js";
+import { normalizeStoreForDetail } from "./routes/stores.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -326,6 +328,58 @@ async function startServer() {
     if (isProd) {
       const publicPath = fs.existsSync(path.join(ROOT_DIR, "dist/public")) ? path.join(ROOT_DIR, "dist/public") : path.join(ROOT_DIR, "dist");
       const indexPath = path.join(publicPath, "index.html");
+
+      app.get("/store/:id", async (req: Request, res: Response) => {
+        try {
+          if (!/^\d+$/.test(req.params.id)) return res.sendFile(indexPath);
+          const id = Number(req.params.id);
+          const store = await cacheGetOrSet(CacheKeys.store(id), CacheTTL.STORES, async () => {
+            const row = db.prepare(`
+              SELECT s.*, u.name as owner_name, u.phone as owner_phone,
+                COUNT(DISTINCT p.id) as total_products, AVG(r.rating) as avg_rating, COUNT(DISTINCT r.id) as review_count,
+                COUNT(DISTINCT sf.id) as follower_count,
+                COALESCE(strftime('%Y/%m', s.created_at), '') as joined
+              FROM stores s JOIN users u ON s.user_id = u.id
+              LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'
+              LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'
+              LEFT JOIN store_followers sf ON sf.store_id = s.id
+              WHERE s.id = ? GROUP BY s.id`).get(id) as any;
+            if (!row) return null;
+            const products = db.prepare(`
+              SELECT p.id, p.name, p.price, p.status, p.badge, p.views, p.image_url, p.created_at
+              FROM products p WHERE p.store_id = ? AND p.moderation_status = 'approved'
+              ORDER BY CASE WHEN p.badge IS NOT NULL AND p.badge <> '' THEN 0 ELSE 1 END, p.created_at DESC, p.id DESC LIMIT 50`).all(id) as any[];
+            return normalizeStoreForDetail(row, products);
+          });
+          if (!store) return res.status(404).sendFile(indexPath);
+          const baseHtml = fs.readFileSync(indexPath, "utf8");
+          const origin = process.env.APP_URL || "https://kidareh.com";
+          const url = new URL("/store/" + id, origin).href;
+          const title = String(store.name || "فروشگاه") + " — کی‌داره";
+          const location = [store.city, store.province].filter(Boolean).join("، ");
+          const description = `فروشگاه ${store.name || ""}${location ? " در " + location : ""} — ${Number(store.products?.length ?? 0).toLocaleString("fa-IR")} کالا. ببین کی داره، حضوری بگیر.`.slice(0, 180);
+          const rawImage = String(store.image || "https://kidareh.com/og-image-1200x630.jpg");
+          const image = /^https?:\/\//i.test(rawImage) ? rawImage : new URL(rawImage, origin).href;
+          const replacements: Array<[string, string]> = [
+            ["<title>کی‌داره | ببین کی داره، حضوری بگیر</title>", "<title>" + escapeHtml(title) + "</title>"],
+            ['<meta name="description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="description" content="' + escapeHtml(description) + '">'],
+            ['<meta property="og:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta property="og:title" content="' + escapeHtml(title) + '">'],
+            ['<meta property="og:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta property="og:description" content="' + escapeHtml(description) + '">'],
+            ['<meta property="og:url" content="https://kidareh.com/">', '<meta property="og:url" content="' + escapeHtml(url) + '">'],
+            ['<meta property="og:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta property="og:image" content="' + escapeHtml(image) + '">'],
+            ['<meta name="twitter:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta name="twitter:title" content="' + escapeHtml(title) + '">'],
+            ['<meta name="twitter:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="twitter:description" content="' + escapeHtml(description) + '">'],
+            ['<meta name="twitter:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta name="twitter:image" content="' + escapeHtml(image) + '">'],
+            ['<link rel="canonical" href="https://kidareh.com/">', '<link rel="canonical" href="' + escapeHtml(url) + '">'],
+          ];
+          let html = baseHtml;
+          for (const [from, to] of replacements) html = html.replace(from, to);
+          return res.type("html").send(html);
+        } catch (error) {
+          logger.error("Store share HTML error:", error);
+          return res.sendFile(indexPath);
+        }
+      });
 
       app.get("/products/:id", async (req: Request, res: Response) => {
         try {
