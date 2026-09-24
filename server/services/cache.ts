@@ -109,6 +109,11 @@ export async function invalidateProductCache(productId: string | number): Promis
   await invalidateSearchCache();
 }
 
+/** Invalidate cached platform/store statistics */
+export async function invalidateStatsCache(): Promise<void> {
+  await redisDel(CacheKeys.stats());
+}
+
 /** Invalidate store-related caches */
 export async function invalidateStoreCache(storeId?: string | number): Promise<void> {
   if (storeId != null) await redisDel(CacheKeys.store(storeId));
