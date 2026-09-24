@@ -43,6 +43,27 @@ export default function PresenceHome() {
         <Feature icon={<Sparkles className="h-5 w-5" />} title="کمک هوشمند" text="اگر اسم دقیق کالا را نمی‌دانی، از دستیار کمک بگیر." />
       </section>
 
+      <section className="mt-6 rounded-3xl border border-[var(--accent)]/20 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="seller-cta-title">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface)] text-[var(--accent)]">
+              <Store className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 id="seller-cta-title" className="text-base font-black">فروشگاه داری؟ کالاهایت را جلوی خریدارهای اطراف بگذار</h2>
+              <p className="mt-1 text-sm font-bold leading-6 text-[var(--muted)]">ثبت فروشندگی رایگان است؛ کالا، قیمت و عکس را اضافه کن تا در جستجوی کی‌داره دیده شوی.</p>
+            </div>
+          </div>
+          <Link
+            to="/become-seller"
+            className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-black text-white transition hover:opacity-90"
+          >
+            ثبت فروشگاه و کالا
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
       <section className="mt-8 rounded-3xl border border-[var(--line)] bg-[var(--surface)] p-5 sm:p-7">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
