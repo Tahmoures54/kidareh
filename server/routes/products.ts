@@ -94,7 +94,11 @@ router.get("/", async (req, res) => {
     if (scope === "city" && city) { baseConditions += " AND (p.city = ? OR s.city = ?)"; params.push(city, city); countParams.push(city, city); }
     else if (scope === "province" && city) {
       const province = cityProvinceMap[city as string];
-      if (province) { baseConditions += " AND p.province = ?"; params.push(province); countParams.push(province); }
+      if (province) {
+        baseConditions += " AND (p.province = ? OR s.province = ?)";
+        params.push(province, province);
+        countParams.push(province, province);
+      }
     }
 
     const { total } = db.prepare(`SELECT COUNT(*) as total FROM products p LEFT JOIN stores s ON p.store_id = s.id WHERE ${baseConditions}`).get(...countParams) as { total: number };
