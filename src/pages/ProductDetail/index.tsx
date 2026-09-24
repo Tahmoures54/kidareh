@@ -241,6 +241,7 @@ export default function ProductDetail() {
   };
 
   const handleNavigate = () => {
+    trackEvent("store_directions_click", { category: "conversion", label: String(product?.id || "") });
     if (!product?.lat || !product?.lng) {
       return showToast("آدرس نقشه ثبت نشده", "error");
     }
@@ -251,12 +252,14 @@ export default function ProductDetail() {
   };
 
   const handleMessage = () => {
+    trackEvent("store_message_click", { category: "conversion", label: String(product?.id || "") });
     if (!user) return navigate("/login");
     if (product?.store_id) navigate(`/chat/${product.store_id}?product=${product.id}`);
     else navigate("/messages");
   };
 
   const handlePhoneClick = (e: React.MouseEvent) => {
+    if (product?.store_phone) trackEvent("store_call_click", { category: "conversion", label: String(product.id) });
     if (!product?.store_phone) {
       e.preventDefault();
       showToast("شماره تماس ثبت نشده", "error");
@@ -336,6 +339,7 @@ export default function ProductDetail() {
       <div className="bg-[var(--bg-primary)] rounded-t-[40px] -mt-8 relative z-20 px-5 pt-8 pb-6 shadow-[0_-10px_40px_rgba(0,0,0,0.08)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.3)] lg:mt-0 lg:rounded-[28px] lg:border lg:border-slate-200 lg:bg-white lg:p-7 lg:shadow-[0_20px_60px_-40px_rgba(8,76,103,.5)]">
         <ProductInfo product={product} isAvailable={isProductAvailable} avgRating={avgRating} />
         <StoreCard
+
           storeId={product.store_id}
           storeName={product.store_name || ""}
           storeCity={product.store_city || ""}
@@ -345,6 +349,7 @@ export default function ProductDetail() {
           hasBlueTick={hasBlueTick}
           distance={distance}
           onFollow={handleFollow}
+          onStoreClick={() => trackEvent("store_view_click", { category: "conversion", label: String(product.store_id) })}
         />
       </div>
       </div>
