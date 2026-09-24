@@ -26,6 +26,7 @@ import { productToFeedPost } from "../../lib/feedMappers";
 
 import { getCategoryDisplayName } from "../../data/processed/categories";
 import { useSearch } from "./hooks/useSearch";
+import { useAnalytics } from "../../hooks/useAnalytics";
 import { SearchSkeleton } from "./components/SearchSkeleton";
 import { FilterSheet } from "./components/FilterSheet";
 import { IdleSection } from "./components/IdleSection";
@@ -33,6 +34,8 @@ import { SPRING_TRANSITION, SORT_OPTIONS } from "./components/constants";
 
 export default function Search() {
   const navigate = useNavigate();
+  const { trackEvent } = useAnalytics();
+  const resultTrackedRef = React.useRef("");
   const {
     query, setQuery,
     showFilter, setShowFilter,
@@ -48,6 +51,30 @@ export default function Search() {
     expandSearchScope, cycleScope, resetFilters,
     searchPlaceholder, scopeLabel,
   } = useSearch();
+
+  const trackSearch = (term: string, source: string) => {
+    const normalized = term.trim();
+    if (!normalized && !filters.category) return;
+    trackEvent("search_started", {
+      category: "discovery",
+      label: source,
+      search_term: normalized || filters.category,
+      scope: filters.scope.type,
+    });
+  };
+
+  React.useEffect(() => {
+    if (!showingResults || isLoading || error || sortedProducts.length === 0) return;
+    const key = `${query.trim()}|${filters.category}|${filters.scope.type}|${filters.scope.id || ""}`;
+    if (resultTrackedRef.current === key) return;
+    resultTrackedRef.current = key;
+    trackEvent("search_result_view", {
+      category: "discovery",
+      label: filters.category || query.trim(),
+      value: sortedProducts.length,
+      scope: filters.scope.type,
+    });
+  }, [showingResults, isLoading, error, sortedProducts.length, query, filters.category, filters.scope.type, filters.scope.id, trackEvent]);
 
   const ScopeIcon = useMemo(() => {
     if (filters.scope.type === "city") return Building;
@@ -93,7 +120,7 @@ export default function Search() {
           {/* Search Input */}
           <form
             className="flex-1 relative"
-            onSubmit={(e) => { e.preventDefault(); commitSearch(query); }}
+            onSubmit={(e) => { e.preventDefault(); trackSearch(query, "submit"); commitSearch(query); }}
           >
             <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center px-3 py-2.5 focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:ring-2 focus-within:ring-rose-500/30 focus-within:border focus-within:border-rose-500/50 transition-all border border-transparent">
               <SearchIcon className="w-5 h-5 text-gray-400 shrink-0" />
@@ -230,10 +257,10 @@ export default function Search() {
         {!showingResults && (
           <IdleSection
             recents={recents}
-            onRecentClick={commitSearch}
+            onRecentClick={(term) => { trackSearch(term, "recent"); commitSearch(term); }}
             onClearRecents={clearRecents}
-            onSuggestionClick={commitSearch}
-            onCategoryClick={(category) => setFilters((prev) => ({ ...prev, category }))}
+            onSuggestionClick={(term) => { trackSearch(term, "suggestion"); commitSearch(term); }}
+            onCategoryClick={(category) => { trackSearch(category, "category"); setFilters((prev) => ({ ...prev, category })); }}
             onRemoveRecent={removeRecent}
           />
         )}
