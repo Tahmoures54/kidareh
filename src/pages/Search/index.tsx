@@ -52,6 +52,26 @@ export default function Search() {
     searchPlaceholder, scopeLabel,
   } = useSearch();
 
+  const handleExpandSearch = () => {
+    trackEvent("search_scope_expand_click", {
+      category: "discovery",
+      label: filters.scope.type,
+      search_term: query.trim() || filters.category,
+    });
+    expandSearchScope();
+  };
+
+  const handleClearSearchFilters = () => {
+    trackEvent("search_zero_result_reset", {
+      category: "discovery",
+      label: filters.scope.type,
+      search_term: query.trim() || filters.category,
+    });
+    resetFilters();
+    setQuery("");
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
   const trackSearch = (term: string, source: string) => {
     const normalized = term.trim();
     if (!normalized && !filters.category) return;
@@ -312,16 +332,27 @@ export default function Search() {
               title="نتیجه‌ای پیدا نشد"
               description={`کالایی برای «${query || getCategoryDisplayName(filters.category)}» در ${scopeLabel} یافت نشد.`}
             />
-            {filters.scope.type !== "country" && (
-              <motion.button
-                onClick={expandSearchScope}
-                whileTap={{ scale: 0.95 }}
-                className="mt-6 flex items-center gap-2 px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl shadow-lg shadow-rose-500/30 transition-colors active:scale-95"
-              >
-                <Expand className="w-4 h-4" />
-                جستجو در {filters.scope.type === "city" ? "کل استان" : "سراسر کشور"}
-              </motion.button>
-            )}
+            <div className="mt-6 flex flex-col items-center gap-2">
+              {filters.scope.type !== "country" && (
+                <motion.button
+                  onClick={handleExpandSearch}
+                  whileTap={{ scale: 0.95 }}
+                  className="flex min-h-11 items-center gap-2 px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl shadow-lg shadow-rose-500/30 transition-colors active:scale-95"
+                >
+                  <Expand className="w-4 h-4" />
+                  جستجو در {filters.scope.type === "city" ? "کل استان" : "سراسر کشور"}
+                </motion.button>
+              )}
+              {(query.trim() || filters.category || activeFilterCount > 0) && (
+                <button
+                  type="button"
+                  onClick={handleClearSearchFilters}
+                  className="min-h-11 rounded-2xl border border-gray-200 bg-white px-5 py-3 text-xs font-black text-gray-600 shadow-sm hover:border-rose-200 hover:text-rose-600 active:scale-95 transition-all"
+                >
+                  حذف فیلترها و شروع دوباره
+                </button>
+              )}
+            </div>
           </div>
         )}
 
