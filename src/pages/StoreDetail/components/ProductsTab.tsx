@@ -21,6 +21,13 @@ export const ProductsTab = memo(({
   );
 
   const availableCount = products.filter((product) => isProductAvailable(product.status)).length;
+  const orderedProducts = [...products].sort((a, b) => {
+    const availableDiff = Number(isProductAvailable(b.status)) - Number(isProductAvailable(a.status));
+    if (availableDiff !== 0) return availableDiff;
+    const badgeDiff = Number(Boolean(b.badge)) - Number(Boolean(a.badge));
+    if (badgeDiff !== 0) return badgeDiff;
+    return Number(b.id) - Number(a.id);
+  });
 
   return (
     <div className="-mx-5 bg-white">
@@ -34,7 +41,7 @@ export const ProductsTab = memo(({
         </span>
       </div>
       <FeedStack>
-        {products.map((product) => (
+        {orderedProducts.map((product) => (
           <FeedPost
             key={product.id}
             post={productToFeedPost(product, {
