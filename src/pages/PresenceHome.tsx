@@ -50,15 +50,15 @@ export default function PresenceHome() {
               <Store className="h-5 w-5" />
             </div>
             <div>
-              <h2 id="seller-cta-title" className="text-base font-black">فروشگاه داری؟ کالاهایت را جلوی خریدارهای اطراف بگذار</h2>
-              <p className="mt-1 text-sm font-bold leading-6 text-[var(--muted)]">ثبت فروشندگی رایگان است؛ کالا، قیمت و عکس را اضافه کن تا در جستجوی کی‌داره دیده شوی.</p>
+              <h2 id="seller-cta-title" className="text-base font-black">فروشگاهت را ثبت کن؛ مشتری‌های اطرافت پیدایت کنند</h2>
+              <p className="mt-1 text-sm font-bold leading-6 text-[var(--muted)]">فروشگاهت را رایگان ثبت کن و کالاهایت را اضافه کن تا خریدارهای اطراف در کی‌داره پیدایت کنند.</p>
             </div>
           </div>
           <Link
             to="/become-seller"
             className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-[var(--accent)] px-5 py-3 text-sm font-black text-white transition hover:opacity-90"
           >
-            ثبت فروشگاه و کالا
+            ثبت فروشگاه
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </div>
