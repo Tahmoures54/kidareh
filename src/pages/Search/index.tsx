@@ -362,7 +362,7 @@ export default function Search() {
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-bold text-gray-500 dark:text-gray-400">
                 <span className="text-gray-900 dark:text-white font-black">
-                  {sortedProducts.length.toLocaleString("fa-IR")}
+                  {sortedProducts.length.toLocaleString("fa-IR")}{hasNextPage ? "+" : ""}
                 </span>
                 {" "}نتیجه
               </p>
