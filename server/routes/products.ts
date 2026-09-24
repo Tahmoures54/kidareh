@@ -234,7 +234,8 @@ router.put("/:id", requireAuth, upload.single("image"), async (req: AuthRequest 
     db.prepare(`UPDATE products SET name = ?, price = ?, status = ?, description = ?, category = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
       .run(nextName, nextPrice, nextStatus, nextDescription, nextCategory, imageUrl, id);
     await invalidateProductCache(id);
-    return res.json({ success: true, id: Number(id) });
+    await invalidateStoreCache(storeInfo.id);
+    return res.json({ success: true, id: Number(id), product: { id: Number(id) } });
   } catch (error) {
     logger.error("Update product error:", error);
     return res.status(500).json({ error: "خطا در بروزرسانی کالا" });
@@ -252,6 +253,7 @@ router.put("/:id/status", requireAuth, async (req: AuthRequest, res: Response) =
     if (!productInfo || productInfo.store_id !== storeInfo.id) return res.status(403).json({ error: "شما دسترسی به این کالا ندارید" });
     db.prepare("UPDATE products SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(status, id);
     await invalidateProductCache(id);
+    await invalidateStoreCache(storeInfo.id);
     return res.json({ success: true, status });
   } catch (error) {
     logger.error("Update product status error:", error);
@@ -268,6 +270,7 @@ router.delete("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
     if (!productInfo || productInfo.store_id !== storeInfo.id) return res.status(403).json({ error: "شما دسترسی به این کالا ندارید" });
     db.prepare("DELETE FROM products WHERE id = ?").run(id);
     await invalidateProductCache(id);
+    await invalidateStoreCache(storeInfo.id);
     return res.json({ success: true, message: "محصول با موفقیت حذف شد" });
   } catch (error) {
     logger.error("Delete product error:", error);
@@ -420,7 +423,7 @@ router.post("/", requireAuth, upload.single("image"), async (req: AuthRequest & 
       .run(storeInfo.id, name, parsedPrice, status, badge || null, imageUrl, description || null, category || null, city, province);
     logger.info(`New product created: ${result.lastInsertRowid} by user ${req.user!.id}`);
     await invalidateStoreCache(storeInfo.id);
-    return res.status(201).json({ success: true, productId: result.lastInsertRowid, message: "محصول روی ویترین قرار گرفت" });
+    return res.status(201).json({ success: true, productId: result.lastInsertRowid, id: Number(result.lastInsertRowid), product: { id: Number(result.lastInsertRowid) }, message: "محصول روی ویترین قرار گرفت" });
   } catch (error: any) {
     if (error.name === "ZodError") return res.status(400).json({ error: error.errors[0].message, field: error.errors[0].path[0] });
     logger.error("Create Product Error:", error);
