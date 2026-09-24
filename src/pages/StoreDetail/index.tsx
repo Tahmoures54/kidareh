@@ -30,6 +30,8 @@ export default function StoreDetail() {
   const [followLoading, setFollowLoading] = useState(false);
   const [userLoc, setUserLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [distInfo, setDistInfo] = useState<DistInfo | null>(null);
+  const hasLocation = Number.isFinite(Number(store?.latitude)) && Number.isFinite(Number(store?.longitude));
+  const hasPhone = Boolean(store?.phone);
 
   useEffect(() => {
     let cancelled = false;
