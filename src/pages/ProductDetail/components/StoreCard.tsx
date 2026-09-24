@@ -16,7 +16,7 @@ interface Props {
   onStoreClick: () => void;
 }
 
-export const StoreCard = memo(({ storeId, storeName, storeCity, followers, following, followLoading, hasBlueTick, distance, onFollow }: Props) => {
+export const StoreCard = memo(({ storeId, storeName, storeCity, followers, following, followLoading, hasBlueTick, distance, onFollow, onStoreClick }: Props) => {
   const storeHref = storeId ? `/store/${storeId}` : "#";
 
   return (
