@@ -259,7 +259,7 @@ router.post("/send-otp", async (req, res) => {
         retryAfter: Math.ceil((RATE_TTL * 1000 - (Date.now() - last)) / 1000),
       });
     }
-    const otp = Math.floor(10000 + Math.random() * 90000).toString();
+    const otp = crypto.randomInt(10000, 100000).toString();
     await setOtp(phone, otp);
     await setSendRate(phone);
     logger.info(`OTP generated for ${phone}`);
