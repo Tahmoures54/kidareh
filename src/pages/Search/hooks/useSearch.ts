@@ -296,6 +296,11 @@ export function useSearch() {
   }, []);
 
   // -------------------- Data --------------------
+  const locationRequired =
+    filters.sortBy === "nearest" || filters.selectedRadius !== "all";
+  const hasUserLocation =
+    Number.isFinite(userLoc.lat) && Number.isFinite(userLoc.lng);
+
   const { 
     data, 
     isLoading, 
@@ -305,6 +310,7 @@ export function useSearch() {
     error, 
     refetch 
   } = useInfiniteProducts({
+    enabled: !locationRequired || hasUserLocation,
     q: debouncedQuery || undefined,
     category: filters.category || undefined,
     limit: 20,
