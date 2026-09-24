@@ -1,1 +1,10 @@
-LOADING
+[
+  {
+    "province-en": "tehran",
+    "province-fa": "تهران",
+    "cities": [
+      {"city-en": "tehran", "city-fa": "تهران"},
+      {"city-en": "rey", "city-fa": "ری"}
+    ]
+  }
+]
