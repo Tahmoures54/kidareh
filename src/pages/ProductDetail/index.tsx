@@ -15,6 +15,7 @@ import { BottomActionBar } from "../../components/ui/BottomActionBar";
 import { setProductSaved } from "../../lib/feedStorage";
 import { updateProductSeo } from "../../utils/productSeo";
 import { shareFeedItem, shareTextForPost } from "../../lib/feedShare";
+import { useAnalytics } from "../../hooks/useAnalytics";
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
 
@@ -54,6 +55,7 @@ export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { trackEvent } = useAnalytics();
 
   const [product, setProduct] = useState<ProductData | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -91,6 +93,7 @@ export default function ProductDetail() {
       const data = await apiRequest<ProductData>(`/api/products/${id}`);
       setProduct(data);
       updateProductSeo(data, window.location.href);
+      trackEvent("product_view", { category: "discovery", label: String(data.id), value: Number(data.price) || 0 });
     } catch (err: unknown) {
       setError(
         err instanceof ApiError && err.status === 404
@@ -100,7 +103,7 @@ export default function ProductDetail() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, trackEvent]);
 
   const fetchReviews = useCallback(async () => {
     if (!id) return;
@@ -226,11 +229,13 @@ export default function ProductDetail() {
   const handleShare = async () => {
     if (!product) return;
     const url = window.location.href;
+    trackEvent("product_share_click", { category: "acquisition", label: String(product.id) });
     const result = await shareFeedItem({
       title: product.name,
       url,
       text: shareTextForPost(product.name, product.store_name),
     });
+    if (result === "shared") trackEvent("product_shared", { category: "acquisition", label: String(product.id) });
     if (result === "copied") showToast("لینک کالا کپی شد");
     if (result === "failed") showToast("اشتراک‌گذاری انجام نشد", "error");
   };
