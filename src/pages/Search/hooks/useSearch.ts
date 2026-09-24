@@ -174,11 +174,6 @@ export function useSearch() {
       if (saved) setRecents(JSON.parse(saved).slice(0, 10));
     } catch {}
 
-    navigator.geolocation?.getCurrentPosition(
-      (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-      () => {}
-    );
-
     return onAppLocationChange(() => {
       const loc = readAppLocation();
       setUserLoc({ lat: loc.lat, lng: loc.lng });
@@ -188,6 +183,32 @@ export function useSearch() {
       }));
     });
   }, []);
+
+  // Location is intentionally opt-in. Opening search should never trigger a
+  // browser permission prompt; ask only when the user chooses a distance-based
+  // action that actually needs coordinates.
+  const requestUserLocation = useCallback(() => {
+    if (!navigator.geolocation) {
+      showToast("موقعیت مکانی در این دستگاه در دسترس نیست");
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLoc({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => showToast("برای جستجوی نزدیک‌ترین گزینه‌ها، اجازه موقعیت مکانی را فعال کنید"),
+      { enableHighAccuracy: false, maximumAge: 300000, timeout: 8000 }
+    );
+  }, [showToast]);
+
+  useEffect(() => {
+    const needsLocation =
+      filters.sortBy === "nearest" || filters.selectedRadius !== "all";
+    if (!needsLocation) return;
+
+    const hasLocation =
+      Number.isFinite(userLoc.lat) && Number.isFinite(userLoc.lng);
+    if (!hasLocation) requestUserLocation();
+  }, [filters.sortBy, filters.selectedRadius, userLoc.lat, userLoc.lng, requestUserLocation]);
 
   // -------------------- Handlers --------------------
   const saveRecent = useCallback((q: string) => {
@@ -420,7 +441,7 @@ export function useSearch() {
     clearRecents, removeRecent,
     expandSearchScope, cycleScope,
     resetFilters,
-    handleShare, handleNavigate,
+    handleShare, handleNavigate, requestUserLocation,
     searchPlaceholder, scopeLabel,
     showToast,
   };
