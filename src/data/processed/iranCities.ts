@@ -1,4 +1,5 @@
-import rawIranCities from "../raw/iranCities.json";
+import { RAW_PART_0 } from "../raw/rawIranCitiesCompact0";
+import { RAW_PART_1 } from "../raw/rawIranCitiesCompact1";
 import { IRAN_CITY_COORDS, POPULAR_CITY_SLUGS } from "./iranCityCoords";
 
 export interface IranCity {
@@ -14,6 +15,19 @@ export interface IranCity {
 }
 
 type AnyRecord = Record<string, any>;
+
+const RAW_IRAN_CITIES = [...RAW_PART_0, ...RAW_PART_1];
+
+function expandCompactRaw(): AnyRecord[] {
+  return RAW_IRAN_CITIES.map((row) => ({
+    "province-fa": row.p,
+    "province-en": row.p.replace(/\s+/g, "-"),
+    cities: row.c.map((name) => ({
+      "city-fa": name,
+      "city-en": name.replace(/\s+/g, "-"),
+    })),
+  }));
+}
 
 export function normalizeCityText(value: unknown): string {
   return String(value ?? "")
@@ -96,7 +110,7 @@ function normalizeIranCities(raw: unknown): IranCity[] {
   );
 }
 
-export const iranCities: IranCity[] = normalizeIranCities(rawIranCities);
+export const iranCities: IranCity[] = normalizeIranCities(expandCompactRaw());
 
 const bySlug = new Map<string, IranCity>();
 const byNameProvince = new Map<string, IranCity>();
