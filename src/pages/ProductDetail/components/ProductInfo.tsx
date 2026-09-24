@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { Clock, Star, ShieldAlert } from "lucide-react";
+import { Clock, Star, ShieldAlert, MapPin } from "lucide-react";
 import { ProductData } from "../types";
 import { getBadgeStyle, formatPrice } from "../../../utils";
 
@@ -54,6 +54,11 @@ export const ProductInfo = memo(({ product, isAvailable, avgRating }: Props) => 
             <Star className="w-4 h-4 fill-current" /> {avgRating}
           </span>
         </div>
+      </div>
+
+      <div className="mb-4 flex items-center justify-between rounded-2xl border border-[var(--brand-primary)]/20 bg-[var(--brand-primary)]/5 px-4 py-3">
+        <div className="flex items-center gap-2 text-sm font-black text-[var(--text-primary)]"><MapPin className="h-4 w-4 text-[var(--brand-primary)]" /> خرید حضوری از فروشگاه</div>
+        <span className="text-[11px] font-bold text-[var(--text-muted)]">قبل از خرید ببین</span>
       </div>
 
       <div className="bg-gradient-to-br from-[var(--brand-primary)]/10 to-[var(--brand-secondary)]/5 border border-[var(--brand-primary)]/20 rounded-3xl p-6 mb-8 flex justify-between items-center relative overflow-hidden group">
