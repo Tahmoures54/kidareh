@@ -103,16 +103,11 @@ export default function Search() {
   }, [filters.scope.type]);
 
   return (
-    <div 
-      className="min-h-[100dvh] bg-white font-sans" 
-      dir="rtl"
-    >
-      {/* Toast */}
+    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl">
       <AnimatePresence>
         {toastMsg && <Toast msg={toastMsg} />}
       </AnimatePresence>
 
-      {/* Filter Sheet */}
       <FilterSheet
         open={showFilter}
         filters={filters}
@@ -121,29 +116,28 @@ export default function Search() {
         onReset={resetFilters}
       />
 
-      {/* ─────────────── Header ─────────────── */}
-      <header className="sticky top-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/80 dark:border-gray-800/50 px-4 pt-[max(16px,env(safe-area-inset-top))] pb-3">
-        
-        {/* Row 1: Back + Search + Scope + Filter */}
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 px-4 pb-3 pt-[max(16px,env(safe-area-inset-top))] backdrop-blur-xl">
         <div className="flex items-center gap-2">
-          
-          {/* Back Button */}
           <motion.button
             onClick={() => navigate(-1)}
             whileTap={{ scale: 0.9 }}
             aria-label="بازگشت"
-            className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex justify-center items-center shrink-0 active:scale-90 transition-transform"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-slate-100 transition active:scale-90"
           >
-            <ArrowRight className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+            <ArrowRight className="h-5 w-5 text-slate-700" />
           </motion.button>
 
-          {/* Search Input */}
           <form
-            className="flex-1 relative"
-            onSubmit={(e) => { e.preventDefault(); trackSearch(query, "submit"); commitSearch(query); }}
+            className="relative flex-1"
+            onSubmit={(e) => {
+              e.preventDefault();
+              trackSearch(query, "submit");
+              commitSearch(query);
+            }}
           >
-            <div className="relative bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center px-3 py-2.5 focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:ring-2 focus-within:ring-rose-500/30 focus-within:border focus-within:border-rose-500/50 transition-all border border-transparent">
-              <SearchIcon className="w-5 h-5 text-gray-400 shrink-0" />
+            <div className="relative flex items-center rounded-xl border border-transparent bg-slate-100 px-3 py-2.5 transition-all focus-within:border-cyan-400/50 focus-within:bg-white focus-within:ring-2 focus-within:ring-cyan-500/20">
+              <SearchIcon className="h-5 w-5 shrink-0 text-slate-400" />
               <input
                 ref={inputRef}
                 type="text"
@@ -151,21 +145,21 @@ export default function Search() {
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder={searchPlaceholder}
                 autoFocus
-                className="flex-1 bg-transparent outline-none px-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400"
+                className="flex-1 bg-transparent px-2.5 text-sm text-slate-900 outline-none placeholder:text-slate-400"
               />
               {query ? (
                 <button
                   type="button"
                   onClick={clearSearch}
                   aria-label="پاک کردن"
-                  className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex justify-center items-center shrink-0 active:scale-90 transition-transform"
+                  className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 transition active:scale-90"
                 >
-                  <X className="w-3.5 h-3.5 text-gray-500" />
+                  <X className="h-3.5 w-3.5 text-slate-500" />
                 </button>
               ) : (
                 <button
                   type="submit"
-                  className="h-7 px-3 rounded-lg bg-rose-500 hover:bg-rose-600 text-white text-[11px] font-black shrink-0 shadow-md shadow-rose-500/30 active:scale-95 transition-all"
+                  className="h-7 shrink-0 rounded-lg bg-gradient-to-l from-cyan-600 to-teal-500 px-3 text-[11px] font-black text-white shadow-md shadow-cyan-500/25 transition active:scale-95"
                 >
                   جستجو
                 </button>
@@ -173,64 +167,58 @@ export default function Search() {
             </div>
           </form>
 
-          {/* Scope Cycle Button */}
           <motion.button
             onClick={cycleScope}
             whileTap={{ scale: 0.9 }}
             aria-label={`محدوده: ${scopeLabel}`}
             title={scopeLabel}
-            className="h-11 px-3 rounded-xl bg-rose-50 dark:bg-rose-500/10 flex items-center gap-1.5 shrink-0 text-rose-600 dark:text-rose-400 font-bold text-xs border border-rose-100 dark:border-rose-500/20 active:scale-95 transition-transform"
+            className="flex h-11 shrink-0 items-center gap-1.5 rounded-xl border border-cyan-100 bg-cyan-50 px-3 text-xs font-bold text-cyan-700 transition active:scale-95"
           >
-            <ScopeIcon className="w-4 h-4" />
-            <span className="hidden sm:inline max-w-[80px] truncate">{scopeLabel}</span>
+            <ScopeIcon className="h-4 w-4" />
+            <span className="hidden max-w-[80px] truncate sm:inline">{scopeLabel}</span>
           </motion.button>
 
-          {/* Filter Button */}
           <motion.button
             whileTap={{ scale: 0.9 }}
             onClick={() => setShowFilter(true)}
             aria-label="فیلترها"
-            className={`relative w-11 h-11 rounded-xl flex justify-center items-center shrink-0 transition-all ${
+            className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all ${
               activeFilterCount > 0
-                ? "bg-rose-500 text-white shadow-lg shadow-rose-500/30"
-                : "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                ? "bg-gradient-to-l from-cyan-600 to-teal-500 text-white shadow-lg shadow-cyan-500/30"
+                : "bg-slate-100 text-slate-700"
             }`}
           >
-            <SlidersHorizontal className="w-5 h-5" />
+            <SlidersHorizontal className="h-5 w-5" />
             {activeFilterCount > 0 && (
-              <span className="absolute -top-1.5 -left-1.5 min-w-[20px] h-5 rounded-full bg-white text-rose-500 text-[10px] font-black flex justify-center items-center border-2 border-rose-500 shadow">
+              <span className="absolute -left-1.5 -top-1.5 flex h-5 min-w-[20px] items-center justify-center rounded-full border-2 border-cyan-500 bg-white text-[10px] font-black text-cyan-600 shadow">
                 {activeFilterCount}
               </span>
             )}
           </motion.button>
         </div>
 
-        {/* Row 2: Sort Chips + View Toggle (فقط وقتی query دارد) */}
         <AnimatePresence>
           {showingResults && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="flex justify-between gap-3 mt-3 overflow-hidden"
+              className="mt-3 flex justify-between gap-3 overflow-hidden"
             >
-              {/* Sort + Scope Chips */}
-              <div className="flex gap-2 overflow-x-auto no-scrollbar items-center shrink">
-                {/* Scope Badge */}
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-500/10 rounded-full text-rose-600 dark:text-rose-400 text-xs font-bold whitespace-nowrap shrink-0 border border-rose-100 dark:border-rose-500/20">
-                  <MapPin className="w-3.5 h-3.5" />
+              <div className="no-scrollbar flex shrink items-center gap-2 overflow-x-auto">
+                <div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border border-cyan-100 bg-cyan-50 px-3 py-1.5 text-xs font-bold text-cyan-700">
+                  <MapPin className="h-3.5 w-3.5" />
                   {scopeLabel}
                 </div>
 
-                {/* Sort Options */}
                 {SORT_OPTIONS.map((sort) => (
                   <button
                     key={sort.key}
                     onClick={() => setFilters((p) => ({ ...p, sortBy: sort.key }))}
-                    className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all active:scale-95 shrink-0 ${
+                    className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
                       filters.sortBy === sort.key
-                        ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                        ? "bg-slate-900 text-white"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
                     }`}
                   >
                     {sort.label}
@@ -238,30 +226,24 @@ export default function Search() {
                 ))}
               </div>
 
-              {/* View Toggle: List / Map */}
-              <div className="bg-gray-100 dark:bg-gray-800 p-1 rounded-xl flex shrink-0 gap-1">
+              <div className="flex shrink-0 gap-1 rounded-xl bg-slate-100 p-1">
                 {(["list", "map"] as const).map((mode) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
                     aria-label={mode === "list" ? "نمای لیست" : "نمای نقشه"}
-                    className={`relative px-3 py-1.5 rounded-lg flex justify-center items-center transition-colors ${
-                      viewMode === mode
-                        ? "text-rose-600 dark:text-rose-400"
-                        : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                    className={`relative flex items-center justify-center rounded-lg px-3 py-1.5 transition-colors ${
+                      viewMode === mode ? "text-cyan-600" : "text-slate-400 hover:text-slate-600"
                     }`}
                   >
                     {viewMode === mode && (
                       <motion.div
                         layoutId="viewToggle"
                         transition={SPRING_TRANSITION}
-                        className="absolute inset-0 bg-white dark:bg-gray-700 rounded-lg shadow-sm -z-10"
+                        className="absolute inset-0 -z-10 rounded-lg bg-white shadow-sm"
                       />
                     )}
-                    {mode === "list" 
-                      ? <List className="w-4 h-4" /> 
-                      : <MapIcon className="w-4 h-4" />
-                    }
+                    {mode === "list" ? <List className="h-4 w-4" /> : <MapIcon className="h-4 w-4" />}
                   </button>
                 ))}
               </div>
@@ -270,64 +252,65 @@ export default function Search() {
         </AnimatePresence>
       </header>
 
-      {/* ─────────────── Main Content ─────────────── */}
       <main className="px-4 py-4 pb-28">
-
-        {/* Idle State */}
         {!showingResults && (
           <IdleSection
             recents={recents}
-            onRecentClick={(term) => { trackSearch(term, "recent"); commitSearch(term); }}
+            onRecentClick={(term) => {
+              trackSearch(term, "recent");
+              commitSearch(term);
+            }}
             onClearRecents={clearRecents}
-            onSuggestionClick={(term) => { trackSearch(term, "suggestion"); commitSearch(term); }}
-            onCategoryClick={(category) => { trackSearch(category, "category"); setFilters((prev) => ({ ...prev, category })); }}
+            onSuggestionClick={(term) => {
+              trackSearch(term, "suggestion");
+              commitSearch(term);
+            }}
+            onCategoryClick={(category) => {
+              trackSearch(category, "category");
+              setFilters((prev) => ({ ...prev, category }));
+            }}
             onRemoveRecent={removeRecent}
           />
         )}
 
         {filters.category && showingResults && (
           <div className="mb-3 flex items-center gap-2">
-            <span className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-black text-rose-600">
+            <span className="rounded-full bg-cyan-50 px-3 py-1.5 text-xs font-black text-cyan-700">
               {getCategoryDisplayName(filters.category)}
             </span>
             <button
               type="button"
               onClick={() => setFilters((prev) => ({ ...prev, category: "" }))}
-              className="text-xs font-bold text-gray-500"
+              className="text-xs font-bold text-slate-500"
             >
               حذف دسته
             </button>
           </div>
         )}
 
-        {/* Error */}
         {showingResults && error && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="mb-4 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-2xl p-4 flex justify-between items-center gap-3"
+            className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 p-4"
           >
-            <div className="flex items-center gap-2 text-rose-700 dark:text-rose-400 text-sm font-bold">
-              <AlertCircle className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-sm font-bold text-rose-700">
+              <AlertCircle className="h-4 w-4" />
               خطا در دریافت اطلاعات
             </div>
             <button
               onClick={() => refetch()}
-              className="text-xs font-black text-rose-700 dark:text-rose-400 bg-rose-100 dark:bg-rose-500/20 px-3 py-1.5 rounded-full active:scale-95 transition-transform"
+              className="rounded-full bg-rose-100 px-3 py-1.5 text-xs font-black text-rose-700 transition active:scale-95"
             >
               تلاش مجدد
             </button>
           </motion.div>
         )}
 
-        {/* Loading Skeleton */}
-        {showingResults && isLoading && sortedProducts.length === 0 && (
-          <SearchSkeleton />
-        )}
+        {showingResults && isLoading && sortedProducts.length === 0 && <SearchSkeleton />}
 
-        {/* Empty Result */}
         {showingResults && !isLoading && !error && sortedProducts.length === 0 && (
-          <div className="pt-10 flex flex-col items-center text-center">
+          <div className="flex flex-col items-center pt-10 text-center">
             <EmptyState
               title="نتیجه‌ای پیدا نشد"
               description={`کالایی برای «${query || getCategoryDisplayName(filters.category)}» در ${scopeLabel} یافت نشد.`}
@@ -337,9 +320,9 @@ export default function Search() {
                 <motion.button
                   onClick={handleExpandSearch}
                   whileTap={{ scale: 0.95 }}
-                  className="flex min-h-11 items-center gap-2 px-6 py-3 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-2xl shadow-lg shadow-rose-500/30 transition-colors active:scale-95"
+                  className="flex min-h-11 items-center gap-2 rounded-2xl bg-gradient-to-l from-cyan-600 to-teal-500 px-6 py-3 font-bold text-white shadow-lg shadow-cyan-500/25 transition active:scale-95"
                 >
-                  <Expand className="w-4 h-4" />
+                  <Expand className="h-4 w-4" />
                   جستجو در {filters.scope.type === "city" ? "کل استان" : "سراسر کشور"}
                 </motion.button>
               )}
@@ -347,7 +330,7 @@ export default function Search() {
                 <button
                   type="button"
                   onClick={handleClearSearchFilters}
-                  className="min-h-11 rounded-2xl border border-gray-200 bg-white px-5 py-3 text-xs font-black text-gray-600 shadow-sm hover:border-rose-200 hover:text-rose-600 active:scale-95 transition-all"
+                  className="min-h-11 rounded-2xl border border-slate-200 bg-white px-5 py-3 text-xs font-black text-slate-600 shadow-sm transition hover:border-cyan-200 hover:text-cyan-700 active:scale-95"
                 >
                   حذف فیلترها و شروع دوباره
                 </button>
@@ -356,56 +339,51 @@ export default function Search() {
           </div>
         )}
 
-        {/* List View */}
         {showingResults && !error && sortedProducts.length > 0 && viewMode === "list" && (
           <>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold text-gray-500 dark:text-gray-400">
-                <span className="text-gray-900 dark:text-white font-black">
-                  {sortedProducts.length.toLocaleString("fa-IR")}{hasNextPage ? "+" : ""}
-                </span>
-                {" "}نتیجه
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm font-bold text-slate-500">
+                <span className="font-black text-slate-900">
+                  {sortedProducts.length.toLocaleString("fa-IR")}
+                  {hasNextPage ? "+" : ""}
+                </span>{" "}
+                نتیجه
               </p>
             </div>
 
             <FeedColumn className="-mx-4">
-            <Virtuoso
-              data={sortedProducts}
-              useWindowScroll
-              overscan={800}
-              endReached={() => {
-                if (hasNextPage && !isFetchingNextPage) fetchNextPage();
-              }}
-              itemContent={(_index, product) => (
-                <FeedPost post={productToFeedPost(product)} />
-              )}
-              components={{
-                Footer: () =>
-                  isFetchingNextPage ? (
-                    <div className="py-8 flex justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-rose-500" />
-                    </div>
-                  ) : !hasNextPage && sortedProducts.length > 0 ? (
-                    <div className="py-10 flex items-center justify-center gap-3">
-                      <div className="h-px flex-1 bg-gradient-to-r from-transparent to-gray-200 dark:to-gray-700" />
-                      <p className="text-xs text-gray-400 font-medium">
-                        همه نتایج نمایش داده شد
-                      </p>
-                      <div className="h-px flex-1 bg-gradient-to-l from-transparent to-gray-200 dark:to-gray-700" />
-                    </div>
-                  ) : null,
-              }}
-            />
+              <Virtuoso
+                data={sortedProducts}
+                useWindowScroll
+                overscan={800}
+                endReached={() => {
+                  if (hasNextPage && !isFetchingNextPage) fetchNextPage();
+                }}
+                itemContent={(_index, product) => <FeedPost post={productToFeedPost(product)} />}
+                components={{
+                  Footer: () =>
+                    isFetchingNextPage ? (
+                      <div className="flex justify-center py-8">
+                        <Loader2 className="h-6 w-6 animate-spin text-cyan-500" />
+                      </div>
+                    ) : !hasNextPage && sortedProducts.length > 0 ? (
+                      <div className="flex items-center justify-center gap-3 py-10">
+                        <div className="h-px flex-1 bg-gradient-to-r from-transparent to-slate-200" />
+                        <p className="text-xs font-medium text-slate-400">همه نتایج نمایش داده شد</p>
+                        <div className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-200" />
+                      </div>
+                    ) : null,
+                }}
+              />
             </FeedColumn>
           </>
         )}
 
-        {/* Map View */}
         {showingResults && !error && sortedProducts.length > 0 && viewMode === "map" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="h-[75vh] overflow-hidden rounded-3xl border border-gray-200 dark:border-gray-700 shadow-lg relative z-0"
+            className="relative z-0 h-[75vh] overflow-hidden rounded-3xl border border-slate-200 shadow-lg"
           >
             <Map center={userLoc} results={sortedProducts} />
           </motion.div>
