@@ -1,6 +1,7 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 import type { CookieOptions, Response } from "express";
+import crypto from "node:crypto";
 import db from "../db.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import { z } from "zod";
