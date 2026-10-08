@@ -40,7 +40,7 @@ export const SearchBar = memo(
       <div className="px-4 pt-3 pb-2">
         <div className="relative">
           <Search
-            className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none"
+            className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-cyan-700 pointer-events-none"
             aria-hidden="true"
           />
           <input
@@ -56,7 +56,7 @@ export const SearchBar = memo(
               bg-[var(--bg-secondary)]
               border border-[var(--border-light)]
               text-sm text-[var(--text-primary)]
-              placeholder:text-gray-400
+              placeholder:text-slate-400
               focus:outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20
               transition-all
               [&::-webkit-search-cancel-button]:hidden
