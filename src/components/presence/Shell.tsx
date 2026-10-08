@@ -78,42 +78,32 @@ export default function PresenceShell() {
   }, [logout, navigate]);
 
   const rail = useMemo(() => (
-    <nav className="flex h-full flex-col items-center gap-2 py-4" aria-label="ناوبری اصلی">
-      <Link to="/" className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--accent)] text-sm font-black text-white shadow-md shadow-[var(--accent)]/20 lg:h-12 lg:w-full lg:justify-start lg:gap-3 lg:px-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/15 text-sm font-black">کی</span>
-        <span className="hidden lg:inline">کی‌داره</span>
-      </Link>
-      {TABS.map((tab) => (
-        <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn("relative flex h-12 w-12 flex-col items-center justify-center rounded-xl text-[var(--muted)] transition lg:w-full", isActive && "bg-white/10 text-[var(--accent-2)]")} aria-label={tab.label}>
-          <tab.icon className="h-5 w-5" />
-          <span className="mt-0.5 text-[10px] font-black">{tab.label}</span>
+    <nav className="flex items-center gap-1" aria-label="ناوبری اصلی">
+      {TABS.slice(0, 4).map((tab) => (
+        <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn(
+          "flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black transition",
+          isActive ? "bg-[var(--accent)]/10 text-[var(--accent)]" : "text-[var(--muted)] hover:bg-[var(--paper)] hover:text-[var(--ink)]"
+        )}>
+          <tab.icon className="h-4 w-4" /><span>{tab.label}</span>
         </NavLink>
       ))}
-      <div className="my-2 h-px w-8 bg-white/10" />
-      {EXTRA_RAIL.map((tab) => (
-        <NavLink key={tab.to} to={tab.to} className={({ isActive }) => cn("relative flex h-12 w-12 flex-col items-center justify-center rounded-xl text-slate-400 transition lg:w-full", isActive && "bg-white/10 text-[var(--accent-2)]")} aria-label={tab.label}>
-          <tab.icon className="h-5 w-5" />
-          <span className="mt-0.5 text-[10px] font-black">{tab.label}</span>
-          {tab.to === "/trip" && tripCount > 0 && <span className="absolute -top-1 left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--accent-2)] px-1 text-[9px] font-black text-white">{tripCount}</span>}
-          {tab.to === "/holds" && holdCount > 0 && <span className="absolute -top-1 left-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--gold)] px-1 text-[9px] font-black text-[var(--ink)]">{holdCount}</span>}
-        </NavLink>
-      ))}
-      <div className="mt-auto flex flex-col gap-1">
-        <Link to="/messages" className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 lg:w-full" aria-label="پیام‌ها"><MessageCircle className="h-5 w-5" /></Link>
-        <Link to="/ai" className="flex h-11 w-11 items-center justify-center rounded-xl text-slate-400 lg:w-full" aria-label="دستیار"><Sparkles className="h-5 w-5" /></Link>
-      </div>
+      <NavLink to="/stores" className={({ isActive }) => cn(
+        "flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black transition",
+        isActive ? "bg-[var(--accent)]/10 text-[var(--accent)]" : "text-[var(--muted)] hover:bg-[var(--paper)] hover:text-[var(--ink)]"
+      )}>
+        <Store className="h-4 w-4" /><span>فروشگاه‌ها</span>
+      </NavLink>
     </nav>
-  ), [holdCount, tripCount]);
+  ), []);
 
   return (
     <div className="presence-root" dir="rtl">
       <a href="#presence-main" className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:right-3 focus:z-[80] focus:rounded-xl focus:bg-[var(--accent)] focus:px-3 focus:py-2 focus:text-xs focus:font-black focus:text-white">پرش به محتوا</a>
       <InstallPrompt />
-      <div className="relative z-0 mx-auto flex min-h-[100dvh] max-w-[1440px] isolate">
-        <aside className="sticky top-0 z-50 hidden h-[100dvh] w-[88px] shrink-0 border-l border-[var(--line)] bg-white/70 backdrop-blur-xl lg:block">{rail}</aside>
+      <div className="relative z-0 mx-auto flex min-h-[100dvh] max-w-[1440px] flex-col isolate">
         <div className="flex min-w-0 flex-1 flex-col">
           <header className={cn("sticky top-0 border-b border-[var(--line)] bg-white/90 backdrop-blur-xl", pickerOpen ? "z-10" : "z-[70]")}>
-            <div className="flex items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+            <div className="mx-auto flex w-full max-w-[1440px] items-center gap-2 px-3 py-2.5 sm:gap-3 sm:px-5 sm:py-3">
               <Link to="/" className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent)] text-xs font-black text-white shadow-sm lg:hidden">کی</Link>
               <div className="min-w-0 flex-1">
                 <p className="hidden text-[11px] font-black text-[var(--accent)] sm:block">کی‌داره · خرید حضوری</p>
@@ -130,7 +120,7 @@ export default function PresenceShell() {
               </div>
               <button type="button" onClick={() => setPalette(true)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--line)] bg-white text-[var(--muted)] md:hidden" aria-label="جستجو"><Search className="h-5 w-5" /></button>
               <button type="button" onClick={() => setPalette(true)} className="hidden h-11 min-w-[220px] items-center gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface)] px-3 text-sm font-bold text-[var(--muted)] md:flex"><Search className="h-4 w-4" />جستجو در {cityLocation.city}</button>
-              <Link to="/stores" className="hidden h-11 items-center gap-1 rounded-xl px-3 text-sm font-black text-[var(--ink-soft)] sm:inline-flex"><Store className="h-4 w-4" />فروشگاه‌ها</Link>
+              <div className="hidden items-center lg:flex">{rail}</div>
               <button type="button" onClick={() => (user ? setMenu(true) : navigate("/login"))} className="flex h-11 w-11 items-center justify-center rounded-xl bg-white text-[var(--ink)] shadow-sm" aria-label={user ? "حساب" : "ورود"}><User className="h-5 w-5" /></button>
             </div>
           </header>
@@ -138,10 +128,10 @@ export default function PresenceShell() {
         </div>
       </div>
 
-      <nav className={cn("presence-tabs fixed inset-x-0 bottom-0 border-t border-[var(--line)] bg-white lg:hidden", pickerOpen ? "z-10" : "z-[80]")} aria-label="تب‌ها">
-        <div className="mx-auto flex max-w-lg items-stretch px-1 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1">
+      <nav className={cn("presence-tabs fixed inset-x-0 bottom-0 border-t border-[var(--line)] bg-white/95 backdrop-blur-xl shadow-[0_-6px_24px_rgba(10,61,58,0.08)]", pickerOpen ? "z-10" : "z-[80]")} aria-label="ناوبری پایین">
+        <div className="mx-auto flex w-full max-w-2xl items-stretch px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1 lg:pb-2 lg:pt-2">
           {TABS.map((tab) => (
-            <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[12px] font-black", isActive ? "text-[var(--accent)]" : "text-[var(--muted)]")}>
+            <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 text-[11px] font-black transition lg:min-h-12 lg:flex-row lg:gap-1.5 lg:text-xs", isActive ? "bg-[var(--accent)]/10 text-[var(--accent)]" : "text-[var(--muted)] hover:bg-[var(--paper)]")}>
               <tab.icon className="h-6 w-6" />{tab.label}
               {tab.to === "/saved" && <span className="sr-only">ذخیره‌شده‌ها</span>}
             </NavLink>
