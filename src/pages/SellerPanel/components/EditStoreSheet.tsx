@@ -54,7 +54,44 @@ export const EditStoreSheet = ({
   const [mapMessage, setMapMessage] = useState<string | null>(null);
   const mapCenter: [number, number] = lat != null && lng != null ? [lat, lng] : [35.6892, 51.3890];
   const markerIcon = L.divIcon({ className: "kidareh-store-picker", html: `<div style="width:30px;height:30px;border-radius:50% 50% 50% 0;background:#08a6a6;border:3px solid white;box-shadow:0 5px 15px rgba(0,0,0,.25);transform:rotate(-45deg)"><div style="width:8px;height:8px;border-radius:50%;background:white;position:absolute;left:8px;top:8px"></div></div>`, iconSize: [30, 30], iconAnchor: [15, 30] });
-  function MapTools() {\n    const map = useMap();\n    const locate = () => {\n      if (!navigator.geolocation) { setMapMessage("مرورگر موقعیت مکانی را پشتیبانی نمی‌کند."); return; }\n      navigator.geolocation.getCurrentPosition((position) => {\n        const nextLat = Number(position.coords.latitude.toFixed(6));\n        const nextLng = Number(position.coords.longitude.toFixed(6));\n        setValue("lat", nextLat, { shouldDirty: true });\n        setValue("lng", nextLng, { shouldDirty: true });\n        map.flyTo([nextLat, nextLng], 17, { duration: 1 });\n        setMapMessage("موقعیت فعلی انتخاب شد.");\n      }, () => setMapMessage("دسترسی به موقعیت مکانی داده نشد."));\n    };\n    const searchAddress = async () => {\n      const query = mapQuery.trim();\n      if (!query) return;\n      setMapSearching(true); setMapMessage(null);\n      try {\n        const params = new URLSearchParams({ q: query, format: "jsonv2", limit: "5", addressdetails: "1", "accept-language": "fa" });\n        const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, { headers: { Accept: "application/json" } });\n        if (!response.ok) throw new Error("geocode");\n        const results = await response.json() as Array<{ lat: string; lon: string; display_name: string }>;\n        if (!results.length) { setMapMessage("آدرسی پیدا نشد. نام شهر، خیابان یا نشانی دقیق‌تر را امتحان کن."); return; }\n        const first = results[0]; const nextLat = Number(Number(first.lat).toFixed(6)); const nextLng = Number(Number(first.lon).toFixed(6));\n        setValue("lat", nextLat, { shouldDirty: true }); setValue("lng", nextLng, { shouldDirty: true });\n        setMapMessage(first.display_name); map.flyTo([nextLat, nextLng], 16, { duration: 1 });\n      } catch { setMapMessage("جستجوی آدرس انجام نشد. دوباره تلاش کن."); } finally { setMapSearching(false); }\n    };\n    return <div className="absolute inset-x-3 top-3 z-[500] flex flex-col gap-2 sm:flex-row">\n      <div className="flex flex-1 gap-2 rounded-xl bg-white/95 p-1.5 shadow-lg backdrop-blur">\n        <input value={mapQuery} onChange={(event) => setMapQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void searchAddress(); } }} placeholder="جستجوی شهر، خیابان یا آدرس" className="min-w-0 flex-1 bg-transparent px-2 text-xs font-bold outline-none" />\n        <button type="button" onClick={() => void searchAddress()} disabled={mapSearching} className="rounded-lg bg-[var(--accent)] px-3 py-2 text-[10px] font-black text-white disabled:opacity-50">{mapSearching ? "..." : "جستجو"}</button>\n      </div>\n      <button type="button" onClick={locate} className="rounded-xl bg-white/95 px-3 py-2 text-[10px] font-black text-[var(--ink)] shadow-lg backdrop-blur hover:bg-white"><LocateFixed className="ml-1 inline h-3.5 w-3.5 text-[var(--accent)]" /> موقعیت من</button>\n      {mapMessage && <div className="absolute right-0 top-12 max-w-full rounded-xl bg-white/95 px-3 py-2 text-[10px] font-bold text-[var(--ink)] shadow-lg">{mapMessage}</div>}\n    </div>;\n  }\n  function LocationPicker() {
+  function MapTools() {
+    const map = useMap();
+    const locate = () => {
+      if (!navigator.geolocation) { setMapMessage("مرورگر موقعیت مکانی را پشتیبانی نمی‌کند."); return; }
+      navigator.geolocation.getCurrentPosition((position) => {
+        const nextLat = Number(position.coords.latitude.toFixed(6));
+        const nextLng = Number(position.coords.longitude.toFixed(6));
+        setValue("lat", nextLat, { shouldDirty: true });
+        setValue("lng", nextLng, { shouldDirty: true });
+        map.flyTo([nextLat, nextLng], 17, { duration: 1 });
+        setMapMessage("موقعیت فعلی انتخاب شد.");
+      }, () => setMapMessage("دسترسی به موقعیت مکانی داده نشد."));
+    };
+    const searchAddress = async () => {
+      const query = mapQuery.trim();
+      if (!query) return;
+      setMapSearching(true); setMapMessage(null);
+      try {
+        const params = new URLSearchParams({ q: query, format: "jsonv2", limit: "5", addressdetails: "1", "accept-language": "fa" });
+        const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, { headers: { Accept: "application/json" } });
+        if (!response.ok) throw new Error("geocode");
+        const results = await response.json() as Array<{ lat: string; lon: string; display_name: string }>;
+        if (!results.length) { setMapMessage("آدرسی پیدا نشد. نام شهر، خیابان یا نشانی دقیق‌تر را امتحان کن."); return; }
+        const first = results[0]; const nextLat = Number(Number(first.lat).toFixed(6)); const nextLng = Number(Number(first.lon).toFixed(6));
+        setValue("lat", nextLat, { shouldDirty: true }); setValue("lng", nextLng, { shouldDirty: true });
+        setMapMessage(first.display_name); map.flyTo([nextLat, nextLng], 16, { duration: 1 });
+      } catch { setMapMessage("جستجوی آدرس انجام نشد. دوباره تلاش کن."); } finally { setMapSearching(false); }
+    };
+    return <div className="absolute inset-x-3 top-3 z-[500] flex flex-col gap-2 sm:flex-row">
+      <div className="flex flex-1 gap-2 rounded-xl bg-white/95 p-1.5 shadow-lg backdrop-blur">
+        <input value={mapQuery} onChange={(event) => setMapQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void searchAddress(); } }} placeholder="جستجوی شهر، خیابان یا آدرس" className="min-w-0 flex-1 bg-transparent px-2 text-xs font-bold outline-none" />
+        <button type="button" onClick={() => void searchAddress()} disabled={mapSearching} className="rounded-lg bg-[var(--accent)] px-3 py-2 text-[10px] font-black text-white disabled:opacity-50">{mapSearching ? "..." : "جستجو"}</button>
+      </div>
+      <button type="button" onClick={locate} className="rounded-xl bg-white/95 px-3 py-2 text-[10px] font-black text-[var(--ink)] shadow-lg backdrop-blur hover:bg-white"><LocateFixed className="ml-1 inline h-3.5 w-3.5 text-[var(--accent)]" /> موقعیت من</button>
+      {mapMessage && <div className="absolute right-0 top-12 max-w-full rounded-xl bg-white/95 px-3 py-2 text-[10px] font-bold text-[var(--ink)] shadow-lg">{mapMessage}</div>}
+    </div>;
+  }
+  function LocationPicker() {
     useMapEvents({ click(event) { setValue("lat", Number(event.latlng.lat.toFixed(6)), { shouldDirty: true }); setValue("lng", Number(event.latlng.lng.toFixed(6)), { shouldDirty: true }); } });
     return lat != null && lng != null ? <Marker position={[lat, lng]} draggable eventHandlers={{ dragend: (event) => { const position = event.target.getLatLng(); setValue("lat", Number(position.lat.toFixed(6)), { shouldDirty: true }); setValue("lng", Number(position.lng.toFixed(6)), { shouldDirty: true }); } }} icon={markerIcon} /> : null;
   }
@@ -215,7 +252,8 @@ export const EditStoreSheet = ({
                 <div className="relative h-64 overflow-hidden rounded-2xl border border-white shadow-sm">
                   <MapContainer center={mapCenter} zoom={lat != null && lng != null ? 16 : 5} scrollWheelZoom style={{ height: "100%", width: "100%" }}>
                     <TileLayer url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png" />
-                    <LocationPicker />\n                    <MapTools />
+                    <LocationPicker />
+                    <MapTools />
                   </MapContainer>
                   <div className="pointer-events-none absolute bottom-3 right-3 z-[500] rounded-xl bg-white/90 px-3 py-2 text-[10px] font-black text-[var(--ink)] shadow-lg backdrop-blur">
                     <LocateFixed className="ml-1 inline h-3.5 w-3.5 text-[var(--accent)]" /> برای انتخاب محل کلیک کن
