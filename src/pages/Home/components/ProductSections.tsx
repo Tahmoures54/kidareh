@@ -71,11 +71,11 @@ export const PremiumProductCard = memo(
     return (
       <motion.article
         variants={itemVariants}
-        className="group relative flex h-full flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white p-2 shadow-[0_8px_24px_-22px_rgba(8,76,103,.55)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-[0_18px_36px_-24px_rgba(8,76,103,.5)] sm:rounded-[20px] sm:p-2.5 lg:p-3"
+        className="group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-slate-200/90 bg-white p-2 shadow-[0_14px_35px_-30px_rgba(7,63,86,.7)] transition-all duration-300 hover:-translate-y-1 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-[0_22px_42px_-25px_rgba(8,76,103,.45)] sm:p-2.5 lg:p-3"
       >
         <Link to={`/products/${product.id}`} className="absolute inset-0 z-0" aria-label={`مشاهده ${product.name}`} />
 
-        <div className="relative z-10 aspect-[4/5] w-full shrink-0 overflow-hidden rounded-[14px] bg-slate-100 sm:rounded-[16px]">
+        <div className="relative z-10 aspect-[4/5] w-full shrink-0 overflow-hidden rounded-[18px] bg-slate-100 sm:rounded-[18px]">
           {!imgError && product.image_url ? (
             <img
               src={product.image_url}
@@ -102,7 +102,7 @@ export const PremiumProductCard = memo(
           </button>
 
           {product.badge && (
-            <span className="absolute right-2 top-2 z-10 max-w-[70%] truncate rounded-md bg-rose-500 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
+            <span className="absolute right-2 top-2 z-10 max-w-[70%] truncate rounded-md bg-cyan-700 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
               {getCategoryTextByValue(product.badge)}
             </span>
           )}
@@ -121,7 +121,7 @@ export const PremiumProductCard = memo(
           </h3>
 
           <div className="mt-2 flex min-h-[2.25rem] items-center justify-between gap-2">
-            <span className="min-w-0 truncate text-sm font-black text-[#073f56] sm:text-[15px]">
+            <span className="min-w-0 truncate text-sm font-black text-[#073f56] sm:text-base">
               {isFree ? (
                 <span className="text-green-600">رایگان</span>
               ) : (
