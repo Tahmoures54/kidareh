@@ -383,8 +383,9 @@ export default function PresenceHome() {
                   className="border-t border-[var(--line)] bg-white p-4 transition hover:bg-[var(--paper)] sm:odd:border-l"
                 >
                   <p className="text-sm font-black text-[var(--ink)]">{row.axis}</p>
-                  <p className="mt-1 text-xs font-bold leading-5 text-[var(--muted)]">{row.a}</p>
-                  <p className="mt-1 text-xs font-bold leading-5 text-[var(--accent)]">{row.b}</p>
+                  <p className="mt-2 text-xs font-bold text-[var(--muted)]">دیجی‌کالا: {row.digikala}</p>
+                  <p className="text-xs font-bold text-[var(--muted)]">دیوار: {row.divar}</p>
+                  <p className="mt-1.5 text-sm font-black text-[var(--accent)]">کی‌داره: {row.kidareh}</p>
                 </div>
               ))}
             </div>
