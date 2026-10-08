@@ -131,7 +131,7 @@ export default function SellerProductForm() {
           </HintCard>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 rounded-[28px] border border-[var(--line)] bg-white p-5 shadow-[0_20px_60px_-45px_rgba(8,76,103,.5)] lg:p-7"
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 rounded-[28px] border border-[var(--line)] bg-white p-5 shadow-[0_20px_60px_-45px_rgba(8,76,103,.5)] lg:p-7">
           {/* عکس */}
           <div className="flex flex-col items-center rounded-3xl bg-[var(--paper)] p-5 lg:flex-row lg:gap-5">
             <label className="cursor-pointer relative h-40 w-40 rounded-3xl bg-white dark:bg-slate-900 border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center overflow-hidden active:scale-[0.98] transition-transform">
