@@ -23,93 +23,150 @@ interface Props {
   setViewMode: (v: ViewMode) => void;
 }
 
-export const SavedHeader = memo(({
-  selectionMode, selectedCount, onCancelSelection, onBatchRemove,
-  productCount, onToggleSort, onRefresh, loading,
-  searchQuery, setSearchQuery, filter, setFilter, counts, viewMode, setViewMode
-}: Props) => {
-  return (
-    <header className="sticky top-0 z-40 bg-[var(--bg-secondary)]/85 backdrop-blur-2xl border-b border-[var(--border-light)] px-4 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 shadow-sm">
-      <div className="flex items-center justify-between mb-3 h-10">
-        {selectionMode ? (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
-              <button onClick={onCancelSelection} className="text-[var(--text-secondary)] font-black text-xs bg-[var(--bg-tertiary)] px-4 py-2 rounded-xl active:scale-95 transition">لغو</button>
-              <span className="font-black text-sm text-[var(--text-primary)]">{selectedCount} مورد</span>
-            </div>
-            <button onClick={onBatchRemove} className="text-white bg-rose-600 px-5 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-lg shadow-rose-500/20 active:scale-95 transition">
-              <Trash2 className="w-3.5 h-3.5" /> حذف
-            </button>
+export const SavedHeader = memo(
+  ({
+    selectionMode,
+    selectedCount,
+    onCancelSelection,
+    onBatchRemove,
+    productCount,
+    onToggleSort,
+    onRefresh,
+    loading,
+    searchQuery,
+    setSearchQuery,
+    filter,
+    setFilter,
+    counts,
+    viewMode,
+    setViewMode,
+  }: Props) => {
+    return (
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))] shadow-sm backdrop-blur-xl">
+        <div className="mb-3 flex h-10 items-center justify-between">
+          {selectionMode ? (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex w-full items-center justify-between"
+            >
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={onCancelSelection}
+                  className="rounded-xl bg-slate-100 px-4 py-2 text-xs font-black text-slate-600 transition active:scale-95"
+                >
+                  لغو
+                </button>
+                <span className="text-sm font-black text-slate-800">{selectedCount} مورد</span>
+              </div>
+              <button
+                onClick={onBatchRemove}
+                className="flex items-center gap-1.5 rounded-xl bg-rose-600 px-5 py-2 text-xs font-black text-white shadow-lg shadow-rose-500/20 transition active:scale-95"
+              >
+                <Trash2 className="h-3.5 w-3.5" /> حذف
+              </button>
+            </motion.div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-teal-600 shadow-md shadow-cyan-500/25">
+                  <Heart className="h-5 w-5 fill-white text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-black leading-none tracking-tight text-slate-900">نشان‌ها</h1>
+                  {productCount > 0 && (
+                    <span className="text-[10px] font-bold text-cyan-600">
+                      {productCount.toLocaleString("fa-IR")} کالا ذخیره شده
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={onToggleSort}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 hover:text-cyan-600 active:scale-90"
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={onRefresh}
+                  disabled={loading}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl text-slate-400 transition hover:bg-slate-50 disabled:opacity-40 active:scale-90"
+                >
+                  <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin text-cyan-600" : ""}`} />
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
+        {!selectionMode && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            className="relative mb-3"
+          >
+            <Search className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="جستجو در نشان‌ها..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-2xl border border-transparent bg-slate-100 py-2.5 pr-10 pl-4 text-sm font-bold text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-cyan-400/50 focus:bg-white focus:shadow-[0_0_0_3px_rgba(8,145,178,0.12)]"
+            />
           </motion.div>
-        ) : (
-          <>
-            <div className="flex items-center gap-2.5">
-              <div className="bg-[var(--brand-primary)]/10 p-2 rounded-xl">
-                <Heart className="w-5 h-5 fill-[var(--brand-primary)] text-[var(--brand-primary)]" />
-              </div>
-              <div>
-                <h1 className="text-lg font-black tracking-tight text-[var(--text-primary)] leading-none">نشان‌ها</h1>
-                {productCount > 0 && <span className="text-[10px] font-bold text-[var(--brand-primary)]">{productCount} کالا ذخیره شده</span>}
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <button onClick={onToggleSort} className="w-9 h-9 flex items-center justify-center text-[var(--text-muted)] rounded-xl hover:bg-[var(--bg-tertiary)] active:scale-90 transition">
-                <ArrowUpDown className="w-4 h-4" />
-              </button>
-              <button onClick={onRefresh} disabled={loading} className="w-9 h-9 flex items-center justify-center text-[var(--text-muted)] rounded-xl hover:bg-[var(--bg-tertiary)] disabled:opacity-40 active:scale-90 transition">
-                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-[var(--brand-primary)]" : ""}`} />
-              </button>
-            </div>
-          </>
         )}
-      </div>
 
-      {!selectionMode && (
-        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mb-3 relative">
-          <Search className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
-          <input 
-            type="text" placeholder="جستجو در نشان‌ها..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} 
-            className="w-full bg-[var(--bg-tertiary)] border border-transparent focus:border-[var(--brand-primary)]/50 focus:shadow-[0_0_0_3px_var(--brand-glow)] rounded-2xl py-2.5 pr-10 pl-4 text-sm font-bold placeholder:text-[var(--text-muted)] text-[var(--text-primary)] focus:outline-none transition-all" 
-          />
-        </motion.div>
-      )}
+        <div className="flex items-center justify-between gap-3">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
+            {[
+              { id: "all", label: "همه", count: counts.all },
+              { id: "price_drop", label: "کاهش قیمت", count: counts.price_drop },
+              { id: "available", label: "موجود", count: counts.available },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setFilter(t.id as Filter)}
+                className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-4 py-2 text-xs font-black transition-all active:scale-95 ${
+                  filter === t.id
+                    ? "bg-gradient-to-l from-cyan-600 to-teal-500 text-white shadow-md shadow-cyan-500/25"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {t.label}
+                {t.count > 0 && (
+                  <span
+                    className={`rounded-md px-1.5 py-0.5 text-[10px] font-black ${
+                      filter === t.id ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500"
+                    }`}
+                  >
+                    {t.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
 
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-0.5">
-          {[
-            { id: "all", label: "همه", count: counts.all },
-            { id: "price_drop", label: "کاهش قیمت", count: counts.price_drop },
-            { id: "available", label: "موجود", count: counts.available },
-          ].map(t => (
-            <button 
-              key={t.id} onClick={() => setFilter(t.id as Filter)} 
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-black whitespace-nowrap transition-all active:scale-95 ${
-                filter === t.id 
-                  ? "bg-gradient-to-l from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white shadow-md shadow-[var(--brand-glow)]" 
-                  : "bg-[var(--bg-tertiary)] text-[var(--text-secondary)] hover:bg-[var(--border-light)]"
+          <div className="flex shrink-0 items-center rounded-xl border border-slate-200 bg-slate-100 p-1">
+            <button
+              onClick={() => setViewMode("grid")}
+              className={`rounded-lg p-1.5 transition-all ${
+                viewMode === "grid" ? "bg-white text-cyan-600 shadow-sm" : "text-slate-400"
               }`}
             >
-              {t.label} 
-              {t.count > 0 && (
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-black ${
-                  filter === t.id ? "bg-white/20 text-white" : "bg-[var(--border-light)] text-[var(--text-muted)]"
-                }`}>
-                  {t.count}
-                </span>
-              )}
+              <LayoutGrid className="h-4 w-4" />
             </button>
-          ))}
+            <button
+              onClick={() => setViewMode("list")}
+              className={`rounded-lg p-1.5 transition-all ${
+                viewMode === "list" ? "bg-white text-cyan-600 shadow-sm" : "text-slate-400"
+              }`}
+            >
+              <List className="h-4 w-4" />
+            </button>
+          </div>
         </div>
-        
-        <div className="bg-[var(--bg-tertiary)] p-1 rounded-xl flex items-center shrink-0 border border-[var(--border-light)]">
-          <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded-lg transition-all ${viewMode === "grid" ? "bg-[var(--bg-secondary)] shadow-sm text-[var(--brand-primary)]" : "text-[var(--text-muted)]"}`}>
-            <LayoutGrid className="w-4 h-4" />
-          </button>
-          <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-lg transition-all ${viewMode === "list" ? "bg-[var(--bg-secondary)] shadow-sm text-[var(--brand-primary)]" : "text-[var(--text-muted)]"}`}>
-            <List className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-    </header>
-  );
-});
+      </header>
+    );
+  }
+);
