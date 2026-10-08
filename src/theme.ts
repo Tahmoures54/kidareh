@@ -1,13 +1,16 @@
-// Central theme constants for Turquoise Iranian Sky
+// Central theme — aligned with MaterialHub (Industrial Iranian Sky)
 export const colors = {
-  primary: '#00A693', // main header / tab
-  primaryDark: '#009688',
-  secondary: '#4DB6AC',
-  light: '#B2EBE0',
-  backgroundLight: '#E0F2F1',
+  primary: '#0E7490',
+  primaryDark: '#0C637A',
+  secondary: '#0891B2',
+  light: '#ECFEFF',
+  backgroundLight: '#F1F5F9',
   accentPurple: '#7B4B94',
-  glow: 'rgba(0,166,147,0.18)',
-  text: '#05282b',
+  glow: 'rgba(14, 116, 144, 0.18)',
+  text: '#0F172A',
+  sidebar: '#0B1622',
+  muted: '#64748B',
+  border: '#CBD5E1',
 };
 
 export type ThemeColors = typeof colors;
