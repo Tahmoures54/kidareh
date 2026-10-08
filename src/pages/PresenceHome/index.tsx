@@ -155,63 +155,45 @@ export default function PresenceHome() {
   const displayName = user?.name?.trim() || user?.store_name?.trim() || "";
 
   return (
-    <div className="grid bg-[var(--paper)] lg:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="sv-home grid bg-[var(--paper)] lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="min-w-0">
-        {/* Hero welcome */}
-        <section className="relative overflow-hidden border-b border-[var(--line)] bg-white">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.55]"
-            style={{
-              background:
-                "radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%), radial-gradient(ellipse 50% 40% at 0% 100%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 50%)",
-            }}
-          />
-          <div className="relative px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
+        <section className="sv-hero">
+          <div className="sv-hero-inner">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[12px] font-black tracking-wide text-[var(--accent)]">
+                <p className="sv-greeting">
                   {greetingByHour()}
                   {displayName ? `، ${displayName}` : ""}
                 </p>
-                <h1 className="mt-1 text-[1.35rem] font-black leading-snug tracking-tight text-[var(--ink)] sm:text-2xl">
-                  ببین کی داره؟ حضوری بگیر
-                </h1>
-                <p className="mt-1.5 max-w-md text-[13px] font-bold leading-6 text-[var(--ink-soft)]">
-                  در <span className="text-[var(--accent)]">{cityLocation.city}</span> کالا و فروشگاه اطراف را
-                  پیدا کن، چت کن، بعد حضوری بخر — بدون انتظار ارسال.
+                <h1 className="sv-title">ببین کی داره؟ حضوری بگیر</h1>
+                <p className="sv-subtitle">
+                  در <span className="font-black text-[var(--accent)]">{cityLocation.city}</span> کالا و
+                  فروشگاه اطراف را پیدا کن، چت کن، بعد حضوری بخر — بدون انتظار ارسال.
                 </p>
               </div>
-              <div className="hidden shrink-0 sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)] text-lg font-black text-white shadow-lg shadow-[var(--accent)]/30">
+              <div className="sv-logo-mark" aria-hidden>
                 کی
               </div>
             </div>
 
-            {/* Quick actions */}
-            <div className="mt-4 flex gap-2.5 overflow-x-auto presence-hide-scroll pb-1">
+            <div className="sv-actions">
               {QUICK_ACTIONS.map((a) => (
-                <Link
-                  key={a.to}
-                  to={a.to}
-                  className="group flex shrink-0 flex-col items-center gap-1.5"
-                >
-                  <span
-                    className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${a.tone} text-white shadow-md transition group-hover:scale-105 group-active:scale-95`}
-                  >
+                <Link key={a.to} to={a.to} className="sv-action">
+                  <span className={`sv-action-icon bg-gradient-to-br ${a.tone}`}>
                     <a.icon className="h-5 w-5" strokeWidth={2.4} />
                   </span>
-                  <span className="text-[10px] font-black text-[var(--ink-soft)]">{a.label}</span>
+                  <span className="sv-action-label">{a.label}</span>
                 </Link>
               ))}
             </div>
 
-            {/* Tehran pulse stats */}
             {isTehran && pulse.inWalk15 > 0 && (
               <div className="mt-4 flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)]/10 px-3 py-1.5 text-[11px] font-black text-[var(--accent)]">
+                <span className="sv-pulse sv-pulse-accent">
                   <Footprints className="h-3.5 w-3.5" />
                   {toFa(pulse.inWalk15)} کالا تا ۱۵ دقیقه پیاده
                 </span>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--paper)] px-3 py-1.5 text-[11px] font-black text-[var(--ink-soft)] ring-1 ring-[var(--line)]">
+                <span className="sv-pulse sv-pulse-soft">
                   <Navigation className="h-3.5 w-3.5 text-[var(--accent)]" />
                   {origin.label || cityLocation.city}
                 </span>
@@ -221,14 +203,12 @@ export default function PresenceHome() {
         </section>
 
         <FeedColumn>
-          {/* Search */}
-          <label className="mx-3 mt-3 flex h-12 items-center gap-3 rounded-2xl border border-[var(--line)] bg-white px-3.5 shadow-sm transition focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent)]/20">
+          <label className="sv-search">
             <Search className="h-4.5 w-4.5 shrink-0 text-[var(--accent)]" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="چی می‌خوای؟ جستجو در پست‌ها و کالاها…"
-              className="h-full flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[var(--muted)]"
               aria-label="جستجو"
             />
             {q && (
@@ -247,16 +227,11 @@ export default function PresenceHome() {
             composer={isSeller ? { label: "استوری من", href: "/buy-badge" } : undefined}
           />
 
-          {/* Categories */}
-          <div className="flex items-center gap-2 overflow-x-auto presence-hide-scroll px-3 pb-2">
+          <div className="flex items-center gap-2 overflow-x-auto presence-hide-scroll px-3 pb-2 pt-1">
             <button
               type="button"
               onClick={() => setMarketCategory("all")}
-              className={`shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition ${
-                marketCategory === "all"
-                  ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25"
-                  : "presence-chip hover:bg-white"
-              }`}
+              className={`sv-chip ${marketCategory === "all" ? "sv-chip-active" : "sv-chip-idle"}`}
             >
               همه
             </button>
@@ -265,30 +240,19 @@ export default function PresenceHome() {
                 key={group.slug}
                 type="button"
                 onClick={() => setMarketCategory(group.slug)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition ${
-                  marketCategory === group.slug
-                    ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25"
-                    : "presence-chip hover:bg-white"
-                }`}
+                className={`sv-chip ${marketCategory === group.slug ? "sv-chip-active" : "sv-chip-idle"}`}
               >
                 {group.icon} {group.short}
               </button>
             ))}
-            <Link
-              to="/categories"
-              className="shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black presence-chip hover:bg-white"
-            >
+            <Link to="/categories" className="sv-chip sv-chip-idle">
               همه دسته‌ها
             </Link>
             {isTehran && (
               <button
                 type="button"
                 onClick={() => setShowFilters((v) => !v)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition ${
-                  showFilters
-                    ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25"
-                    : "presence-chip hover:bg-white"
-                }`}
+                className={`sv-chip ${showFilters ? "sv-chip-active" : "sv-chip-idle"}`}
               >
                 فیلتر
               </button>
@@ -303,9 +267,7 @@ export default function PresenceHome() {
                   type="button"
                   onClick={() => setRadiusKm(r.km)}
                   className={`rounded-full px-3 py-1.5 text-[11px] font-black transition ${
-                    radiusKm === r.km
-                      ? "bg-[var(--accent)] text-white"
-                      : "presence-chip"
+                    radiusKm === r.km ? "bg-[var(--accent)] text-white" : "presence-chip"
                   }`}
                 >
                   {r.label}
@@ -346,16 +308,15 @@ export default function PresenceHome() {
           )}
         </FeedColumn>
 
-        {/* Feed header */}
-        <div className="flex items-center justify-between px-4 pb-1 pt-1">
-          <p className="text-[13px] font-black text-[var(--ink)]">
+        <div className="sv-section-head">
+          <p className="sv-section-title">
             {q.trim()
               ? `نتایج «${q.trim()}»`
               : marketCategory !== "all"
                 ? categoriesData.find((g) => g.slug === marketCategory)?.short || "دسته"
                 : "تازه‌های اطراف"}
           </p>
-          <span className="text-[11px] font-bold text-[var(--muted)]">
+          <span className="sv-section-meta">
             {posts.length > 0 ? `${toFa(posts.length)} مورد` : ""}
           </span>
         </div>
@@ -404,17 +365,14 @@ export default function PresenceHome() {
           )}
         </FeedColumn>
 
-        {/* Why Kidareh */}
         <FeedColumn>
-          <section className="mx-3 my-6 overflow-hidden rounded-[28px] border border-[var(--line)] bg-white shadow-sm">
-            <div className="relative overflow-hidden bg-gradient-to-br from-[var(--accent)] to-teal-700 px-5 py-5 text-white">
-              <div className="pointer-events-none absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
-              <div className="pointer-events-none absolute -bottom-10 -right-6 h-40 w-40 rounded-full bg-white/10" />
-              <p className="relative text-sm font-black text-white/90">چرا کی‌داره؟</p>
-              <h2 className="relative mt-1 text-lg font-black leading-snug sm:text-xl">
+          <section className="sv-why">
+            <div className="sv-why-banner">
+              <p className="relative z-[1] text-sm font-black text-white/90">چرا کی‌داره؟</p>
+              <h2 className="relative z-[1] mt-1 text-lg font-black leading-snug sm:text-xl">
                 ببین، بعد بخر — از مغازه همین محله
               </h2>
-              <p className="relative mt-2 max-w-sm text-[13px] font-bold leading-6 text-white/85">
+              <p className="relative z-[1] mt-2 max-w-sm text-[13px] font-bold leading-6 text-white/85">
                 شفافیت موجودی و قیمت، چت فوری با فروشنده، مسیر روی نقشه.
               </p>
             </div>
@@ -425,33 +383,25 @@ export default function PresenceHome() {
                   className="border-t border-[var(--line)] bg-white p-4 transition hover:bg-[var(--paper)] sm:odd:border-l"
                 >
                   <p className="text-sm font-black text-[var(--ink)]">{row.axis}</p>
-                  <p className="mt-2 text-xs font-bold text-[var(--muted)]">دیجی‌کالا: {row.digikala}</p>
-                  <p className="text-xs font-bold text-[var(--muted)]">دیوار: {row.divar}</p>
-                  <p className="mt-1.5 text-sm font-black text-[var(--accent)]">کی‌داره: {row.kidareh}</p>
+                  <p className="mt-1 text-xs font-bold leading-5 text-[var(--muted)]">{row.a}</p>
+                  <p className="mt-1 text-xs font-bold leading-5 text-[var(--accent)]">{row.b}</p>
                 </div>
               ))}
-            </div>
-            <div className="border-t border-[var(--line)] p-4">
-              <Link
-                to="/explore"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] py-3.5 text-sm font-black text-white shadow-md shadow-[var(--accent)]/25 transition hover:brightness-105 active:scale-[0.98]"
-              >
-                شروع کشف روی نقشه
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
             </div>
           </section>
         </FeedColumn>
       </div>
 
       {desktop && (
-        <aside className="sticky top-[73px] z-0 h-[calc(100dvh-73px)] border-r border-[var(--line)]">
-          <div className="relative h-full">
-            <PresenceMap origin={origin} listings={listings} />
-            <div className="absolute bottom-4 right-4 left-4 z-10 presence-card rounded-2xl p-3 shadow-lg">
-              <p className="inline-flex items-center gap-1 text-xs font-black">
-                <Footprints className="h-3.5 w-3.5 text-[var(--accent)]" />
-                {toFa(listings.length)} کالا روی نقشهٔ {isTehran ? origin.label : cityLocation.city}
+        <aside className="sticky top-0 hidden h-[100dvh] border-r border-[var(--line)] bg-white/80 p-4 backdrop-blur-md lg:block">
+          <div className="flex h-full flex-col gap-3">
+            <div className="overflow-hidden rounded-2xl border border-[var(--line)] shadow-sm">
+              <PresenceMap className="presence-map h-[280px] w-full" listings={listings.slice(0, 40)} origin={origin} />
+            </div>
+            <div className="rounded-2xl border border-[var(--line)] bg-white p-4 shadow-sm">
+              <p className="text-xs font-black text-[var(--muted)]">موقعیت فعال</p>
+              <p className="mt-1 text-sm font-black text-[var(--ink)]">
+                {origin.label || cityLocation.city}
               </p>
               <div className="mt-2 flex gap-2">
                 <Link
