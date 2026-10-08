@@ -1,0 +1,24 @@
+name: CD-Liara
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "22"
+
+      - name: Update Liara
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: |
+          npm i -g @liara/cli@9
+          liara deploy --app="kidareh" --api-token="$LIARA_TOKEN" --port=3000 --no-app-logs
