@@ -4,14 +4,18 @@ import { Check, CheckCheck, Clock, AlertCircle, X } from "lucide-react";
 import { Msg, MsgStatus } from "../types";
 
 const StatusIcon = React.memo(({ status }: { status: MsgStatus }) => {
-  if (status === "sending") return (
-    <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}>
-      <Clock className="w-3 h-3 text-white/70" />
-    </motion.div>
-  );
-  if (status === "sent") return <Check className="w-3.5 h-3.5 text-white/90" />;
-  if (status === "read") return <CheckCheck className="w-3.5 h-3.5 text-white drop-shadow-sm" />;
-  if (status === "error") return <AlertCircle className="w-3.5 h-3.5 text-rose-300" />;
+  if (status === "sending")
+    return (
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
+      >
+        <Clock className="h-3 w-3 text-white/70" />
+      </motion.div>
+    );
+  if (status === "sent") return <Check className="h-3.5 w-3.5 text-white/90" />;
+  if (status === "read") return <CheckCheck className="h-3.5 w-3.5 text-white drop-shadow-sm" />;
+  if (status === "error") return <AlertCircle className="h-3.5 w-3.5 text-rose-300" />;
   return null;
 });
 
@@ -28,27 +32,29 @@ const MessageBubble = React.memo(({ msg, isMe, onRetry }: Props) => {
       initial={{ opacity: 0, y: 15, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ type: "spring", stiffness: 400, damping: 28 }}
-      className={`flex mb-3 ${isMe ? "justify-end" : "justify-start"}`}
+      className={`mb-3 flex ${isMe ? "justify-end" : "justify-start"}`}
     >
-      <div className={`relative max-w-[85%] px-4 py-2.5 shadow-sm group ${
-        isMe
-          ? "bg-gradient-to-br from-teal-600 to-blue-500 dark:from-teal-700 dark:to-blue-600 text-white rounded-2xl rounded-tl-sm"
-          : "bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-100 rounded-2xl rounded-tr-sm"
-      }`}>
-        <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">
-          {msg.text}
-        </p>
-        <div className={`flex items-center justify-end gap-1.5 mt-1 select-none ${isMe ? "text-teal-100" : "text-gray-400 dark:text-gray-500"}`}>
-          <span className="text-[10px] font-medium tracking-wide">
-            {msg.timestamp}
-          </span>
+      <div
+        className={`group relative max-w-[85%] px-4 py-2.5 shadow-sm ${
+          isMe
+            ? "rounded-2xl rounded-tl-sm bg-gradient-to-br from-cyan-600 to-teal-500 text-white shadow-cyan-500/15"
+            : "rounded-2xl rounded-tr-sm border border-slate-100 bg-white text-slate-800"
+        }`}
+      >
+        <p className="break-words text-[14px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+        <div
+          className={`mt-1 flex select-none items-center justify-end gap-1.5 ${
+            isMe ? "text-cyan-100" : "text-slate-400"
+          }`}
+        >
+          <span className="text-[10px] font-medium tracking-wide">{msg.timestamp}</span>
           {isMe && <StatusIcon status={msg.status} />}
           {isMe && msg.status === "error" && (
             <button
               onClick={() => onRetry(msg)}
-              className="ml-1 text-rose-200 active:scale-90 transition-transform bg-rose-500/20 rounded-full p-0.5"
+              className="ml-1 rounded-full bg-rose-500/20 p-0.5 text-rose-200 transition-transform active:scale-90"
             >
-              <X className="w-3 h-3" />
+              <X className="h-3 w-3" />
             </button>
           )}
         </div>
