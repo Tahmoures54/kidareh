@@ -104,7 +104,7 @@ export default function PresenceShell() {
                 <p className="hidden text-[11px] font-black text-[var(--accent)] sm:block">کی‌داره · خرید حضوری</p>
                 <div className="flex min-w-0 items-center gap-1">
                   <button type="button" onClick={() => setPickerOpen(true)} className="inline-flex min-h-10 max-w-full items-center gap-1 rounded-xl px-1 text-sm font-black" aria-label="انتخاب شهر" title={cityLocation.display}>
-                    <MapPin className="h-4 w-4 shrink-0 text-[var(--accent)]" /><span className="truncate">{cityLocation.city}</span><ChevronDown className="h-4 w-4 shrink-0 text-[var(--muted)]" />
+                    <MapPin className="h-4 w-4 shrink-0 text-[var(--accent)]" /><span className="inline-flex h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.14),0_0_10px_rgba(16,185,129,0.65)]" aria-label="موقعیت فعال" title="موقعیت فعال" /><span className="truncate">{cityLocation.city}</span><ChevronDown className="h-4 w-4 shrink-0 text-[var(--muted)]" />
                   </button>
                   {isTehran && <select value={origin.neighborhoodId ?? ""} onChange={(e) => setNeighborhood(e.target.value as (typeof NEIGHBORHOODS)[number]["id"])} className="hidden max-w-[150px] truncate rounded-xl bg-transparent py-1 text-[11px] font-black outline-none sm:block" aria-label="انتخاب محله تهران">
                     <option value="">محله تهران</option>{NEIGHBORHOODS.map((n) => <option key={n.id} value={n.id}>{n.name} · {n.district}</option>)}
