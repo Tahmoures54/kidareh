@@ -192,10 +192,7 @@ export default function Stores() {
   }, [stores, filter, sort]);
 
   return (
-    <div
-      className="min-h-screen bg-gray-50/50 dark:bg-gray-950 text-gray-900 dark:text-white pb-28 transition-colors"
-      dir="rtl"
-    >
+    <div className="min-h-screen bg-slate-50/50 pb-28 text-slate-900 transition-colors" dir="rtl">
       <SortSheet open={sortOpen} value={sort} onClose={() => setSortOpen(false)} onChange={setSort} />
 
       <StoresHeader
@@ -215,7 +212,7 @@ export default function Stores() {
         onToggleNationwide={() => setNationwide((v) => !v)}
       />
 
-      <main className="px-4 py-6 max-w-2xl mx-auto">
+      <main className="mx-auto max-w-2xl px-4 py-6">
         <AnimatePresence>
           {!search && !loading && !error && stores.length > 0 && (
             <motion.div
@@ -224,20 +221,20 @@ export default function Stores() {
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               className="grid grid-cols-3 gap-3 overflow-hidden"
             >
-              <div className="rounded-[1.25rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 text-center shadow-sm">
-                <StoreIcon className="w-5 h-5 text-teal-500 mx-auto mb-2" />
-                <div className="text-lg font-black">{counts.all.toLocaleString("fa-IR")}</div>
-                <div className="text-[10px] font-bold text-gray-500 mt-0.5">فروشگاه</div>
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm">
+                <StoreIcon className="mx-auto mb-2 h-5 w-5 text-cyan-500" />
+                <div className="text-lg font-black text-slate-900">{counts.all.toLocaleString("fa-IR")}</div>
+                <div className="mt-0.5 text-[10px] font-bold text-slate-400">فروشگاه</div>
               </div>
-              <div className="rounded-[1.25rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 text-center shadow-sm">
-                <BadgeCheck className="w-5 h-5 text-sky-500 mx-auto mb-2" />
-                <div className="text-lg font-black">{counts.verified.toLocaleString("fa-IR")}</div>
-                <div className="text-[10px] font-bold text-gray-500 mt-0.5">تأییدشده</div>
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm">
+                <BadgeCheck className="mx-auto mb-2 h-5 w-5 text-cyan-500" />
+                <div className="text-lg font-black text-slate-900">{counts.verified.toLocaleString("fa-IR")}</div>
+                <div className="mt-0.5 text-[10px] font-bold text-slate-400">تأییدشده</div>
               </div>
-              <div className="rounded-[1.25rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 p-4 text-center shadow-sm">
-                <Star className="w-5 h-5 text-amber-400 fill-amber-400 mx-auto mb-2" />
-                <div className="text-lg font-black">{avgRating}</div>
-                <div className="text-[10px] font-bold text-gray-500 mt-0.5">میانگین</div>
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 text-center shadow-sm">
+                <Star className="mx-auto mb-2 h-5 w-5 fill-amber-400 text-amber-400" />
+                <div className="text-lg font-black text-slate-900">{avgRating}</div>
+                <div className="mt-0.5 text-[10px] font-bold text-slate-400">میانگین</div>
               </div>
             </motion.div>
           )}
@@ -249,36 +246,36 @@ export default function Stores() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="bg-white dark:bg-gray-900 rounded-[2rem] border border-rose-100 dark:border-rose-500/20 p-8 text-center shadow-sm"
+            className="rounded-3xl border border-rose-100 bg-white p-8 text-center shadow-sm"
           >
-            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-4 opacity-80" />
-            <h3 className="text-base font-black mb-2">نت وصل نشد</h3>
-            <p className="text-sm text-gray-500 mb-6">{error}</p>
+            <AlertCircle className="mx-auto mb-4 h-12 w-12 text-rose-500 opacity-80" />
+            <h3 className="mb-2 text-base font-black text-slate-800">نت وصل نشد</h3>
+            <p className="mb-6 text-sm text-slate-500">{error}</p>
             <button
               type="button"
               onClick={handleRefresh}
-              className="inline-flex items-center gap-2 bg-teal-600 text-white px-6 py-3 rounded-2xl font-black text-sm active:scale-95 shadow-lg shadow-teal-500/20"
+              className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-l from-cyan-600 to-teal-500 px-6 py-3 text-sm font-black text-white shadow-lg shadow-cyan-500/25 active:scale-95"
             >
-              <RefreshCw className="w-4 h-4" /> دوباره تلاش کن
+              <RefreshCw className="h-4 w-4" /> دوباره تلاش کن
             </button>
           </motion.div>
         ) : processedStores.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 px-4">
-            <div className="w-24 h-24 mx-auto mb-6 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-[2rem] flex items-center justify-center shadow-xl rotate-3">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="px-4 py-16 text-center">
+            <div className="mx-auto mb-6 flex h-24 w-24 rotate-3 items-center justify-center rounded-[2rem] border border-slate-100 bg-white shadow-xl">
               {search ? (
-                <Search className="w-10 h-10 text-gray-300" />
+                <Search className="h-10 w-10 text-slate-300" />
               ) : (
-                <Sparkles className="w-10 h-10 text-gray-300" />
+                <Sparkles className="h-10 w-10 text-cyan-300" />
               )}
             </div>
-            <h3 className="text-lg font-black mb-2">
+            <h3 className="mb-2 text-lg font-black text-slate-800">
               {search
                 ? "فروشگاهی پیدا نشد"
                 : nationwide
                   ? "با این فیلتر چیزی نیست"
                   : `هنوز فروشگاهی در ${cityLocation.city} نیست`}
             </h3>
-            <p className="text-sm text-gray-500 mb-8">
+            <p className="mb-8 text-sm text-slate-500">
               {search
                 ? "یه اسم دیگه امتحان کن"
                 : nationwide
@@ -290,7 +287,7 @@ export default function Stores() {
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="bg-teal-600 text-white px-6 py-3 rounded-2xl text-sm font-black active:scale-95 shadow-md"
+                  className="rounded-2xl bg-gradient-to-l from-cyan-600 to-teal-500 px-6 py-3 text-sm font-black text-white shadow-md shadow-cyan-500/25 active:scale-95"
                 >
                   پاک کردن جستجو
                 </button>
@@ -299,7 +296,7 @@ export default function Stores() {
                 <button
                   type="button"
                   onClick={() => setNationwide(true)}
-                  className="bg-teal-600 text-white px-6 py-3 rounded-2xl text-sm font-black active:scale-95 shadow-md"
+                  className="rounded-2xl bg-gradient-to-l from-cyan-600 to-teal-500 px-6 py-3 text-sm font-black text-white shadow-md shadow-cyan-500/25 active:scale-95"
                 >
                   سراسر کشور
                 </button>
@@ -308,7 +305,7 @@ export default function Stores() {
                 <button
                   type="button"
                   onClick={() => setFilter("all")}
-                  className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-2xl text-sm font-black active:scale-95"
+                  className="rounded-2xl bg-slate-100 px-6 py-3 text-sm font-black text-slate-700 active:scale-95"
                 >
                   همه فروشگاه‌ها
                 </button>
@@ -324,7 +321,7 @@ export default function Stores() {
                 ))}
               </AnimatePresence>
             </motion.div>
-            <div ref={sentinelRef} className="h-4 mt-4" />
+            <div ref={sentinelRef} className="mt-4 h-4" />
             <AnimatePresence>
               {moreLoading && (
                 <motion.div
@@ -333,19 +330,15 @@ export default function Stores() {
                   exit={{ opacity: 0 }}
                   className="flex justify-center py-4"
                 >
-                  <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 text-sm font-bold text-gray-600 shadow-sm">
-                    <Loader2 className="w-4 h-4 animate-spin text-teal-500" /> داره می‌آد…
+                  <div className="inline-flex items-center gap-2 rounded-full border border-slate-100 bg-white px-5 py-2.5 text-sm font-bold text-slate-600 shadow-sm">
+                    <Loader2 className="h-4 w-4 animate-spin text-cyan-500" /> داره می‌آد…
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
             {moreError && (
-              <div className="text-center py-4">
-                <button
-                  type="button"
-                  onClick={handleMore}
-                  className="text-sm font-bold text-teal-600"
-                >
+              <div className="py-4 text-center">
+                <button type="button" onClick={handleMore} className="text-sm font-bold text-cyan-600">
                   بارگذاری بیشتر نشد — دوباره بزن
                 </button>
               </div>
