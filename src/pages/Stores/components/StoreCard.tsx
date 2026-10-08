@@ -1,10 +1,19 @@
 import React, { memo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Store as StoreIcon, BadgeCheck, ShieldCheck, MapPin, Star, Users, ShoppingBag, ChevronLeft } from "lucide-react";
+import {
+  Store as StoreIcon,
+  BadgeCheck,
+  ShieldCheck,
+  MapPin,
+  Star,
+  Users,
+  ShoppingBag,
+  ChevronLeft,
+} from "lucide-react";
 import { StoreItem } from "../types";
 
-const PLACEHOLDER = "https://placehold.co/150x150/e0e7ff/4f46e5?text=Store";
+const PLACEHOLDER = "https://placehold.co/150x150/ecfeff/0e7490?text=Store";
 
 function isVerified(store: StoreItem): boolean {
   return store.blue_tick_expires_at ? new Date(store.blue_tick_expires_at) > new Date() : false;
@@ -23,7 +32,7 @@ function cityLine(store: StoreItem): string {
   return [store.city, store.province].filter(Boolean).join("، ") || "نامشخص";
 }
 
-export const StoreCard = memo(({ store, index }: { store: StoreItem; index: number; }) => {
+export const StoreCard = memo(({ store, index }: { store: StoreItem; index: number }) => {
   const verified = isVerified(store);
 
   return (
@@ -37,39 +46,81 @@ export const StoreCard = memo(({ store, index }: { store: StoreItem; index: numb
     >
       <Link
         to={`/store/${store.id}`}
-        className="relative block overflow-hidden rounded-[1.5rem] border border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:shadow-xl hover:shadow-teal-600/5 transition-all duration-300 active:scale-[0.985]"
+        className="relative block overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-cyan-200 hover:shadow-lg hover:shadow-cyan-500/5 active:scale-[0.985]"
       >
-        <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-br from-teal-600/[0.03] via-transparent to-fuchsia-500/[0.03]" />
-        <div className="relative p-4 flex items-center gap-4">
-          <div className="relative w-16 h-16 shrink-0">
-            <div className={`w-full h-full rounded-2xl overflow-hidden transition-colors ${verified ? "p-[2px] bg-gradient-to-br from-blue-400 to-teal-600 shadow-sm" : "bg-gray-100 dark:bg-gray-800"}`}>
-              <div className="w-full h-full rounded-[14px] overflow-hidden bg-white dark:bg-gray-900 border border-gray-100/50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/[0.03] via-transparent to-teal-500/[0.03] opacity-0 transition-opacity group-hover:opacity-100" />
+        <div className="relative flex items-center gap-4 p-4">
+          <div className="relative h-16 w-16 shrink-0">
+            <div
+              className={`h-full w-full overflow-hidden rounded-2xl transition-colors ${
+                verified
+                  ? "bg-gradient-to-br from-cyan-400 to-teal-600 p-[2px] shadow-sm shadow-cyan-500/20"
+                  : "bg-slate-100"
+              }`}
+            >
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-[14px] border border-slate-100/50 bg-white">
                 {store.image_url ? (
-                  <img src={store.image_url} alt={store.name} loading="lazy" onError={(e) => { (e.currentTarget as HTMLImageElement).src = PLACEHOLDER; }} className="w-full h-full object-cover" />
+                  <img
+                    src={store.image_url}
+                    alt={store.name}
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
+                    }}
+                    className="h-full w-full object-cover"
+                  />
                 ) : (
-                  <StoreIcon className={`w-7 h-7 ${verified ? "text-teal-500" : "text-gray-400"}`} />
+                  <StoreIcon className={`h-7 w-7 ${verified ? "text-cyan-500" : "text-slate-400"}`} />
                 )}
               </div>
             </div>
-            {verified && <span className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white dark:bg-gray-900 border border-white dark:border-gray-900 flex items-center justify-center shadow-sm"><BadgeCheck className="w-4.5 h-4.5 text-blue-500" /></span>}
+            {verified && (
+              <span className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-white shadow-sm">
+                <BadgeCheck className="h-4 w-4 text-cyan-500" />
+              </span>
+            )}
           </div>
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <h3 className="text-[15px] font-black text-gray-900 dark:text-white truncate group-hover:text-teal-700 transition-colors">{store.name}</h3>
-              {verified && <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-blue-50 text-blue-600"><ShieldCheck className="w-3 h-3" /> تأییدشده</span>}
+          <div className="min-w-0 flex-1">
+            <div className="mb-1.5 flex items-center gap-1.5">
+              <h3 className="truncate text-[15px] font-black text-slate-900 transition-colors group-hover:text-cyan-700">
+                {store.name}
+              </h3>
+              {verified && (
+                <span className="hidden items-center gap-1 rounded-full bg-cyan-50 px-2 py-0.5 text-[10px] font-black text-cyan-700 sm:inline-flex">
+                  <ShieldCheck className="h-3 w-3" /> تأییدشده
+                </span>
+              )}
             </div>
-            <div className="flex flex-wrap items-center gap-2 text-[10px] mb-2.5">
-              <span className="bg-teal-50 dark:bg-teal-500/10 text-teal-700 font-black px-2.5 py-0.5 rounded-lg">{store.category || "عمومی"}</span>
-              <span className="flex items-center gap-1 text-gray-500 font-medium"><MapPin className="w-3 h-3" /> {cityLine(store)}</span>
+            <div className="mb-2.5 flex flex-wrap items-center gap-2 text-[10px]">
+              <span className="rounded-lg bg-cyan-50 px-2.5 py-0.5 font-black text-cyan-700">
+                {store.category || "عمومی"}
+              </span>
+              <span className="flex items-center gap-1 font-medium text-slate-500">
+                <MapPin className="h-3 w-3" /> {cityLine(store)}
+              </span>
             </div>
-            <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-600 font-bold">
-              {store.avg_rating != null && <span className="inline-flex items-center gap-1 bg-amber-50 text-amber-600 px-1.5 py-0.5 rounded-md"><Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /> {fmtRating(store.avg_rating)}</span>}
-              {store.review_count != null && <span className="inline-flex items-center gap-1"><Users className="w-3.5 h-3.5 text-gray-400" /> {fmtNum(store.review_count)} نظر</span>}
-              {store.product_count != null && <span className="inline-flex items-center gap-1"><ShoppingBag className="w-3.5 h-3.5 text-gray-400" /> {fmtNum(store.product_count)} کالا</span>}
+            <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold text-slate-600">
+              {store.avg_rating != null && (
+                <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-amber-600">
+                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /> {fmtRating(store.avg_rating)}
+                </span>
+              )}
+              {store.review_count != null && (
+                <span className="inline-flex items-center gap-1">
+                  <Users className="h-3.5 w-3.5 text-slate-400" /> {fmtNum(store.review_count)} نظر
+                </span>
+              )}
+              {store.product_count != null && (
+                <span className="inline-flex items-center gap-1">
+                  <ShoppingBag className="h-3.5 w-3.5 text-slate-400" /> {fmtNum(store.product_count)} کالا
+                </span>
+              )}
             </div>
           </div>
-          <div className="shrink-0 w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-teal-50 group-hover:text-teal-600 transition-colors"><ChevronLeft className="w-4 h-4" /></div>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition-colors group-hover:bg-cyan-50 group-hover:text-cyan-600">
+            <ChevronLeft className="h-4 w-4" />
+          </div>
         </div>
       </Link>
     </motion.div>
