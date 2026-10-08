@@ -8,6 +8,7 @@ import { Header } from "./components/HeaderWidgets";
 import { SearchBar } from "./components/SearchBar";
 import { ResultHeader } from "./components/ResultHeader";
 import { PremiumProductCard, ProductCardSkeleton, SegmentedScope } from "./components/ProductSections";
+import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
 import CityPicker from "../../components/location/CityPicker";
 
