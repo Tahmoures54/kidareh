@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bookmark, ChevronDown, Home, Map as MapIcon, MapPin, Radio, Route, QrCode, User, MessageCircle, Sparkles, Store, Search, LogOut, ShieldCheck, LocateFixed } from "lucide-react";
+import { Bookmark, ChevronDown, Home, Map as MapIcon, MapPin, User, MessageCircle, Sparkles, Store, Search, LogOut, ShieldCheck, LocateFixed } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useAppLocation } from "../../hooks/useAppLocation";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
@@ -20,11 +20,6 @@ const TABS = [
   { to: "/profile", label: "من", icon: User },
 ] as const;
 
-const EXTRA_RAIL = [
-  { to: "/radar", label: "قیمت", icon: Radio },
-  { to: "/trip", label: "مسیر", icon: Route },
-  { to: "/holds", label: "رزرو", icon: QrCode },
-] as const;
 
 function isPresencePath(pathname: string) {
   return pathname === "/" || ["/explore", "/radar", "/trip", "/holds", "/reservations", "/search", "/saved", "/following", "/categories"].includes(pathname) || pathname.startsWith("/p/") || pathname.startsWith("/product/") || pathname.startsWith("/categories/");
