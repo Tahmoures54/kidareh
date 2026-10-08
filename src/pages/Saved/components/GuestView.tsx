@@ -5,33 +5,53 @@ import { Heart, UserPlus, ShoppingBag, BellRing } from "lucide-react";
 
 export const GuestView = memo(() => {
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] flex flex-col items-center justify-center p-6 text-center relative overflow-hidden" dir="rtl">
-      <div className="absolute top-0 right-0 w-72 h-72 bg-[var(--brand-primary)]/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
-      <div className="absolute bottom-0 left-0 w-64 h-64 bg-rose-500/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
+    <div
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-slate-50 p-6 text-center"
+      dir="rtl"
+    >
+      <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 -translate-y-1/2 translate-x-1/3 rounded-full bg-cyan-400/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-64 w-64 -translate-x-1/3 translate-y-1/2 rounded-full bg-teal-400/10 blur-3xl" />
 
       <motion.div
-        initial={{ scale: 0.5, opacity: 0, rotate: -15 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} transition={{ type: "spring", bounce: 0.4, delay: 0.1 }}
-        className="relative z-10 w-32 h-32 bg-[var(--bg-secondary)] border border-[var(--border-light)] rounded-[2rem] shadow-2xl shadow-[var(--brand-glow)] flex items-center justify-center mb-10"
+        initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
+        animate={{ scale: 1, opacity: 1, rotate: 0 }}
+        transition={{ type: "spring", bounce: 0.4, delay: 0.1 }}
+        className="relative z-10 mb-10 flex h-32 w-32 items-center justify-center rounded-[2rem] border border-slate-100 bg-white shadow-2xl shadow-cyan-500/15"
       >
-        <Heart className="w-16 h-16 fill-rose-500 text-rose-500 drop-shadow-md" />
-        <motion.div animate={{ y: [0, -8, 0], scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }} className="absolute -top-4 -right-4 bg-gradient-to-l from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white rounded-full p-2.5 shadow-xl shadow-[var(--brand-glow)] border-4 border-[var(--bg-primary)]">
-          <BellRing className="w-5 h-5" />
+        <Heart className="h-16 w-16 fill-cyan-500 text-cyan-500 drop-shadow-md" />
+        <motion.div
+          animate={{ y: [0, -8, 0], scale: [1, 1.15, 1] }}
+          transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+          className="absolute -right-4 -top-4 rounded-full border-4 border-slate-50 bg-gradient-to-l from-cyan-600 to-teal-500 p-2.5 text-white shadow-xl shadow-cyan-500/30"
+        >
+          <BellRing className="h-5 w-5" />
         </motion.div>
       </motion.div>
 
       <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-        <h2 className="text-3xl font-black text-[var(--text-primary)] mb-3 tracking-tight">علاقه‌مندی‌هات</h2>
-        <p className="text-base text-[var(--text-muted)] mb-12 max-w-sm leading-relaxed font-medium">
+        <h2 className="mb-3 text-3xl font-black tracking-tight text-slate-900">علاقه‌مندی‌هات</h2>
+        <p className="mb-12 max-w-sm text-base font-medium leading-relaxed text-slate-500">
           کالاهایی که دوست داری رو ذخیره کن تا بعداً راحت پیداشون کنی.
         </p>
       </motion.div>
 
-      <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="space-y-4 w-full max-w-xs relative z-10">
-        <Link to="/login" className="w-full bg-gradient-to-l from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 shadow-xl shadow-[var(--brand-glow)] active:scale-[0.98] transition-all">
-          <UserPlus className="w-5 h-5" /> ورود سریع
+      <motion.div
+        initial={{ y: 30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="relative z-10 w-full max-w-xs space-y-3"
+      >
+        <Link
+          to="/login"
+          className="flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-l from-cyan-600 to-teal-500 py-4 text-sm font-black text-white shadow-xl shadow-cyan-500/25 transition-all active:scale-[0.98]"
+        >
+          <UserPlus className="h-5 w-5" /> ورود سریع
         </Link>
-        <Link to="/search" className="w-full bg-[var(--bg-secondary)] text-[var(--text-primary)] py-4 rounded-2xl font-black text-sm flex items-center justify-center gap-3 border border-[var(--border-light)] active:scale-[0.98] transition-all">
-          <ShoppingBag className="w-5 h-5" /> بگرد بدون ورود
+        <Link
+          to="/search"
+          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white py-4 text-sm font-black text-slate-800 transition-all active:scale-[0.98]"
+        >
+          <ShoppingBag className="h-5 w-5" /> بگرد بدون ورود
         </Link>
       </motion.div>
     </div>
