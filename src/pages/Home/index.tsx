@@ -1,6 +1,6 @@
-import React, { memo, useCallback, useEffect, useState } from "react";
-import { Loader2, AlertCircle, X, Search, UserPlus, Heart, Navigation, Sparkles, Store, Tag, ArrowLeft } from "lucide-react";
+import React, { memo, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, ArrowLeft, ChevronLeft, Loader2, MapPin, Search, Store, Tag, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useHomeLogic } from "./useHomeLogic";
 import { HOME_CONFIG } from "./constants";
@@ -13,141 +13,121 @@ import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
 import CityPicker from "../../components/location/CityPicker";
 
-const containerVariants = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: HOME_CONFIG.ANIMATION_STAGGER } } };
+const ActiveFiltersBanner = memo(({ filterCount, onClear }: { filterCount: number; onClear: () => void }) => (
+  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+    <button onClick={onClear} className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3.5 py-2 text-xs font-extrabold text-rose-600">
+      {filterCount} فیلتر فعال <X className="h-3.5 w-3.5" />
+    </button>
+  </motion.div>
+));
 
-const featureCards = [
-  { title: "کالای موردنظرت را پیدا کن", text: "نام کالا را جستجو کن و گزینه‌های موجود در فروشگاه‌ها را ببین.", icon: Search, action: "جستجوی کالا", to: "/search" },
-  { title: "فروشگاه‌های اطراف را پیدا کن", text: "فروشگاه‌های نزدیک و کالاهای موجود را برای خرید حضوری بررسی کن.", icon: Navigation, action: "اطراف من", to: "/explore" },
-  { title: "کالاها را ذخیره کن", text: "محصولات موردپسندت را نشان کن تا بعداً سریع به آن‌ها برگردی.", icon: Heart, action: "نشان‌ها", to: "/saved" },
-  { title: "فروشگاهت را ثبت کن", text: "فروشگاه و کالاهایت را معرفی کن تا مشتری‌های اطراف پیدایت کنند.", icon: Store, action: "ثبت فروشگاه", to: "/become-seller" },
-  { title: "اگر پیدا نکردی، درخواست بده", text: "اگر کالای موردنظر را در نتایج ندیدی، درخواستت را از مسیر جستجو پیگیری کن.", icon: Tag, action: "جستجوی دوباره", to: "/search" },
-  { title: "دستیار خرید", text: "برای پیدا کردن کالا یا انتخاب بهتر، از دستیار کی‌داره کمک بگیر.", icon: Sparkles, action: "دستیار", to: "/ai" },
-];
+const ErrorBanner = memo(({ onRetry }: { onRetry: () => void }) => (
+  <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-3.5">
+    <div className="flex items-center justify-between gap-3">
+      <span className="flex items-center gap-2 text-xs font-extrabold text-rose-600"><AlertCircle className="h-4 w-4" />ارتباط با بازار لحظه‌ای قطع شد.</span>
+      <button onClick={onRetry} className="rounded-xl bg-white px-3 py-1.5 text-xs font-extrabold text-rose-700 shadow-sm">تلاش مجدد</button>
+    </div>
+  </motion.div>
+));
 
-function FeatureBanner({ user }: { user: unknown }) {
-  const [index, setIndex] = useState(0);
-  const card = featureCards[index];
-  const Icon = card.icon;
-
-  useEffect(() => {
-    const timer = window.setInterval(
-      () => setIndex((value) => (value + 1) % featureCards.length),
-      4500
-    );
-    return () => window.clearInterval(timer);
-  }, []);
-
-  return (
-    <section className="pt-3 sm:pt-5" aria-label="امکانات کی‌داره">
-      <div className="relative overflow-hidden rounded-[28px] border border-cyan-100 bg-gradient-to-br from-[#063b52] via-[#07566c] to-[#08a6a6] px-5 py-5 text-white shadow-[0_24px_60px_-34px_rgba(6,73,94,.7)] sm:px-8 sm:py-7">
-        <div className="pointer-events-none absolute -left-20 -top-24 h-64 w-64 rounded-full bg-cyan-200/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-28 right-10 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
-
-        <div className="relative grid items-center gap-5 lg:grid-cols-[1fr_auto]">
-          <div>
-            <div className="mb-2 flex items-center gap-2">
-              <span className="rounded-full bg-white/15 px-3 py-1 text-[10px] font-black ring-1 ring-white/15">
-                کی‌داره؟
-              </span>
-              <span className="text-[10px] font-bold text-cyan-50">ببین کی داره، حضوری بگیر</span>
-            </div>
-            <h1 className="max-w-2xl text-2xl font-black leading-[1.45] sm:text-3xl lg:text-[36px]">
-              خرید حضوری را ساده و سریع پیدا کن
-            </h1>
-            <p className="mt-2 max-w-2xl text-xs font-bold leading-6 text-cyan-50/90 sm:text-sm">
-              کالا را جستجو کن، فروشگاه نزدیکت را پیدا کن و قبل از راه افتادن ببین چه چیزی کجاست.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                to="/search"
-                className="inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-xs font-black text-[#07506a] shadow-lg transition hover:-translate-y-0.5 hover:bg-cyan-50"
-              >
-                <Search className="h-4 w-4" />
-                جستجوی کالا
-              </Link>
-              {!user && (
-                <Link
-                  to="/register"
-                  className="inline-flex h-10 items-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 text-xs font-black text-white backdrop-blur transition hover:bg-white/15"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  ثبت‌نام
-                </Link>
-              )}
-            </div>
-          </div>
-
-          <div className="hidden h-36 w-36 items-center justify-center rounded-[32px] bg-white/10 ring-1 ring-white/15 lg:flex">
-            <Icon className="h-16 w-16 text-cyan-50" strokeWidth={1.5} />
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
-        {featureCards.map((item, i) => {
-          const ItemIcon = item.icon;
-          const active = i === index;
-          return (
-            <button
-              key={item.title}
-              type="button"
-              onClick={() => setIndex(i)}
-              className={`group min-h-[92px] rounded-2xl border p-3 text-right transition-all duration-200 ${active
-                ? "border-cyan-300 bg-cyan-50 shadow-sm"
-                : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-cyan-200 hover:shadow-sm"}`}
-              aria-label={item.title}
-              aria-pressed={active}
-            >
-              <div className={`mb-2 flex h-8 w-8 items-center justify-center rounded-xl ${active ? "bg-cyan-600 text-white" : "bg-slate-100 text-slate-600"}`}>
-                <ItemIcon className="h-4 w-4" />
-              </div>
-              <div className="line-clamp-2 text-[11px] font-black leading-5 text-slate-800">{item.title}</div>
-            </button>
-          );
-        })}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={index}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.2 }}
-          className="mt-2 flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2"
-        >
-          <span className="truncate text-[11px] font-bold text-slate-500">{card.text}</span>
-          <Link to={card.to} className="mr-3 shrink-0 text-[11px] font-black text-cyan-700 hover:text-cyan-900">
-            {card.action} ←
-          </Link>
-        </motion.div>
-      </AnimatePresence>
-    </section>
-  );
-}
-
-const ActiveFiltersBanner = memo(({ filterCount, onClear }: { filterCount: number; onClear: () => void }) => <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mb-4 overflow-hidden"><button onClick={onClear} aria-label="پاک کردن فیلترها" className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-600"><span>{filterCount} فیلتر فعال</span><X className="h-3.5 w-3.5" /></button></motion.div>);
-const ErrorBanner = memo(({ onRetry }: { onRetry: () => void }) => <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-5" role="alert"><div className="flex items-center justify-between gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3.5"><span className="flex items-center gap-2 text-xs font-bold text-rose-600"><AlertCircle className="h-4 w-4" />ارتباط با بازار لحظه‌ای قطع شد.</span><button onClick={onRetry} className="rounded-xl bg-rose-100 px-3 py-1.5 text-xs font-bold text-rose-700">تلاش مجدد</button></div></motion.div>);
-const EndOfListMessage = memo(() => <div className="flex items-center justify-center gap-3 py-10"><div className="h-px flex-1 bg-slate-200" /><p className="text-xs font-medium text-slate-400">فعلاً همین‌ها بود 🌿</p><div className="h-px flex-1 bg-slate-200" /></div>);
+const QuickBenefit = ({ icon: Icon, title, text }: { icon: typeof Search; title: string; text: string }) => (
+  <div className="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 px-3.5 py-3 shadow-[0_10px_30px_-28px_rgba(7,63,86,.5)]">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700"><Icon className="h-4.5 w-4.5" /></div>
+    <div className="min-w-0"><div className="text-[11px] font-black text-slate-800">{title}</div><div className="mt-0.5 truncate text-[10px] font-bold text-slate-500">{text}</div></div>
+  </div>
+);
 
 export default function Home() {
   const logic = useHomeLogic();
   const { user, effectiveCity, effectiveDisplay, effectiveProvince, gpsEnabled, manualLocation, search, setSearch, activeCategory, setActiveCategory, scope, setScope, sort, setSort, isLocationModalOpen, setIsLocationModalOpen, handleClearFilters, hasActiveFilters, filterCount, error, refetch, isLoading, allProducts, favoritesSet, toggleFavorite, isFetchingNextPage, hasNextPage, loadMoreRef, selectCity, useGps, gpsLoading, gpsError } = logic;
-  const handleOpenLocationModal = useCallback(() => setIsLocationModalOpen(true), [setIsLocationModalOpen]);
-  const productsCount = allProducts.length;
-  return <HomeErrorBoundary><div dir="rtl" className="min-h-screen bg-[var(--bg-primary)] font-sans text-slate-900">
-    <Header user={user} effectiveCity={effectiveCity} effectiveDisplay={effectiveDisplay} gpsEnabled={gpsEnabled} manualLocation={manualLocation} onOpenLocationModal={handleOpenLocationModal} />
-    <CityPicker open={isLocationModalOpen} selectedCity={effectiveCity} selectedProvince={effectiveProvince} gpsLoading={gpsLoading} gpsError={gpsError} onClose={() => setIsLocationModalOpen(false)} onSelect={selectCity} onGps={useGps} />
-    <main className="pb-24"><div className="mx-auto w-full max-w-[1320px] px-3 sm:px-5 lg:px-6">
-      <FeatureBanner user={user} />
-      <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:mt-4 sm:p-2.5"><div className="rounded-xl bg-slate-50 p-1"><SearchBar value={search} onChange={setSearch} placeholder="چه کالایی می‌خواهی؟ مثلاً موبایل، لوازم خودرو، پوشاک…" /></div></section>
-      <section className="mt-2 overflow-hidden rounded-2xl border border-slate-200 bg-white"><CategorySlider activeCategory={activeCategory} onSelectCategory={setActiveCategory} /></section>
-      <section className="mt-4" aria-labelledby="products-title">
-        <div className="mb-3 flex flex-col gap-3 border-b border-slate-200 pb-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-3"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700"><Tag className="h-4 w-4" /></div><div><h2 id="products-title" className="text-xl font-black tracking-tight text-[#073f56]">کالاهای موجود</h2><p className="mt-0.5 text-xs font-bold text-slate-500">{effectiveCity ? "گزینه‌های قابل بررسی در " + effectiveCity : "محصولات تازه فروشگاه‌ها"}</p></div></div><div className="w-full sm:w-72"><SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} /></div></div>
-        <AnimatePresence>{hasActiveFilters && <ActiveFiltersBanner filterCount={filterCount} onClear={handleClearFilters} />}</AnimatePresence><AnimatePresence>{error && <ErrorBanner onRetry={refetch} />}</AnimatePresence>
-        {!isLoading && productsCount > 0 && <div className="mb-4"><ResultHeader count={productsCount} sort={sort} onSortChange={setSort} isLoading={isLoading} /></div>}
-        {isLoading && productsCount === 0 ? <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">{Array.from({ length: HOME_CONFIG.SKELETON_COUNT }).map((_, i) => <ProductCardSkeleton key={i} />)}</div> : !isLoading && productsCount === 0 ? <div className="rounded-[24px] border border-slate-200 bg-white py-12"><EmptyState title="هنوز کالایی پیدا نشد" description={hasActiveFilters ? "فیلترها را کمی بازتر کن؛ شاید نتیجه پیدا شود." : "به‌زودی کالاهای تازه‌ای از فروشگاه‌ها اضافه می‌شود."}>{hasActiveFilters && <button onClick={handleClearFilters} className="mt-2 rounded-xl bg-teal-600 px-6 py-2.5 text-sm font-bold text-white">پاک کردن فیلترها</button>}</EmptyState></div> : <><motion.div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" variants={containerVariants} initial="hidden" animate="show">{allProducts.map((p) => <PremiumProductCard key={p.id} product={p} isFavorite={favoritesSet.has(p.id)} onToggleFavorite={toggleFavorite} />)}</motion.div><div ref={loadMoreRef} className="mt-6 flex h-20 items-center justify-center">{isFetchingNextPage && <div className="flex items-center gap-2 text-sm text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />در حال بارگذاری…</div>}</div>{!hasNextPage && productsCount > 0 && !isFetchingNextPage && <EndOfListMessage />}</>}
-      </section>
-    </div></main>
-  </div></HomeErrorBoundary>;
+  const openLocation = useCallback(() => setIsLocationModalOpen(true), [setIsLocationModalOpen]);
+
+  return (
+    <HomeErrorBoundary>
+      <div dir="rtl" className="min-h-screen bg-[#f6f9fb] font-sans text-slate-900">
+        <Header user={user} effectiveCity={effectiveCity} effectiveDisplay={effectiveDisplay} gpsEnabled={gpsEnabled} manualLocation={manualLocation} onOpenLocationModal={openLocation} />
+        <CityPicker open={isLocationModalOpen} selectedCity={effectiveCity} selectedProvince={effectiveProvince} gpsLoading={gpsLoading} gpsError={gpsError} onClose={() => setIsLocationModalOpen(false)} onSelect={selectCity} onGps={useGps} />
+
+        <main className="pb-28">
+          <section className="relative overflow-hidden bg-[#063b52] text-white">
+            <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-cyan-400/20 blur-3xl" />
+            <div className="pointer-events-none absolute -left-24 bottom-[-120px] h-80 w-80 rounded-full bg-teal-400/15 blur-3xl" />
+            <div className="relative mx-auto max-w-[1320px] px-4 pb-9 pt-8 sm:px-6 sm:pb-12 sm:pt-11 lg:px-8">
+              <div className="max-w-3xl">
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-[10px] font-black backdrop-blur">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-300" />
+                  خرید حضوری، همین اطراف
+                </div>
+                <h1 className="text-[30px] font-black leading-[1.35] tracking-tight sm:text-4xl lg:text-5xl">قبل از راه افتادن،<br className="sm:hidden" /> ببین <span className="text-cyan-300">کی داره.</span></h1>
+                <p className="mt-3 max-w-2xl text-sm font-bold leading-7 text-cyan-50/85 sm:text-base">کالا را پیدا کن، فروشگاه نزدیکت را ببین و برای خرید حضوری مستقیم راه بیفت.</p>
+              </div>
+
+              <div className="mt-7 max-w-3xl rounded-[24px] bg-white p-2 shadow-[0_24px_70px_-28px_rgba(0,0,0,.65)]">
+                <SearchBar value={search} onChange={setSearch} placeholder="چه چیزی می‌خواهی پیدا کنی؟ مثلاً روغن موتور، کفش، شارژر..." />
+                <div className="flex flex-wrap items-center gap-2 px-3 pb-2 pt-1 text-[10px] font-bold text-slate-500">
+                  <span className="text-slate-400">جستجوهای سریع:</span>
+                  {["روغن موتور", "کفش ورزشی", "شارژر آیفون", "لوازم خودرو"].map((q) => (
+                    <button key={q} onClick={() => setSearch(q)} className="rounded-full bg-slate-100 px-2.5 py-1.5 transition hover:bg-cyan-50 hover:text-cyan-700">{q}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mt-6 grid max-w-4xl gap-2.5 sm:grid-cols-3">
+                <QuickBenefit icon={MapPin} title="نزدیکت را پیدا کن" text={effectiveCity ? `در ${effectiveCity}` : "شهر خودت را انتخاب کن"} />
+                <QuickBenefit icon={Tag} title="قیمت را ببین" text="قبل از حرکت بررسی کن" />
+                <QuickBenefit icon={Store} title="مستقیم از فروشگاه" text="خرید حضوری و ساده" />
+              </div>
+            </div>
+          </section>
+
+          <div className="mx-auto w-full max-w-[1320px] px-3 sm:px-5 lg:px-8">
+            <section className="mt-5 overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_14px_45px_-38px_rgba(7,63,86,.5)]">
+              <div className="flex items-center justify-between border-b border-slate-100 px-4 pt-4">
+                <div><h2 className="text-base font-black text-[#073f56]">دسته‌بندی‌ها</h2><p className="mt-1 text-[10px] font-bold text-slate-400">از اینجا سریع‌تر شروع کن</p></div>
+                <Link to="/search" className="flex items-center gap-1 text-[10px] font-black text-cyan-700">همه دسته‌ها <ArrowLeft className="h-3.5 w-3.5" /></Link>
+              </div>
+              <CategorySlider activeCategory={activeCategory} onSelectCategory={setActiveCategory} />
+            </section>
+
+            <section className="mt-7" aria-labelledby="products-title">
+              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <div className="mb-1.5 flex items-center gap-2 text-cyan-700"><span className="h-2 w-2 rounded-full bg-cyan-500" /><span className="text-[10px] font-black uppercase tracking-wide">Marketplace</span></div>
+                  <h2 id="products-title" className="text-2xl font-black tracking-tight text-[#073f56]">کالاهای موجود</h2>
+                  <p className="mt-1 text-xs font-bold text-slate-500">{effectiveCity ? `انتخاب‌های قابل بررسی در ${effectiveCity}` : "محصولات تازه فروشگاه‌ها"}</p>
+                </div>
+                <div className="w-full sm:w-72"><SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} /></div>
+              </div>
+
+              <AnimatePresence>{hasActiveFilters && <ActiveFiltersBanner filterCount={filterCount} onClear={handleClearFilters} />}</AnimatePresence>
+              <AnimatePresence>{error && <ErrorBanner onRetry={refetch} />}</AnimatePresence>
+
+              {!isLoading && allProducts.length > 0 && <div className="mb-4"><ResultHeader count={allProducts.length} sort={sort} onSortChange={setSort} isLoading={isLoading} /></div>}
+
+              {isLoading && allProducts.length === 0 ? (
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">{Array.from({ length: HOME_CONFIG.SKELETON_COUNT }).map((_, i) => <ProductCardSkeleton key={i} />)}</div>
+              ) : !isLoading && allProducts.length === 0 ? (
+                <div className="rounded-[26px] border border-slate-200 bg-white py-14"><EmptyState title="هنوز کالایی پیدا نشد" description={hasActiveFilters ? "فیلترها را کمی بازتر کن؛ شاید نتیجه پیدا شود." : "به‌زودی کالاهای تازه‌ای از فروشگاه‌ها اضافه می‌شود."}>{hasActiveFilters && <button onClick={handleClearFilters} className="mt-2 rounded-xl bg-cyan-700 px-6 py-2.5 text-sm font-bold text-white">پاک کردن فیلترها</button>}</EmptyState></div>
+              ) : (
+                <>
+                  <motion.div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" initial="hidden" animate="show">
+                    {allProducts.map((p) => <PremiumProductCard key={p.id} product={p} isFavorite={favoritesSet.has(p.id)} onToggleFavorite={toggleFavorite} />)}
+                  </motion.div>
+                  <div ref={loadMoreRef} className="mt-7 flex h-16 items-center justify-center">{isFetchingNextPage && <div className="flex items-center gap-2 text-sm font-bold text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />در حال بارگذاری…</div>}</div>
+                  {!hasNextPage && <div className="flex items-center gap-3 py-7"><div className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold text-slate-400">همین‌ها بود 🌿</span><div className="h-px flex-1 bg-slate-200" /></div>}
+                </>
+              )}
+            </section>
+
+            <section className="mb-8 mt-8 overflow-hidden rounded-[28px] bg-gradient-to-l from-[#073f56] to-[#086d78] p-6 text-white shadow-[0_25px_60px_-35px_rgba(7,63,86,.8)] sm:p-8">
+              <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div><div className="mb-2 text-xs font-black text-cyan-200">فروشنده‌ای؟</div><h2 className="text-xl font-black sm:text-2xl">فروشگاهت را رایگان معرفی کن.</h2><p className="mt-2 max-w-xl text-xs font-bold leading-6 text-cyan-50/80">کالاهایت را ثبت کن تا خریدارهای اطراف راحت‌تر پیدایت کنند.</p></div>
+                <Link to={user ? "/become-seller" : "/onboarding?role=seller"} className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-black text-[#073f56] transition hover:-translate-y-0.5"><Store className="h-4 w-4" />ثبت فروشگاه <ChevronLeft className="h-4 w-4" /></Link>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </HomeErrorBoundary>
+  );
 }
