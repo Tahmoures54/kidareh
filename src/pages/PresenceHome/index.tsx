@@ -366,6 +366,33 @@ export default function PresenceHome() {
         </FeedColumn>
 
         <FeedColumn>
+          <section className="mx-3 mt-5 overflow-hidden rounded-[28px] border border-[var(--line)] bg-white shadow-sm">
+            <div className="grid gap-0 lg:grid-cols-2">
+              <div className="bg-[var(--accent)] p-5 text-white sm:p-7">
+                <p className="text-xs font-black text-white/75">برای خریدار</p>
+                <h2 className="mt-1 text-xl font-black leading-8 sm:text-2xl">قبل از راه افتادن، ببین کی داره.</h2>
+                <p className="mt-2 text-xs font-bold leading-6 text-white/80">
+                  کالا را پیدا کن، فروشگاه نزدیک را ببین، قیمت و موجودی را بررسی کن و اگر لازم بود مستقیم با فروشنده حرف بزن.
+                </p>
+                <Link to="/search" className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-white px-4 text-xs font-black text-[var(--accent)]">
+                  همین حالا جستجو کن <ArrowLeft className="h-4 w-4" />
+                </Link>
+              </div>
+              <div className="p-5 sm:p-7">
+                <p className="text-xs font-black text-[var(--muted)]">برای فروشنده</p>
+                <h2 className="mt-1 text-xl font-black leading-8 text-[var(--ink)] sm:text-2xl">فروشگاهت را رایگان معرفی کن.</h2>
+                <p className="mt-2 text-xs font-bold leading-6 text-[var(--muted)]">
+                  مشتری‌های اطرافت باید بتوانند کالا، قیمت و موقعیت فروشگاهت را ببینند. با یک ثبت‌نام ساده شروع کن.
+                </p>
+                <Link to={user ? "/become-seller" : "/onboarding?role=seller"} className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[var(--ink)] px-4 text-xs font-black text-white">
+                  ثبت فروشگاه <Store className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </section>
+        </FeedColumn>
+
+        <FeedColumn>
           <section className="sv-why">
             <div className="sv-why-banner">
               <p className="relative z-[1] text-sm font-black text-white/90">چرا کی‌داره؟</p>
