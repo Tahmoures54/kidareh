@@ -61,8 +61,7 @@ function normalizeProduct(raw: any): SavedProduct & Record<string, any> {
     distance: raw.distance || raw.city || "",
     image,
     hasPriceDrop: Boolean(
-      raw.hasPriceDrop ||
-        (raw.old_price && Number(raw.old_price) > Number(raw.price))
+      raw.hasPriceDrop || (raw.old_price && Number(raw.old_price) > Number(raw.price))
     ),
   };
 }
@@ -130,14 +129,12 @@ export default function Saved() {
   const filtered = useMemo(() => {
     let list = [...products];
     if (filter === "price_drop") list = list.filter((p) => p.hasPriceDrop);
-    if (filter === "available")
-      list = list.filter((p) => isProductAvailable(p.status));
+    if (filter === "available") list = list.filter((p) => isProductAvailable(p.status));
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
       list = list.filter(
         (p) =>
-          String(p.name).toLowerCase().includes(q) ||
-          String(p.store || "").toLowerCase().includes(q)
+          String(p.name).toLowerCase().includes(q) || String(p.store || "").toLowerCase().includes(q)
       );
     }
     list.sort((a, b) => (sortAsc ? a.price - b.price : b.price - a.price));
@@ -211,7 +208,7 @@ export default function Saved() {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-28" dir="rtl">
+    <div className="min-h-screen bg-slate-50/40 pb-28" dir="rtl">
       <SavedHeader
         selectionMode={selectionMode}
         selectedCount={selected.size}
@@ -236,16 +233,16 @@ export default function Saved() {
       <div className="px-4 pt-4">
         {loading && (
           <div className="flex justify-center py-20">
-            <RefreshCw className="w-8 h-8 animate-spin text-[var(--brand-primary)]" />
+            <RefreshCw className="h-8 w-8 animate-spin text-cyan-600" />
           </div>
         )}
 
         {!loading && error && (
-          <div className="text-center py-16 space-y-4">
-            <p className="text-rose-500 font-bold">{error}</p>
+          <div className="space-y-4 py-16 text-center">
+            <p className="font-bold text-rose-500">{error}</p>
             <button
               onClick={fetchSaved}
-              className="px-5 py-2.5 rounded-xl bg-[var(--brand-primary)] text-white text-sm font-bold"
+              className="rounded-xl bg-gradient-to-l from-cyan-600 to-teal-500 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-cyan-500/25"
             >
               تلاش مجدد
             </button>
@@ -256,9 +253,7 @@ export default function Saved() {
           <EmptyState
             icon={Heart}
             title={
-              searchQuery || filter !== "all"
-                ? "نتیجه‌ای یافت نشد"
-                : "هنوز کالایی ذخیره نکرده‌اید"
+              searchQuery || filter !== "all" ? "نتیجه‌ای یافت نشد" : "هنوز کالایی ذخیره نکرده‌اید"
             }
             description={
               searchQuery || filter !== "all"
@@ -313,7 +308,7 @@ export default function Saved() {
       {!selectionMode && isAuthenticated && products.length > 0 && (
         <button
           onClick={() => setSelectionMode(true)}
-          className="fixed bottom-24 left-4 z-30 px-4 py-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-light)] shadow-lg text-xs font-bold text-[var(--text-secondary)]"
+          className="fixed bottom-24 left-4 z-30 rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 shadow-lg transition hover:border-cyan-200 hover:text-cyan-700"
         >
           انتخاب چندتایی
         </button>
