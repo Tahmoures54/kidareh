@@ -17,10 +17,9 @@ interface HeaderProps {
   gpsEnabled: boolean;
   manualLocation: ManualLocation | null;
   onOpenLocationModal: () => void;
-  hasNotifications?: boolean; // پراپ جدید برای نشان دادن نقطه اعلان
+  hasNotifications?: boolean;
 }
 
-// کلاس‌های مشترک برای دکمه‌های آیکونی
 const ICON_BUTTON_CLASS =
   "p-2 rounded-lg text-[var(--text-secondary)] hover:text-[var(--brand-primary)] hover:bg-gray-100 dark:hover:bg-gray-800 transition-all active:scale-90";
 
@@ -37,7 +36,6 @@ export const Header = memo(
     const navigate = useNavigate();
     const isSeller = user?.role === "seller" || user?.role === "admin";
 
-    // استفاده از useCallback برای جلوگیری از ساخت تابع در هر رندر
     const handleNavigateToMessages = useCallback(() => {
       navigate("/messages");
     }, [navigate]);
@@ -49,7 +47,6 @@ export const Header = memo(
     const handleAvatarError = useCallback(
       (e: React.SyntheticEvent<HTMLImageElement>) => {
         e.currentTarget.style.display = "none";
-        // می‌توان fallback icon را نشان داد، اما در اینجا با مخفی کردن تصویر، آیکون کاربر از قبل وجود دارد
       },
       []
     );
@@ -60,7 +57,6 @@ export const Header = memo(
         style={{ paddingTop: "max(0px, env(safe-area-inset-top))" }}
       >
         <div className="flex items-center justify-between h-14 px-4">
-          {/* انتخاب شهر */}
           <button
             onClick={onOpenLocationModal}
             aria-label="انتخاب شهر"
@@ -81,17 +77,31 @@ export const Header = memo(
               {effectiveCity}
             </span>
             <ChevronDown className="w-4 h-4 text-[var(--text-muted)] shrink-0" />
+            <span
+              aria-hidden="true"
+              className={`relative inline-flex w-2.5 h-2.5 shrink-0 rounded-full ${
+                gpsEnabled && !manualLocation
+                  ? "bg-emerald-500"
+                  : "bg-[var(--brand-primary)]"
+              }`}
+            >
+              <span
+                className={`absolute inset-0 rounded-full ${
+                  gpsEnabled && !manualLocation
+                    ? "bg-emerald-400"
+                    : "bg-[var(--brand-primary)]"
+                } animate-ping opacity-75`}
+              />
+            </span>
           </button>
 
-          {/* لوگو */}
           <Link
             to="/"
-            className="text-lg font-black text-[var(--text-primary)] hover:text-rose-600 transition-colors"
+            className="text-lg font-black text-[var(--text-primary)] hover:text-[var(--brand-primary)] transition-colors"
           >
             کی‌داره؟
           </Link>
 
-          {/* آیکون‌های سمت چپ */}
           <div className="flex items-center gap-2">
             {isSeller && (
               <Link
