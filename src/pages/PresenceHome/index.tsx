@@ -1,6 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock3, Footprints, Radio, Sparkles } from "lucide-react";
+import {
+  Clock3,
+  Footprints,
+  Map as MapIcon,
+  Radio,
+  Search,
+  Sparkles,
+  Store,
+  Navigation,
+  ShoppingBag,
+  ArrowLeft,
+} from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { useAppLocation } from "../../hooks/useAppLocation";
 import { categoriesData, getCategoryGroupBySlug, getCategoryGroupInfo } from "../../data/processed/categories";
@@ -45,10 +56,26 @@ const RADII = [
   { km: 8, label: "کل شهر" },
 ];
 
+const QUICK_ACTIONS = [
+  { to: "/explore", label: "نقشه", icon: MapIcon, tone: "from-teal-500 to-cyan-500" },
+  { to: "/radar", label: "رادار قیمت", icon: Radio, tone: "from-violet-500 to-fuchsia-500" },
+  { to: "/ai", label: "دستیار هوشمند", icon: Sparkles, tone: "from-amber-500 to-orange-500" },
+  { to: "/search", label: "جستجو", icon: Search, tone: "from-sky-500 to-blue-600" },
+  { to: "/stores", label: "فروشگاه‌ها", icon: Store, tone: "from-emerald-500 to-teal-600" },
+] as const;
+
+function greetingByHour(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "صبح بخیر";
+  if (h < 17) return "ظهر بخیر";
+  if (h < 21) return "عصر بخیر";
+  return "شب بخیر";
+}
+
 export default function PresenceHome() {
   const { origin } = usePresenceOrigin();
   const { location: cityLocation, isTehran } = useAppLocation();
-  const { isSeller } = useAuth();
+  const { user, isSeller } = useAuth();
   const [q, setQ] = useState("");
   const [marketCategory, setMarketCategory] = useState("all");
   const [radiusKm, setRadiusKm] = useState(3);
@@ -125,18 +152,94 @@ export default function PresenceHome() {
     return mergeMarketStories(paidStories, extra, 24);
   }, [isTehran, paidStories]);
 
+  const displayName = user?.name?.trim() || user?.store_name?.trim() || "";
+
   return (
-    <div className="grid bg-white lg:grid-cols-[minmax(0,1fr)_420px]">
+    <div className="grid bg-[var(--paper)] lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="min-w-0">
+        {/* Hero welcome */}
+        <section className="relative overflow-hidden border-b border-[var(--line)] bg-white">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.55]"
+            style={{
+              background:
+                "radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 55%), radial-gradient(ellipse 50% 40% at 0% 100%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 50%)",
+            }}
+          />
+          <div className="relative px-4 pb-4 pt-4 sm:px-5 sm:pt-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[12px] font-black tracking-wide text-[var(--accent)]">
+                  {greetingByHour()}
+                  {displayName ? `، ${displayName}` : ""}
+                </p>
+                <h1 className="mt-1 text-[1.35rem] font-black leading-snug tracking-tight text-[var(--ink)] sm:text-2xl">
+                  ببین کی داره؟ حضوری بگیر
+                </h1>
+                <p className="mt-1.5 max-w-md text-[13px] font-bold leading-6 text-[var(--ink-soft)]">
+                  در <span className="text-[var(--accent)]">{cityLocation.city}</span> کالا و فروشگاه اطراف را
+                  پیدا کن، چت کن، بعد حضوری بخر — بدون انتظار ارسال.
+                </p>
+              </div>
+              <div className="hidden shrink-0 sm:flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)] text-lg font-black text-white shadow-lg shadow-[var(--accent)]/30">
+                کی
+              </div>
+            </div>
+
+            {/* Quick actions */}
+            <div className="mt-4 flex gap-2.5 overflow-x-auto presence-hide-scroll pb-1">
+              {QUICK_ACTIONS.map((a) => (
+                <Link
+                  key={a.to}
+                  to={a.to}
+                  className="group flex shrink-0 flex-col items-center gap-1.5"
+                >
+                  <span
+                    className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${a.tone} text-white shadow-md transition group-hover:scale-105 group-active:scale-95`}
+                  >
+                    <a.icon className="h-5 w-5" strokeWidth={2.4} />
+                  </span>
+                  <span className="text-[10px] font-black text-[var(--ink-soft)]">{a.label}</span>
+                </Link>
+              ))}
+            </div>
+
+            {/* Tehran pulse stats */}
+            {isTehran && pulse.inWalk15 > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)]/10 px-3 py-1.5 text-[11px] font-black text-[var(--accent)]">
+                  <Footprints className="h-3.5 w-3.5" />
+                  {toFa(pulse.inWalk15)} کالا تا ۱۵ دقیقه پیاده
+                </span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--paper)] px-3 py-1.5 text-[11px] font-black text-[var(--ink-soft)] ring-1 ring-[var(--line)]">
+                  <Navigation className="h-3.5 w-3.5 text-[var(--accent)]" />
+                  {origin.label || cityLocation.city}
+                </span>
+              </div>
+            )}
+          </div>
+        </section>
+
         <FeedColumn>
-          <label className="mx-3 mt-3 flex h-11 items-center gap-3 rounded-2xl bg-[var(--paper)] px-3">
-            <Sparkles className="h-4 w-4 text-[var(--accent)]" />
+          {/* Search */}
+          <label className="mx-3 mt-3 flex h-12 items-center gap-3 rounded-2xl border border-[var(--line)] bg-white px-3.5 shadow-sm transition focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--accent)]/20">
+            <Search className="h-4.5 w-4.5 shrink-0 text-[var(--accent)]" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="جستجو در پست‌ها…"
-              className="h-full flex-1 bg-transparent text-sm font-bold outline-none"
+              placeholder="چی می‌خوای؟ جستجو در پست‌ها و کالاها…"
+              className="h-full flex-1 bg-transparent text-sm font-bold outline-none placeholder:text-[var(--muted)]"
+              aria-label="جستجو"
             />
+            {q && (
+              <button
+                type="button"
+                onClick={() => setQ("")}
+                className="rounded-lg px-2 py-1 text-[11px] font-black text-[var(--muted)] hover:text-[var(--ink)]"
+              >
+                پاک
+              </button>
+            )}
           </label>
 
           <FeedStories
@@ -144,11 +247,16 @@ export default function PresenceHome() {
             composer={isSeller ? { label: "استوری من", href: "/buy-badge" } : undefined}
           />
 
+          {/* Categories */}
           <div className="flex items-center gap-2 overflow-x-auto presence-hide-scroll px-3 pb-2">
             <button
               type="button"
               onClick={() => setMarketCategory("all")}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${marketCategory === "all" ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+              className={`shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition ${
+                marketCategory === "all"
+                  ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25"
+                  : "presence-chip hover:bg-white"
+              }`}
             >
               همه
             </button>
@@ -157,98 +265,135 @@ export default function PresenceHome() {
                 key={group.slug}
                 type="button"
                 onClick={() => setMarketCategory(group.slug)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${marketCategory === group.slug ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+                className={`shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition ${
+                  marketCategory === group.slug
+                    ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25"
+                    : "presence-chip hover:bg-white"
+                }`}
               >
                 {group.icon} {group.short}
               </button>
             ))}
             <Link
               to="/categories"
-              className="shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black presence-chip"
+              className="shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black presence-chip hover:bg-white"
             >
               همه دسته‌ها
             </Link>
             {isTehran && (
-            <button
-              type="button"
-              onClick={() => setShowFilters((v) => !v)}
-              className={`shrink-0 rounded-full px-3 py-1.5 text-[12px] font-black ${showFilters ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
-            >
-              فیلتر
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={`shrink-0 rounded-full px-3.5 py-2 text-[12px] font-black transition ${
+                  showFilters
+                    ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent)]/25"
+                    : "presence-chip hover:bg-white"
+                }`}
+              >
+                فیلتر
+              </button>
             )}
           </div>
 
           {showFilters && isTehran && (
-          <div className="flex flex-wrap items-center gap-2 px-3 pb-2">
-            {RADII.map((r) => (
+            <div className="mx-3 mb-2 flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--line)] bg-white p-3">
+              {RADII.map((r) => (
+                <button
+                  key={r.km}
+                  type="button"
+                  onClick={() => setRadiusKm(r.km)}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-black transition ${
+                    radiusKm === r.km
+                      ? "bg-[var(--accent)] text-white"
+                      : "presence-chip"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
               <button
-                key={r.km}
                 type="button"
-                onClick={() => setRadiusKm(r.km)}
-                className={`rounded-full px-3 py-1.5 text-[11px] font-black ${radiusKm === r.km ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
+                onClick={() => setOpenNow((v) => !v)}
+                className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-black transition ${
+                  openNow ? "bg-[var(--ok)] text-white" : "presence-chip"
+                }`}
               >
-                {r.label}
+                <Clock3 className="h-3 w-3" /> فقط باز
               </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setOpenNow((v) => !v)}
-              className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-black ${openNow ? "bg-[var(--ok)] text-white" : "presence-chip"}`}
-            >
-              <Clock3 className="h-3 w-3" /> فقط باز
-            </button>
-            {(
-              [
-                ["nearest", "نزدیک‌ترین"],
-                ["cheapest", "ارزان‌ترین"],
-                ["trust", "معتبرترین"],
-                ["newest", "تازه‌ترین"],
-              ] as const
-            ).map(([key, label]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setSort(key)}
-                className={`rounded-full px-3 py-1.5 text-[11px] font-black ${sort === key ? "bg-[var(--accent)] text-white" : "presence-chip"}`}
-              >
-                {label}
-              </button>
-            ))}
-            <span className="text-[11px] font-black text-[var(--muted)]">{toFa(pulse.inWalk15)} تا ۱۵ دقیقه</span>
-          </div>
+              {(
+                [
+                  ["nearest", "نزدیک‌ترین"],
+                  ["cheapest", "ارزان‌ترین"],
+                  ["trust", "معتبرترین"],
+                  ["newest", "تازه‌ترین"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setSort(key)}
+                  className={`rounded-full px-3 py-1.5 text-[11px] font-black transition ${
+                    sort === key ? "bg-[var(--accent)] text-white" : "presence-chip"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+              <span className="text-[11px] font-black text-[var(--muted)]">
+                {toFa(pulse.inWalk15)} تا ۱۵ دقیقه
+              </span>
+            </div>
           )}
         </FeedColumn>
+
+        {/* Feed header */}
+        <div className="flex items-center justify-between px-4 pb-1 pt-1">
+          <p className="text-[13px] font-black text-[var(--ink)]">
+            {q.trim()
+              ? `نتایج «${q.trim()}»`
+              : marketCategory !== "all"
+                ? categoriesData.find((g) => g.slug === marketCategory)?.short || "دسته"
+                : "تازه‌های اطراف"}
+          </p>
+          <span className="text-[11px] font-bold text-[var(--muted)]">
+            {posts.length > 0 ? `${toFa(posts.length)} مورد` : ""}
+          </span>
+        </div>
 
         <FeedColumn>
           {posts.length === 0 ? (
             <div className="px-3 py-6">
-              <PresenceEmpty
-                title={
-                  marketCategory !== "all"
-                    ? "در این دسته کالایی نیست"
-                    : isTehran
-                      ? "در این شعاع کالایی نیست"
-                      : `هنوز آگهی در ${cityLocation.city} نیست`
-                }
-                hint={
-                  marketCategory !== "all"
-                    ? "دسته دیگری را بزن یا از «همه دسته‌ها» زیردسته دقیق‌تر را باز کن."
-                    : isTehran
-                      ? "فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
-                      : "فروشگاه‌های همین شهر را ببین یا از هدر شهر دیگری انتخاب کن."
-                }
-                actionLabel={isTehran ? "نمایش کل شهر" : "فروشگاه‌های این شهر"}
-                actionTo={isTehran ? undefined : "/stores"}
-                onAction={
-                  isTehran
-                    ? () => {
-                        setOpenNow(false);
-                        setRadiusKm(8);
-                      }
-                    : undefined
-                }
-              />
+              <div className="rounded-[28px] border border-dashed border-[var(--line)] bg-white p-6 text-center">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--accent)]/10 text-[var(--accent)]">
+                  <ShoppingBag className="h-7 w-7" />
+                </div>
+                <PresenceEmpty
+                  title={
+                    marketCategory !== "all"
+                      ? "در این دسته کالایی نیست"
+                      : isTehran
+                        ? "در این شعاع کالایی نیست"
+                        : `هنوز آگهی در ${cityLocation.city} نیست`
+                  }
+                  hint={
+                    marketCategory !== "all"
+                      ? "دسته دیگری را بزن یا از «همه دسته‌ها» زیردسته دقیق‌تر را باز کن."
+                      : isTehran
+                        ? "فیلتر «فقط باز» را خاموش کن یا شعاع را بزرگ‌تر بگیر."
+                        : "فروشگاه‌های همین شهر را ببین یا از هدر شهر دیگری انتخاب کن."
+                  }
+                  actionLabel={isTehran ? "نمایش کل شهر" : "فروشگاه‌های این شهر"}
+                  actionTo={isTehran ? undefined : "/stores"}
+                  onAction={
+                    isTehran
+                      ? () => {
+                          setOpenNow(false);
+                          setRadiusKm(8);
+                        }
+                      : undefined
+                  }
+                />
+              </div>
             </div>
           ) : (
             <FeedStack>
@@ -259,46 +404,72 @@ export default function PresenceHome() {
           )}
         </FeedColumn>
 
+        {/* Why Kidareh */}
         <FeedColumn>
-          <section className="mx-3 my-6 overflow-hidden rounded-[24px] border border-[var(--line)]">
-            <div className="bg-[var(--accent)] px-5 py-4 text-white">
-              <p className="text-sm font-black text-white/90">چرا کی‌داره؟</p>
-              <h2 className="mt-1 text-lg font-black">ببین، بعد بخر — از مغازه همین محله</h2>
+          <section className="mx-3 my-6 overflow-hidden rounded-[28px] border border-[var(--line)] bg-white shadow-sm">
+            <div className="relative overflow-hidden bg-gradient-to-br from-[var(--accent)] to-teal-700 px-5 py-5 text-white">
+              <div className="pointer-events-none absolute -left-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
+              <div className="pointer-events-none absolute -bottom-10 -right-6 h-40 w-40 rounded-full bg-white/10" />
+              <p className="relative text-sm font-black text-white/90">چرا کی‌داره؟</p>
+              <h2 className="relative mt-1 text-lg font-black leading-snug sm:text-xl">
+                ببین، بعد بخر — از مغازه همین محله
+              </h2>
+              <p className="relative mt-2 max-w-sm text-[13px] font-bold leading-6 text-white/85">
+                شفافیت موجودی و قیمت، چت فوری با فروشنده، مسیر روی نقشه.
+              </p>
             </div>
             <div className="grid sm:grid-cols-2">
               {compare.map((row) => (
-                <div key={row.axis} className="border-t border-[var(--line)] bg-white p-4">
+                <div
+                  key={row.axis}
+                  className="border-t border-[var(--line)] bg-white p-4 transition hover:bg-[var(--paper)] sm:odd:border-l"
+                >
                   <p className="text-sm font-black text-[var(--ink)]">{row.axis}</p>
                   <p className="mt-2 text-xs font-bold text-[var(--muted)]">دیجی‌کالا: {row.digikala}</p>
                   <p className="text-xs font-bold text-[var(--muted)]">دیوار: {row.divar}</p>
-                  <p className="mt-1 text-sm font-black text-[var(--accent)]">کی‌داره: {row.kidareh}</p>
+                  <p className="mt-1.5 text-sm font-black text-[var(--accent)]">کی‌داره: {row.kidareh}</p>
                 </div>
               ))}
+            </div>
+            <div className="border-t border-[var(--line)] p-4">
+              <Link
+                to="/explore"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--accent)] py-3.5 text-sm font-black text-white shadow-md shadow-[var(--accent)]/25 transition hover:brightness-105 active:scale-[0.98]"
+              >
+                شروع کشف روی نقشه
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
             </div>
           </section>
         </FeedColumn>
       </div>
 
       {desktop && (
-      <aside className="sticky top-[73px] z-0 h-[calc(100dvh-73px)] border-r border-[var(--line)]">
-        <div className="relative h-full">
-          <PresenceMap origin={origin} listings={listings} />
-          <div className="absolute bottom-4 right-4 left-4 z-10 presence-card rounded-2xl p-3">
-            <p className="inline-flex items-center gap-1 text-xs font-black">
-              <Footprints className="h-3.5 w-3.5 text-[var(--accent)]" />
-              {toFa(listings.length)} کالا روی نقشهٔ {isTehran ? origin.label : cityLocation.city}
-            </p>
-            <div className="mt-2 flex gap-2">
-              <Link to="/explore" className="flex-1 rounded-xl bg-[var(--accent)] py-3 text-center text-sm font-black text-white">
-                نقشه تمام‌صفحه
-              </Link>
-              <Link to="/radar" className="flex items-center justify-center gap-1 rounded-xl bg-[var(--accent)] px-3 text-[11px] font-black text-white">
-                <Radio className="h-3.5 w-3.5" /> رادار
-              </Link>
+        <aside className="sticky top-[73px] z-0 h-[calc(100dvh-73px)] border-r border-[var(--line)]">
+          <div className="relative h-full">
+            <PresenceMap origin={origin} listings={listings} />
+            <div className="absolute bottom-4 right-4 left-4 z-10 presence-card rounded-2xl p-3 shadow-lg">
+              <p className="inline-flex items-center gap-1 text-xs font-black">
+                <Footprints className="h-3.5 w-3.5 text-[var(--accent)]" />
+                {toFa(listings.length)} کالا روی نقشهٔ {isTehran ? origin.label : cityLocation.city}
+              </p>
+              <div className="mt-2 flex gap-2">
+                <Link
+                  to="/explore"
+                  className="flex-1 rounded-xl bg-[var(--accent)] py-3 text-center text-sm font-black text-white shadow-md shadow-[var(--accent)]/20"
+                >
+                  نقشه تمام‌صفحه
+                </Link>
+                <Link
+                  to="/radar"
+                  className="flex items-center justify-center gap-1 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 px-3 text-[11px] font-black text-white"
+                >
+                  <Radio className="h-3.5 w-3.5" /> رادار
+                </Link>
+              </div>
             </div>
           </div>
-        </div>
-      </aside>
+        </aside>
       )}
     </div>
   );
