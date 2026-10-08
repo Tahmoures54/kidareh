@@ -69,7 +69,7 @@ export default function Home() {
     <main className="pb-24"><div className="mx-auto w-full max-w-[1320px] px-3 sm:px-5 lg:px-6">
       <FeatureBanner user={user} />
       <section className="mt-3 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm sm:mt-4 sm:p-2.5"><div className="rounded-xl bg-slate-50 p-1"><SearchBar value={search} onChange={setSearch} placeholder="چه کالایی می‌خواهی؟ مثلاً موبایل، لوازم خودرو، پوشاک…" /></div></section>
-      <section className="mt-3"><CategorySlider activeCategory={activeCategory} onSelect={setActiveCategory} /></section>
+      <section className="mt-3"><CategorySlider activeCategory={activeCategory} onSelectCategory={setActiveCategory} /></section>
       <section className="mt-5" aria-labelledby="products-title">
         <div className="mb-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-center gap-3"><div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700"><Tag className="h-5 w-5" /></div><div><h2 id="products-title" className="text-lg font-black tracking-tight text-[#073f56]">کالاهای موجود</h2><p className="mt-0.5 text-xs font-bold text-slate-500">{effectiveCity ? "گزینه‌های قابل بررسی در " + effectiveCity : "محصولات تازه فروشگاه‌ها"}</p></div></div><div className="w-full sm:w-72"><SegmentedScope scope={scope} onScopeChange={setScope} city={effectiveCity} /></div></div>
         <AnimatePresence>{hasActiveFilters && <ActiveFiltersBanner filterCount={filterCount} onClear={handleClearFilters} />}</AnimatePresence><AnimatePresence>{error && <ErrorBanner onRetry={refetch} />}</AnimatePresence>
