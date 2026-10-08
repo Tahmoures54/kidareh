@@ -55,7 +55,6 @@ export const PremiumProductCard = memo(
     const [imgError, setImgError] = useState(false);
     const isFree = product.price == null || product.price === 0;
 
-    // ریست کردن خطای تصویر هنگام تغییر آدرس تصویر یا شناسه محصول
     useEffect(() => {
       setImgError(false);
     }, [product.image_url, product.id]);
@@ -70,102 +69,87 @@ export const PremiumProductCard = memo(
     );
 
     return (
-      <motion.div variants={itemVariants} className="group relative rounded-[22px] border border-slate-200/80 bg-white/90 p-2.5 shadow-[0_12px_35px_-28px_rgba(8,76,103,.5)] transition-all duration-300 hover:-translate-y-1 hover:border-[#08a6a6]/25 hover:shadow-[0_22px_45px_-28px_rgba(8,76,103,.55)] lg:p-3">
-        {/* لینک اصلی کل کارت را پوشش می‌دهد */}
-        <Link
-          to={`/products/${product.id}`}
-          className="absolute inset-0 z-0"
-          aria-label={`مشاهده ${product.name}`}
-        />
+      <motion.article
+        variants={itemVariants}
+        className="group relative flex h-full flex-col overflow-hidden rounded-[18px] border border-slate-200 bg-white p-2 shadow-[0_8px_24px_-22px_rgba(8,76,103,.55)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-[0_18px_36px_-24px_rgba(8,76,103,.5)] sm:rounded-[20px] sm:p-2.5 lg:p-3"
+      >
+        <Link to={`/products/${product.id}`} className="absolute inset-0 z-0" aria-label={`مشاهده ${product.name}`} />
 
-        {/* Image Container */}
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-[18px] bg-slate-100 dark:bg-gray-800 mb-3">
+        <div className="relative z-10 aspect-[4/5] w-full shrink-0 overflow-hidden rounded-[14px] bg-slate-100 sm:rounded-[16px]">
           {!imgError && product.image_url ? (
             <img
               src={product.image_url}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
               loading="lazy"
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-              <ShoppingBag className="w-12 h-12 text-gray-300 dark:text-gray-600" />
+            <div className="flex h-full w-full items-center justify-center bg-slate-100">
+              <ShoppingBag className="h-10 w-10 text-slate-300" />
             </div>
           )}
 
-          {/* Overlay gradient on hover */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-          {/* Favorite Button - outside Link overlay */}
           <button
+            type="button"
             onClick={handleFavoriteClick}
-            aria-label={
-              isFavorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"
-            }
-            className="absolute top-2.5 left-2.5 z-20 w-9 h-9 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-md flex items-center justify-center transition-all duration-300 md:opacity-0 md:group-hover:opacity-100 active:scale-90 shadow-lg"
+            aria-label={isFavorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
+            className="absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-md transition-all active:scale-90 md:opacity-0 md:group-hover:opacity-100"
           >
-            <Heart
-              className={`w-[18px] h-[18px] transition-all ${
-                isFavorite
-                  ? "fill-rose-500 text-rose-500 scale-110"
-                  : "text-gray-700 dark:text-white"
-              }`}
-            />
+            <Heart className={`h-4 w-4 ${isFavorite ? "fill-rose-500 text-rose-500" : "text-slate-700"}`} />
           </button>
 
-          {/* Badge */}
           {product.badge && (
-            <span className="absolute top-2.5 right-2.5 z-10 px-2.5 py-1 bg-rose-500 text-white text-[10px] font-extrabold rounded-lg shadow-md tracking-wide">
+            <span className="absolute right-2 top-2 z-10 max-w-[70%] truncate rounded-md bg-rose-500 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
               {getCategoryTextByValue(product.badge)}
             </span>
           )}
 
-          {/* View Count - On hover */}
           {product.views != null && product.views > 0 && (
-            <div className="absolute bottom-2.5 left-2.5 z-10 px-2 py-1 bg-black/60 backdrop-blur-sm rounded-lg flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Eye className="w-3 h-3 text-white" />
-              <span className="text-[10px] font-bold text-white">
-                {formatViews(product.views)}
-              </span>
+            <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-1 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
+              <Eye className="h-3 w-3 text-white" />
+              <span className="text-[9px] font-bold text-white">{formatViews(product.views)}</span>
             </div>
           )}
         </div>
 
-        {/* Info Section */}
-        <div className="px-0.5 relative z-10">
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 leading-5 mb-2 group-hover:text-[#0788ad] dark:group-hover:text-cyan-400 transition-colors">
+        <div className="relative z-10 flex flex-1 flex-col px-0.5 pt-2.5">
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-[13px] font-extrabold leading-5 text-slate-900 transition-colors group-hover:text-cyan-700 sm:text-sm">
             {product.name}
           </h3>
 
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-base font-black text-[#073f56] dark:text-white">
+          <div className="mt-2 flex min-h-[2.25rem] items-center justify-between gap-2">
+            <span className="min-w-0 truncate text-sm font-black text-[#073f56] sm:text-[15px]">
               {isFree ? (
-                <span className="text-green-600 dark:text-green-400">رایگان</span>
+                <span className="text-green-600">رایگان</span>
               ) : (
                 <>
                   {formatPrice(product.price)}
-                  <span className="text-[10px] font-normal text-gray-500 dark:text-gray-400 mr-1">
-                    تومان
-                  </span>
+                  <span className="mr-1 text-[9px] font-normal text-slate-500">تومان</span>
                 </>
               )}
             </span>
-            <span className="text-[11px] text-gray-500 dark:text-gray-400 flex items-center gap-1 truncate max-w-[45%]">
-              <MapPin className="w-3 h-3 shrink-0" />
+            <span className="flex min-w-0 max-w-[42%] shrink-0 items-center gap-1 truncate text-[10px] font-medium text-slate-500 sm:text-[11px]">
+              <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate">{product.city}</span>
             </span>
           </div>
 
-          {product.store_name && (
-            <div className="mt-2 flex items-center justify-between gap-2 border-t border-slate-100 pt-2 text-[11px] text-gray-500 dark:border-gray-800 dark:text-gray-400">
-              <Store className="w-3 h-3 shrink-0" />
-              <span className="truncate">{product.store_name}</span>
-              <ChevronLeft className="h-3.5 w-3.5 shrink-0 text-[#08a6a6]" />
-            </div>
-          )}
+          <div className="mt-auto min-h-[2.25rem] border-t border-slate-100 pt-2">
+            {product.store_name ? (
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 sm:text-[11px]">
+                <Store className="h-3 w-3 shrink-0 text-slate-400" />
+                <span className="min-w-0 flex-1 truncate">{product.store_name}</span>
+                <ChevronLeft className="h-3.5 w-3.5 shrink-0 text-cyan-600" />
+              </div>
+            ) : (
+              <div className="h-4" aria-hidden="true" />
+            )}
+          </div>
         </div>
-      </motion.div>
+      </motion.article>
     );
   }
 );
