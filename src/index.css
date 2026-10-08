@@ -1,12 +1,6 @@
-/* ====================== KIDAREH × MaterialHub Design Language ====================== */
-/*
- * Adapted from MaterialHub design-system.css
- * Theme: Industrial · Serious · Iranian Sky Turquoise
- * Primary: #0E7490 | Accent: #0891B2 | Navy: #0B1622 | BG: #F1F5F9
- */
-@import url("https://cdn.jsdelivr.net/gh/Tahmoures54/kidareh@da01b2dcfe0467ef61801002966dfb487a7448fa/src/index.css");
+/* ====================== KIDAREH GLOBAL DESIGN SYSTEM ====================== */
+/* Iranian-sky turquoise · RTL · clean marketplace */
 
-/* ── Global token override (MaterialHub) ── */
 :root {
   --brand-primary: #0E7490;
   --brand-primary-dark: #0C637A;
@@ -49,12 +43,18 @@
   --shadow-color: rgba(0, 0, 0, 0.35);
 }
 
-body {
-  background-color: var(--bg-primary) !important;
-  color: var(--text-primary);
+html {
+  background: var(--bg-primary);
 }
 
-/* ── Presence OS → MaterialHub industrial shell ── */
+body {
+  margin: 0;
+  background: var(--bg-primary) !important;
+  color: var(--text-primary);
+  font-family: Vazirmatn, Tahoma, Arial, sans-serif;
+}
+
+/* ── Presence pages ── */
 .presence-root {
   --paper: #F1F5F9;
   --paper-2: #E2E8F0;
@@ -81,7 +81,6 @@ body {
   border: 1px solid var(--line);
   border-radius: 14px !important;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04) !important;
-  backdrop-filter: none;
 }
 
 .presence-chip {
@@ -95,7 +94,7 @@ body {
   font-weight: 700 !important;
 }
 
-/* ── Shell rail / header (industrial navy) ── */
+/* ── Presence navigation ── */
 .presence-root > .relative > aside {
   background: #0B1622 !important;
   border-color: #122033 !important;
@@ -121,33 +120,35 @@ body {
   backdrop-filter: none !important;
 }
 
-/* ── Home — MaterialHub workspace / landing style ── */
+/* ── Home system ── */
 .sv-home {
-  --sv-radius: 10px;
-  --sv-radius-lg: 14px;
-  --sv-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.04);
-  --sv-shadow-lg: 0 4px 16px rgba(15, 23, 42, 0.08);
-  --sv-ring: 0 0 0 3px rgba(14, 116, 144, 0.15);
+  --sv-radius: 12px;
+  --sv-radius-lg: 20px;
+  --sv-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.05);
+  --sv-shadow-lg: 0 8px 30px rgba(15, 23, 42, 0.08);
+  --sv-ring: 0 0 0 3px rgba(8, 145, 178, 0.15);
 }
 
 .sv-home .sv-hero {
   position: relative;
   overflow: hidden;
-  border-bottom: 1px solid #E2E8F0;
+  border: 1px solid #CFFAFE;
+  border-radius: 24px;
   background:
-    radial-gradient(ellipse 80% 60% at 85% 10%, rgba(8, 145, 178, 0.12), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 10% 90%, rgba(14, 116, 144, 0.07), transparent 50%),
-    linear-gradient(160deg, #F0FDFF 0%, #F8FAFC 45%, #FFFFFF 100%);
+    radial-gradient(circle at 85% 20%, rgba(56, 189, 248, 0.2), transparent 28%),
+    radial-gradient(circle at 15% 85%, rgba(8, 145, 178, 0.12), transparent 32%),
+    linear-gradient(135deg, #F0FDFF 0%, #FFFFFF 58%, #ECFEFF 100%);
+  box-shadow: var(--sv-shadow-lg);
 }
 
 .sv-home .sv-hero-inner {
   position: relative;
-  padding: 1.35rem 1rem 1.5rem;
+  padding: 1.5rem 1rem 1.65rem;
 }
 
 @media (min-width: 640px) {
   .sv-home .sv-hero-inner {
-    padding: 1.6rem 1.35rem 1.75rem;
+    padding: 2rem 1.5rem 2.1rem;
   }
 }
 
@@ -161,31 +162,30 @@ body {
   border: 1px solid #A5F3FC;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
   color: #0E7490;
 }
 
 .sv-home .sv-title {
   margin-top: 0.75rem;
-  font-size: clamp(1.5rem, 4vw, 1.95rem);
-  font-weight: 800;
+  font-size: clamp(1.55rem, 4vw, 2.2rem);
+  font-weight: 900;
   line-height: 1.2;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.03em;
   color: #0F172A;
 }
 
 .sv-home .sv-subtitle {
-  margin-top: 0.55rem;
-  max-width: 32rem;
-  font-size: 0.9rem;
+  margin-top: 0.6rem;
+  max-width: 36rem;
+  font-size: 0.92rem;
   font-weight: 500;
-  line-height: 1.65;
+  line-height: 1.7;
   color: #64748B;
 }
 
 .sv-home .sv-subtitle span {
   color: #0E7490 !important;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .sv-home .sv-logo-mark {
@@ -195,7 +195,7 @@ body {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 14px;
   background: linear-gradient(145deg, #0891B2, #0E7490);
   font-size: 0.95rem;
   font-weight: 800;
@@ -235,18 +235,21 @@ body {
   width: 2.85rem;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 13px;
   color: #fff;
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+
 .sv-home .sv-action:hover .sv-action-icon {
   transform: translateY(-2px);
   box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
 }
+
 .sv-home .sv-action:active .sv-action-icon {
   transform: scale(0.97);
 }
+
 .sv-home .sv-action-label {
   font-size: 0.65rem;
   font-weight: 700;
@@ -255,21 +258,23 @@ body {
 
 .sv-home .sv-search {
   display: flex;
-  height: 2.85rem;
+  height: 3.15rem;
   align-items: center;
   gap: 0.65rem;
-  margin: 0.9rem 0.75rem 0;
-  padding: 0 0.95rem;
-  border-radius: 10px;
-  border: 1px solid #CBD5E1;
+  margin: 1rem 0.75rem 0;
+  padding: 0 1rem;
+  border-radius: 14px;
+  border: 1px solid #BAE6FD;
   background: #FFFFFF;
   box-shadow: var(--sv-shadow);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
+
 .sv-home .sv-search:focus-within {
-  border-color: #0E7490;
+  border-color: #0891B2;
   box-shadow: var(--sv-shadow), var(--sv-ring);
 }
+
 .sv-home .sv-search input {
   height: 100%;
   flex: 1;
@@ -280,6 +285,7 @@ body {
   font-weight: 600;
   color: #0F172A;
 }
+
 .sv-home .sv-search input::placeholder {
   color: #94A3B8;
   font-weight: 500;
@@ -293,34 +299,39 @@ body {
   font-weight: 700;
   transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
+
 .sv-home .sv-chip-active {
   background: #0E7490;
   color: #fff;
   border: 1px solid #0E7490;
-  box-shadow: none;
 }
+
 .sv-home .sv-chip-idle {
   background: #FFFFFF;
   border: 1px solid #CBD5E1;
   color: #0F172A;
 }
+
 .sv-home .sv-chip-idle:hover {
-  background: #F8FAFC;
-  border-color: #94A3B8;
+  background: #ECFEFF;
+  border-color: #67E8F9;
+  color: #0E7490;
 }
 
 .sv-home .sv-section-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.5rem 1rem 0.25rem;
+  padding: 0.6rem 1rem 0.3rem;
 }
+
 .sv-home .sv-section-title {
-  font-size: 0.85rem;
-  font-weight: 800;
+  font-size: 0.9rem;
+  font-weight: 900;
   letter-spacing: -0.01em;
   color: #0F172A;
 }
+
 .sv-home .sv-section-meta {
   font-size: 0.7rem;
   font-weight: 600;
@@ -330,11 +341,12 @@ body {
 .sv-home .sv-why {
   margin: 1.5rem 0.75rem;
   overflow: hidden;
-  border-radius: 14px;
+  border-radius: 18px;
   border: 1px solid #E2E8F0;
   background: #fff;
   box-shadow: var(--sv-shadow-lg);
 }
+
 .sv-home .sv-why-banner {
   position: relative;
   overflow: hidden;
@@ -342,6 +354,7 @@ body {
   color: #F8FAFC;
   background: linear-gradient(145deg, #0B1622 0%, #122033 50%, #0E7490 140%);
 }
+
 .sv-home .sv-why-banner::before {
   content: "";
   position: absolute;
@@ -352,6 +365,7 @@ body {
   top: -30%;
   right: -8%;
 }
+
 .sv-home .sv-why-banner::after {
   content: "";
   position: absolute;
@@ -372,17 +386,20 @@ body {
   font-size: 0.68rem;
   font-weight: 700;
 }
+
 .sv-home .sv-pulse-accent {
   background: #ECFEFF;
   border: 1px solid #A5F3FC;
   color: #0E7490;
 }
+
 .sv-home .sv-pulse-soft {
   background: #FFFFFF;
   color: #64748B;
   border: 1px solid #E2E8F0;
 }
 
+/* ── Shared cards ── */
 .product-card,
 .card {
   border-radius: 14px !important;
@@ -390,7 +407,7 @@ body {
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
 }
 
-/* ── Feed cards = MaterialHub mh-card ── */
+/* ── Feed ── */
 .feed-column { display: flex; flex-direction: column; gap: 0; }
 .feed-stack {
   display: flex;
@@ -448,7 +465,6 @@ body {
   border-radius: 10px !important;
   font-weight: 700 !important;
   font-size: 0.8rem !important;
-  transition: background 0.15s ease, border-color 0.15s ease;
 }
 .feed-post button.inline-flex.min-h-11 {
   border-color: #CBD5E1 !important;
@@ -551,38 +567,44 @@ body {
   border-radius: 4px;
 }
 
-/* ── Mobile header + tabs ── */
-.presence-root header .text-\[12px\].font-black {
-  font-size: 0.7rem !important;
-  font-weight: 700 !important;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #0E7490 !important;
-}
+/* ── Header ── */
 .presence-root header button,
-.presence-root header a { border-radius: 10px !important; }
-.presence-root header .rounded-2xl { border-radius: 10px !important; }
+.presence-root header a {
+  border-radius: 10px !important;
+}
+
+.presence-root header .rounded-2xl {
+  border-radius: 10px !important;
+}
+
 .presence-tabs {
   background: #FFFFFF !important;
   border-top: 1px solid #E2E8F0 !important;
   box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.06);
 }
+
 .presence-tabs a {
   font-weight: 700 !important;
   font-size: 0.7rem !important;
   color: #64748B !important;
 }
-.presence-tabs a[aria-current="page"] { color: #0E7490 !important; }
+
+.presence-tabs a[aria-current="page"] {
+  color: #0E7490 !important;
+}
+
 .feed-stack .rounded-\[28px\],
 .feed-column .rounded-\[28px\] {
   border-radius: 14px !important;
   border-color: #CBD5E1 !important;
 }
+
 .presence-card.absolute.bottom-0 {
   border-radius: 16px 16px 0 0 !important;
   border: 1px solid #E2E8F0;
   box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.12) !important;
 }
+
 .presence-card.absolute.bottom-0 a.min-h-12,
 .presence-card.absolute.bottom-0 button.min-h-12 {
   border-radius: 10px !important;
