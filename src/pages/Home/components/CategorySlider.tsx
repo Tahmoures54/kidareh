@@ -99,16 +99,16 @@ export const CategorySlider = memo(
                 aria-label={item.name}
                 data-category={item.slug}
                 onClick={() => handleSelect(item.slug)}
-                className={`relative shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 flex items-center gap-1.5 ${
+                className={`relative shrink-0 rounded-2xl border px-4 py-2.5 text-sm font-black transition-all duration-200 flex items-center gap-2 ${
                   isActive
-                    ? "text-white dark:text-gray-900 shadow-md"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    ? "text-white shadow-md shadow-cyan-900/15"
+                    : "border-slate-200 bg-slate-50 text-slate-600 hover:border-cyan-200 hover:bg-cyan-50 hover:text-cyan-700"
                 }`}
               >
                 {isActive && (
                   <motion.div
                     layoutId="activeCategoryPill"
-                    className="absolute inset-0 bg-gradient-to-br from-rose-500 to-rose-600 dark:from-rose-600 dark:to-rose-700 rounded-xl"
+                    className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-600 to-teal-600"
                     transition={{
                       type: "spring",
                       stiffness: 350,
@@ -127,11 +127,11 @@ export const CategorySlider = memo(
 
         {/* گرادیانت‌های محو */}
         <div
-          className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-900 to-transparent pointer-events-none"
+          className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none"
           aria-hidden="true"
         />
         <div
-          className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white dark:from-gray-900 to-transparent pointer-events-none"
+          className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none"
           aria-hidden="true"
         />
       </div>
