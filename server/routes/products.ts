@@ -197,7 +197,7 @@ router.get("/admin/pending", requireAuth, requireRole(["admin"]), (_req: AuthReq
 
 router.put("/:id", requireAuth, upload.single("image"), async (req: AuthRequest & { file?: Express.Multer.File }, res: Response) => {
   try {
-    const id = String(req.params.id);
+    const id = String(String(req.params.id ?? ""));
     const storeInfo = db.prepare("SELECT id, city, province FROM stores WHERE user_id = ?").get(req.user!.id) as any;
     if (!storeInfo) return res.status(403).json({ error: "فروشگاهی یافت نشد" });
     const productInfo = db.prepare("SELECT * FROM products WHERE id = ?").get(id) as any;
@@ -249,7 +249,7 @@ router.put("/:id", requireAuth, upload.single("image"), async (req: AuthRequest 
 
 router.put("/:id/status", requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = typeof req.params.id === "string" ? req.params.id : "";
     const status = normalizeProductStatus(req.body.status);
     if (!status) return res.status(400).json({ error: "وضعیت نامعتبر است" });
     const storeInfo = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(req.user!.id) as any;
