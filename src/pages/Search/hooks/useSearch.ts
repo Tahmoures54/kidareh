@@ -351,7 +351,7 @@ export function useSearch() {
         updated: p.updated || p.updated_at || "به‌تازگی",
         image_url: p.image_url || FALLBACK,
         rating: Number(p.rating || 4.5),
-        badge: p.badge || null,
+        badge: p.badge || undefined,
         lat,
         lng,
       };
