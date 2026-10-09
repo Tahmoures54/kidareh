@@ -3,6 +3,7 @@ export const IRAN_CITY_COORDS: Record<string, { lat: number; lng: number }> = {
   tehran: { lat: 35.6892, lng: 51.389 },
   karaj: { lat: 35.8327, lng: 50.9915 },
   eslamshahr: { lat: 35.5446, lng: 51.2303 },
+  islamshahr: { lat: 35.5446, lng: 51.2303 },
   shahriar: { lat: 35.6599, lng: 51.0578 },
   varamin: { lat: 35.3242, lng: 51.6457 },
   qods: { lat: 35.7214, lng: 51.1089 },
@@ -127,6 +128,6 @@ export const POPULAR_CITY_SLUGS = [
   "khorramabad",
   "sanandaj",
   "bushehr",
-  "eslamshahr",
+  "islamshahr",
   "kashan",
 ] as const;
