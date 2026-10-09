@@ -170,13 +170,12 @@ export const LocationModal: React.FC<LocationModalProps> = ({
   useBodyScrollLock(isOpen);
 
   useEffect(() => {
-    if (isOpen) {
-      setSearchQuery("");
-      const timer = setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 350);
-      return () => clearTimeout(timer);
-    }
+    if (!isOpen) return;
+    setSearchQuery("");
+    const timer = setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 350);
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   useEffect(() => {
