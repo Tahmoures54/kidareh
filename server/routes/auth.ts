@@ -1,6 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
-import type { CookieOptions, Response } from "express";
+import type { CookieOptions, Response, Request as ExpressRequest } from "express";
 import crypto from "node:crypto";
 import db from "../db.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
@@ -42,7 +42,7 @@ const kavenegarApi = KAVENEGAR_API_KEY
 
 const SESSION_COOKIE = isProduction ? "__Host-kidareh_session" : "kidareh_session";
 
-function isMobileClient(req: Request): boolean {
+function isMobileClient(req: ExpressRequest): boolean {
   const client = String(req.get("x-kidareh-client") || "").toLowerCase();
   return client === "mobile" || client === "flutter" || client === "app";
 }
