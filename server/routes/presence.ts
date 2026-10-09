@@ -294,11 +294,15 @@ router.post("/trips/:id/stops/:stopOrder/check-in", requireAuth, (req: AuthReque
     return;
   }
 
-  db.prepare(`
+  const updated = db.prepare(`
     UPDATE trip_items
     SET status = 'arrived', arrived_at = CURRENT_TIMESTAMP
     WHERE trip_id = ? AND stop_order = ? AND arrival_token_hash = ? AND status = 'pending'
   `).run(tripId, stopOrder, tokenHash);
+  if (updated.changes === 0) {
+    res.status(409).json({ error: "این QR قبلاً استفاده شده است." });
+    return;
+  }
 
   res.json({ success: true, tripId, stopOrder, message: "حضور در فروشگاه تأیید شد." });
 });
