@@ -1,4 +1,8 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
+import { randomUUID } from "node:crypto";
+import db from "../db.js";
+import { requireAuth, type AuthRequest } from "../middleware/auth.js";
+import { tripRequestSchema, tripStatusSchema } from "../../src/presence/tripSchema.js";
 import {
   buildRadar,
   DEFAULT_ORIGIN,
@@ -70,16 +74,186 @@ router.get("/listings/:id", (req, res): void => {
   res.json({ listing: enriched, radar: radar[0] ?? null });
 });
 
-router.post("/trip", (req, res) => {
-  const body = req.body ?? {};
-  const lat = Number(body.lat);
-  const lng = Number(body.lng);
-  const origin: PresenceOrigin =
-    Number.isFinite(lat) && Number.isFinite(lng)
-      ? { lat, lng, label: typeof body.label === "string" ? body.label : DEFAULT_ORIGIN.label }
-      : DEFAULT_ORIGIN;
-  const ids = Array.isArray(body.listingIds) ? body.listingIds.map(String).slice(0, 8) : [];
-  res.json({ origin, plan: planTrip(origin, ids) });
+function tripOrigin(input: { lat?: number; lng?: number; label?: string }): PresenceOrigin {
+  if (input.lat !== undefined && input.lng !== undefined) {
+    return { lat: input.lat, lng: input.lng, label: input.label ?? DEFAULT_ORIGIN.label };
+  }
+  return DEFAULT_ORIGIN;
+}
+
+router.post("/trip", (req, res): void => {
+  const parsed = tripRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "اطلاعات مسیر معتبر نیست.", details: parsed.error.issues });
+    return;
+  }
+  const origin = tripOrigin(parsed.data);
+  res.json({ origin, plan: planTrip(origin, parsed.data.listingIds) });
+});
+
+interface StoredTrip {
+  id: string;
+  user_id: number;
+  origin_lat: number;
+  origin_lng: number;
+  origin_label: string;
+  status: "planned" | "started" | "completed" | "cancelled";
+  total_walk_minutes: number;
+  total_km: number;
+  total_toman: number;
+  created_at: string;
+  updated_at: string;
+}
+
+interface StoredTripItem {
+  id: string;
+  trip_id: string;
+  listing_id: string;
+  stop_order: number;
+  item_order: number;
+  store_id: string;
+  store_name: string;
+  store_address: string;
+  store_phone: string;
+  store_open_hour: number;
+  store_close_hour: number;
+  product_name: string;
+  price_toman: number;
+  latitude: number;
+  longitude: number;
+  walk_from_previous_minutes: number;
+  status: "pending" | "arrived" | "skipped";
+  arrived_at: string | null;
+}
+
+router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "برای ذخیره مسیر وارد حساب شوید." });
+    return;
+  }
+
+  const parsed = tripRequestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "اطلاعات مسیر معتبر نیست.", details: parsed.error.issues });
+    return;
+  }
+
+  const origin = tripOrigin(parsed.data);
+  const plan = planTrip(origin, parsed.data.listingIds);
+  if (plan.stops.length === 0) {
+    res.status(422).json({ error: "برای ذخیره مسیر، دست‌کم یک کالای معتبر انتخاب کنید." });
+    return;
+  }
+
+  const tripId = randomUUID();
+  const insertTrip = db.prepare(`
+    INSERT INTO trips (id, user_id, origin_lat, origin_lng, origin_label, status,
+      total_walk_minutes, total_km, total_toman, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, 'planned', ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+  `);
+  const insertItem = db.prepare(`
+    INSERT INTO trip_items (
+      id, trip_id, listing_id, stop_order, item_order, store_id, store_name,
+      store_address, store_phone, store_open_hour, store_close_hour, product_name,
+      price_toman, latitude, longitude, walk_from_previous_minutes, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+  `);
+
+  const saveTrip = db.transaction(() => {
+    insertTrip.run(
+      tripId, userId, origin.lat, origin.lng, origin.label,
+      plan.totalWalkMinutes, plan.totalKm, plan.totalToman,
+    );
+    plan.stops.forEach((stop, stopIndex) => {
+      stop.listings.forEach((listing, itemIndex) => {
+        insertItem.run(
+          randomUUID(), tripId, listing.id, stopIndex + 1, itemIndex + 1,
+          listing.storeId, listing.store.name, listing.store.address, listing.store.phone || "",
+          listing.store.openHour, listing.store.closeHour, listing.name, listing.price,
+          listing.store.lat, listing.store.lng, stop.walkFromPrev,
+        );
+      });
+    });
+  });
+
+  try {
+    saveTrip();
+    res.status(201).json({ tripId, status: "planned", origin, plan });
+  } catch (error) {
+    res.status(500).json({ error: "ذخیره مسیر انجام نشد. لطفاً دوباره تلاش کنید." });
+  }
+});
+
+router.get("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "برای مشاهده مسیرها وارد حساب شوید." });
+    return;
+  }
+
+  const trips = db.prepare(`
+    SELECT t.*,
+      (SELECT COUNT(*) FROM trip_items i WHERE i.trip_id = t.id) AS item_count,
+      (SELECT COUNT(DISTINCT i.store_id) FROM trip_items i WHERE i.trip_id = t.id) AS store_count
+    FROM trips t
+    WHERE t.user_id = ?
+    ORDER BY t.updated_at DESC
+    LIMIT 25
+  `).all(userId) as Array<StoredTrip & { item_count: number; store_count: number }>;
+
+  res.json({ trips });
+});
+
+router.get("/trips/:id", requireAuth, (req: AuthRequest, res: Response): void => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "برای مشاهده مسیر وارد حساب شوید." });
+    return;
+  }
+  const tripId = req.params.id;
+  const trip = db.prepare("SELECT * FROM trips WHERE id = ? AND user_id = ?").get(tripId, userId) as StoredTrip | undefined;
+  if (!trip) {
+    res.status(404).json({ error: "مسیر پیدا نشد." });
+    return;
+  }
+  const items = db.prepare(`
+    SELECT * FROM trip_items
+    WHERE trip_id = ?
+    ORDER BY stop_order ASC, item_order ASC
+  `).all(tripId) as StoredTripItem[];
+  res.json({ trip, items });
+});
+
+router.patch("/trips/:id/status", requireAuth, (req: AuthRequest, res: Response): void => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "برای تغییر وضعیت مسیر وارد حساب شوید." });
+    return;
+  }
+  const parsed = tripStatusSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "وضعیت جدید مسیر معتبر نیست.", details: parsed.error.issues });
+    return;
+  }
+  const tripId = req.params.id;
+  const trip = db.prepare("SELECT id, status FROM trips WHERE id = ? AND user_id = ?").get(tripId, userId) as { id: string; status: StoredTrip["status"] } | undefined;
+  if (!trip) {
+    res.status(404).json({ error: "مسیر پیدا نشد." });
+    return;
+  }
+
+  const allowed =
+    (trip.status === "planned" && ["started", "cancelled"].includes(parsed.data.status)) ||
+    (trip.status === "started" && ["completed", "cancelled"].includes(parsed.data.status));
+  if (!allowed) {
+    res.status(409).json({ error: "این تغییر وضعیت برای مسیر ممکن نیست." });
+    return;
+  }
+
+  db.prepare("UPDATE trips SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?")
+    .run(parsed.data.status, tripId, userId);
+  res.json({ success: true, tripId, status: parsed.data.status });
 });
 
 router.get("/pulse", (req, res) => {
