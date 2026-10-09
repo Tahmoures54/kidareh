@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bookmark, ChevronDown, Home, Map as MapIcon, MapPin, User, MessageCircle, Sparkles, Store, Search, LogOut, ShieldCheck, LocateFixed } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -11,6 +12,7 @@ import CommandPalette from "./CommandPalette";
 import CityPicker from "../location/CityPicker";
 import InstallPrompt from "../InstallPrompt";
 import { cn } from "../../utils";
+import { hapticFeedback } from "../../utils/haptics";
 
 const TABS = [
   { to: "/", label: "خانه", icon: Home, end: true },
@@ -75,7 +77,7 @@ export default function PresenceShell() {
   const rail = useMemo(() => (
     <nav className="flex items-center gap-1" aria-label="ناوبری اصلی">
       {TABS.slice(0, 4).map((tab) => (
-        <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn(
+        <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} onClick={() => hapticFeedback("light")} className={({ isActive }) => cn(
           "flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-black transition",
           isActive ? "bg-cyan-50 text-cyan-700" : "text-slate-400 hover:bg-slate-50 hover:text-slate-800"
         )}>
@@ -119,14 +121,27 @@ export default function PresenceShell() {
               <button type="button" onClick={() => (user ? setMenu(true) : navigate("/login"))} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-700 shadow-sm transition hover:border-cyan-200 hover:text-cyan-700" aria-label={user ? "حساب" : "ورود"}><User className="h-5 w-5" /></button>
             </div>
           </header>
-          <main id="presence-main" className={cn("relative z-0 w-full flex-1 pb-32 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}><Outlet /></main>
+          <main id="presence-main" className={cn("relative z-0 w-full flex-1 pb-32 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 7 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.18, ease: "easeOut" as const }}
+                className="min-h-full"
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </main>
         </div>
       </div>
 
       <nav className={cn("presence-tabs fixed inset-x-0 bottom-0 border-t border-slate-200/80 bg-white/95 shadow-[0_-6px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl", pickerOpen ? "z-10" : "z-[80]")} aria-label="ناوبری پایین">
         <div className="mx-auto flex w-full max-w-2xl items-stretch px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1 lg:pb-2 lg:pt-2">
           {TABS.map((tab) => (
-            <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 text-[11px] font-black transition lg:min-h-12 lg:flex-row lg:gap-1.5 lg:text-xs", isActive ? "bg-cyan-50 text-cyan-700" : "text-slate-400 hover:bg-slate-50")}>
+            <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} onClick={() => hapticFeedback("light")} className={({ isActive }) => cn("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 text-[11px] font-black transition lg:min-h-12 lg:flex-row lg:gap-1.5 lg:text-xs", isActive ? "bg-cyan-50 text-cyan-700" : "text-slate-400 hover:bg-slate-50")}>
               <tab.icon className="h-6 w-6" />{tab.label}
               {tab.to === "/saved" && <span className="sr-only">ذخیره‌شده‌ها</span>}
             </NavLink>
