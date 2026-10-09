@@ -19,7 +19,7 @@ export function sanitizeInput(input: string): string {
     "'": '&#039;',
   };
   
-  return input.replace(/[&<>"']/g, (char) => map[char]);
+  return input.replace(/[&<>"']/g, (char) => map[char] ?? char);
 }
 
 /**
