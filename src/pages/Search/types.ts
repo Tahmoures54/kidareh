@@ -1,4 +1,5 @@
 export type { SortType, ViewMode, LocationScopeType, LocationScope } from "../../types/common";
+import type { SortType, LocationScope } from "../../types/common";
 
 export interface ProductResult {
   id: number | string;
