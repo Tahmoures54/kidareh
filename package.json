@@ -101,7 +101,8 @@
     "uuid": "14.0.0",
     "winston": "^3.19.0",
     "workbox-window": "^7.3.0",
-    "zod": "^3.25.0"
+    "zod": "^3.25.0",
+    "leaflet.markercluster": "^1.5.3"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.1.14",
