@@ -37,6 +37,37 @@ router.use(requireAuth);
 router.use(requireRole(["admin"]));
 router.use(isMasterAdmin);
 
+const supportAgentSchema = z.object({
+  phone: z.string().regex(/^09\\d{9}$/, "شماره موبایل معتبر نیست"),
+});
+
+// مدیریت همکاران پشتیبانی؛ فقط کاربرانی که قبلاً حساب خریدار ساخته‌اند قابل ارتقا هستند.
+router.get("/support-agents", (_req: AuthRequest, res: Response) => {
+  const rows = db.prepare("SELECT phone FROM users WHERE role = 'support' ORDER BY id DESC").all() as Array<{ phone: string }>;
+  res.json({ supportAgents: rows.map((row) => row.phone) });
+});
+
+router.post("/support-agents", (req: AuthRequest, res: Response) => {
+  const parsed = supportAgentSchema.safeParse(req.body);
+  if (!parsed.success) return void res.status(400).json({ error: "شماره موبایل معتبر نیست." });
+
+  const phone = parsed.data.phone;
+  const existing = db.prepare("SELECT role FROM users WHERE phone = ?").get(phone) as { role: string } | undefined;
+  if (!existing) return void res.status(404).json({ error: "ابتدا باید این شماره در کی‌داره ثبت‌نام کرده باشد." });
+  if (existing.role === "support") return void res.json({ success: true, alreadyExists: true });
+  if (existing.role !== "buyer") return void res.status(409).json({ error: "فقط حساب خریدار را می‌توان به همکار پشتیبانی تبدیل کرد." });
+
+  db.prepare("UPDATE users SET role = 'support', updated_at = CURRENT_TIMESTAMP WHERE phone = ? AND role = 'buyer'").run(phone);
+  res.status(201).json({ success: true, phone });
+});
+
+router.delete("/support-agents/:phone", (req: AuthRequest, res: Response) => {
+  const phone = String(req.params.phone ?? "");
+  const result = db.prepare("UPDATE users SET role = 'buyer', updated_at = CURRENT_TIMESTAMP WHERE phone = ? AND role = 'support'").run(phone);
+  if (result.changes === 0) return void res.status(404).json({ error: "همکار پشتیبانی پیدا نشد." });
+  res.json({ success: true, phone });
+});
+
 // ═══════════════════════════════════════
 // 2. Dashboard Statistics
 // ═══════════════════════════════════════
