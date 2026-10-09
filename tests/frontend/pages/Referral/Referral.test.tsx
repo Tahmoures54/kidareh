@@ -10,8 +10,8 @@ vi.mock("../../../../src/context/AuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock("../../../../src/hooks/useWallet", () => ({
-  useWallet: vi.fn(),
+vi.mock("../../../../src/hooks/useReferral", () => ({
+  useReferral: vi.fn(),
 }));
 
 vi.mock("../../../../src/hooks/useClipboard", () => ({
@@ -35,10 +35,10 @@ vi.mock("motion/react", async () => {
 
 /* ─── Helpers ─── */
 import { useAuth }   from "../../../../src/context/AuthContext";
-import { useWallet } from "../../../../src/hooks/useWallet";
+import { useReferral } from "../../../../src/hooks/useReferral";
 
 const mockUseAuth   = vi.mocked(useAuth);
-const mockUseWallet = vi.mocked(useWallet);
+const mockUseReferral = vi.mocked(useReferral);
 
 const BASE_STATS = {
   balance:            50_000,
@@ -66,8 +66,9 @@ function setup(overrides?: { stats?: any; transactions?: any; loading?: boolean;
     user: { id: "u1", role: "seller" },
   } as any);
 
-  mockUseWallet.mockReturnValue({
+  mockUseReferral.mockReturnValue({
     stats:            overrides?.stats       ?? BASE_STATS,
+    percentage:       25,
     transactions:     overrides?.transactions ?? BASE_TRANSACTIONS,
     loading:          overrides?.loading      ?? false,
     error:            overrides?.error        ?? null,
@@ -145,8 +146,9 @@ describe("WalletPage", () => {
   /* ── refresh ── */
   it("دکمه refresh صدا می‌زند", async () => {
     const refreshData = vi.fn();
-    mockUseWallet.mockReturnValue({
+    mockUseReferral.mockReturnValue({
       stats: BASE_STATS,
+      percentage: 25,
       transactions: [],
       loading: false,
       error: null,
@@ -166,8 +168,9 @@ describe("WalletPage", () => {
     mockUseAuth.mockReturnValue({
       user: { id: "u2", role: "marketer" },
     } as any);
-    mockUseWallet.mockReturnValue({
+    mockUseReferral.mockReturnValue({
       stats: BASE_STATS,
+      percentage: 25,
       transactions: [],
       loading: false,
       error: null,
