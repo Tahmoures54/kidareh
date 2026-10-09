@@ -27,7 +27,7 @@ const SegmentedControl = ({ tabs, activeTab, onChange }: Props) => (
           {isActive && (
             <motion.div
               layoutId="tab-pill"
-              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              transition={{ type: "spring" as const, stiffness: 300, damping: 25 }}
               className="absolute inset-0 -z-10 bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200/50 dark:border-gray-700/50"
             />
           )}
