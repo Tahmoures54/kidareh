@@ -82,7 +82,7 @@ export default function BottomSheet({
               }
             }}
             initial={{ y: "100%" }}
-            animate={{ y: 0, maxHeight: `${safeSnapPoints[snapIndex] * 100}dvh` }}
+            animate={{ y: 0, maxHeight: `${(safeSnapPoints[snapIndex] ?? safeSnapPoints[safeSnapPoints.length - 1] ?? 0.9) * 100}dvh` }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 360, damping: 36 }}
             className="relative z-10 flex w-full max-w-3xl flex-col overflow-hidden rounded-t-[30px] border border-white/70 bg-white shadow-[0_-18px_70px_rgba(15,23,42,.22)]"
