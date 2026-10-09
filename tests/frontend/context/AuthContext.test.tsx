@@ -1,11 +1,11 @@
 // src/context/__tests__/AuthContext.test.tsx
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
-import { AuthProvider, useAuth } from '../AuthContext';
-import { apiRequest } from '../../utils/api';
+import { AuthProvider, useAuth } from '../../../src/context/AuthContext';
+import { apiRequest } from '../../../src/utils/api';
 
 // Mock the entire api module
-vi.mock('../../utils/api', () => ({
+vi.mock('../../../src/utils/api', () => ({
   apiRequest: vi.fn(),
   ApiError: class extends Error {
     status: number;
