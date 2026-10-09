@@ -46,9 +46,10 @@ interface Props {
   path?: GeoPoint[];
   height?: string;
   selectedId?: string;
+  className?: string;
 }
 
-export default function PresenceMap({ origin, listings, path, height = "100%", selectedId }: Props) {
+export default function PresenceMap({ origin, listings, path, height = "100%", selectedId, className }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const uniqueStores = useMemo(() => {
