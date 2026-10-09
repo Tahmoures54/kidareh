@@ -177,12 +177,13 @@ router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
     );
     plan.stops.forEach((stop, stopIndex) => {
       stop.listings.forEach((listing, itemIndex) => {
+        const arrivalHash = arrivalHashes.get(stopIndex + 1);
+        if (!arrivalHash) throw new Error("Missing arrival token hash for trip stop");
         insertItem.run(
           randomUUID(), tripId, listing.id, stopIndex + 1, itemIndex + 1,
           listing.storeId, listing.store.name, listing.store.address, listing.store.phone || "",
           listing.store.openHour, listing.store.closeHour, listing.name, listing.price,
-          listing.store.lat, listing.store.lng, stop.walkFromPrev,
-          arrivalHashes.get(stopIndex + 1) ?? createHash("sha256").update(randomBytes(32)).digest("hex"),
+          listing.store.lat, listing.store.lng, stop.walkFromPrev, arrivalHash,
         );
       });
     });
