@@ -14,21 +14,24 @@ const isMasterAdmin = (req: AuthRequest, res: Response, next: NextFunction): voi
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ error: "احراز هویت ناموفق بود." });
+      res.status(401).json({ error: "احراز هویت ناموفق بود." });
+      return;
     }
 
     const user = db.prepare("SELECT phone FROM users WHERE id = ?").get(userId) as any;
     const MASTER_ADMIN_PHONE = process.env.ADMIN_PHONE || "09160684552";
 
     if (!user || user.phone !== MASTER_ADMIN_PHONE) {
-      return res.status(403).json({
+      res.status(403).json({
         error: "دسترسی غیرمجاز. این بخش فقط برای مدیریت کل سامانه در دسترس است.",
       });
+      return;
     }
     next();
   } catch (error) {
     logger.error("Master Admin Check Error:", error);
-    return res.status(500).json({ error: "خطای سرور در بررسی سطح دسترسی مدیریت." });
+    res.status(500).json({ error: "خطای سرور در بررسی سطح دسترسی مدیریت." });
+    return;
   }
 };
 
@@ -74,7 +77,7 @@ router.get("/dashboard-stats", (_req: AuthRequest, res: Response) => {
     ).all();
 
     return res.json({
-      ...stats,
+      ...(stats && typeof stats === "object" ? stats : {}),
       pendingProducts,
       pendingReports,
       totalRevenue,
@@ -369,7 +372,8 @@ router.post("/stores/:id/toggle-blue-tick", (req: AuthRequest, res: Response): v
   try {
     const store = db.prepare("SELECT id, blue_tick_expires_at FROM stores WHERE id = ?").get(storeId) as any;
     if (!store) {
-      return res.status(404).json({ error: "فروشگاه یافت نشد" });
+      res.status(404).json({ error: "فروشگاه یافت نشد" });
+      return;
     }
 
     const hasBlueTick = store.blue_tick_expires_at && new Date(store.blue_tick_expires_at) > new Date();
@@ -429,22 +433,27 @@ router.put("/settings", (req: AuthRequest, res: Response): void => {
       });
       updateMany(settings);
       logger.info(`⚙️ Settings batch updated by admin ${req.user?.id}`);
-      return res.json({ success: true, message: "تنظیمات با موفقیت بروزرسانی شد." });
+      res.json({ success: true, message: "تنظیمات با موفقیت بروزرسانی شد." });
+      return;
     }
 
     if (!key || value === undefined) {
-      return res.status(400).json({ error: "کلید و مقدار برای بروزرسانی الزامی است." });
+      res.status(400).json({ error: "کلید و مقدار برای بروزرسانی الزامی است." });
+      return;
     }
 
     db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)").run(key, String(value));
     logger.info(`⚙️ Setting '${key}' updated by admin ${req.user?.id}`);
-    return res.json({ success: true, message: "تنظیم با موفقیت بروزرسانی شد." });
+    res.json({ success: true, message: "تنظیم با موفقیت بروزرسانی شد." });
+    return;
   } catch (error: any) {
     if (error.name === "ZodError") {
-      return res.status(400).json({ error: error.errors[0].message });
+      res.status(400).json({ error: error.errors[0].message });
+      return;
     }
     logger.error("Update Settings Error:", error);
-    return res.status(500).json({ error: "خطا در ذخیره تنظیمات." });
+    res.status(500).json({ error: "خطا در ذخیره تنظیمات." });
+    return;
   }
 });
 
