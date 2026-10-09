@@ -78,7 +78,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
   }, []);
 
   return (
-    <div ref={wrapRef} className="presence-map h-full w-full overflow-hidden" style={{ height }}>
+    <div ref={wrapRef} className={["presence-map h-full w-full overflow-hidden", className].filter(Boolean).join(" ")} style={{ height }}>
       {!ready ? (
         <div className="h-full w-full animate-pulse bg-[#d9e2d6]" />
       ) : (
