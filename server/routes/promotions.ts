@@ -58,15 +58,15 @@ router.get("/stories", (req, res: Response) => {
 });
 
 /** POST /api/promotions/stories/:id/view */
-router.post("/stories/:id/view", (req, res: Response) => {
+router.post("/stories/:id/view", (req, res: Response): void => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.json({ ok: true });
+  if (!Number.isFinite(id)) { res.json({ ok: true }); return; }
   recordBannerImpression(id);
   res.json({ ok: true });
 });
 
 /** POST /api/promotions/stories/:id/click */
-router.post("/stories/:id/click", (req, res: Response) => {
+router.post("/stories/:id/click", (req, res: Response): void => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) return res.json({ ok: true });
   recordBannerClick(id);
@@ -74,7 +74,7 @@ router.post("/stories/:id/click", (req, res: Response) => {
 });
 
 /** GET /api/promotions/banners?city=تهران — homepage sponsored (labeled ads) */
-router.get("/banners", (req, res: Response) => {
+router.get("/banners", (req, res: Response): void => {
   try {
     const city = String(req.query.city || "تهران");
     const limit = Math.min(10, Math.max(1, Number(req.query.limit) || 5));
@@ -89,18 +89,18 @@ router.get("/banners", (req, res: Response) => {
 });
 
 /** POST /api/promotions/banners/:id/click */
-router.post("/banners/:id/click", (req, res: Response) => {
+router.post("/banners/:id/click", (req, res: Response): void => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.status(400).json({ error: "شناسه نامعتبر" });
+  if (!Number.isFinite(id)) { res.status(400).json({ error: "شناسه نامعتبر" }); return; }
   recordBannerClick(id);
   res.json({ ok: true });
 });
 
 /** GET /api/promotions/my-stats — seller ROI dashboard */
-router.get("/my-stats", requireAuth, (req: AuthRequest, res: Response) => {
+router.get("/my-stats", requireAuth, (req: AuthRequest, res: Response): void => {
   try {
     const stats = getSellerPromoStats(req.user!.id);
-    if (!stats) return res.status(404).json({ error: "فروشگاهی یافت نشد" });
+    if (!stats) { res.status(404).json({ error: "فروشگاهی یافت نشد" }); return; }
     res.json(stats);
   } catch (err) {
     logger.error("promo stats:", err);
@@ -109,9 +109,9 @@ router.get("/my-stats", requireAuth, (req: AuthRequest, res: Response) => {
 });
 
 /** GET /api/promotions/package/:id */
-router.get("/package/:id", (req, res: Response) => {
+router.get("/package/:id", (req, res: Response): void => {
   const pkg = getPackage(req.params.id);
-  if (!pkg) return res.status(404).json({ error: "پکیج یافت نشد" });
+  if (!pkg) { res.status(404).json({ error: "پکیج یافت نشد" }); return; }
   res.json(pkg);
 });
 
