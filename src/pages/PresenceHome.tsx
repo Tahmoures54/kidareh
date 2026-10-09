@@ -26,7 +26,7 @@ const fadeUp = {
 
 export default function PresenceHome() {
   return (
-    <main dir="rtl" className="mx-auto w-full max-w-6xl px-4 pb-16 pt-4 sm:px-6 lg:pt-6">
+    <div dir="rtl" className="mx-auto w-full max-w-6xl px-4 pb-16 pt-4 sm:px-6 lg:pt-6">
       {/* ─── HERO ─── */}
       <motion.section
         initial="hidden"
@@ -267,6 +267,6 @@ export default function PresenceHome() {
       <p className="mt-8 text-center text-xs font-bold text-slate-400">
         برای پیدا کردن کالا لازم نیست اول ثبت‌نام کنی.
       </p>
-    </main>
+    </div>
   );
 }
