@@ -33,6 +33,6 @@ describe("walking route optimization", () => {
   it("handles zero, one, and two stops", () => {
     expect(orderByWalk(origin, [])).toEqual([]);
     expect(orderByWalk(origin, [points[0]])).toEqual([points[0]]);
-    expect(orderByWalk(origin, points.slice(0, 2)).toHaveLength(2);
+    expect(orderByWalk(origin, points.slice(0, 2))).toHaveLength(2);
   });
 });
