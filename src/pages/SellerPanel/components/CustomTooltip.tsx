@@ -13,12 +13,13 @@ interface CustomTooltipProps {
 }
 
 export const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
-  if (active && payload && payload.length) {
+  const first = payload?.[0];
+  if (active && first) {
     return (
       <div className="bg-[var(--bg-secondary)]/95 backdrop-blur-md text-[var(--text-primary)] px-3.5 py-2.5 rounded-2xl shadow-xl text-xs font-bold border border-[var(--border-light)]">
         <p className="mb-1 text-[var(--text-muted)]">{label}</p>
         <p className="text-[var(--brand-primary)] flex items-center gap-1.5 font-black">
-          <Eye className="w-3.5 h-3.5" /> {payload[0].value} »«“œÌœ
+          <Eye className="w-3.5 h-3.5" /> {first.value} √à√á√í√è√≠√è
         </p>
       </div>
     );
