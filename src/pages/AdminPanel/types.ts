@@ -37,5 +37,5 @@ export interface StoreItem {
   blue_tick_expires_at: string | null;
 }
 
-export type BadgeConfig = { price: number; duration: number };
+export type BadgeConfig = { price: number; duration?: number; duration_days?: number; label?: string; description?: string; color?: string };
 export type BadgeConfigs = Record<string, BadgeConfig>;
