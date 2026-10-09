@@ -1,8 +1,8 @@
 import { Router, type Response } from "express";
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import db from "../db.js";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
-import { tripRequestSchema, tripStatusSchema } from "../../src/presence/tripSchema.js";
+import { tripArrivalSchema, tripRequestSchema, tripStatusSchema } from "../../src/presence/tripSchema.js";
 import {
   buildRadar,
   DEFAULT_ORIGIN,
@@ -147,6 +147,16 @@ router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
   }
 
   const tripId = randomUUID();
+  const arrivalTokens = plan.stops.map((_stop, index) => ({
+    stopOrder: index + 1,
+    token: randomBytes(32).toString("hex"),
+  }));
+  const arrivalHashes = new Map(
+    arrivalTokens.map((entry) => [
+      entry.stopOrder,
+      createHash("sha256").update(entry.token).digest("hex"),
+    ]),
+  );
   const insertTrip = db.prepare(`
     INSERT INTO trips (id, user_id, origin_lat, origin_lng, origin_label, status,
       total_walk_minutes, total_km, total_toman, created_at, updated_at)
@@ -156,8 +166,8 @@ router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
     INSERT INTO trip_items (
       id, trip_id, listing_id, stop_order, item_order, store_id, store_name,
       store_address, store_phone, store_open_hour, store_close_hour, product_name,
-      price_toman, latitude, longitude, walk_from_previous_minutes, status
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+      price_toman, latitude, longitude, walk_from_previous_minutes, arrival_token_hash, status
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
   `);
 
   const saveTrip = db.transaction(() => {
@@ -172,6 +182,7 @@ router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
           listing.storeId, listing.store.name, listing.store.address, listing.store.phone || "",
           listing.store.openHour, listing.store.closeHour, listing.name, listing.price,
           listing.store.lat, listing.store.lng, stop.walkFromPrev,
+          arrivalHashes.get(stopIndex + 1) ?? "",
         );
       });
     });
@@ -179,7 +190,7 @@ router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
 
   try {
     saveTrip();
-    res.status(201).json({ tripId, status: "planned", origin, plan });
+    res.status(201).json({ tripId, status: "planned", origin, plan, arrivalTokens });
   } catch (error) {
     res.status(500).json({ error: "ذخیره مسیر انجام نشد. لطفاً دوباره تلاش کنید." });
   }
@@ -223,6 +234,68 @@ router.get("/trips/:id", requireAuth, (req: AuthRequest, res: Response): void =>
     ORDER BY stop_order ASC, item_order ASC
   `).all(tripId) as StoredTripItem[];
   res.json({ trip, items });
+});
+
+router.post("/trips/:id/stops/:stopOrder/check-in", requireAuth, (req: AuthRequest, res: Response): void => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "برای تأیید حضور وارد حساب شوید." });
+    return;
+  }
+  if (req.user?.role !== "seller" && req.user?.role !== "admin") {
+    res.status(403).json({ error: "تأیید حضور فقط برای حساب فروشنده امکان‌پذیر است." });
+    return;
+  }
+
+  const parsed = tripArrivalSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "کد QR معتبر نیست.", details: parsed.error.issues });
+    return;
+  }
+
+  const stopOrder = Number(req.params.stopOrder);
+  if (!Number.isSafeInteger(stopOrder) || stopOrder < 1) {
+    res.status(400).json({ error: "شماره توقف معتبر نیست." });
+    return;
+  }
+
+  const tripId = req.params.id;
+  const trip = db.prepare("SELECT status FROM trips WHERE id = ?").get(tripId) as { status: StoredTrip["status"] } | undefined;
+  if (!trip) {
+    res.status(404).json({ error: "مسیر پیدا نشد." });
+    return;
+  }
+  if (trip.status !== "started") {
+    res.status(409).json({ error: "ابتدا خریدار باید سفر را شروع کند." });
+    return;
+  }
+
+  const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
+  const item = db.prepare(`
+    SELECT store_phone FROM trip_items
+    WHERE trip_id = ? AND stop_order = ? AND arrival_token_hash = ?
+    LIMIT 1
+  `).get(tripId, stopOrder, tokenHash) as { store_phone: string } | undefined;
+  if (!item) {
+    res.status(404).json({ error: "این QR برای این توقف معتبر نیست یا قبلاً صادر نشده است." });
+    return;
+  }
+
+  const sellerStore = db.prepare("SELECT id, phone FROM stores WHERE user_id = ? LIMIT 1")
+    .get(userId) as { id: number; phone: string | null } | undefined;
+  const normalizePhone = (value: string) => value.replace(/[^0-9]/g, "");
+  if (!sellerStore?.phone || normalizePhone(sellerStore.phone) !== normalizePhone(item.store_phone)) {
+    res.status(403).json({ error: "این QR متعلق به فروشگاه ثبت‌شده شما نیست." });
+    return;
+  }
+
+  db.prepare(`
+    UPDATE trip_items
+    SET status = 'arrived', arrived_at = CURRENT_TIMESTAMP
+    WHERE trip_id = ? AND stop_order = ? AND arrival_token_hash = ? AND status = 'pending'
+  `).run(tripId, stopOrder, tokenHash);
+
+  res.json({ success: true, tripId, stopOrder, message: "حضور در فروشگاه تأیید شد." });
 });
 
 router.patch("/trips/:id/status", requireAuth, (req: AuthRequest, res: Response): void => {
