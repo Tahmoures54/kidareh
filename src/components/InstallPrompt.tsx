@@ -146,7 +146,7 @@ export default function InstallPrompt() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed bottom-24 left-4 right-4 z-50 mx-auto max-w-md lg:bottom-4"
+            className="relative z-40 mx-3 my-3 max-w-md sm:mx-auto lg:mx-auto"
             dir="rtl"
           >
             <div className="relative bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-5 overflow-hidden">
@@ -180,7 +180,7 @@ export default function InstallPrompt() {
                     اپلیکیشن کی‌داره
                   </h3>
                   <p className="text-[11px] text-gray-600 font-medium leading-relaxed">
-                    سریع‌تر، آفلاین و دسترسی سریع‌تر به فروشگاه‌ها.
+                    کی‌داره را به صفحهٔ اصلی اضافه کن تا سریع‌تر به فروشگاه‌های اطرافت برسی.
                   </p>
                 </div>
               </div>
