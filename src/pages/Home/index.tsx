@@ -111,7 +111,7 @@ export default function Home() {
               ) : (
                 <>
                   <motion.div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6" initial="hidden" animate="show">
-                    {allProducts.map((p) => <PremiumProductCard key={p.id} product={p} isFavorite={favoritesSet.has(p.id)} onToggleFavorite={toggleFavorite} />)}
+                    {allProducts.map((p) => <PremiumProductCard key={p.id} product={p} isFavorite={favoritesSet.has(String(p.id))} onToggleFavorite={toggleFavorite} />)}
                   </motion.div>
                   <div ref={loadMoreRef} className="mt-7 flex h-16 items-center justify-center">{isFetchingNextPage && <div className="flex items-center gap-2 text-sm font-bold text-slate-500"><Loader2 className="h-4 w-4 animate-spin" />در حال بارگذاری…</div>}</div>
                   {!hasNextPage && <div className="flex items-center gap-3 py-7"><div className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold text-slate-400">همین‌ها بود 🌿</span><div className="h-px flex-1 bg-slate-200" /></div>}
