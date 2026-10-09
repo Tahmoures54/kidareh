@@ -29,7 +29,7 @@ jobs:
             "fix/typecheck-stage-1" \
             "fix/typecheck-zero-errors" \
             "fix/typecheck-zero-errors-20261009"; do
-            encoded_branch="$(python -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["BRANCH"], safe=""))' BRANCH="$branch")"
+            encoded_branch="$(python -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$branch")"
             if gh api "repos/$GH_REPO/branches/$encoded_branch" >/dev/null 2>&1; then
               gh api --method DELETE "repos/$GH_REPO/git/refs/heads/$encoded_branch"
               echo "Deleted obsolete branch: $branch"
