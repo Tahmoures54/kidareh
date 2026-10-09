@@ -75,24 +75,81 @@ function deg2rad(d: number): number {
   return (d * Math.PI) / 180;
 }
 
-/** Nearest-neighbor walk tour. Good enough for 2–8 neighborhood stops. */
-export function orderByWalk<T extends GeoPoint>(origin: GeoPoint, points: T[]): T[] {
+/** ساخت مسیر اولیه با الگوریتم نزدیک‌ترین همسایه. */
+export function nearestNeighborOrder<T extends GeoPoint>(origin: GeoPoint, points: readonly T[]): T[] {
   const remaining = [...points];
   const ordered: T[] = [];
   let cursor = origin;
-  while (remaining.length) {
-    let best = 0;
-    let bestKm = Infinity;
-    remaining.forEach((p, i) => {
-      const km = haversineKm(cursor, p);
-      if (km < bestKm) {
-        bestKm = km;
-        best = i;
+
+  while (remaining.length > 0) {
+    let bestIndex = 0;
+    let bestDistance = Infinity;
+    for (let index = 0; index < remaining.length; index += 1) {
+      const distance = haversineKm(cursor, remaining[index]);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        bestIndex = index;
       }
-    });
-    const next = remaining.splice(best, 1)[0];
+    }
+    const next = remaining.splice(bestIndex, 1)[0];
     ordered.push(next);
     cursor = next;
   }
+
   return ordered;
+}
+
+/** طول مسیر باز از مبدأ تا آخرین توقف؛ بازگشت به مبدأ محاسبه نمی‌شود. */
+export function openRouteDistance<T extends GeoPoint>(origin: GeoPoint, points: readonly T[]): number {
+  let cursor = origin;
+  let distance = 0;
+  for (const point of points) {
+    distance += haversineKm(cursor, point);
+    cursor = point;
+  }
+  return distance;
+}
+
+/** بهبود مسیر با 2-opt؛ برای سبدهای محلی کوچک سریع و قطعی است. */
+export function twoOptImprove<T extends GeoPoint>(
+  origin: GeoPoint,
+  initialRoute: readonly T[],
+  maxPasses = 12,
+): T[] {
+  const route = [...initialRoute];
+  if (route.length < 3) return route;
+
+  let pass = 0;
+  let improved = true;
+  while (improved && pass < maxPasses) {
+    improved = false;
+    pass += 1;
+
+    for (let start = 0; start < route.length - 1; start += 1) {
+      for (let end = start + 1; end < route.length; end += 1) {
+        const before = start === 0 ? origin : route[start - 1];
+        const first = route[start];
+        const last = route[end];
+        const after = route[end + 1];
+
+        const currentEdges =
+          haversineKm(before, first) + (after ? haversineKm(last, after) : 0);
+        const proposedEdges =
+          haversineKm(before, last) + (after ? haversineKm(first, after) : 0);
+
+        if (proposedEdges + 1e-6 < currentEdges) {
+          const reversed = route.slice(start, end + 1).reverse();
+          route.splice(start, reversed.length, ...reversed);
+          improved = true;
+        }
+      }
+    }
+  }
+
+  return route;
+}
+
+/** ترتیب نهایی توقف‌ها: نزدیک‌ترین همسایه + بهینه‌سازی 2-opt. */
+export function orderByWalk<T extends GeoPoint>(origin: GeoPoint, points: T[]): T[] {
+  return twoOptImprove(origin, nearestNeighborOrder(origin, points));
 }
