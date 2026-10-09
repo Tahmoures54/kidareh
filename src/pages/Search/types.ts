@@ -1,3 +1,4 @@
+import type { SortType, ViewMode, LocationScopeType, LocationScope } from "../../types/common";
 export type { SortType, ViewMode, LocationScopeType, LocationScope } from "../../types/common";
 
 export interface ProductResult {
