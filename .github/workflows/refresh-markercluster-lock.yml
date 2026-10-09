@@ -37,3 +37,5 @@ jobs:
             git commit -m "chore(deps): add Leaflet marker clustering"
             git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
+
+# Lock refresh is deliberately scoped to this feature branch and workflow file.
