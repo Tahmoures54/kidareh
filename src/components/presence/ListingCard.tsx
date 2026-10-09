@@ -6,6 +6,7 @@ import { formatCompactToman, formatWalk, toFa } from "../../presence/engine";
 import { CATEGORY_META } from "../../presence/catalog";
 import { cn } from "../../utils";
 import PresenceImage from "./PresenceImage";
+import { triggerHaptic } from "../../utils/haptics";
 
 interface Props {
   listing: EnrichedListing;
@@ -90,6 +91,7 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  triggerHaptic("light");
                   onToggleTrip(listing.id);
                 }}
                 className={cn(
