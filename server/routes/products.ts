@@ -268,7 +268,7 @@ router.put("/:id/status", requireAuth, async (req: AuthRequest, res: Response) =
 
 router.delete("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id ?? "");
     const storeInfo = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(req.user!.id) as any;
     if (!storeInfo) return res.status(403).json({ error: "فروشگاهی یافت نشد" });
     const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(id) as any;
@@ -386,7 +386,7 @@ router.post("/:id/reviews", requireAuth, (req: AuthRequest, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id ?? "");
     if (isNaN(Number(id))) return res.status(400).json({ error: "شناسه نامعتبر است" });
     setImmediate(() => {
       try { db.prepare("UPDATE products SET views = views + 1 WHERE id = ?").run(id); } catch (e) { logger.error("Failed to increment views:", e); }
