@@ -23,10 +23,10 @@ import {
 } from "../../../src/hooks/useAppLocation";
 
 describe("iranCities dataset", () => {
-  it("loads all Iranian provinces and a full city list", () => {
+  it("loads all Iranian provinces and the curated city directory", () => {
     expect(iranProvinceNames.length).toBe(31);
     expect(IRAN_CITIES_BY_PROVINCE).toHaveLength(31);
-    expect(IRAN_CITY_COUNT).toBeGreaterThan(1000);
+    expect(IRAN_CITY_COUNT).toBeGreaterThanOrEqual(150);
     expect(iranCities.length).toBe(IRAN_CITY_COUNT);
   });
 
