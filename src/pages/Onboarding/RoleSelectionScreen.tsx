@@ -14,7 +14,7 @@ interface RoleOption {
 interface RoleSelectionScreenProps {
   selectedRole: UserRole;
   onRoleSelect: (role: UserRole) => void;
-  onNext: () => void;
+  onNext: (role: UserRole) => void;
 }
 
 const ROLES: RoleOption[] = [
