@@ -73,8 +73,7 @@ export async function searchProducts(
       parsed.maxPrice != null &&
       parsed.minPrice > parsed.maxPrice
     ) {
-      return res
-        .status(400)
+      return void res.status(400)
         .json({ error: "minPrice نباید بزرگ‌تر از maxPrice باشد." });
     }
 
@@ -82,8 +81,7 @@ export async function searchProducts(
       (parsed.sort === "nearest" || parsed.radiusKm != null) &&
       (parsed.lat == null || parsed.lng == null)
     ) {
-      return res
-        .status(400)
+      return void res.status(400)
         .json({ error: "برای nearest/radiusKm باید lat و lng ارسال شود." });
     }
 
