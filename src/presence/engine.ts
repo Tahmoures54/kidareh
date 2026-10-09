@@ -143,6 +143,8 @@ export function buildRadar(origin: PresenceOrigin, sku?: string, at?: Date): Rad
     const byWalk = [...listings].sort((a, b) => a.walkMinutes - b.walkMinutes);
     const cheapest = byPrice[0];
     const nearest = byWalk[0];
+    const mostExpensive = byPrice[byPrice.length - 1];
+    if (!cheapest || !nearest || !mostExpensive) continue;
     result.push({
       sku: key,
       label: cheapest.skuLabel,
@@ -150,7 +152,7 @@ export function buildRadar(origin: PresenceOrigin, sku?: string, at?: Date): Rad
       listings: byPrice,
       cheapest,
       nearest,
-      spreadToman: byPrice[byPrice.length - 1].price - cheapest.price,
+      spreadToman: mostExpensive.price - cheapest.price,
       storeCount: listings.length,
     });
   }
@@ -275,6 +277,7 @@ export function mapsWalkUrl(origin: GeoPoint, dest: GeoPoint): string {
 export function mapsMultiStopUrl(origin: GeoPoint, points: GeoPoint[]): string {
   if (points.length === 0) return mapsWalkUrl(origin, origin);
   const dest = points[points.length - 1];
+  if (!dest) return mapsWalkUrl(origin, origin);
   const way = points.slice(0, -1).map((p) => `${p.lat},${p.lng}`).join("|");
   const base = `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lng}&destination=${dest.lat},${dest.lng}&travelmode=walking`;
   return way ? `${base}&waypoints=${encodeURIComponent(way)}` : base;
