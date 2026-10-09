@@ -19,7 +19,7 @@ const TIERS = [
 
 function getUserTier(referredUsers: number) {
   // پیدا کردن رتبه فعلی
-  const currentTier = TIERS.find(t => referredUsers >= t.min && referredUsers <= t.max) || TIERS[0];
+  const currentTier = TIERS.find(t => referredUsers >= t.min && referredUsers <= t.max) || TIERS[0]!;
   const currentTierIndex = TIERS.indexOf(currentTier);
   const nextTier = TIERS[currentTierIndex + 1] || null;
 
