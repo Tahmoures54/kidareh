@@ -96,7 +96,7 @@ export const PremiumProductCard = memo(
             type="button"
             onClick={handleFavoriteClick}
             aria-label={isFavorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
-            className="absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-md transition-all active:scale-90 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
+            className="product-favorite-button absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-md transition-all active:scale-90 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
           >
             <Heart className={`h-4 w-4 ${isFavorite ? "fill-rose-500 text-rose-500" : "text-slate-700"}`} />
           </button>
