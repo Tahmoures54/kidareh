@@ -24,6 +24,8 @@ export interface FeedPostData {
   productId?: number;
   listingId?: string;
   sku?: string;
+  lastStockConfirmedAt?: string | null;
+  stockConfidence?: number | null;
 }
 
 function usableImage(src?: string | null): src is string {
@@ -117,6 +119,8 @@ export function productToFeedPost(raw: Record<string, any>, storeFallback?: {
       .join(" · "),
     badge: raw.badge || undefined,
     status: raw.status || "موجود",
+    lastStockConfirmedAt: typeof raw.last_stock_confirmed_at === "string" ? raw.last_stock_confirmed_at : null,
+    stockConfidence: typeof raw.stock_confidence === "number" ? raw.stock_confidence : 0.5,
     productId: Number.isFinite(id) ? id : undefined,
   };
 }
