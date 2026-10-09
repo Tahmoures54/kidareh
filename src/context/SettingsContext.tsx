@@ -295,9 +295,15 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateBadgeConfig = useCallback(
     async (badge: string, config: Partial<BadgeConfig>) => {
-      const newBadgeConfigs = {
+      const current = settings.badgeConfigs[badge] ?? {
+        price: 0,
+        duration: 30,
+        description: "",
+        color: "bg-indigo-500 text-white",
+      };
+      const newBadgeConfigs: BadgeConfigs = {
         ...settings.badgeConfigs,
-        [badge]: { ...settings.badgeConfigs[badge], ...config },
+        [badge]: { ...current, ...config },
       };
 
       await apiRequest("/api/admin/settings", {
