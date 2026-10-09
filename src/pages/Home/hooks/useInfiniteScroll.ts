@@ -34,6 +34,7 @@ export const useInfiniteScroll = <T extends HTMLElement = HTMLDivElement>({
 
   const handleObserver = useCallback((entries: IntersectionObserverEntry[]) => {
     const [target] = entries;
+    if (!target) return;
     const { hasNextPage, isFetchingNextPage, fetchNextPage, enabled } = stateRef.current;
 
     if (enabled && target.isIntersecting && hasNextPage && !isFetchingNextPage) {
