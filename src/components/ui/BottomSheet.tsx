@@ -1,6 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
+
+const DEFAULT_SNAP_POINTS = [0.56, 0.9] as const;
 
 interface BottomSheetProps {
   open: boolean;
@@ -20,13 +22,21 @@ export default function BottomSheet({
   title,
   description,
   children,
-  snapPoints = [0.56, 0.9],
+  snapPoints = DEFAULT_SNAP_POINTS,
   initialSnap = 1,
 }: BottomSheetProps) {
-  const safeSnapPoints = snapPoints.length > 0
-    ? snapPoints.map((point) => Math.min(0.96, Math.max(0.25, point))).sort((a, b) => a - b)
-    : [0.56, 0.9];
+  const safeSnapPoints = useMemo(
+    () => snapPoints.length > 0
+      ? snapPoints.map((point) => Math.min(0.96, Math.max(0.25, point))).sort((a, b) => a - b)
+      : [...DEFAULT_SNAP_POINTS],
+    [snapPoints]
+  );
+  const onCloseRef = useRef(onClose);
   const [snapIndex, setSnapIndex] = useState(Math.min(Math.max(initialSnap, 0), safeSnapPoints.length - 1));
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -34,14 +44,14 @@ export default function BottomSheet({
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") onCloseRef.current();
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, initialSnap, safeSnapPoints.length, onClose]);
+  }, [open, initialSnap, safeSnapPoints.length]);
 
   return (
     <AnimatePresence>
