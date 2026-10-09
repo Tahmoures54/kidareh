@@ -389,7 +389,7 @@ async function startServer() {
 
       app.get("/products/:id", async (req: Request, res: Response) => {
         try {
-          if (!/^\d+$/.test(req.params.id)) return res.sendFile(indexPath);
+          if (!/^\d+$/.test(String(req.params.id ?? ""))) return res.sendFile(indexPath);
           const product = await getCachedProductDetail(String(req.params.id ?? ""));
           if (!product) return res.status(404).sendFile(indexPath);
           const baseHtml = fs.readFileSync(indexPath, "utf8");
