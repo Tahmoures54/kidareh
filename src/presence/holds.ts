@@ -48,18 +48,22 @@ export function cancelLocalHold(id: string): HoldRecord | null {
   const items = read();
   const idx = items.findIndex((h) => h.id === id);
   if (idx < 0) return null;
-  items[idx] = { ...items[idx], status: "cancelled" };
+  const existing = items[idx];
+  if (!existing) return null;
+  items[idx] = { ...existing, status: "cancelled" };
   write(items);
-  return items[idx];
+  return items[idx] ?? null;
 }
 
 export function markLocalReady(id: string): HoldRecord | null {
   const items = read();
   const idx = items.findIndex((h) => h.id === id);
   if (idx < 0) return null;
-  items[idx] = { ...items[idx], status: "ready_for_pickup" };
+  const existing = items[idx];
+  if (!existing) return null;
+  items[idx] = { ...existing, status: "ready_for_pickup" };
   write(items);
-  return items[idx];
+  return items[idx] ?? null;
 }
 
 export const HOLD_OPTIONS = [
