@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowUpLeft,
   Clock3,
   LocateFixed,
+  Loader2,
   MapPin,
   Navigation,
   Search,
@@ -27,6 +28,7 @@ import { presenceMarketStories } from "../../presence/stories";
 import { useMarketStories } from "../../hooks/useMarketStories";
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../utils/api";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 
 const PRESENCE_GROUP_TO_LISTING: Record<string, ListingCategory[]> = {
   digital: ["digital", "audio", "gaming"],
@@ -64,6 +66,16 @@ export default function PresenceHome() {
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
   const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
   const { items: paidStories } = useMarketStories(cityLocation.city);
+
+  const refreshHome = useCallback(async () => {
+    const response = await apiRequest<{ products?: Record<string, unknown>[] }>(
+      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""}`
+    );
+    const rows = Array.isArray(response?.products) ? response.products : [];
+    setShopPosts(rows.map((row) => productToFeedPost(row)));
+  }, [cityLocation.city, marketCategory]);
+
+  const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh({ onRefresh: refreshHome });
 
   const listingCats = useMemo(
     () => (marketCategory === "all" ? ("all" as const) : listingCatsFor(marketCategory)),
@@ -133,7 +145,13 @@ export default function PresenceHome() {
       : categoriesData.find((g) => g.slug === marketCategory)?.short || "کالاها";
 
   return (
-    <div className="min-h-full bg-[#f6f8f7] text-[var(--ink)]">
+    <div className="min-h-full bg-[#f6f8f7] text-[var(--ink)]" {...pullHandlers}>
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-0 z-[120] flex justify-center transition-opacity" style={{ transform: `translateY(${Math.max(0, Math.min(pullDistance, 54))}px)`, opacity: pullDistance > 0 || refreshing ? 1 : 0 }}>
+        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-white/95 px-4 py-2 text-xs font-black text-teal-700 shadow-lg backdrop-blur dark:border-teal-900 dark:bg-slate-900/95 dark:text-teal-300">
+          <Loader2 className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "در حال تازه‌سازی" : pullDistance >= 76 ? "رها کن تا تازه شود" : "برای تازه‌سازی پایین بکش"}
+        </div>
+      </div>
       <div className="mx-auto w-full max-w-[1320px] px-3 pb-28 pt-3 sm:px-5 lg:px-7 lg:pb-16 lg:pt-5">
         <section className="relative overflow-hidden rounded-[30px] bg-[var(--ink)] shadow-[0_20px_60px_rgba(15,42,40,0.14)]">
           <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[var(--accent)]/25 blur-3xl" />
