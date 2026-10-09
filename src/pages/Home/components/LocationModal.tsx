@@ -177,6 +177,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
       }, 350);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isOpen]);
 
   useEffect(() => {
@@ -204,7 +205,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
     estimateSize: () => ITEM_HEIGHT,
     overscan: 8,
     getItemKey: (index) =>
-      `${filteredCities[index].name}-${filteredCities[index].province}`, // Added stable key for virtualizer
+      `${filteredCities[index]?.name ?? index}-${filteredCities[index]?.province ?? ""}`, // Added stable key for virtualizer
   });
 
   const handleSelectCity = useCallback(
@@ -365,6 +366,7 @@ export const LocationModal: React.FC<LocationModalProps> = ({
                 >
                   {virtualizer.getVirtualItems().map((virtualItem) => {
                     const city = filteredCities[virtualItem.index];
+                    if (!city) return null;
                     const isSelected =
                       city.name === selectedCity &&
                       city.province === selectedProvince;
