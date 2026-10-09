@@ -4,11 +4,11 @@ import { CheckCircle, AlertCircle, X } from "lucide-react";
 
 interface ToastProps {
   msg: string;
-  type: "success" | "error";
-  onClose: () => void;
+  type?: "success" | "error";
+  onClose?: () => void;
 }
 
-export default function Toast({ msg, type, onClose }: ToastProps) {
+export default function Toast({ msg, type = "error", onClose = () => undefined }: ToastProps) {
   useEffect(() => {
     const timer = setTimeout(() => onClose(), 3200);
     return () => clearTimeout(timer);
