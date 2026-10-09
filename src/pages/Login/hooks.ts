@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { friendlyError } from "../../utils/friendlyError";
-import { CONFIG, toEn } from "./utils";
 
 export function useLoginLogic() {
   const { sendOtp, verifyOtp, user, isLoading: authLoading } = useAuth();
