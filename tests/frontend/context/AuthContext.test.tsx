@@ -2,10 +2,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../../src/context/AuthContext';
-import { apiRequest } from '../../../src/utils/api';
+import { apiRequest } from '@utils/api';
 
 // Mock the entire api module
-vi.mock('../../../src/utils/api', () => ({
+vi.mock('@utils/api', () => ({
   apiRequest: vi.fn(),
   ApiError: class extends Error {
     status: number;
