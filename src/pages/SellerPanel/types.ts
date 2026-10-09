@@ -14,6 +14,8 @@ export interface Product {
   badge?: string | null;
   image?: string | null;
   image_url?: string | null;
+  last_stock_confirmed_at?: string | null;
+  stock_confidence?: number | null;
 }
 
 export interface StoreInfo {
