@@ -121,7 +121,7 @@ router.post("/", requireAuth, (req: AuthRequest, res) => {
       store_not_found: [404, "فروشگاه پیدا نشد"],
     };
     const hit = map[err?.message];
-    if (hit) return res.status(hit[0]).json({ error: hit[1] });
+    if (hit) return void res.status(hit[0]).json({ error: hit[1] });
     logger.error("create reservation", err);
     res.status(500).json({ error: "رزرو ثبت نشد" });
   }
@@ -133,13 +133,13 @@ router.patch("/:id/status", requireAuth, (req: AuthRequest, res) => {
   const row = db
     .prepare(`SELECT * FROM reservations WHERE public_id = ? OR id = ?`)
     .get(req.params.id, Number(req.params.id) || -1) as any;
-  if (!row) return res.status(404).json({ error: "رزرو پیدا نشد" });
+  if (!row) return void res.status(404).json({ error: "رزرو پیدا نشد" });
   if (Number(row.buyer_id) !== Number(req.user!.id) && req.user!.role !== "admin" && req.user!.role !== "seller") {
-    return res.status(403).json({ error: "دسترسی ندارید" });
+    return void res.status(403).json({ error: "دسترسی ندارید" });
   }
   const allowed = TRANSITIONS[row.status] || [];
   if (!allowed.includes(next)) {
-    return res.status(400).json({ error: "این تغییر وضعیت مجاز نیست" });
+    return void res.status(400).json({ error: "این تغییر وضعیت مجاز نیست" });
   }
   db.prepare(`UPDATE reservations SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(next, row.id);
   const updated = db.prepare(`SELECT * FROM reservations WHERE id = ?`).get(row.id);
