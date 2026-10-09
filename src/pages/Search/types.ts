@@ -11,7 +11,7 @@ export interface ProductResult {
   updated: string;
   image_url: string;
   rating: number;
-  badge: string | null;
+  badge?: string;
   lat?: number;
   lng?: number;
 }
