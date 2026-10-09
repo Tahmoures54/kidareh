@@ -34,3 +34,9 @@ jobs:
 
       - name: TypeScript validation
         run: npm run typecheck
+
+      - name: Unit and integration tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build
