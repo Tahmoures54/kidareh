@@ -28,6 +28,8 @@ import { getCategoryDisplayName } from "../../data/processed/categories";
 import { useSearch } from "./hooks/useSearch";
 import { useAnalytics } from "../../hooks/useAnalytics";
 import { SearchSkeleton } from "./components/SearchSkeleton";
+import { useHaptics } from "../../hooks/useHaptics";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { FilterSheet } from "./components/FilterSheet";
 import { IdleSection } from "./components/IdleSection";
 import { SPRING_TRANSITION, SORT_OPTIONS } from "./components/constants";
@@ -35,6 +37,7 @@ import { SPRING_TRANSITION, SORT_OPTIONS } from "./components/constants";
 export default function Search() {
   const navigate = useNavigate();
   const { trackEvent } = useAnalytics();
+  const haptic = useHaptics();
   const resultTrackedRef = React.useRef("");
   const {
     query, setQuery,
@@ -51,6 +54,12 @@ export default function Search() {
     expandSearchScope, cycleScope, resetFilters,
     searchPlaceholder, scopeLabel,
   } = useSearch();
+
+  const refreshSearch = useCallback(async () => {
+    await refetch();
+    haptic("success");
+  }, [refetch, haptic]);
+  const pull = usePullToRefresh({ onRefresh: refreshSearch });
 
   const handleExpandSearch = () => {
     trackEvent("search_scope_expand_click", {
@@ -103,7 +112,21 @@ export default function Search() {
   }, [filters.scope.type]);
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl">
+    <div
+      className="min-h-[100dvh] bg-slate-50/50 font-sans"
+      dir="rtl"
+      onTouchStart={pull.onTouchStart}
+      onTouchMove={pull.onTouchMove}
+      onTouchEnd={pull.onTouchEnd}
+    >
+      <div
+        className="pointer-events-none fixed left-1/2 top-16 z-[90] flex -translate-x-1/2 items-center justify-center overflow-hidden rounded-full bg-white/95 text-cyan-700 shadow-lg ring-1 ring-slate-200/70 transition-[height,opacity] duration-150"
+        style={{ height: pull.pullDistance, width: 48, opacity: pull.pullDistance > 0 || pull.isRefreshing ? 1 : 0 }}
+        aria-live="polite"
+        aria-label={pull.isRefreshing ? "در حال تازه‌سازی نتایج" : "برای تازه‌سازی بیشتر بکشید"}
+      >
+        {pull.isRefreshing ? <Loader2 className="h-5 w-5 animate-spin" /> : <SearchIcon className="h-4 w-4" />}
+      </div>
       <AnimatePresence>
         {toastMsg && <Toast msg={toastMsg} />}
       </AnimatePresence>
