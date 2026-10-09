@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Store, TrendingDown, Trash2, MapPin, MoreVertical, Share2, Check } from "lucide-react";
 import { isProductAvailable } from "../../utils/productAvailability";
+import StockFreshnessBadge from "../presence/StockFreshnessBadge";
+import { getStockFreshness } from "../../utils/stockFreshness";
 
 const FALLBACK = "https://placehold.co/400x400/1e293b/94a3b8?text=No+Image";
 
@@ -16,12 +18,13 @@ export const ProductCard = memo(({ product, viewMode, onRemove, isSelected, onTo
   const [showMenu, setShowMenu] = useState(false);
   const isList = viewMode === "list";
   const available = isProductAvailable(product.status);
+  const stockFreshness = getStockFreshness(product.last_stock_confirmed_at, product.stock_confidence);
 
   return (
     <motion.div
       layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.2 } }}
       transition={{ layout: { type: "spring", bounce: 0.15 } }}
-      className={`relative w-full rounded-3xl border-2 ${
+      className={`relative w-full rounded-3xl border-2 ${stockFreshness.kind === "stale" ? "grayscale-[0.25] opacity-75" : ""} ${
         isSelected ? "border-[var(--brand-primary)] ring-4 ring-[var(--brand-glow)] bg-[var(--brand-primary)]/5" : "border-[var(--border-light)] bg-[var(--bg-secondary)]"
       } shadow-sm overflow-visible`}
       onClick={() => selectionMode && onToggleSelect(product.id)}
@@ -69,6 +72,7 @@ export const ProductCard = memo(({ product, viewMode, onRemove, isSelected, onTo
               <span className="flex items-center gap-1 font-medium"><Store className="w-3 h-3" /> {product.store}</span>
               {product.distanceValue < 999999 && <span className="flex items-center gap-1 font-medium"><MapPin className="w-3 h-3" /> {product.distance}</span>}
             </div>
+            <div className="mb-3"><StockFreshnessBadge lastConfirmedAt={product.last_stock_confirmed_at} confidence={product.stock_confidence} compact /></div>
           </div>
           
           <div className="flex items-end justify-between mt-auto">
