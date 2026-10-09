@@ -60,7 +60,7 @@ router.get("/stories", (req, res: Response) => {
 /** POST /api/promotions/stories/:id/view */
 router.post("/stories/:id/view", (req, res: Response) => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.json({ ok: true });
+  if (!Number.isFinite(id)) return void res.json({ ok: true });
   recordBannerImpression(id);
   res.json({ ok: true });
 });
@@ -68,7 +68,7 @@ router.post("/stories/:id/view", (req, res: Response) => {
 /** POST /api/promotions/stories/:id/click */
 router.post("/stories/:id/click", (req, res: Response) => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.json({ ok: true });
+  if (!Number.isFinite(id)) return void res.json({ ok: true });
   recordBannerClick(id);
   res.json({ ok: true });
 });
@@ -91,7 +91,7 @@ router.get("/banners", (req, res: Response) => {
 /** POST /api/promotions/banners/:id/click */
 router.post("/banners/:id/click", (req, res: Response) => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.status(400).json({ error: "شناسه نامعتبر" });
+  if (!Number.isFinite(id)) return void res.status(400).json({ error: "شناسه نامعتبر" });
   recordBannerClick(id);
   res.json({ ok: true });
 });
@@ -100,7 +100,7 @@ router.post("/banners/:id/click", (req, res: Response) => {
 router.get("/my-stats", requireAuth, (req: AuthRequest, res: Response) => {
   try {
     const stats = getSellerPromoStats(req.user!.id);
-    if (!stats) return res.status(404).json({ error: "فروشگاهی یافت نشد" });
+    if (!stats) return void res.status(404).json({ error: "فروشگاهی یافت نشد" });
     res.json(stats);
   } catch (err) {
     logger.error("promo stats:", err);
@@ -111,7 +111,7 @@ router.get("/my-stats", requireAuth, (req: AuthRequest, res: Response) => {
 /** GET /api/promotions/package/:id */
 router.get("/package/:id", (req, res: Response) => {
   const pkg = getPackage(req.params.id);
-  if (!pkg) return res.status(404).json({ error: "پکیج یافت نشد" });
+  if (!pkg) return void res.status(404).json({ error: "پکیج یافت نشد" });
   res.json(pkg);
 });
 
