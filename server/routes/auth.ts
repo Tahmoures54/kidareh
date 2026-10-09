@@ -68,7 +68,7 @@ function clearSessionCookie(res: Response): void {
 
 async function sendSms(phone: string, otp: string): Promise<boolean> {
   if (!kavenegarApi) {
-    logger.warn(`No Kavenegar API Key. FALLBACK OTP for ${phone}: ${otp}`);
+    logger.error("OTP delivery unavailable: KAVENEGAR_API_KEY is not configured.");
     return false;
   }
   return new Promise((resolve) => {
@@ -88,10 +88,10 @@ async function sendSms(phone: string, otp: string): Promise<boolean> {
             clearTimeout(timeout);
             isResolved = true;
             if (status === 200) {
-              logger.info(`SMS sent to ${phone}`);
+              logger.info("OTP SMS delivered successfully.");
               resolve(true);
             } else {
-              logger.error(`Kavenegar Error ${phone} status=${status}`);
+              logger.error(`Kavenegar rejected OTP delivery (status=${status}).`);
               resolve(false);
             }
           }
@@ -263,7 +263,7 @@ router.post("/send-otp", async (req, res) => {
     const otp = crypto.randomInt(10000, 100000).toString();
     await setOtp(phone, otp);
     await setSendRate(phone);
-    logger.info(`OTP generated for ${phone}`);
+    logger.info("OTP challenge generated.");
     const sent = await sendSms(phone, otp);
     if (sent) return res.json({ message: "کد تأیید ارسال شد", success: true });
     // بدون SMS واقعی فقط در dev با SHOW_OTP_IN_DEV کد را برمی‌گردانیم
