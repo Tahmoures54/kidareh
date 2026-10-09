@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bookmark, ChevronDown, Home, Map as MapIcon, MapPin, User, MessageCircle, Sparkles, Store, Search, LogOut, ShieldCheck, LocateFixed } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
@@ -119,7 +120,20 @@ export default function PresenceShell() {
               <button type="button" onClick={() => (user ? setMenu(true) : navigate("/login"))} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-700 shadow-sm transition hover:border-cyan-200 hover:text-cyan-700" aria-label={user ? "حساب" : "ورود"}><User className="h-5 w-5" /></button>
             </div>
           </header>
-          <main id="presence-main" className={cn("relative z-0 w-full flex-1 pb-32 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}><Outlet /></main>
+          <main id="presence-main" className={cn("relative z-0 w-full flex-1 pb-32 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 7 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.16, ease: "easeOut" }}
+                className="min-h-full"
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </main>
         </div>
       </div>
 

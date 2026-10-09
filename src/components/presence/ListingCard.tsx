@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Clock3, Footprints, Minus, Plus, Radio } from "lucide-react";
 import type { EnrichedListing } from "../../presence/types";
@@ -6,6 +7,7 @@ import { formatCompactToman, formatWalk, toFa } from "../../presence/engine";
 import { CATEGORY_META } from "../../presence/catalog";
 import { cn } from "../../utils";
 import PresenceImage from "./PresenceImage";
+import { useHaptics } from "../../hooks/useHaptics";
 
 interface Props {
   listing: EnrichedListing;
@@ -16,8 +18,14 @@ interface Props {
 
 export const ListingCard = memo(function ListingCard({ listing, compact, inTrip, onToggleTrip }: Props) {
   const cat = CATEGORY_META[listing.category];
+  const haptic = useHaptics();
   return (
-    <article
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.18 }}
       className={cn(
         "group relative z-0 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-lg",
         compact && "rounded-2xl"
@@ -90,6 +98,7 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  haptic("selection");
                   onToggleTrip(listing.id);
                 }}
                 className={cn(
@@ -106,6 +115,6 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
           </div>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 });
