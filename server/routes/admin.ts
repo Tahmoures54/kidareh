@@ -14,21 +14,21 @@ const isMasterAdmin = (req: AuthRequest, res: Response, next: NextFunction): voi
   try {
     const userId = req.user?.id;
     if (!userId) {
-      return res.status(401).json({ error: "احراز هویت ناموفق بود." });
+      return void res.status(401).json({ error: "احراز هویت ناموفق بود." });
     }
 
     const user = db.prepare("SELECT phone FROM users WHERE id = ?").get(userId) as any;
     const MASTER_ADMIN_PHONE = process.env.ADMIN_PHONE || "09160684552";
 
     if (!user || user.phone !== MASTER_ADMIN_PHONE) {
-      return res.status(403).json({
+      return void res.status(403).json({
         error: "دسترسی غیرمجاز. این بخش فقط برای مدیریت کل سامانه در دسترس است.",
       });
     }
     next();
   } catch (error) {
     logger.error("Master Admin Check Error:", error);
-    return res.status(500).json({ error: "خطای سرور در بررسی سطح دسترسی مدیریت." });
+    return void res.status(500).json({ error: "خطای سرور در بررسی سطح دسترسی مدیریت." });
   }
 };
 
@@ -42,7 +42,7 @@ router.use(isMasterAdmin);
 // ═══════════════════════════════════════
 router.get("/dashboard-stats", (_req: AuthRequest, res: Response) => {
   try {
-    const stats = getStats();
+    const stats = getStats() as Record<string, unknown>;
 
     const pendingProducts = (db.prepare(
       "SELECT COUNT(*) as count FROM products WHERE moderation_status = 'pending'"
@@ -85,7 +85,7 @@ router.get("/dashboard-stats", (_req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     logger.error("Dashboard Stats Error:", error);
-    return res.status(500).json({ error: "خطا در دریافت آمار داشبورد." });
+    return void res.status(500).json({ error: "خطا در دریافت آمار داشبورد." });
   }
 });
 
@@ -168,7 +168,7 @@ router.get("/users", (req: AuthRequest, res: Response) => {
     });
   } catch (error) {
     logger.error("Fetch Users Error:", error);
-    return res.status(500).json({ error: "خطا در دریافت لیست کاربران." });
+    return void res.status(500).json({ error: "خطا در دریافت لیست کاربران." });
   }
 });
 
@@ -279,7 +279,7 @@ router.get("/products/pending", (_req: AuthRequest, res: Response) => {
     return res.json(products);
   } catch (error) {
     logger.error("Get pending products error:", error);
-    return res.status(500).json({ error: "خطا در دریافت محصولات در انتظار" });
+    return void res.status(500).json({ error: "خطا در دریافت محصولات در انتظار" });
   }
 });
 
@@ -369,7 +369,7 @@ router.post("/stores/:id/toggle-blue-tick", (req: AuthRequest, res: Response): v
   try {
     const store = db.prepare("SELECT id, blue_tick_expires_at FROM stores WHERE id = ?").get(storeId) as any;
     if (!store) {
-      return res.status(404).json({ error: "فروشگاه یافت نشد" });
+      return void res.status(404).json({ error: "فروشگاه یافت نشد" });
     }
 
     const hasBlueTick = store.blue_tick_expires_at && new Date(store.blue_tick_expires_at) > new Date();
@@ -404,7 +404,7 @@ router.get("/settings", (_req: AuthRequest, res: Response) => {
     return res.json(result);
   } catch (error) {
     logger.error("Fetch Settings Error:", error);
-    return res.status(500).json({ error: "خطا در دریافت تنظیمات سیستم." });
+    return void res.status(500).json({ error: "خطا در دریافت تنظیمات سیستم." });
   }
 });
 
@@ -433,7 +433,7 @@ router.put("/settings", (req: AuthRequest, res: Response): void => {
     }
 
     if (!key || value === undefined) {
-      return res.status(400).json({ error: "کلید و مقدار برای بروزرسانی الزامی است." });
+      return void res.status(400).json({ error: "کلید و مقدار برای بروزرسانی الزامی است." });
     }
 
     db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)").run(key, String(value));
@@ -441,10 +441,10 @@ router.put("/settings", (req: AuthRequest, res: Response): void => {
     return res.json({ success: true, message: "تنظیم با موفقیت بروزرسانی شد." });
   } catch (error: any) {
     if (error.name === "ZodError") {
-      return res.status(400).json({ error: error.errors[0].message });
+      return void res.status(400).json({ error: error.errors[0].message });
     }
     logger.error("Update Settings Error:", error);
-    return res.status(500).json({ error: "خطا در ذخیره تنظیمات." });
+    return void res.status(500).json({ error: "خطا در ذخیره تنظیمات." });
   }
 });
 
@@ -460,7 +460,7 @@ router.post("/backup", (_req: AuthRequest, res: Response) => {
     return res.json({ success: true, message: "بکاپ با موفقیت ایجاد شد", path: backupPath });
   } catch (error) {
     logger.error("Backup error:", error);
-    return res.status(500).json({ error: "خطا در ایجاد بکاپ" });
+    return void res.status(500).json({ error: "خطا در ایجاد بکاپ" });
   }
 });
 
@@ -480,7 +480,7 @@ router.get("/system-info", (_req: AuthRequest, res: Response) => {
     return res.json(info);
   } catch (error) {
     logger.error("System info error:", error);
-    return res.status(500).json({ error: "خطا در دریافت اطلاعات سیستم" });
+    return void res.status(500).json({ error: "خطا در دریافت اطلاعات سیستم" });
   }
 });
 
