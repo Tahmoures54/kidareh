@@ -63,7 +63,7 @@ export const PremiumProductCard = memo(
       (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
-        onToggleFavorite(product.id);
+        onToggleFavorite(String(product.id));
       },
       [onToggleFavorite, product.id]
     );
