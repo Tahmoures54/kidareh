@@ -284,7 +284,11 @@ router.post("/trips/:id/stops/:stopOrder/check-in", requireAuth, (req: AuthReque
 
   const sellerStore = db.prepare("SELECT id, phone FROM stores WHERE user_id = ? LIMIT 1")
     .get(userId) as { id: number; phone: string | null } | undefined;
-  const normalizePhone = (value: string) => value.replace(/[^0-9]/g, "");
+  const normalizePhone = (value: string) =>
+    value
+      .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+      .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)))
+      .replace(/[^0-9]/g, "");
   if (!sellerStore?.phone || normalizePhone(sellerStore.phone) !== normalizePhone(item.store_phone)) {
     res.status(403).json({ error: "این QR متعلق به فروشگاه ثبت‌شده شما نیست." });
     return;
