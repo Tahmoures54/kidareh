@@ -1,9 +1,6 @@
 name: Typecheck
 
 on:
-  push:
-    branches:
-      - fix/typecheck-zero-errors-20261009
   pull_request:
     branches:
       - main
