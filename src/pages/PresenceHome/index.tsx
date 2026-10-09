@@ -170,7 +170,20 @@ export default function PresenceHome() {
       : categoriesData.find((g) => g.slug === marketCategory)?.short || "کالاها";
 
   return (
-    <div className="min-h-full bg-[#f6f8f7] text-[var(--ink)]">
+    <div
+      className="min-h-full bg-[#f6f8f7] text-[var(--ink)]"
+      onTouchStart={pull.onTouchStart}
+      onTouchMove={pull.onTouchMove}
+      onTouchEnd={pull.onTouchEnd}
+    >
+      <div
+        className="pointer-events-none fixed left-1/2 top-16 z-[90] flex -translate-x-1/2 items-center justify-center overflow-hidden rounded-full bg-white/95 text-[var(--accent)] shadow-lg ring-1 ring-slate-200/70 transition-[height,opacity] duration-150"
+        style={{ height: pull.pullDistance, width: 48, opacity: pull.pullDistance > 0 || pull.isRefreshing ? 1 : 0 }}
+        aria-live="polite"
+        aria-label={pull.isRefreshing ? "در حال تازه‌سازی" : "برای تازه‌سازی بیشتر بکشید"}
+      >
+        {pull.isRefreshing ? <Loader2 className="h-5 w-5 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+      </div>
       <div className="mx-auto w-full max-w-[1320px] px-3 pb-28 pt-3 sm:px-5 lg:px-7 lg:pb-16 lg:pt-5">
         <section className="relative overflow-hidden rounded-[30px] bg-[var(--ink)] shadow-[0_20px_60px_rgba(15,42,40,0.14)]">
           <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[var(--accent)]/25 blur-3xl" />
@@ -196,7 +209,8 @@ export default function PresenceHome() {
                 className="mt-7 flex max-w-2xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-2xl sm:flex-row"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  window.location.assign(`/search?q=${encodeURIComponent(q.trim())}`);
+                  haptic("success");
+                  navigate(`/search?q=${encodeURIComponent(q.trim())}`);
                 }}
               >
                 <div className="flex min-h-14 flex-1 items-center gap-3 rounded-xl px-3">
@@ -262,7 +276,7 @@ export default function PresenceHome() {
           <div className="flex gap-2 overflow-x-auto pb-1 presence-hide-scroll">
             <button
               type="button"
-              onClick={() => setMarketCategory("all")}
+              onClick={() => selectCategory("all")}
               className={`flex min-w-[88px] flex-col items-center gap-2 rounded-2xl px-3 py-3 text-[11px] font-black transition ${marketCategory === "all" ? "bg-[var(--accent)] text-white shadow-sm" : "bg-[#f5f7f6] text-[var(--ink)] hover:bg-[var(--accent)]/10"}`}
             >
               <span className="text-xl">همه</span>
@@ -272,7 +286,7 @@ export default function PresenceHome() {
               <button
                 key={group.slug}
                 type="button"
-                onClick={() => setMarketCategory(group.slug)}
+                onClick={() => selectCategory(group.slug)}
                 className={`flex min-w-[88px] flex-col items-center gap-2 rounded-2xl px-3 py-3 text-[11px] font-black transition ${marketCategory === group.slug ? "bg-[var(--accent)] text-white shadow-sm" : "bg-[#f5f7f6] text-[var(--ink)] hover:bg-[var(--accent)]/10"}`}
               >
                 <span className="text-xl">{group.icon}</span>
@@ -315,16 +329,34 @@ export default function PresenceHome() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => setOpenNow((v) => !v)}
+                  onClick={() => { setOpenNow((v) => !v); haptic("selection"); }}
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-black ${openNow ? "bg-emerald-600 text-white" : "border border-[var(--line)] bg-white text-[var(--muted)]"}`}
                 >
                   <Clock3 className="h-3 w-3" /> باز
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setFiltersOpen(true); haptic("selection"); }}
+                  className="inline-flex items-center gap-1 rounded-full border border-[var(--line)] bg-white px-3 py-1.5 text-[10px] font-black text-[var(--muted)] transition hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                >
+                  <SlidersHorizontal className="h-3 w-3" /> فیلترها
                 </button>
               </div>
             )}
           </div>
 
-          {posts.length > 0 ? (
+          {isLoadingPosts && posts.length === 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="در حال بارگذاری کالاها">
+              {[0, 1, 2, 3, 4, 5].map((item) => (
+                <div key={item} className="overflow-hidden rounded-[24px] border border-[var(--line)] bg-white p-3 shadow-sm">
+                  <div className="aspect-[16/10] animate-pulse rounded-2xl bg-slate-100" />
+                  <div className="mt-4 h-3 w-2/3 animate-pulse rounded-full bg-slate-100" />
+                  <div className="mt-3 h-3 w-1/2 animate-pulse rounded-full bg-slate-100" />
+                  <div className="mt-5 h-8 w-1/3 animate-pulse rounded-xl bg-teal-50" />
+                </div>
+              ))}
+            </div>
+          ) : posts.length > 0 ? (
             <FeedColumn>
               <FeedStack>
                 {posts.slice(0, 8).map((post) => <FeedPost key={post.key} post={post} />)}
@@ -410,6 +442,45 @@ export default function PresenceHome() {
           برای پیدا کردن کالا لازم نیست اول ثبت‌نام کنی.
         </p>
       </div>
+      <BottomSheet
+        open={filtersOpen}
+        title="فیلترهای سریع"
+        description="نتایج را با توجه به مسیر و زمان خریدت محدود کن."
+        onClose={() => setFiltersOpen(false)}
+        snapPoints={[46, 78]}
+        initialSnap={0}
+      >
+        <div className="space-y-6 pb-3">
+          <section>
+            <h3 className="mb-3 text-sm font-black text-slate-800">محدوده جستجو</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {RADII.map((radius) => (
+                <button key={radius.km} type="button" onClick={() => { setRadiusKm(radius.km); haptic("selection"); }} className={radiusKm === radius.km ? "min-h-11 rounded-xl bg-[var(--accent)] px-2 text-xs font-black text-white shadow-sm" : "min-h-11 rounded-xl border border-slate-200 bg-white px-2 text-xs font-black text-slate-600"}>
+                  {radius.label}
+                </button>
+              ))}
+            </div>
+          </section>
+          <section>
+            <h3 className="mb-3 text-sm font-black text-slate-800">ترتیب نمایش</h3>
+            <div className="grid grid-cols-3 gap-2">
+              {([{ value: "nearest", label: "نزدیک‌ترین" }, { value: "cheapest", label: "ارزان‌ترین" }, { value: "newest", label: "جدیدترین" }] as const).map((option) => (
+                <button key={option.value} type="button" onClick={() => { setSort(option.value); haptic("selection"); }} className={sort === option.value ? "min-h-11 rounded-xl bg-[var(--accent)] px-2 text-xs font-black text-white shadow-sm" : "min-h-11 rounded-xl border border-slate-200 bg-white px-2 text-xs font-black text-slate-600"}>
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
+          <button type="button" onClick={() => { setOpenNow((value) => !value); haptic("selection"); }} className={openNow ? "flex min-h-12 w-full items-center justify-between rounded-xl bg-emerald-600 px-4 text-sm font-black text-white" : "flex min-h-12 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-4 text-sm font-black text-slate-700"}>
+            <span>فقط فروشگاه‌های باز</span>
+            <span className={openNow ? "h-5 w-9 rounded-full bg-white/30 p-0.5" : "h-5 w-9 rounded-full bg-slate-200 p-0.5"}><span className={openNow ? "block h-4 w-4 translate-x-4 rounded-full bg-white shadow-sm" : "block h-4 w-4 rounded-full bg-white shadow-sm"} /></span>
+          </button>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button type="button" onClick={() => { setRadiusKm(3); setOpenNow(false); setSort("nearest"); haptic("light"); }} className="min-h-12 rounded-xl border border-slate-200 bg-white text-sm font-black text-slate-600">پاک‌کردن فیلترها</button>
+            <button type="button" onClick={() => setFiltersOpen(false)} className="min-h-12 rounded-xl bg-[var(--accent)] text-sm font-black text-white shadow-md shadow-teal-500/20">نمایش نتایج</button>
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   );
 }
