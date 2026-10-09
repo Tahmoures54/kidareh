@@ -1,18 +1,32 @@
-﻿import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, AlertCircle, X } from "lucide-react";
 
 interface ToastProps {
   msg: string;
-  type: "success" | "error";
-  onClose: () => void;
+  type?: "success" | "error";
+  onClose?: () => void;
 }
 
-export default function Toast({ msg, type, onClose }: ToastProps) {
+/** Toast مشترک؛ اگر مصرف‌کننده callback بستن ندهد، خودش پس از چند ثانیه مخفی می‌شود. */
+function Toast({ msg, type = "error", onClose }: ToastProps) {
+  const [visible, setVisible] = useState(true);
+
   useEffect(() => {
-    const timer = setTimeout(() => onClose(), 3200);
-    return () => clearTimeout(timer);
+    const timer = window.setTimeout(() => {
+      setVisible(false);
+      onClose?.();
+    }, 3200);
+
+    return () => window.clearTimeout(timer);
   }, [onClose]);
+
+  const close = () => {
+    setVisible(false);
+    onClose?.();
+  };
+
+  if (!visible) return null;
 
   const isSuccess = type === "success";
 
@@ -30,26 +44,28 @@ export default function Toast({ msg, type, onClose }: ToastProps) {
           ? "bg-emerald-50/90 border-emerald-200 text-emerald-900 dark:bg-emerald-950/70 dark:border-emerald-800/50 dark:text-emerald-100"
           : "bg-rose-50/90 border-rose-200 text-rose-900 dark:bg-rose-950/70 dark:border-rose-800/50 dark:text-rose-100",
       ].join(" ")}
-      role="status"
-      aria-live="polite"
+      role={isSuccess ? "status" : "alert"}
+      aria-live={isSuccess ? "polite" : "assertive"}
     >
       {isSuccess ? (
-        <CheckCircle className="w-5 h-5" />
+        <CheckCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
       ) : (
-        <AlertCircle className="w-5 h-5" />
+        <AlertCircle className="w-5 h-5 shrink-0" aria-hidden="true" />
       )}
 
       <p className="text-sm font-black flex-1 leading-relaxed">{msg}</p>
 
       <button
-        onClick={onClose}
+        type="button"
+        onClick={close}
         className="w-9 h-9 rounded-2xl flex items-center justify-center hover:bg-black/5 dark:hover:bg-white/5 transition"
-        aria-label="بستن"
+        aria-label="بستن پیام"
       >
-        <X className="w-4 h-4 opacity-70" />
+        <X className="w-4 h-4 opacity-70" aria-hidden="true" />
       </button>
     </motion.div>
   );
 }
 
+export default Toast;
 export { Toast };
