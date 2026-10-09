@@ -341,6 +341,7 @@ export function useSearch() {
         name: p.name || "بدون نام",
         store_id: p.store_id,
         store_name: p.store_name || "نامشخص",
+        store: p.store_name || "نامشخص",
         store_image_url: p.store_image_url || p.store_image,
         distance: p.distance || formatDistance(distanceMeters),
         distanceMeters,
