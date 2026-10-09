@@ -213,7 +213,7 @@ class PerformanceLogger {
       ttfb: timing.responseStart - timing.requestStart,
       download: timing.responseEnd - timing.responseStart,
       domInteractive: timing.domInteractive - timing.responseEnd,
-      domComplete: timing.domComplete - timing.domLoaded,
+      domComplete: timing.domComplete - timing.domContentLoadedEventEnd,
       loadComplete: timing.loadEventEnd - timing.loadEventStart,
       totalTime: timing.loadEventEnd - timing.fetchStart,
     };
