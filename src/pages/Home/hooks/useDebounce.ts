@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 interface DebounceOptions {
   /** تاخیر به میلی‌ثانیه */
-  delay: number;
+  delay?: number;
   /** اگر true باشد، بلافاصله در اولین فراخوانی مقدار را برگرداند (پیش‌فرض) */
   leading?: boolean;
   /** اگر true باشد، مقدار نهایی پس از تاخیر اعمال شود (پیش‌فرض true) */
@@ -20,7 +20,7 @@ interface DebouncedState<T> {
 function useDebounce<T>(
   value: T,
   delay: number,
-  options: DebounceOptions = {}
+  options: Partial<DebounceOptions> = {}
 ): DebouncedState<T> {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
