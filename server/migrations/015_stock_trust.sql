@@ -1,5 +1,5 @@
 -- Kidareh migration 015: stock freshness and confidence.
--- Idempotent equivalent of the migration in server/db.ts.
+-- Equivalent of the migration in server/db.ts; run once against an older database.
 ALTER TABLE products ADD COLUMN last_stock_confirmed_at TEXT;
 ALTER TABLE products ADD COLUMN stock_confidence REAL NOT NULL DEFAULT 0.5
   CHECK (stock_confidence >= 0 AND stock_confidence <= 1);
