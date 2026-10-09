@@ -36,6 +36,9 @@ export interface AuthContextType {
   isAdmin: boolean;
   isSupport: boolean;
   isMarketer: boolean;
+  supportAgents: string[];
+  addSupportAgent: (phone: string) => Promise<void>;
+  removeSupportAgent: (phone: string) => Promise<void>;
   sendOtp: (phone: string) => Promise<void>;
   verifyOtp: (phone: string, code: string) => Promise<User>;
   logout: () => Promise<void>;
@@ -113,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [refreshing, setRefreshing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [supportAgents, setSupportAgents] = useState<string[]>([]);
 
   const isMountedRef = useRef(true);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
@@ -317,6 +321,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const loadSupportAgents = useCallback(async () => {
+    if (user?.role !== "admin") {
+      setSupportAgents([]);
+      return;
+    }
+    try {
+      const response = await apiRequest<{ supportAgents: string[] }>("/api/admin/support-agents", { auth: true });
+      setSupportAgents(Array.isArray(response?.supportAgents) ? response.supportAgents : []);
+    } catch {
+      setSupportAgents([]);
+    }
+  }, [user?.role]);
+
+  const addSupportAgent = useCallback(async (phone: string) => {
+    const normalizedPhone = phone.replace(/\D/g, "");
+    await apiRequest("/api/admin/support-agents", {
+      method: "POST",
+      auth: true,
+      body: { phone: normalizedPhone },
+    });
+    await loadSupportAgents();
+  }, [loadSupportAgents]);
+
+  const removeSupportAgent = useCallback(async (phone: string) => {
+    await apiRequest(`/api/admin/support-agents/${encodeURIComponent(phone)}`, {
+      method: "DELETE",
+      auth: true,
+    });
+    await loadSupportAgents();
+  }, [loadSupportAgents]);
+
+  useEffect(() => {
+    if (user?.role === "admin") void loadSupportAgents();
+    else setSupportAgents([]);
+  }, [user?.role, loadSupportAgents]);
+
   const clearError = useCallback(() => setError(null), []);
 
   const value = useMemo<AuthContextType>(
@@ -331,6 +371,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin: user?.role === "admin",
       isSupport: user?.role === "support" || user?.role === "admin",
       isMarketer: user?.role === "marketer",
+      supportAgents,
+      addSupportAgent,
+      removeSupportAgent,
       sendOtp,
       verifyOtp,
       logout,
@@ -339,7 +382,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearError,
       error,
     }),
-    [user, loading, refreshing, verifying, sendOtp, verifyOtp, logout, refreshMe, updateUser, clearError, error]
+    [user, loading, refreshing, verifying, supportAgents, addSupportAgent, removeSupportAgent, sendOtp, verifyOtp, logout, refreshMe, updateUser, clearError, error]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
