@@ -641,7 +641,7 @@ button {
 }
 
 @media (hover: none) {
-  .group button.md\\:opacity-0 {
+  .product-favorite-button {
     opacity: 1;
   }
 }
