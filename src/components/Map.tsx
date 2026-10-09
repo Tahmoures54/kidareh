@@ -59,7 +59,7 @@ export interface ProductResult {
   latitude?: number;
   longitude?: number;
   distance?: string;
-  badge?: string;
+  badge?: string | null;
 }
 
 interface MapProps {
