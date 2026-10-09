@@ -292,7 +292,7 @@ async function startServer() {
       if (!sessionCookie) return next();
       const origin = req.get("origin");
       const allowed = new Set(getAllowedOrigins());
-      if (!origin || !allowed.has(origin)) return res.status(403).json({ error: "درخواست ناامن رد شد" });
+      if (!origin || !allowed.has(origin)) return void res.status(403).json({ error: "درخواست ناامن رد شد" });
       next();
     });
 
@@ -338,7 +338,7 @@ async function startServer() {
       app.get("/store/:id", async (req: Request, res: Response) => {
         try {
           if (!/^\d+$/.test(String(req.params.id ?? ""))) return res.sendFile(indexPath);
-          const id = Number(req.params.id);
+          const id = Number(String(req.params.id ?? ""));
           const store = await cacheGetOrSet(CacheKeys.store(id), CacheTTL.STORES, async () => {
             const row = db.prepare(`
               SELECT s.*, u.name as owner_name, u.phone as owner_phone,
@@ -357,7 +357,7 @@ async function startServer() {
               ORDER BY CASE WHEN p.badge IS NOT NULL AND p.badge <> '' THEN 0 ELSE 1 END, p.created_at DESC, p.id DESC LIMIT 50`).all(id) as any[];
             return normalizeStoreForDetail(row, products);
           });
-          if (!store) return res.status(404).sendFile(indexPath);
+          if (!store) return void res.status(404).sendFile(indexPath);
           const baseHtml = fs.readFileSync(indexPath, "utf8");
           const origin = process.env.APP_URL || "https://kidareh.com";
           const url = new URL("/store/" + id, origin).href;
@@ -392,7 +392,7 @@ async function startServer() {
           const productId = String(req.params.id ?? "");
           if (!/^\d+$/.test(productId)) return void res.sendFile(indexPath);
           const product = await getCachedProductDetail(productId);
-          if (!product) return res.status(404).sendFile(indexPath);
+          if (!product) return void res.status(404).sendFile(indexPath);
           const baseHtml = fs.readFileSync(indexPath, "utf8");
           const origin = process.env.APP_URL || "https://kidareh.com";
           const url = new URL("/products/" + productId, origin).href;
@@ -411,9 +411,9 @@ async function startServer() {
     }
 
     app.use((req: Request, res: Response) => {
-      if (req.url.startsWith("/api/")) return res.status(404).json({ error: "مسیر API یافت نشد", requestId: req.id });
-      if (!isProd) return res.status(404).json({ error: "مسیر یافت نشد", requestId: req.id });
-      return res.status(404).send("Not Found");
+      if (req.url.startsWith("/api/")) return void res.status(404).json({ error: "مسیر API یافت نشد", requestId: req.id });
+      if (!isProd) return void res.status(404).json({ error: "مسیر یافت نشد", requestId: req.id });
+      return void res.status(404).send("Not Found");
     });
 
     app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
