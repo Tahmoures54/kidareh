@@ -27,6 +27,7 @@ import { productToFeedPost } from "../../lib/feedMappers";
 import { getCategoryDisplayName } from "../../data/processed/categories";
 import { useSearch } from "./hooks/useSearch";
 import { useAnalytics } from "../../hooks/useAnalytics";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 import { SearchSkeleton } from "./components/SearchSkeleton";
 import { FilterSheet } from "./components/FilterSheet";
 import { IdleSection } from "./components/IdleSection";
@@ -51,6 +52,8 @@ export default function Search() {
     expandSearchScope, cycleScope, resetFilters,
     searchPlaceholder, scopeLabel,
   } = useSearch();
+
+  const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh({ onRefresh: refetch });
 
   const handleExpandSearch = () => {
     trackEvent("search_scope_expand_click", {
@@ -103,7 +106,13 @@ export default function Search() {
   }, [filters.scope.type]);
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl">
+    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl" {...pullHandlers}>
+      <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-0 z-[120] flex justify-center transition-opacity" style={{ transform: `translateY(${Math.max(0, Math.min(pullDistance, 54))}px)`, opacity: pullDistance > 0 || refreshing ? 1 : 0 }}>
+        <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-white/95 px-4 py-2 text-xs font-black text-teal-700 shadow-lg backdrop-blur">
+          <Loader2 className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+          {refreshing ? "در حال تازه‌سازی" : pullDistance >= 76 ? "رها کن تا تازه شود" : "برای تازه‌سازی پایین بکش"}
+        </div>
+      </div>
       <AnimatePresence>
         {toastMsg && <Toast msg={toastMsg} />}
       </AnimatePresence>
