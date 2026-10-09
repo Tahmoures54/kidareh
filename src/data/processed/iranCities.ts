@@ -1,5 +1,4 @@
-import { RAW_PART_0 } from "../raw/rawIranCitiesCompact0";
-import { RAW_PART_1 } from "../raw/rawIranCitiesCompact1";
+import RAW_IRAN_CITIES_SOURCE from "../raw/iranCities.json";
 import { IRAN_CITY_COORDS, POPULAR_CITY_SLUGS } from "./iranCityCoords";
 
 export interface IranCity {
