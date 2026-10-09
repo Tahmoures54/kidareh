@@ -91,6 +91,7 @@ export function orderByWalk<T extends GeoPoint>(origin: GeoPoint, points: T[]): 
       }
     });
     const next = remaining.splice(best, 1)[0];
+    if (!next) break;
     ordered.push(next);
     cursor = next;
   }
