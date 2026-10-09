@@ -15,7 +15,6 @@ export default defineConfig(({ mode, command }) => {
     plugins: [
       react({
         jsxRuntime: "automatic",
-        fastRefresh: isServe,
       }),
       tailwindcss(),
       VitePWA({
