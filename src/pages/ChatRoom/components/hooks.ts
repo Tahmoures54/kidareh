@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { apiRequest } from "../../../utils/api";
-import { Msg, MsgStatus } from "./types";
+import { Msg, MsgStatus } from "../types";
 
 type RoomInfo = { roomId: string; success?: boolean };
 
