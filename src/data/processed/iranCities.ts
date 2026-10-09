@@ -1,5 +1,4 @@
-import { RAW_PART_0 } from "../raw/rawIranCitiesCompact0";
-import { RAW_PART_1 } from "../raw/rawIranCitiesCompact1";
+import rawIranCities from "../raw/iranCities.json";
 import { IRAN_CITY_COORDS, POPULAR_CITY_SLUGS } from "./iranCityCoords";
 
 export interface IranCity {
@@ -14,20 +13,10 @@ export interface IranCity {
   provinceEn?: string;
 }
 
-type AnyRecord = Record<string, any>;
+interface RawIranCity { "city-fa": string; "city-en": string; }
+interface RawIranProvince { "province-fa": string; "province-en": string; cities: RawIranCity[]; }
 
-const RAW_IRAN_CITIES = [...RAW_PART_0, ...RAW_PART_1];
-
-function expandCompactRaw(): AnyRecord[] {
-  return RAW_IRAN_CITIES.map((row) => ({
-    "province-fa": row.p,
-    "province-en": row.p.replace(/\s+/g, "-"),
-    cities: row.c.map((name) => ({
-      "city-fa": name,
-      "city-en": name.replace(/\s+/g, "-"),
-    })),
-  }));
-}
+const RAW_IRAN_CITIES: RawIranProvince[] = rawIranCities;
 
 export function normalizeCityText(value: unknown): string {
   return String(value ?? "")
@@ -57,12 +46,12 @@ function coordsFor(cityEn: string, name: string): { lat: number; lng: number } |
   );
 }
 
-function makeCity(input: AnyRecord, fallbackProvinceFa = "", fallbackProvinceEn = ""): IranCity | null {
-  const name = normalizeCityText(input["city-fa"] ?? input.name ?? input.city ?? input.title);
+function makeCity(input: RawIranCity, fallbackProvinceFa = "", fallbackProvinceEn = ""): IranCity | null {
+  const name = normalizeCityText(input["city-fa"]);
   if (!name) return null;
 
-  const province = normalizeCityText(input["province-fa"] ?? input.province ?? fallbackProvinceFa);
-  const cityEn = String(input["city-en"] ?? input.slug ?? "").trim();
+  const province = normalizeCityText(fallbackProvinceFa);
+  const cityEn = String(input["city-en"] ?? "").trim();
   const provinceEn = String(input["province-en"] ?? fallbackProvinceEn ?? "").trim();
   const coords = coordsFor(cityEn, name);
 
@@ -78,22 +67,15 @@ function makeCity(input: AnyRecord, fallbackProvinceFa = "", fallbackProvinceEn 
   };
 }
 
-function normalizeIranCities(raw: unknown): IranCity[] {
+function normalizeIranCities(raw: readonly RawIranProvince[]): IranCity[] {
   const result: IranCity[] = [];
 
-  if (Array.isArray(raw)) {
-    for (const provinceItem of raw) {
-      if (!provinceItem || typeof provinceItem !== "object") continue;
-      const provinceObj = provinceItem as AnyRecord;
-      const provinceFa = normalizeCityText(provinceObj["province-fa"] ?? provinceObj.province ?? "");
-      const provinceEn = String(provinceObj["province-en"] ?? "").trim();
-      const cities = Array.isArray(provinceObj.cities) ? provinceObj.cities : [];
-
-      for (const cityItem of cities) {
-        if (!cityItem || typeof cityItem !== "object") continue;
-        const city = makeCity(cityItem as AnyRecord, provinceFa, provinceEn);
-        if (city) result.push(city);
-      }
+  for (const provinceItem of raw) {
+    const provinceFa = normalizeCityText(provinceItem["province-fa"]);
+    const provinceEn = provinceItem["province-en"].trim();
+    for (const cityItem of provinceItem.cities) {
+      const city = makeCity(cityItem, provinceFa, provinceEn);
+      if (city) result.push(city);
     }
   }
 
@@ -110,7 +92,7 @@ function normalizeIranCities(raw: unknown): IranCity[] {
   );
 }
 
-export const iranCities: IranCity[] = normalizeIranCities(expandCompactRaw());
+export const iranCities: IranCity[] = normalizeIranCities(RAW_IRAN_CITIES);
 
 const bySlug = new Map<string, IranCity>();
 const byNameProvince = new Map<string, IranCity>();
