@@ -52,7 +52,7 @@ function makeCity(input: RawIranCity, fallbackProvinceFa = "", fallbackProvinceE
 
   const province = normalizeCityText(fallbackProvinceFa);
   const cityEn = String(input["city-en"] ?? "").trim();
-  const provinceEn = String(input["province-en"] ?? fallbackProvinceEn ?? "").trim();
+  const provinceEn = fallbackProvinceEn.trim();
   const coords = coordsFor(cityEn, name);
 
   return {
