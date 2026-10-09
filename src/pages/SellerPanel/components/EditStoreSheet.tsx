@@ -77,7 +77,7 @@ export const EditStoreSheet = ({
         if (!response.ok) throw new Error("geocode");
         const results = await response.json() as Array<{ lat: string; lon: string; display_name: string }>;
         if (!results.length) { setMapMessage("آدرسی پیدا نشد. نام شهر، خیابان یا نشانی دقیق‌تر را امتحان کن."); return; }
-        const first = results[0]; const nextLat = Number(Number(first.lat).toFixed(6)); const nextLng = Number(Number(first.lon).toFixed(6));
+        const first = results[0]; if (!first) { setMapMessage("آدرسی پیدا نشد."); return; } const nextLat = Number(Number(first.lat).toFixed(6)); const nextLng = Number(Number(first.lon).toFixed(6));
         setValue("lat", nextLat, { shouldDirty: true }); setValue("lng", nextLng, { shouldDirty: true });
         setMapMessage(first.display_name); map.flyTo([nextLat, nextLng], 16, { duration: 1 });
       } catch { setMapMessage("جستجوی آدرس انجام نشد. دوباره تلاش کن."); } finally { setMapSearching(false); }
