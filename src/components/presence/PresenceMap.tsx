@@ -5,6 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { Link } from "react-router-dom";
 import type { EnrichedListing, GeoPoint } from "../../presence/types";
 import { formatCompactToman, formatWalk } from "../../presence/engine";
+import { clusterStores } from "../../presence/clustering";
 
 function pin(color: string, label?: string) {
   return L.divIcon({
@@ -75,25 +76,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
     return [...map.values()];
   }, [listings]);
 
-  // خوشه‌بندی سبک بر اساس سطح بزرگ‌نمایی؛ بدون درخواست شبکه یا وابستگی اضافه.
-  const clusterGroups = useMemo(() => {
-    const cellSize = 0.08 / 2 ** Math.max(0, zoom - 10);
-    const buckets = new Map<string, EnrichedListing[]>();
-    for (const listing of uniqueStores) {
-      const key = `${Math.floor(listing.store.lat / cellSize)}:${Math.floor(listing.store.lng / cellSize)}`;
-      const bucket = buckets.get(key) ?? [];
-      bucket.push(listing);
-      buckets.set(key, bucket);
-    }
-    return Array.from(buckets.entries()).map(([key, items]) => ({
-      key,
-      items,
-      center: {
-        lat: items.reduce((sum, item) => sum + item.store.lat, 0) / items.length,
-        lng: items.reduce((sum, item) => sum + item.store.lng, 0) / items.length,
-      },
-    }));
-  }, [uniqueStores, zoom]);
+  const clusterGroups = useMemo(() => clusterStores(uniqueStores, zoom), [uniqueStores, zoom]);
 
   const center = isPoint(origin) ? origin : { lat: 35.757, lng: 51.4105 };
   const line = (path ?? []).filter(isPoint);
