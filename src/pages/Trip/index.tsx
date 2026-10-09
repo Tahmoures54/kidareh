@@ -79,18 +79,23 @@ export default function TripPage() {
     }
   };
 
-  const startNavigation = () => {
+  const startNavigation = async () => {
     if (plan.stops.length === 0) return;
-    setActiveStopIndex(0);
-    setNavigationActive(true);
     setNotice("");
     if (savedTripId) {
-      void apiRequest("/api/presence/trips/" + savedTripId + "/status", {
-        method: "PATCH",
-        auth: true,
-        body: { status: "started" },
-      }).catch(() => setNotice("مسیریابی فعال شد؛ وضعیت ذخیره‌شده هنوز به‌روزرسانی نشده است."));
+      try {
+        await apiRequest("/api/presence/trips/" + savedTripId + "/status", {
+          method: "PATCH",
+          auth: true,
+          body: { status: "started" },
+        });
+      } catch {
+        setNotice("وضعیت مسیر ذخیره‌شده شروع نشد؛ برای فعال شدن QR دوباره ذخیره مسیر را بررسی کن.");
+        return;
+      }
     }
+    setActiveStopIndex(0);
+    setNavigationActive(true);
   };
 
   const advanceNavigation = () => {
