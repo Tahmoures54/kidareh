@@ -372,7 +372,7 @@ router.post("/", requireAuth, requireRole(["seller", "admin"]), async (req: Auth
     }
     const result = db.prepare(`INSERT INTO stores (user_id, name, description, address, phone, category, image_url, lat, lng, city, province, has_business_license, is_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`)
       .run(userId, name, description, address, phone, category, image_url || null, lat, lng, city, province);
-    await invalidateStoreCache(result.lastInsertRowid);
+    await invalidateStoreCache(Number(result.lastInsertRowid));
     await invalidateStatsCache();
     res.status(201).json({ success: true, message: "فروشگاه شما با موفقیت ثبت شد.", storeId: Number(result.lastInsertRowid) });
   } catch (err: any) {
