@@ -182,7 +182,7 @@ router.get("/attachment/:filename", requireAuth, (req: AuthRequest, res: Respons
   const isStaff = req.user!.role === "admin" || req.user!.role === "support";
   const match = db.prepare("SELECT id, user_id, attachments FROM support_tickets WHERE attachments LIKE ? LIMIT 1").get(`%${filename}%`) as any;
   if (!match) return res.status(404).json({ error: "فایل یافت نشد" });
-  if (!isStaff && Number(match.user_id) !== Number(req.user!.id)) return res.status(403).json({ error: "دسترسی غیرمجاز" });
+  if (!isStaff && Number(match.user_id) !== Number(Number(req.user!.id))) return res.status(403).json({ error: "دسترسی غیرمجاز" });
   const filePath = path.join(uploadDir, filename);
   if (!fs.existsSync(filePath)) return res.status(404).json({ error: "فایل یافت نشد" });
   return res.sendFile(filePath, { headers: { "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });
@@ -251,7 +251,7 @@ router.get("/tickets", requireAuth, (req: AuthRequest, res: Response): void => {
  * GET /api/support/attachment/:filename — private, authorization-checked attachment download.
  */
 router.get("/attachment/:filename", requireAuth, (req: AuthRequest, res: Response) => {
-  const filename = path.basename(req.params.filename || "");
+  const filename = path.basename(String(req.params.filename ?? ""));
   if (!/^support_[a-f0-9]{32}\.[a-z0-9]{1,10}$/i.test(filename)) return res.status(400).json({ error: "نام فایل نامعتبر است" });
   const isStaff = req.user!.role === "admin" || req.user!.role === "support";
   const match = db.prepare("SELECT id, user_id, attachments FROM support_tickets WHERE attachments LIKE ? LIMIT 1").get(`%${filename}%`) as any;
