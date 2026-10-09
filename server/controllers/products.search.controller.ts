@@ -102,7 +102,7 @@ export async function searchProducts(
     const sliced = hasMore ? result.rows.slice(0, parsed.limit) : result.rows;
     const nextCursor = hasMore ? encodeCursor({ v: 2, offset: (cursor?.offset ?? 0) + parsed.limit }) : null;
 
-    return res.json({
+    return void res.json({
       products: sliced,
       nextCursor,
       hasMore,
@@ -110,7 +110,7 @@ export async function searchProducts(
     });
   } catch (err: any) {
     if (err?.name === "ZodError") {
-      return res.status(400).json({
+      return void res.status(400).json({
         error: "پارامترهای ورودی نامعتبر است.",
         details: err.issues,
       });
