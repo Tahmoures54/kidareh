@@ -31,12 +31,13 @@ export function trackWebVitals(onMetric: (metric: any) => void) {
   if ('PerformanceObserver' in window) {
     // Track Cumulative Layout Shift
     const clsObserver = new PerformanceObserver((entryList) => {
-      for (const entry of entryList.getEntries()) {
-        if ((entry as any).hadRecentInput) continue; // Ignore user inputs
+      for (const rawEntry of entryList.getEntries()) {
+        const entry = rawEntry as PerformanceEntry & { value: number; hadRecentInput: boolean };
+        if (entry.hadRecentInput) continue;
         onMetric({
-          name: 'CLS',
+          name: "CLS",
           value: entry.value,
-          rating: entry.value <= 0.1 ? 'good' : entry.value <= 0.25 ? 'needs-improvement' : 'poor'
+          rating: entry.value <= 0.1 ? "good" : entry.value <= 0.25 ? "needs-improvement" : "poor"
         });
       }
     });
@@ -44,14 +45,15 @@ export function trackWebVitals(onMetric: (metric: any) => void) {
 
     // Track Largest Contentful Paint
     const lcpObserver = new PerformanceObserver((entryList) => {
-      const lastEntry = entryList.getEntries().pop();
-      if (lastEntry) {
-        onMetric({
-          name: 'LCP',
-          value: lastEntry.renderTime || lastEntry.loadTime,
-          rating: lastEntry.renderTime <= 2500 ? 'good' : lastEntry.renderTime <= 4000 ? 'needs-improvement' : 'poor'
-        });
-      }
+      const rawEntry = entryList.getEntries().pop();
+      if (!rawEntry) return;
+      const lastEntry = rawEntry as PerformanceEntry & { renderTime: number; loadTime: number };
+      const value = lastEntry.renderTime || lastEntry.loadTime || lastEntry.startTime;
+      onMetric({
+        name: "LCP",
+        value,
+        rating: value <= 2500 ? "good" : value <= 4000 ? "needs-improvement" : "poor"
+      });
     });
     lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
 
@@ -100,7 +102,7 @@ export function useIntersectionObserver<T extends HTMLElement = HTMLDivElement>(
 
   useEffect(() => {
     const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
+      if (entry?.isIntersecting) {
         setIsVisible(true);
         observer.unobserve(entry.target);
       }
