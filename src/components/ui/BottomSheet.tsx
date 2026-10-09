@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 interface BottomSheetProps {
   open: boolean;
@@ -23,7 +23,8 @@ export default function BottomSheet({
   description,
 }: BottomSheetProps) {
   const safePoints = snapPoints.length ? [...snapPoints].sort((a, b) => a - b) : [48];
-  const startHeight = safePoints[Math.min(Math.max(initialSnap, 0), safePoints.length - 1)] ?? 48;
+  const [snapIndex, setSnapIndex] = useState(Math.min(Math.max(initialSnap, 0), safePoints.length - 1));
+  const currentHeight = safePoints[snapIndex] ?? 48;
 
   return (
     <AnimatePresence>
@@ -43,7 +44,7 @@ export default function BottomSheet({
             aria-modal="true"
             aria-label={title}
             initial={{ y: "100%" }}
-            animate={{ y: 0, height: `${startHeight}dvh` }}
+            animate={{ y: 0, height: `${currentHeight}dvh` }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 360, damping: 34 }}
             drag="y"
@@ -55,6 +56,13 @@ export default function BottomSheet({
               if (info.offset.y > 100 || info.velocity.y > 700) {
                 onClose();
                 return;
+              }
+              if (info.offset.y < -45 || info.velocity.y < -450) {
+                setSnapIndex((current) => Math.min(safePoints.length - 1, current + 1));
+                return;
+              }
+              if (info.offset.y > 35) {
+                setSnapIndex((current) => Math.max(0, current - 1));
               }
             }}
             className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-t-[30px] border border-white/70 bg-white shadow-[0_-18px_70px_rgba(15,23,42,.22)]"
