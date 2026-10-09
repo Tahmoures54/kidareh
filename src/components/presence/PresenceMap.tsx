@@ -31,6 +31,18 @@ function FlyTo({ center }: { center: GeoPoint }) {
   return null;
 }
 
+
+function ZoomWatcher({ onZoomChange }: { onZoomChange: (zoom: number) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    const updateZoom = () => onZoomChange(map.getZoom());
+    updateZoom();
+    map.on("zoomend", updateZoom);
+    return () => { map.off("zoomend", updateZoom); };
+  }, [map, onZoomChange]);
+  return null;
+}
+
 function InvalidateSize() {
   const map = useMap();
   useEffect(() => {
@@ -52,6 +64,7 @@ interface Props {
 export default function PresenceMap({ origin, listings, path, height = "100%", selectedId, className }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
+  const [zoom, setZoom] = useState(14);
   const uniqueStores = useMemo(() => {
     const map = new Map<string, EnrichedListing>();
     for (const l of listings) {
@@ -61,6 +74,26 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
     }
     return [...map.values()];
   }, [listings]);
+
+  // خوشه‌بندی سبک بر اساس سطح بزرگ‌نمایی؛ بدون درخواست شبکه یا وابستگی اضافه.
+  const clusterGroups = useMemo(() => {
+    const cellSize = 0.08 / 2 ** Math.max(0, zoom - 10);
+    const buckets = new Map<string, EnrichedListing[]>();
+    for (const listing of uniqueStores) {
+      const key = `${Math.floor(listing.store.lat / cellSize)}:${Math.floor(listing.store.lng / cellSize)}`;
+      const bucket = buckets.get(key) ?? [];
+      bucket.push(listing);
+      buckets.set(key, bucket);
+    }
+    return Array.from(buckets.entries()).map(([key, items]) => ({
+      key,
+      items,
+      center: {
+        lat: items.reduce((sum, item) => sum + item.store.lat, 0) / items.length,
+        lng: items.reduce((sum, item) => sum + item.store.lng, 0) / items.length,
+      },
+    }));
+  }, [uniqueStores, zoom]);
 
   const center = isPoint(origin) ? origin : { lat: 35.757, lng: 51.4105 };
   const line = (path ?? []).filter(isPoint);
@@ -94,6 +127,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <InvalidateSize />
+          <ZoomWatcher onZoomChange={setZoom} />
           <FlyTo center={center} />
           <Marker position={[center.lat, center.lng]} icon={pin("#0a3d3a", "تو")} />
           {line.length > 1 && (
@@ -102,24 +136,49 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
               pathOptions={{ color: "#00A693", weight: 4, opacity: 0.9 }}
             />
           )}
-          {uniqueStores.map((l) => (
-            <Marker
-              key={l.storeId}
-              position={[l.store.lat, l.store.lng]}
-              icon={pin(l.id === selectedId ? "#e6b84f" : "#00A693", formatCompactToman(l.price))}
-            >
-              <Popup>
-                <div dir="rtl" className="min-w-[160px] text-right">
-                  <p className="text-xs font-black">{l.store.name}</p>
-                  <p className="text-[11px]">{l.skuLabel}</p>
-                  <p className="text-[11px] font-bold">{formatWalk(l.walkMinutes)}</p>
-                  <Link to={`/p/${l.id}`} className="mt-1 inline-block text-[11px] font-black text-[var(--accent)]">
-                    جزئیات کالا
-                  </Link>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          {clusterGroups.map((cluster) => {
+            if (cluster.items.length === 1) {
+              const listing = cluster.items[0];
+              if (!listing) return null;
+              return (
+                <Marker
+                  key={listing.storeId}
+                  position={[listing.store.lat, listing.store.lng]}
+                  icon={pin(listing.id === selectedId ? "#e6b84f" : "#08a6a6", formatCompactToman(listing.price))}
+                >
+                  <Popup>
+                    <div dir="rtl" className="min-w-[160px] text-right">
+                      <p className="text-xs font-black">{listing.store.name}</p>
+                      <p className="text-[11px]">{listing.skuLabel}</p>
+                      <p className="text-[11px] font-bold">{formatWalk(listing.walkMinutes)}</p>
+                      <Link to={`/p/${listing.id}`} className="mt-1 inline-block text-[11px] font-black text-[var(--accent)]">
+                        جزئیات کالا
+                      </Link>
+                    </div>
+                  </Popup>
+                </Marker>
+              );
+            }
+            return (
+              <Marker
+                key={`cluster-${cluster.key}`}
+                position={[cluster.center.lat, cluster.center.lng]}
+                icon={pin("#087f8c", `${cluster.items.length} فروشگاه`)}
+              >
+                <Popup>
+                  <div dir="rtl" className="max-h-64 min-w-[190px] space-y-2 overflow-y-auto text-right">
+                    <p className="text-xs font-black text-teal-800">{cluster.items.length} فروشگاه در این محدوده</p>
+                    {cluster.items.slice(0, 8).map((listing) => (
+                      <Link key={listing.storeId} to={`/p/${listing.id}`} className="block rounded-xl bg-slate-50 p-2 hover:bg-teal-50">
+                        <span className="block text-xs font-black">{listing.store.name}</span>
+                        <span className="mt-1 block text-[11px] font-bold text-slate-500">{listing.skuLabel} · {formatCompactToman(listing.price)}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </Popup>
+              </Marker>
+            );
+          })}
         </MapContainer>
       )}
     </div>
