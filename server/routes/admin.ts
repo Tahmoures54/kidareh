@@ -10,7 +10,7 @@ const router = Router();
 // ═══════════════════════════════════════
 // 1. Master Admin Middleware (امنیت چندلایه)
 // ═══════════════════════════════════════
-const isMasterAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+const isMasterAdmin = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
@@ -173,7 +173,7 @@ router.get("/users", (req: AuthRequest, res: Response) => {
 });
 
 /** Verify Store */
-router.post("/users/:id/verify", (req: AuthRequest, res: Response): void => {
+router.post("/users/:id/verify", (req: AuthRequest, res: Response) => {
   try {
     const userId = req.params.id;
     const { verify } = req.body;
@@ -198,7 +198,7 @@ router.post("/users/:id/verify", (req: AuthRequest, res: Response): void => {
 });
 
 /** Ban User */
-router.post("/users/:id/ban", (req: AuthRequest, res: Response): void => {
+router.post("/users/:id/ban", (req: AuthRequest, res: Response) => {
   try {
     const userId = req.params.id;
     const { reason } = req.body;
@@ -223,7 +223,7 @@ router.post("/users/:id/ban", (req: AuthRequest, res: Response): void => {
 });
 
 /** Unban User */
-router.post("/users/:id/unban", (req: AuthRequest, res: Response): void => {
+router.post("/users/:id/unban", (req: AuthRequest, res: Response) => {
   try {
     const userId = req.params.id;
     db.prepare(
@@ -238,7 +238,7 @@ router.post("/users/:id/unban", (req: AuthRequest, res: Response): void => {
 });
 
 /** Change User Role */
-router.post("/users/:id/role", (req: AuthRequest, res: Response): void => {
+router.post("/users/:id/role", (req: AuthRequest, res: Response) => {
   try {
     const userId = req.params.id;
     const { role } = req.body;
@@ -284,7 +284,7 @@ router.get("/products/pending", (_req: AuthRequest, res: Response) => {
 });
 
 /** Approve Product */
-router.post("/products/:id/approve", (req: AuthRequest, res: Response): void => {
+router.post("/products/:id/approve", (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const product = db.prepare("SELECT id FROM products WHERE id = ?").get(id);
@@ -302,7 +302,7 @@ router.post("/products/:id/approve", (req: AuthRequest, res: Response): void => 
 });
 
 /** Reject Product */
-router.post("/products/:id/reject", (req: AuthRequest, res: Response): void => {
+router.post("/products/:id/reject", (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
@@ -318,7 +318,7 @@ router.post("/products/:id/reject", (req: AuthRequest, res: Response): void => {
 });
 
 /** Delete Product */
-router.delete("/products/:id", (req: AuthRequest, res: Response): void => {
+router.delete("/products/:id", (req: AuthRequest, res: Response) => {
   try {
     const { id } = req.params;
     db.prepare("DELETE FROM products WHERE id = ?").run(id);
@@ -364,7 +364,7 @@ router.get("/stores", (_req: AuthRequest, res: Response) => {
 });
 
 /** Toggle Blue Tick for a store */
-router.post("/stores/:id/toggle-blue-tick", (req: AuthRequest, res: Response): void => {
+router.post("/stores/:id/toggle-blue-tick", (req: AuthRequest, res: Response) => {
   const storeId = Number(req.params.id);
   try {
     const store = db.prepare("SELECT id, blue_tick_expires_at FROM stores WHERE id = ?").get(storeId) as any;
@@ -415,7 +415,7 @@ const settingsSchema = z.object({
   settings: z.record(z.string()).optional(),
 });
 
-router.put("/settings", (req: AuthRequest, res: Response): void => {
+router.put("/settings", (req: AuthRequest, res: Response) => {
   try {
     const validatedData = settingsSchema.parse(req.body);
     const { key, value, settings } = validatedData;
