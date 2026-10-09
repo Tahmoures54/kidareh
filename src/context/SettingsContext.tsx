@@ -18,6 +18,9 @@ export interface BadgeConfig {
   duration: number; // days
   description: string;
   color: string;
+  /** فیلدهای سازگاری با تنظیمات برچسب‌های قدیمی پنل مدیریت */
+  label?: string;
+  duration_days?: number;
 }
 
 interface BadgeConfigs {
@@ -295,9 +298,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateBadgeConfig = useCallback(
     async (badge: string, config: Partial<BadgeConfig>) => {
-      const newBadgeConfigs = {
+      const currentConfig = settings.badgeConfigs[badge] ?? defaultBadgeConfigs["پیشنهاد ویژه"];
+      const newBadgeConfigs: BadgeConfigs = {
         ...settings.badgeConfigs,
-        [badge]: { ...settings.badgeConfigs[badge], ...config },
+        [badge]: { ...currentConfig, ...config },
       };
 
       await apiRequest("/api/admin/settings", {
