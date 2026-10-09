@@ -145,7 +145,7 @@ export default function PresenceHome() {
       : categoriesData.find((g) => g.slug === marketCategory)?.short || "کالاها";
 
   return (
-    <div className="min-h-full bg-[#f6f8f7] text-[var(--ink)]" {...pullHandlers}>
+    <div className="min-h-full overscroll-y-contain bg-[#f6f8f7] text-[var(--ink)]" {...pullHandlers}>
       <div aria-live="polite" className="pointer-events-none fixed inset-x-0 top-0 z-[120] flex justify-center transition-opacity" style={{ transform: `translateY(${Math.max(0, Math.min(pullDistance, 54))}px)`, opacity: pullDistance > 0 || refreshing ? 1 : 0 }}>
         <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-teal-100 bg-white/95 px-4 py-2 text-xs font-black text-teal-700 shadow-lg backdrop-blur dark:border-teal-900 dark:bg-slate-900/95 dark:text-teal-300">
           <Loader2 className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
