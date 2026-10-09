@@ -66,7 +66,7 @@ function hasValidSignature(file: Express.Multer.File): boolean {
   if (mime === "image/png") return b.subarray(0, 8).equals(Buffer.from([137,80,78,71,13,10,26,10]));
   if (mime === "image/webp") return b.length >= 12 && b.toString("ascii",0,4) === "RIFF" && b.toString("ascii",8,12) === "WEBP";
   if (mime === "application/pdf") return b.subarray(0,5).toString("ascii") === "%PDF-";
-  if (mime === "application/zip") return b.length >= 4 && b[0] === 0x50 && b[1] === 0x4b && [0x03,0x05,0x07].includes(b[2]) && [0x04,0x06,0x08].includes(b[3]);
+  if (mime === "application/zip") return b.length >= 4 && b[0] === 0x50 && b[1] === 0x4b && [0x03,0x05,0x07].includes(b[2] ?? -1) && [0x04,0x06,0x08].includes(b[3] ?? -1);
   if (mime === "text/plain") return !b.subarray(0, Math.min(b.length, 8192)).includes(0);
   return false;
 }
