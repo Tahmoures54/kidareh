@@ -132,11 +132,21 @@ export default function AddProduct() {
           <div>
             <label className="text-xs font-bold text-slate-500 mb-1.5 block">وضعیت</label>
             <div className="h-12">
-              <SegmentedControl
-                options={["موجود", "ناموجود"]}
-                value={state.status === "موجود" || state.status === "ناموجود" ? state.status : "موجود"}
-                onChange={(v) => setters.setStatus(v as "موجود" | "ناموجود")}
-              />
+              <div className="flex h-12 rounded-xl bg-slate-100 p-1 dark:bg-slate-700" role="group" aria-label="وضعیت کالا">
+                {(["موجود", "ناموجود"] as const).map((status) => (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => setters.setStatus(status)}
+                    aria-pressed={state.status === status}
+                    className={`flex-1 rounded-lg text-xs font-bold transition-colors ${state.status === status
+                      ? "bg-white text-teal-700 shadow-sm dark:bg-slate-600 dark:text-teal-300"
+                      : "text-slate-500 dark:text-slate-300"}`}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
