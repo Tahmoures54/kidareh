@@ -65,7 +65,7 @@ export default function OnboardingFlow() {
           key="role"
           selectedRole={selectedRole}
           onRoleSelect={setSelectedRole}
-          onNext={handleRoleSelected}
+          onNext={() => handleRoleSelected(selectedRole)}
         />
       )}
 
