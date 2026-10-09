@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS trip_items (
   latitude REAL NOT NULL,
   longitude REAL NOT NULL,
   walk_from_previous_minutes INTEGER NOT NULL DEFAULT 0 CHECK (walk_from_previous_minutes >= 0),
+  arrival_token_hash TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'pending'
     CHECK (status IN ('pending', 'arrived', 'skipped')),
   arrived_at TEXT,
