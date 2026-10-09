@@ -36,4 +36,4 @@ jobs:
         run: npm run typecheck
 
       - name: Focused UX and map tests
-        run: npx vitest run tests/frontend/hooks/usePullToRefresh.test.ts tests/frontend/presence/clusterListings.test.ts tests/frontend/presence/geo.test.ts tests/frontend/presence/tripSchema.test.ts
+        run: npx vitest run tests/frontend/hooks/usePullToRefresh.test.ts tests/frontend/presence/clusterListings.test.ts tests/frontend/presence/geo.test.ts tests/frontend/presence/tripSchema.test.ts tests/frontend/utils/stockFreshness.test.ts
