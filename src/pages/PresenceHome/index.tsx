@@ -65,17 +65,35 @@ export default function PresenceHome() {
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
   const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
+  const [shopPostsLoading, setShopPostsLoading] = useState(true);
   const { items: paidStories } = useMarketStories(cityLocation.city);
 
-  const refreshHome = useCallback(async () => {
-    const response = await apiRequest<{ products?: Record<string, unknown>[] }>(
-      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""}`
-    );
-    const rows = Array.isArray(response?.products) ? response.products : [];
-    setShopPosts(rows.map((row) => productToFeedPost(row)));
+  const loadShopPosts = useCallback(async (signal?: AbortSignal) => {
+    setShopPostsLoading(true);
+    try {
+      const response = await apiRequest<{ products?: Record<string, unknown>[] }>(
+        `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""}`,
+        { signal },
+      );
+      if (signal?.aborted) return;
+      const rows = Array.isArray(response?.products) ? response.products : [];
+      setShopPosts(rows.map((row) => productToFeedPost(row)));
+    } catch {
+      if (!signal?.aborted) setShopPosts([]);
+    } finally {
+      if (!signal?.aborted) setShopPostsLoading(false);
+    }
   }, [cityLocation.city, marketCategory]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadShopPosts(controller.signal);
+    return () => controller.abort();
+  }, [loadShopPosts]);
+
+  const refreshHome = useCallback(() => loadShopPosts(), [loadShopPosts]);
   const { pullDistance, refreshing, handlers: pullHandlers } = usePullToRefresh({ onRefresh: refreshHome });
+
 
   const listingCats = useMemo(
     () => (marketCategory === "all" ? ("all" as const) : listingCatsFor(marketCategory)),
@@ -97,24 +115,6 @@ export default function PresenceHome() {
     if (!listingCats) return [];
     return raw.filter((item) => listingCats.includes(item.category));
   }, [isTehran, origin, q, listingCats, radiusKm, openNow, sort]);
-
-  useEffect(() => {
-    let cancelled = false;
-    apiRequest<{ products?: Record<string, unknown>[] }>(
-      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""}`
-    )
-      .then((res) => {
-        if (cancelled) return;
-        const rows = Array.isArray(res?.products) ? res.products : [];
-        setShopPosts(rows.map((row) => productToFeedPost(row)));
-      })
-      .catch(() => {
-        if (!cancelled) setShopPosts([]);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [cityLocation.city, marketCategory]);
 
   const listingPosts = useMemo(() => listings.map(listingToFeedPost), [listings]);
 
@@ -305,7 +305,18 @@ export default function PresenceHome() {
             )}
           </div>
 
-          {posts.length > 0 ? (
+          {shopPostsLoading && posts.length === 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="در حال بارگذاری کالاها" aria-busy="true">
+              {[0, 1, 2].map((item) => (
+                <div key={item} className="overflow-hidden rounded-[24px] border border-slate-100 bg-white p-3 shadow-sm animate-pulse">
+                  <div className="aspect-[16/10] rounded-2xl bg-slate-100" />
+                  <div className="mt-4 h-4 w-3/4 rounded-full bg-slate-100" />
+                  <div className="mt-3 h-3 w-1/2 rounded-full bg-slate-100" />
+                  <div className="mt-5 h-8 w-1/3 rounded-xl bg-teal-50" />
+                </div>
+              ))}
+            </div>
+          ) : posts.length > 0 ? (
             <FeedColumn>
               <FeedStack>
                 {posts.slice(0, 8).map((post) => <FeedPost key={post.key} post={post} />)}
