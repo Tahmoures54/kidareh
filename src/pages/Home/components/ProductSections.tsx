@@ -46,7 +46,7 @@ const itemVariants = {
   show: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.3, ease: "easeOut" },
+    transition: { duration: 0.3, ease: "easeOut" as const },
   },
 };
 
@@ -207,7 +207,7 @@ export const SegmentedScope = memo(
               <motion.div
                 layoutId="activeScopePill"
                 className="absolute inset-0 bg-white dark:bg-gray-900 rounded-lg shadow-sm"
-                transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                transition={{ type: "spring" as const, stiffness: 350, damping: 30 }}
               />
             )}
             <span className="relative z-10 truncate">{tab.label}</span>
