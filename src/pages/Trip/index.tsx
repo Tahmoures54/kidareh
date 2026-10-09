@@ -10,10 +10,12 @@ import { clearTrip, listTripIds, onTripChange, toggleTrip } from "../../presence
 import PresenceMap from "../../components/presence/PresenceMap";
 import PageHero from "../../components/presence/PageHero";
 import PresenceEmpty from "../../components/presence/EmptyState";
+import TripStopQRCode from "../../components/presence/TripStopQRCode";
 
 interface SavedTripResponse {
   tripId: string;
   status: "planned";
+  arrivalTokens: Array<{ stopOrder: number; token: string }>;
 }
 
 export default function TripPage() {
@@ -23,6 +25,7 @@ export default function TripPage() {
   const [ids, setIds] = useState(() => listTripIds());
   const [saving, setSaving] = useState(false);
   const [savedTripId, setSavedTripId] = useState<string | null>(null);
+  const [arrivalTokens, setArrivalTokens] = useState<Array<{ stopOrder: number; token: string }>>([]);
   const [notice, setNotice] = useState("");
   const [navigationActive, setNavigationActive] = useState(false);
   const [activeStopIndex, setActiveStopIndex] = useState(0);
@@ -67,7 +70,8 @@ export default function TripPage() {
         },
       });
       setSavedTripId(saved.tripId);
-      setNotice("مسیر در حساب کاربری شما ذخیره شد.");
+      setArrivalTokens(saved.arrivalTokens);
+      setNotice("مسیر ذخیره شد. هنگام شروع سفر، QR هر توقف برای تأیید فروشنده در دسترس است.");
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "ذخیره مسیر انجام نشد. دوباره تلاش کنید.");
     } finally {
@@ -110,12 +114,17 @@ export default function TripPage() {
     clearTrip();
     setIds([]);
     setSavedTripId(null);
+    setArrivalTokens([]);
     setNavigationActive(false);
     setActiveStopIndex(0);
     setNotice("");
   };
 
   const activeStop = plan.stops[activeStopIndex];
+  const activeArrivalToken = arrivalTokens.find((entry) => entry.stopOrder === activeStopIndex + 1)?.token;
+  const qrPayload = savedTripId && activeArrivalToken
+    ? window.location.origin + "/trip-checkin#" + new URLSearchParams({ tripId: savedTripId, stopOrder: String(activeStopIndex + 1), token: activeArrivalToken }).toString()
+    : "";
 
   return (
     <div className="grid min-h-[calc(100dvh-73px)] lg:grid-cols-[26rem_minmax(0,1fr)]" dir="rtl">
@@ -148,6 +157,11 @@ export default function TripPage() {
             <h2 className="mt-2 text-lg font-black text-slate-900">{activeStop.listing.store.name}</h2>
             <p className="mt-1 text-xs leading-6 text-slate-600">{activeStop.listing.store.address}</p>
             <p className="mt-2 text-xs font-bold text-teal-800">از توقف قبل: {formatWalk(activeStop.walkFromPrev)}</p>
+            {savedTripId && activeArrivalToken ? (
+              <div className="mt-4"><TripStopQRCode value={qrPayload} label={activeStop.listing.store.name} /></div>
+            ) : (
+              <p className="mt-3 rounded-xl bg-white/80 px-3 py-2 text-[11px] font-bold leading-5 text-slate-500">برای تأیید QR توسط فروشنده، ابتدا مسیر را در حساب کاربری ذخیره کن.</p>
+            )}
             <div className="mt-4 flex gap-2">
               <a
                 href={mapsMultiStopUrl(origin, [{ lat: activeStop.listing.store.lat, lng: activeStop.listing.store.lng }])}
@@ -216,6 +230,7 @@ export default function TripPage() {
                         stop.listings.forEach((listing) => toggleTrip(listing.id));
                         setIds(listTripIds());
                         setSavedTripId(null);
+                        setArrivalTokens([]);
                         setNavigationActive(false);
                       }}
                       className="rounded-xl p-2 text-rose-500 transition hover:bg-rose-50"
