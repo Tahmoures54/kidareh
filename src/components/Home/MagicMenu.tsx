@@ -19,7 +19,7 @@ interface MagicMenuProps {
 
 // انیمیشن نرم و فنری
 const springTransition = {
-  type: "spring",
+  type: "spring" as const,
   stiffness: 350,
   damping: 25,
   mass: 0.8,
