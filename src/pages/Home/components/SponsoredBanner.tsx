@@ -91,7 +91,8 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
 
   const handleBannerClick = useCallback(() => {
     if (!banners.length) return;
-    const current = banners[index] || banners[0];
+    const current = banners[index] ?? banners[0];
+    if (!current) return;
     // ثبت کلیک
     fetch(`/api/promotions/banners/${current.id}/click`, {
       method: "POST",
@@ -127,7 +128,8 @@ export function SponsoredBanner({ city }: SponsoredBannerProps) {
 
   if (!banners.length) return null;
 
-  const current = banners[index] || banners[0];
+  const current = banners[index] ?? banners[0];
+    if (!current) return;
 
   return (
     <div className="px-4 mb-4">
