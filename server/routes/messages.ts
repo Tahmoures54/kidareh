@@ -293,7 +293,9 @@ router.post("/", requireAuth, (req: AuthRequest, res: Response) => {
       .prepare(
         `SELECT id, room_id, sender_id, receiver_id, content, is_read, created_at FROM messages WHERE id = ?`
       )
-      .get(result.lastInsertRowid);
+      .get(result.lastInsertRowid) as Record<string, unknown> | undefined;
+
+    if (!message) return res.status(500).json({ error: "پیام ذخیره شد اما بازیابی آن ناموفق بود" });
 
     // Emit via Socket.IO if available
     const io = req.app.get("io");
