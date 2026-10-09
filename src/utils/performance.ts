@@ -7,6 +7,9 @@ import { useEffect, useRef, useState } from 'react';
 
 /* ====================== TYPES ====================== */
 
+interface LayoutShiftPerformanceEntry extends PerformanceEntry { value: number; hadRecentInput: boolean; }
+interface LargestContentfulPaintPerformanceEntry extends PerformanceEntry { renderTime?: number; loadTime?: number; }
+
 export interface PerformanceMetrics {
   FCP: number; // First Contentful Paint
   LCP: number; // Largest Contentful Paint
@@ -31,8 +34,9 @@ export function trackWebVitals(onMetric: (metric: any) => void) {
   if ('PerformanceObserver' in window) {
     // Track Cumulative Layout Shift
     const clsObserver = new PerformanceObserver((entryList) => {
-      for (const entry of entryList.getEntries()) {
-        if ((entry as any).hadRecentInput) continue; // Ignore user inputs
+      for (const rawEntry of entryList.getEntries()) {
+        const entry = rawEntry as LayoutShiftPerformanceEntry;
+        if (entry.hadRecentInput) continue; // Ignore user inputs
         onMetric({
           name: 'CLS',
           value: entry.value,
@@ -44,12 +48,14 @@ export function trackWebVitals(onMetric: (metric: any) => void) {
 
     // Track Largest Contentful Paint
     const lcpObserver = new PerformanceObserver((entryList) => {
-      const lastEntry = entryList.getEntries().pop();
-      if (lastEntry) {
+      const rawEntry = entryList.getEntries().pop();
+      if (rawEntry) {
+        const lastEntry = rawEntry as LargestContentfulPaintPerformanceEntry;
+        const renderTime = lastEntry.renderTime ?? lastEntry.loadTime ?? lastEntry.startTime;
         onMetric({
           name: 'LCP',
-          value: lastEntry.renderTime || lastEntry.loadTime,
-          rating: lastEntry.renderTime <= 2500 ? 'good' : lastEntry.renderTime <= 4000 ? 'needs-improvement' : 'poor'
+          value: renderTime,
+          rating: renderTime <= 2500 ? 'good' : renderTime <= 4000 ? 'needs-improvement' : 'poor'
         });
       }
     });
