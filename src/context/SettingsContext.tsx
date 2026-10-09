@@ -298,7 +298,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateBadgeConfig = useCallback(
     async (badge: string, config: Partial<BadgeConfig>) => {
-      const currentConfig = settings.badgeConfigs[badge] ?? defaultBadgeConfigs["پیشنهاد ویژه"];
+      const currentConfig: BadgeConfig = settings.badgeConfigs[badge] ?? defaultBadgeConfigs["پیشنهاد ویژه"]!;
       const newBadgeConfigs: BadgeConfigs = {
         ...settings.badgeConfigs,
         [badge]: { ...currentConfig, ...config },
