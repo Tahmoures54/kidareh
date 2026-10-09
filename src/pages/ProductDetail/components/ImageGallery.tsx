@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
-const SPRING_TRANSITION = { type: "spring", stiffness: 300, damping: 25 };
+const SPRING_TRANSITION = { type: "spring" as const, stiffness: 300, damping: 25 };
 
 interface GalleryProps {
   images: string[];
