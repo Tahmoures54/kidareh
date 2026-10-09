@@ -303,7 +303,7 @@ router.post("/:id/reject", requireAuth, requireRole(["admin"]), async (req: Auth
     const { reason } = req.body;
     const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(req.params.id) as any;
     db.prepare("UPDATE products SET moderation_status = 'rejected', rejection_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(reason || "نامشخص", req.params.id);
-    await invalidateProductCache(req.params.id);
+    await invalidateProductCache(String(req.params.id ?? ""));
     if (productInfo?.store_id) await invalidateStoreCache(productInfo.store_id);
     await invalidateStatsCache();
     return res.json({ success: true, message: "محصول رد شد" });
