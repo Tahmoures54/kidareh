@@ -1,0 +1,39 @@
+name: One-time cleanup of merged Kidareh branches
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cleanup-obsolete-branches.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete only branches whose work is merged or superseded
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          for branch in \
+            "feat/buyer-experience-polish" \
+            "feat/buyer-ux-pull-refresh" \
+            "feat/map-marker-clustering-clean" \
+            "feat/stock-trust-layer" \
+            "feat/trip-optimizer-persistence" \
+            "fix/execution-stage-1" \
+            "fix/typecheck-stage-1" \
+            "fix/typecheck-zero-errors" \
+            "fix/typecheck-zero-errors-20261009"; do
+            encoded_branch="$(python -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["BRANCH"], safe=""))' BRANCH="$branch")"
+            if gh api "repos/$GH_REPO/branches/$encoded_branch" >/dev/null 2>&1; then
+              gh api --method DELETE "repos/$GH_REPO/git/refs/heads/$encoded_branch"
+              echo "Deleted obsolete branch: $branch"
+            else
+              echo "Already absent: $branch"
+            fi
+          done
