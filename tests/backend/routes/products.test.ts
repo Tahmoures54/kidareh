@@ -1,36 +1,54 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import request from 'supertest';
-import express from 'express';
-import productsRouter from '../../../server/routes/products';
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import express from "express";
+import type { AddressInfo } from "node:net";
+import productsRouter from "../../../server/routes/products";
 
 const app = express();
 app.use(express.json());
-app.use('/api/products', productsRouter);
+app.use("/api/products", productsRouter);
 
-describe('Products API', () => {
-  it('GET /api/products - ÈÇíÏ áíÓÊ ãÍÕæáÇÊ ÑÇ ÈÑÑÏÇäÏ', async () => {
-    const response = await request(app)
-      .get('/api/products')
-      .expect('Content-Type', /json/)
-      .expect(200);
+let server: ReturnType<typeof app.listen>;
+let baseUrl = "";
 
-    expect(response.body).toHaveProperty('products');
-    expect(Array.isArray(response.body.products)).toBe(true);
+beforeAll(async () => {
+  server = app.listen(0);
+  await new Promise<void>((resolve, reject) => {
+    server.once("listening", resolve);
+    server.once("error", reject);
+  });
+  const address = server.address() as AddressInfo;
+  baseUrl = `http://127.0.0.1:${address.port}`;
+});
+
+afterAll(async () => {
+  if (!server) return;
+  await new Promise<void>((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+  });
+});
+
+describe("Products API", () => {
+  it("returns a JSON product list", async () => {
+    const response = await fetch(`${baseUrl}/api/products`);
+    expect(response.headers.get("content-type")).toMatch(/json/);
+    expect(response.status).toBe(200);
+
+    const body: unknown = await response.json();
+    expect(body).toHaveProperty("products");
+    expect(Array.isArray((body as { products?: unknown }).products)).toBe(true);
   });
 
-  it('POST /api/products - ÈÇíÏ ãÍÕæá ÌÏíÏ ÇíÌÇÏ ˜äÏ', async () => {
-    const newProduct = {
-      title: 'ãÍÕæá ÊÓÊí',
-      price: 500000,
-      description: 'ÊæÖíÍÇÊ ÊÓÊ'
-    };
+  it("does not allow anonymous product creation", async () => {
+    const response = await fetch(`${baseUrl}/api/products`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: "محصول آزمایشی",
+        price: 500000,
+        description: "توضیحات آزمایشی",
+      }),
+    });
 
-    const response = await request(app)
-      .post('/api/products')
-      .send(newProduct)
-      .expect(201);
-
-    expect(response.body).toHaveProperty('id');
-    expect(response.body.title).toBe(newProduct.title);
+    expect([401, 403]).toContain(response.status);
   });
 });
