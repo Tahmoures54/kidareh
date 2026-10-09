@@ -42,6 +42,8 @@ export function usePullToRefresh({
     hapticFeedback("light");
     try {
       await onRefresh();
+    } catch {
+      hapticFeedback("warning");
     } finally {
       setRefreshing(false);
     }
