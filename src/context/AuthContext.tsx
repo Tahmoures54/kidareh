@@ -7,7 +7,7 @@ import React, {
   useCallback,
   useRef,
 } from "react";
-// 🔧 useNavigate حذف شد (استفاده نشده بود)
+import { useNavigate } from "react-router-dom";
 import { apiRequest, ApiError } from "../utils/api";
 
 /* ====================== TYPES ====================== */
