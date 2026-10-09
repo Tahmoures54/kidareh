@@ -61,7 +61,7 @@ export const ImageCarousel = memo(({ images, name, imgIndex, setImgIndex, setGal
 
       {images.length > 1 && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/30 backdrop-blur-md px-3 py-2 rounded-full">
-          {images.map((_, i) => (
+          {images.map((_image: string, i: number) => (
             <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === imgIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"}`} />
           ))}
         </div>
