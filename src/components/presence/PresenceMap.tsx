@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap, Polyline } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap, Polyline } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Link } from "react-router-dom";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
+import MarkerClusterLayer from "./MarkerClusterLayer";
 import type { EnrichedListing, GeoPoint } from "../../presence/types";
 import { formatCompactToman, formatWalk } from "../../presence/engine";
 
@@ -102,24 +104,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
               pathOptions={{ color: "#00A693", weight: 4, opacity: 0.9 }}
             />
           )}
-          {uniqueStores.map((l) => (
-            <Marker
-              key={l.storeId}
-              position={[l.store.lat, l.store.lng]}
-              icon={pin(l.id === selectedId ? "#e6b84f" : "#00A693", formatCompactToman(l.price))}
-            >
-              <Popup>
-                <div dir="rtl" className="min-w-[160px] text-right">
-                  <p className="text-xs font-black">{l.store.name}</p>
-                  <p className="text-[11px]">{l.skuLabel}</p>
-                  <p className="text-[11px] font-bold">{formatWalk(l.walkMinutes)}</p>
-                  <Link to={`/p/${l.id}`} className="mt-1 inline-block text-[11px] font-black text-[var(--accent)]">
-                    جزئیات کالا
-                  </Link>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          <MarkerClusterLayer listings={uniqueStores} selectedId={selectedId} />
         </MapContainer>
       )}
     </div>
