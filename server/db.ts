@@ -739,7 +739,7 @@ if (process.env.AUTO_BACKUP === "true") {
 // 12. Stats
 // ============================================================================
 
-export const getStats = () => {
+export const getStats = (): Record<string, number> | null => {
   try {
     return db.prepare(`
       SELECT
@@ -757,7 +757,7 @@ export const getStats = () => {
         (SELECT COUNT(*) FROM transactions)                                AS total_transactions,
         (SELECT COUNT(*) FROM wallet_transactions)                         AS total_wallet_tx,
         (SELECT COUNT(*) FROM referral_events WHERE status='approved')     AS completed_referrals
-    `).get();
+    `).get() as Record<string, number> | undefined ?? null;
   } catch (err) {
     logger.error("❌ Stats error:", err);
     return null;
