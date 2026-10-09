@@ -104,6 +104,7 @@ const CitySelector = memo(
         const timer = setTimeout(() => inputRef.current?.focus(), 100);
         return () => clearTimeout(timer);
       }
+      return undefined;
     }, [isOpen, isMobile]);
 
     const displayText = displayLocation || selectedCity || "انتخاب شهر";
