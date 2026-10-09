@@ -1,0 +1,29 @@
+name: Remove merged seller price insights branch
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/remove-merged-seller-branch.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete the now-merged feature branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          branch="feat/seller-price-insights"
+          encoded_branch="$(python -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$branch")"
+          if gh api "repos/$GH_REPO/branches/$encoded_branch" >/dev/null 2>&1; then
+            gh api --method DELETE "repos/$GH_REPO/git/refs/heads/$encoded_branch"
+            echo "Deleted merged branch: $branch"
+          else
+            echo "Branch already absent: $branch"
+          fi
