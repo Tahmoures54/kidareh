@@ -37,6 +37,7 @@ const CITY_SLUG_BY_FA: Record<string, string> = {
   "اردبیل": "ardabil",
   "زاهدان": "zahedan",
   "بندرعباس": "bandar-abbas",
+  "بندر عباس": "bandar-abbas",
   "اراک": "arak",
   "ساری": "sari",
   "گرگان": "gorgan",
