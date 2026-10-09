@@ -618,3 +618,41 @@ body {
     transition: none;
   }
 }
+
+
+/* ── Accessibility and interaction polish ── */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid #06B6D4;
+  outline-offset: 3px;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  touch-action: manipulation;
+}
+
+::selection {
+  color: #083344;
+  background: #A5F3FC;
+}
+
+@media (hover: none) {
+  .group button.md\\:opacity-0 {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
