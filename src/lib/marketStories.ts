@@ -101,7 +101,7 @@ export function mapApiStory(raw: Record<string, unknown>): StoryItem | null {
     : [];
   return {
     id,
-    storeId,
+    storeId: String(storeId),
     name,
     href,
     image,
