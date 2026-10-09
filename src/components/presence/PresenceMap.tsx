@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap, Polyline } from "react-leaflet";
+import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents, Polyline } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { Link } from "react-router-dom";
 import type { EnrichedListing, GeoPoint } from "../../presence/types";
+import { clusterListings } from "../../presence/clusterListings";
 import { formatCompactToman, formatWalk } from "../../presence/engine";
 
 function pin(color: string, label?: string) {
@@ -47,6 +48,83 @@ interface Props {
   height?: string;
   selectedId?: string;
   className?: string;
+}
+
+function StoreMarkerClusters({ listings, selectedId }: { listings: EnrichedListing[]; selectedId?: string }) {
+  const map = useMap();
+  const [zoom, setZoom] = useState(map.getZoom());
+
+  useMapEvents({
+    zoomend: () => setZoom(map.getZoom()),
+  });
+
+  const clusters = useMemo(() => clusterListings(listings, zoom), [listings, zoom]);
+
+  return (
+    <>
+      {clusters.map((cluster) => {
+        if (cluster.listings.length === 1) {
+          const listing = cluster.listings[0];
+          return (
+            <Marker
+              key={cluster.id}
+              position={[cluster.lat, cluster.lng]}
+              icon={pin(listing.id === selectedId ? "#e6b84f" : "#00A693", formatCompactToman(listing.price))}
+            >
+              <Popup>
+                <div dir="rtl" className="min-w-[160px] text-right">
+                  <p className="text-xs font-black">{listing.store.name}</p>
+                  <p className="text-[11px]">{listing.skuLabel}</p>
+                  <p className="text-[11px] font-bold">{formatWalk(listing.walkMinutes)}</p>
+                  <Link to={`/p/${listing.id}`} className="mt-1 inline-block text-[11px] font-black text-[var(--accent)]">
+                    جزئیات کالا
+                  </Link>
+                </div>
+              </Popup>
+            </Marker>
+          );
+        }
+
+        const count = cluster.listings.length;
+        const clusterIcon = L.divIcon({
+          className: "presence-cluster",
+          html: `<div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:3px solid rgba(255,255,255,.95);border-radius:50%;background:#08a6a6;color:#fff;font:900 13px Vazirmatn,sans-serif;box-shadow:0 8px 22px rgba(8,80,80,.28)">${count}</div>`,
+          iconSize: [44, 44],
+          iconAnchor: [22, 22],
+        });
+
+        return (
+          <Marker
+            key={cluster.id}
+            position={[cluster.lat, cluster.lng]}
+            icon={clusterIcon}
+            eventHandlers={{
+              click: () => map.flyTo([cluster.lat, cluster.lng], Math.min(18, map.getZoom() + 2), { duration: 0.45 }),
+            }}
+          >
+            <Popup>
+              <div dir="rtl" className="min-w-[180px] text-right">
+                <p className="text-sm font-black">{count.toLocaleString("fa-IR")} فروشگاه نزدیک</p>
+                <p className="mb-2 mt-1 text-[11px] text-slate-500">برای دیدن فروشگاه‌ها روی خوشه بزنید یا نقشه را بزرگ‌نمایی کنید.</p>
+                <div className="space-y-2">
+                  {cluster.listings.slice(0, 4).map((listing) => (
+                    <Link
+                      key={listing.id}
+                      to={`/p/${listing.id}`}
+                      className="block border-t border-slate-100 pt-2 text-[11px] font-bold text-teal-700"
+                    >
+                      {listing.store.name} · {listing.skuLabel}
+                    </Link>
+                  ))}
+                  {count > 4 && <p className="text-[10px] text-slate-400">و { (count - 4).toLocaleString("fa-IR") } مورد دیگر</p>}
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        );
+      })}
+    </>
+  );
 }
 
 export default function PresenceMap({ origin, listings, path, height = "100%", selectedId, className }: Props) {
@@ -102,24 +180,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
               pathOptions={{ color: "#00A693", weight: 4, opacity: 0.9 }}
             />
           )}
-          {uniqueStores.map((l) => (
-            <Marker
-              key={l.storeId}
-              position={[l.store.lat, l.store.lng]}
-              icon={pin(l.id === selectedId ? "#e6b84f" : "#00A693", formatCompactToman(l.price))}
-            >
-              <Popup>
-                <div dir="rtl" className="min-w-[160px] text-right">
-                  <p className="text-xs font-black">{l.store.name}</p>
-                  <p className="text-[11px]">{l.skuLabel}</p>
-                  <p className="text-[11px] font-bold">{formatWalk(l.walkMinutes)}</p>
-                  <Link to={`/p/${l.id}`} className="mt-1 inline-block text-[11px] font-black text-[var(--accent)]">
-                    جزئیات کالا
-                  </Link>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          <StoreMarkerClusters listings={uniqueStores} selectedId={selectedId} />
         </MapContainer>
       )}
     </div>

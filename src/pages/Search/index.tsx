@@ -31,6 +31,8 @@ import { SearchSkeleton } from "./components/SearchSkeleton";
 import { FilterSheet } from "./components/FilterSheet";
 import { IdleSection } from "./components/IdleSection";
 import { SPRING_TRANSITION, SORT_OPTIONS } from "./components/constants";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../../components/ui/PullToRefreshIndicator";
 
 export default function Search() {
   const navigate = useNavigate();
@@ -51,6 +53,9 @@ export default function Search() {
     expandSearchScope, cycleScope, resetFilters,
     searchPlaceholder, scopeLabel,
   } = useSearch();
+
+  const refreshSearch = React.useCallback(async () => { await refetch(); }, [refetch]);
+  const pullToRefresh = usePullToRefresh(refreshSearch);
 
   const handleExpandSearch = () => {
     trackEvent("search_scope_expand_click", {
@@ -103,7 +108,8 @@ export default function Search() {
   }, [filters.scope.type]);
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl">
+    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl" onTouchStart={pullToRefresh.onTouchStart} onTouchMove={pullToRefresh.onTouchMove} onTouchEnd={pullToRefresh.onTouchEnd}>
+      <PullToRefreshIndicator distance={pullToRefresh.pullDistance} refreshing={pullToRefresh.isRefreshing} threshold={pullToRefresh.threshold} />
       <AnimatePresence>
         {toastMsg && <Toast msg={toastMsg} />}
       </AnimatePresence>

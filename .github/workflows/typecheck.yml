@@ -34,3 +34,6 @@ jobs:
 
       - name: TypeScript validation
         run: npm run typecheck
+
+      - name: Focused UX and map tests
+        run: npx vitest run tests/frontend/hooks/usePullToRefresh.test.ts tests/frontend/presence/clusterListings.test.ts
