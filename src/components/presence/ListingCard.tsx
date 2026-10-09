@@ -1,4 +1,5 @@
 import React, { memo } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { BadgeCheck, Clock3, Footprints, Minus, Plus, Radio } from "lucide-react";
 import type { EnrichedListing } from "../../presence/types";
@@ -6,6 +7,7 @@ import { formatCompactToman, formatWalk, toFa } from "../../presence/engine";
 import { CATEGORY_META } from "../../presence/catalog";
 import { cn } from "../../utils";
 import PresenceImage from "./PresenceImage";
+import { useHaptics } from "../../hooks/useHaptics";
 
 interface Props {
   listing: EnrichedListing;
@@ -16,6 +18,7 @@ interface Props {
 
 export const ListingCard = memo(function ListingCard({ listing, compact, inTrip, onToggleTrip }: Props) {
   const cat = CATEGORY_META[listing.category];
+  const haptic = useHaptics();
   return (
     <article
       className={cn(
@@ -90,7 +93,7 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onToggleTrip(listing.id);
+                  haptic("selection");\n                  onToggleTrip(listing.id);
                 }}
                 className={cn(
                   "inline-flex h-11 items-center gap-1 rounded-xl px-3 text-sm font-black shadow-sm transition",
