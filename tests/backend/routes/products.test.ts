@@ -1,14 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import productsRouter from '../products';
+import productsRouter from '../../../server/routes/products';
 
 const app = express();
 app.use(express.json());
 app.use('/api/products', productsRouter);
 
 describe('Products API', () => {
-  it('GET /api/products - »«Ìœ ·Ì”  „Õ’Ê·«  —« »—ê—œ«‰œ', async () => {
+  it('GET /api/products - √à√á√≠√è √°√≠√ì√ä √£√ç√ï√¶√°√á√ä √ë√á √à√ë¬ê√ë√è√á√§√è', async () => {
     const response = await request(app)
       .get('/api/products')
       .expect('Content-Type', /json/)
@@ -18,11 +18,11 @@ describe('Products API', () => {
     expect(Array.isArray(response.body.products)).toBe(true);
   });
 
-  it('POST /api/products - »«Ìœ „Õ’Ê· ÃœÌœ «ÌÃ«œ ò‰œ', async () => {
+  it('POST /api/products - √à√á√≠√è √£√ç√ï√¶√° √å√è√≠√è √á√≠√å√á√è Àú√§√è', async () => {
     const newProduct = {
-      title: '„Õ’Ê·  ” Ì',
+      title: '√£√ç√ï√¶√° √ä√ì√ä√≠',
       price: 500000,
-      description: ' Ê÷ÌÕ«   ” '
+      description: '√ä√¶√ñ√≠√ç√á√ä √ä√ì√ä'
     };
 
     const response = await request(app)
