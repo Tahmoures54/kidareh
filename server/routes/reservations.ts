@@ -83,7 +83,7 @@ router.get("/", requireAuth, (req: AuthRequest, res) => {
   res.json({ reservations: rows.map(rowToJson) });
 });
 
-router.post("/", requireAuth, (req: AuthRequest, res) => {
+router.post("/", requireAuth, (req: AuthRequest, res): void => {
   const listingId = String(req.body?.listingId || req.body?.listing_id || "");
   const holdMinutes = Number(req.body?.holdMinutes ?? req.body?.hold_minutes ?? 45);
   try {
@@ -113,6 +113,7 @@ router.post("/", requireAuth, (req: AuthRequest, res) => {
       hold.storeLng
     );
     res.status(201).json({ reservation: hold });
+    return;
   } catch (err: any) {
     const map: Record<string, [number, string]> = {
       listing_not_found: [404, "کالا پیدا نشد"],
@@ -121,9 +122,10 @@ router.post("/", requireAuth, (req: AuthRequest, res) => {
       store_not_found: [404, "فروشگاه پیدا نشد"],
     };
     const hit = map[err?.message];
-    if (hit) return res.status(hit[0]).json({ error: hit[1] });
+    if (hit) { res.status(hit[0]).json({ error: hit[1] }); return; }
     logger.error("create reservation", err);
     res.status(500).json({ error: "رزرو ثبت نشد" });
+    return;
   }
 });
 
