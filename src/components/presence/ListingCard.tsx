@@ -20,11 +20,11 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
   return (
     <article
       className={cn(
-        "group relative z-0 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-lg",
+        "group relative z-0 overflow-hidden rounded-[26px] border border-slate-200/70 bg-white shadow-[0_14px_40px_-30px_rgba(15,23,42,.38)] transition-all duration-300 hover:-translate-y-1 hover:border-teal-200 hover:shadow-[0_24px_54px_-30px_rgba(8,166,166,.45)] focus-within:ring-4 focus-within:ring-teal-500/10 dark:border-slate-800 dark:bg-slate-900",
         compact && "rounded-2xl"
       )}
     >
-      <Link to={`/p/${listing.id}`} className="absolute inset-0 z-[1]" aria-label={listing.name} />
+      <Link to={`/p/${listing.id}`} className="absolute inset-0 z-[1] rounded-[26px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-teal-500/60" aria-label={`مشاهده ${listing.name}`} />
       <div className={cn("relative overflow-hidden bg-slate-100", compact ? "aspect-[5/4]" : "aspect-[16/10] sm:aspect-[4/5]")}>
         <PresenceImage
           src={listing.image}
@@ -45,7 +45,7 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
         </div>
         <div className="absolute bottom-3 right-3 left-3 flex items-end justify-between gap-2">
           <span className="inline-flex items-center gap-1 rounded-full bg-white/95 px-2.5 py-1 text-[11px] font-black text-slate-800 shadow-sm">
-            <Footprints className="h-3.5 w-3.5 text-cyan-600" />
+            <Footprints className="h-3.5 w-3.5 text-teal-600 dark:text-teal-400" />
             {formatWalk(listing.walkMinutes)}
           </span>
           {listing.savingsPct > 0 && (
@@ -75,7 +75,7 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
             {listing.oldPrice ? (
               <p className="text-[11px] font-bold text-slate-400 line-through">{formatCompactToman(listing.oldPrice)}</p>
             ) : null}
-            <p className="text-lg font-black tracking-tight text-cyan-600">{formatCompactToman(listing.price)}</p>
+            <p className="text-lg font-black tracking-tight text-teal-700 dark:text-teal-400">{formatCompactToman(listing.price)}</p>
           </div>
           <div className="relative z-20 flex items-center gap-1.5">
             <Link
