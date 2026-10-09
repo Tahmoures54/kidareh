@@ -73,7 +73,7 @@ router.get("/dashboard-stats", (_req: AuthRequest, res: Response) => {
        ORDER BY p.created_at DESC LIMIT 5`
     ).all();
 
-    return res.json({
+    return void res.json({
       ...stats,
       pendingProducts,
       pendingReports,
@@ -151,7 +151,7 @@ router.get("/users", (req: AuthRequest, res: Response) => {
 
     const { total } = db.prepare(countQuery).get(...countParams) as any;
 
-    return res.json({
+    return void res.json({
       users: users.map((u: any) => ({
         ...u,
         blue_tick_active: u.blue_tick_expires_at
@@ -276,7 +276,7 @@ router.get("/products/pending", (_req: AuthRequest, res: Response) => {
       WHERE p.moderation_status = 'pending'
       ORDER BY p.created_at ASC
     `).all();
-    return res.json(products);
+    return void res.json(products);
   } catch (error) {
     logger.error("Get pending products error:", error);
     return void res.status(500).json({ error: "خطا در دریافت محصولات در انتظار" });
@@ -401,7 +401,7 @@ router.get("/settings", (_req: AuthRequest, res: Response) => {
       acc[row.key] = { value: row.value, description: row.description };
       return acc;
     }, {});
-    return res.json(result);
+    return void res.json(result);
   } catch (error) {
     logger.error("Fetch Settings Error:", error);
     return void res.status(500).json({ error: "خطا در دریافت تنظیمات سیستم." });
@@ -429,7 +429,7 @@ router.put("/settings", (req: AuthRequest, res: Response): void => {
       });
       updateMany(settings);
       logger.info(`⚙️ Settings batch updated by admin ${req.user?.id}`);
-      return res.json({ success: true, message: "تنظیمات با موفقیت بروزرسانی شد." });
+      return void res.json({ success: true, message: "تنظیمات با موفقیت بروزرسانی شد." });
     }
 
     if (!key || value === undefined) {
@@ -438,7 +438,7 @@ router.put("/settings", (req: AuthRequest, res: Response): void => {
 
     db.prepare("INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)").run(key, String(value));
     logger.info(`⚙️ Setting '${key}' updated by admin ${req.user?.id}`);
-    return res.json({ success: true, message: "تنظیم با موفقیت بروزرسانی شد." });
+    return void res.json({ success: true, message: "تنظیم با موفقیت بروزرسانی شد." });
   } catch (error: any) {
     if (error.name === "ZodError") {
       return void res.status(400).json({ error: error.errors[0].message });
@@ -457,7 +457,7 @@ router.post("/backup", (_req: AuthRequest, res: Response) => {
   try {
     const backupPath = createBackup();
     logger.info(`💾 Database backup created by admin ${_req.user?.id}`);
-    return res.json({ success: true, message: "بکاپ با موفقیت ایجاد شد", path: backupPath });
+    return void res.json({ success: true, message: "بکاپ با موفقیت ایجاد شد", path: backupPath });
   } catch (error) {
     logger.error("Backup error:", error);
     return void res.status(500).json({ error: "خطا در ایجاد بکاپ" });
@@ -477,7 +477,7 @@ router.get("/system-info", (_req: AuthRequest, res: Response) => {
       },
       env: process.env.NODE_ENV || "development",
     };
-    return res.json(info);
+    return void res.json(info);
   } catch (error) {
     logger.error("System info error:", error);
     return void res.status(500).json({ error: "خطا در دریافت اطلاعات سیستم" });
