@@ -37,6 +37,8 @@ function normalizeProduct(raw: Record<string, unknown>): Product {
     badge: typeof raw.badge === "string" ? raw.badge : null,
     image,
     image_url: image,
+    last_stock_confirmed_at: typeof raw.last_stock_confirmed_at === "string" ? raw.last_stock_confirmed_at : null,
+    stock_confidence: typeof raw.stock_confidence === "number" ? raw.stock_confidence : 0.5,
   };
 }
 
@@ -122,6 +124,24 @@ export function useSellerPanel() {
     },
     onError: () => handleShowToast("وضعیت عوض نشد. دوباره بزن"),
   });
+
+  const confirmStockMut = useMutation({
+    mutationFn: (id: number) =>
+      apiRequest<{ success: boolean; last_stock_confirmed_at: string | null; stock_confidence: number }>(
+        "/api/products/" + id + "/confirm-stock",
+        { method: "POST", auth: true, body: {} },
+      ),
+    onSuccess: () => {
+      handleShowToast("موجودی همین حالا تأیید شد");
+      invalidateProducts();
+      void queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: () => handleShowToast("تأیید موجودی انجام نشد؛ دوباره تلاش کنید"),
+  });
+
+  const confirmStock = useCallback((product: Product) => {
+    confirmStockMut.mutate(product.id);
+  }, [confirmStockMut]);
 
   const toggleVisibilityMut = useMutation({
     mutationFn: (vars: { id: number; isPublic: boolean }) =>
@@ -244,6 +264,8 @@ export function useSellerPanel() {
     lowStockCount,
     filteredProducts,
     updateStatusMut,
+    confirmStockMut,
+    confirmStock,
     toggleVisibilityMut,
     deleteProductMut,
     updateStoreMut,
