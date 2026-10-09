@@ -20,6 +20,7 @@ import { useAuth } from "../../context/AuthContext";
 import { BADGES_LIST } from "../../components/badges";
 import { fmtPrice } from "./utils";
 import { useAddProduct } from "./components/hooks";
+import SegmentedControl from "./components/SegmentedControl";
 import { Toast } from "../../components/ui/Toast";
 import CategoryField from "../../components/category/CategoryField";
 
@@ -45,7 +46,7 @@ export default function AddProduct() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] pb-28 text-slate-900 dark:text-white font-sans" dir="rtl">
-      <AnimatePresence>{state.toast && <Toast key={state.toast.id} msg={state.toast.msg} type={state.toast.type} />}</AnimatePresence>
+      <AnimatePresence>{state.toast && <Toast key={state.toast.id} msg={state.toast.msg} type={state.toast.type ?? "error"} />}</AnimatePresence>
 
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/50 dark:border-slate-800/50 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3">
         <div className="flex items-center gap-3">
@@ -135,7 +136,7 @@ export default function AddProduct() {
               <SegmentedControl
                 options={["موجود", "ناموجود"]}
                 value={state.status === "موجود" || state.status === "ناموجود" ? state.status : "موجود"}
-                onChange={(v) => setters.setStatus(v as "موجود" | "ناموجود")}
+                onChange={(v: string) => setters.setStatus(v as "موجود" | "ناموجود")}
               />
             </div>
           </div>

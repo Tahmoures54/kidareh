@@ -63,7 +63,7 @@ function SellerShopHome() {
     const result = await shareFeedItem({ title: shopName, text: shareTextForPost(shopName), url: window.location.origin + "/store/" + storeInfo.id });
     if (result === "shared" || result === "copied") {
       analytics.trackEvent({ name: "seller_first_product_shared", category: "growth", label: result });
-      setToast({ msg: result === "shared" ? "ویترینت برای اشتراک‌گذاری آماده شد." : "لینک ویترین کپی شد.", type: "success", id: Date.now() });
+      setToast(result === "shared" ? "ویترینت برای اشتراک‌گذاری آماده شد." : "لینک ویترین کپی شد.");
     }
   };
 

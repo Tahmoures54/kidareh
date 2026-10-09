@@ -1,21 +1,21 @@
 import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchProductsPage, type FetchProductsParams } from "../services/products.service";
+import type { ProductsPageResponse as ApiProductsPageResponse } from "../types/product";
 
 /* ====================== TYPES ====================== */
 
 export interface Product {
   id: string;
   name: string;
-  price?: number;
-  image_url?: string;
-  badge?: string;
+  price?: number | string;
+  image_url?: string | null;
+  badge?: string | null;
   store_name?: string;
-  status?: "موجود" | "ناموجود";
+  status?: string;
   city?: string;
-  views?: number; 
-  // Pro Tip: استفاده از Record بجای any برای حفظ ایمنی تایپ‌ها
-  metadata?: Record<string, unknown>; 
+  views?: number;
+  metadata?: Record<string, unknown>;
 }
 
 export interface ProductsPageResponse {
@@ -118,10 +118,14 @@ export function useInfiniteProducts(input: UseInfiniteProductsInput = {}) {
     
     // دریافت سیگنال از React Query برای لغو درخواست‌های تکراری
     queryFn: async ({ pageParam, signal }) => {
-      return fetchProductsPage({
+      const page: ApiProductsPageResponse = await fetchProductsPage({
         ...normalizedParams,
         cursor: pageParam ?? null,
-      }, signal); // ارسال سیگنال به سرویس
+      }, signal);
+      return {
+        ...page,
+        products: page.products.map((product) => ({ ...product, id: String(product.id) })),
+      };
     },
     
     initialPageParam: null,

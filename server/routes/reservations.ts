@@ -83,7 +83,7 @@ router.get("/", requireAuth, (req: AuthRequest, res) => {
   res.json({ reservations: rows.map(rowToJson) });
 });
 
-router.post("/", requireAuth, (req: AuthRequest, res) => {
+router.post("/", requireAuth, (req: AuthRequest, res): void => {
   const listingId = String(req.body?.listingId || req.body?.listing_id || "");
   const holdMinutes = Number(req.body?.holdMinutes ?? req.body?.hold_minutes ?? 45);
   try {
@@ -113,6 +113,7 @@ router.post("/", requireAuth, (req: AuthRequest, res) => {
       hold.storeLng
     );
     res.status(201).json({ reservation: hold });
+    return;
   } catch (err: any) {
     const map: Record<string, [number, string]> = {
       listing_not_found: [404, "کالا پیدا نشد"],
@@ -121,29 +122,33 @@ router.post("/", requireAuth, (req: AuthRequest, res) => {
       store_not_found: [404, "فروشگاه پیدا نشد"],
     };
     const hit = map[err?.message];
-    if (hit) return res.status(hit[0]).json({ error: hit[1] });
+    if (hit) { res.status(hit[0]).json({ error: hit[1] }); return; }
     logger.error("create reservation", err);
     res.status(500).json({ error: "رزرو ثبت نشد" });
+    return;
   }
 });
 
-router.patch("/:id/status", requireAuth, (req: AuthRequest, res) => {
+router.patch("/:id/status", requireAuth, (req: AuthRequest, res): void => {
   expireStale();
   const next = String(req.body?.status || "");
   const row = db
     .prepare(`SELECT * FROM reservations WHERE public_id = ? OR id = ?`)
     .get(req.params.id, Number(req.params.id) || -1) as any;
-  if (!row) return res.status(404).json({ error: "رزرو پیدا نشد" });
+  if (!row) { res.status(404).json({ error: "رزرو پیدا نشد" }); return; }
   if (Number(row.buyer_id) !== Number(req.user!.id) && req.user!.role !== "admin" && req.user!.role !== "seller") {
-    return res.status(403).json({ error: "دسترسی ندارید" });
+    res.status(403).json({ error: "دسترسی ندارید" });
+    return;
   }
   const allowed = TRANSITIONS[row.status] || [];
   if (!allowed.includes(next)) {
-    return res.status(400).json({ error: "این تغییر وضعیت مجاز نیست" });
+    res.status(400).json({ error: "این تغییر وضعیت مجاز نیست" });
+    return;
   }
   db.prepare(`UPDATE reservations SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(next, row.id);
   const updated = db.prepare(`SELECT * FROM reservations WHERE id = ?`).get(row.id);
   res.json({ reservation: rowToJson(updated) });
+  return;
 });
 
 export default router;

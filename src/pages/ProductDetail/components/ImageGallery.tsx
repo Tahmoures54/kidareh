@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 
 const FALLBACK = "https://placehold.co/800x800/1e293b/94a3b8?text=No+Image";
-const SPRING_TRANSITION = { type: "spring", stiffness: 300, damping: 25 };
+const SPRING_TRANSITION = { type: "spring" as const, stiffness: 300, damping: 25 };
 
 interface GalleryProps {
   images: string[];
@@ -61,7 +61,7 @@ export const ImageCarousel = memo(({ images, name, imgIndex, setImgIndex, setGal
 
       {images.length > 1 && (
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 z-10 bg-black/30 backdrop-blur-md px-3 py-2 rounded-full">
-          {images.map((_, i) => (
+          {images.map((_image: string, i: number) => (
             <div key={i} className={`h-1.5 rounded-full transition-all duration-300 ${i === imgIndex ? "w-6 bg-white" : "w-1.5 bg-white/40"}`} />
           ))}
         </div>

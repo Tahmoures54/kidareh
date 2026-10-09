@@ -63,7 +63,7 @@ export async function searchProducts(
   req: Request,
   res: Response,
   next: NextFunction
-) {
+): Promise<void> {
   try {
     const parsed = querySchema.parse(req.query);
 
@@ -73,18 +73,16 @@ export async function searchProducts(
       parsed.maxPrice != null &&
       parsed.minPrice > parsed.maxPrice
     ) {
-      return res
-        .status(400)
-        .json({ error: "minPrice نباید بزرگ‌تر از maxPrice باشد." });
+      res.status(400).json({ error: "minPrice نباید بزرگ‌تر از maxPrice باشد." });
+      return;
     }
 
     if (
       (parsed.sort === "nearest" || parsed.radiusKm != null) &&
       (parsed.lat == null || parsed.lng == null)
     ) {
-      return res
-        .status(400)
-        .json({ error: "برای nearest/radiusKm باید lat و lng ارسال شود." });
+      res.status(400).json({ error: "برای nearest/radiusKm باید lat و lng ارسال شود." });
+      return;
     }
 
     // Decode cursor
@@ -102,19 +100,22 @@ export async function searchProducts(
     const sliced = hasMore ? result.rows.slice(0, parsed.limit) : result.rows;
     const nextCursor = hasMore ? encodeCursor({ v: 2, offset: (cursor?.offset ?? 0) + parsed.limit }) : null;
 
-    return res.json({
+    res.json({
       products: sliced,
       nextCursor,
       hasMore,
       total: result.total ?? undefined,
     });
+    return;
   } catch (err: any) {
     if (err?.name === "ZodError") {
-      return res.status(400).json({
+      res.status(400).json({
         error: "پارامترهای ورودی نامعتبر است.",
         details: err.issues,
       });
+      return;
     }
     next(err);
+    return;
   }
 }

@@ -58,10 +58,13 @@ router.get("/radar", (req, res) => {
   res.json({ origin, groups: buildRadar(origin, sku) });
 });
 
-router.get("/listings/:id", (req, res) => {
+router.get("/listings/:id", (req, res): void => {
   const origin = originFromQuery(req);
   const listing = getListing(req.params.id);
-  if (!listing) return res.status(404).json({ error: "کالا پیدا نشد" });
+  if (!listing) {
+    res.status(404).json({ error: "کالا پیدا نشد" });
+    return;
+  }
   const enriched = enrichListing(listing, origin);
   const radar = buildRadar(origin, listing.sku);
   res.json({ listing: enriched, radar: radar[0] ?? null });

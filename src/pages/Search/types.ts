@@ -1,9 +1,11 @@
 export type { SortType, ViewMode, LocationScopeType, LocationScope } from "../../types/common";
+import type { SortType, LocationScope } from "../../types/common";
 
 export interface ProductResult {
   id: number | string;
   name: string;
   store_id?: number | string;
+  store: string;
   distance: string;
   distanceMeters?: number;
   price: number | string;

@@ -113,11 +113,12 @@ adminRouter.use(requireAuth);
 adminRouter.use(requireRole(['admin']));
 
 // چک اضافی برای ادمین اصلی (شماره خاص)
-adminRouter.use((req: AuthRequest, res: Response, next: NextFunction) => {
+adminRouter.use((req: AuthRequest, res: Response, next: NextFunction): void => {
   const MASTER_ADMIN_PHONE = process.env.ADMIN_PHONE || '09160684552';
   const user = db.prepare("SELECT phone FROM users WHERE id = ?").get(req.user!.id) as any;
   if (!user || user.phone !== MASTER_ADMIN_PHONE) {
-    return res.status(403).json({ error: "دسترسی غیرمجاز. این بخش فقط برای مدیریت کل سامانه در دسترس است." });
+    res.status(403).json({ error: "دسترسی غیرمجاز. این بخش فقط برای مدیریت کل سامانه در دسترس است." });
+    return;
   }
   next();
 });

@@ -14,7 +14,7 @@ interface CitySelectorProps {
 }
 
 // تنظیمات انیمیشن فنری
-const springTransition = { type: "spring", stiffness: 350, damping: 25 };
+const springTransition = { type: "spring" as const, stiffness: 350, damping: 25 };
 
 /**
  * Premium CitySelector
@@ -100,10 +100,9 @@ const CitySelector = memo(
 
     /* فوکوس خودکار هوشمند (فقط در دسکتاپ تا کیبورد موبایل مزاحم نشود) */
     useEffect(() => {
-      if (isOpen && !isMobile) {
-        const timer = setTimeout(() => inputRef.current?.focus(), 100);
-        return () => clearTimeout(timer);
-      }
+      if (!isOpen || isMobile) return;
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      return () => clearTimeout(timer);
     }, [isOpen, isMobile]);
 
     const displayText = displayLocation || selectedCity || "انتخاب شهر";

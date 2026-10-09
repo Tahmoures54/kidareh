@@ -27,7 +27,7 @@ export const useHomeLogic = () => {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortType>("newest");
 
-  const debouncedSearch = useDebounce(search, HOME_CONFIG.SEARCH_DEBOUNCE_MS);
+  const { debouncedValue: debouncedSearch } = useDebounce(search, HOME_CONFIG.SEARCH_DEBOUNCE_MS);
 
   // -------------------- Location Logic --------------------
   const effectiveCity = location.city || "تهران";

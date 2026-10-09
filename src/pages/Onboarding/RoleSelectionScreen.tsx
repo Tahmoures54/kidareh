@@ -14,7 +14,7 @@ interface RoleOption {
 interface RoleSelectionScreenProps {
   selectedRole: UserRole;
   onRoleSelect: (role: UserRole) => void;
-  onNext: () => void;
+  onNext: (role: UserRole) => void;
 }
 
 const ROLES: RoleOption[] = [
@@ -48,7 +48,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
+  show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 30 } },
 };
 
 export default function RoleSelectionScreen({
@@ -131,7 +131,7 @@ export default function RoleSelectionScreen({
         )}
 
         <motion.button
-          onClick={onNext}
+          onClick={() => onNext(selectedRole)}
           whileTap={{ scale: 0.97 }}
           className="w-full h-16 bg-gradient-to-r from-[#00A693] to-[#00897a] text-white rounded-[22px] font-black text-base shadow-xl shadow-cyan-500/30 flex items-center justify-center gap-3 group"
         >

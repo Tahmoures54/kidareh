@@ -22,7 +22,7 @@ import {
 
 import { Toast, Loading, Empty, StatCard, FALLBACK_PRODUCT } from "./components";
 
-const SPRING_TRANSITION = { type: "spring", bounce: 0.2, duration: 0.6 };
+const SPRING_TRANSITION = { type: "spring" as const, bounce: 0.2, duration: 0.6 };
 
 const StatusBadge = ({ status }: { status: string }) => {
   const config: Record<string, { icon: any; color: string; bg: string; text: string }> = {
@@ -44,7 +44,7 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 export default function AdminPanel() {
   const navigate = useNavigate();
-  const { user, logout, supportAgents, addSupportAgent, removeSupportAgent } = useAuth();
+  const { user, logout } = useAuth();
   const { referralPercentage, badgeConfigs, updateReferralPercentage, updateBadgeConfig } = useSettings();
   const { tickets, replyTicket } = useSupport();
 
@@ -68,6 +68,7 @@ export default function AdminPanel() {
   const { data: products = [], isLoading: loadP } = usePendingProducts(isAdmin);
   const { data: reports = [], isLoading: loadR } = useReports(isAdmin);
   const { data: usersList = [], isLoading: loadU } = useUsers(isAdmin);
+  const supportAgents = usersList.filter((candidate) => candidate.role === "support").map((candidate) => candidate.phone);
   const { data: storesList = [], isLoading: loadS } = useStores(isAdmin);
   const { data: settingsData } = useAdminSettings(isAdmin);
 
@@ -92,7 +93,12 @@ export default function AdminPanel() {
 
   const handleSaveSettings = () => {
     updateReferralPercentage(refPct);
-    if (localBadges) Object.entries(localBadges).forEach(([b, c]) => updateBadgeConfig(b, c));
+    if (localBadges) Object.entries(localBadges).forEach(([b, c]) => updateBadgeConfig(b, {
+      price: c.price,
+      duration: c.duration ?? c.duration_days ?? 30,
+      description: c.description ?? "",
+      color: c.color ?? "#08a6a6",
+    }));
     saveSettingsMut.mutate({ payToken, smsToken });
   };
 
@@ -126,10 +132,21 @@ export default function AdminPanel() {
   const handleAddAgent = (e: React.FormEvent) => {
     e.preventDefault();
     if (agentPhone.length === 11 && agentPhone.startsWith("09")) { 
-      addSupportAgent(agentPhone); setAgentPhone(""); 
+      const target = usersList.find((candidate) => candidate.phone === agentPhone);
+      if (!target) {
+        setToast("❌ ابتدا این شماره باید در کی‌داره ثبت‌نام کرده باشد");
+        return;
+      }
+      updateUserRole.mutate({ userId: target.id, role: "support" });
+      setAgentPhone(""); 
     } else {
       setToast("❌ شماره همراه معتبر نیست");
     }
+  };
+
+  const handleRemoveAgent = (phone: string) => {
+    const target = usersList.find((candidate) => candidate.phone === phone);
+    if (target) updateUserRole.mutate({ userId: target.id, role: "buyer" });
   };
 
   if (!user || (!isAdmin && user.role !== "support")) {
@@ -212,7 +229,7 @@ export default function AdminPanel() {
                       {supportAgents.map((agent: string) => (
                         <span key={agent} className="inline-flex items-center gap-2 px-3 py-2 bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 rounded-xl text-xs font-bold">
                           <Shield className="w-3.5 h-3.5" />{agent}
-                          <button onClick={() => removeSupportAgent(agent)} className="text-rose-400 hover:text-rose-500 ml-1"><X className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => handleRemoveAgent(agent)} className="text-rose-400 hover:text-rose-500 ml-1"><X className="w-3.5 h-3.5" /></button>
                         </span>
                       ))}
                     </div>

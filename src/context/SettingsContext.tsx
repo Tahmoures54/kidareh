@@ -295,9 +295,16 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
   const updateBadgeConfig = useCallback(
     async (badge: string, config: Partial<BadgeConfig>) => {
-      const newBadgeConfigs = {
+      const fallbackConfig: BadgeConfig = {
+        price: 0,
+        duration: 1,
+        description: "",
+        color: "#08a6a6",
+      };
+      const existingConfig = settings.badgeConfigs[badge] ?? defaultBadgeConfigs[badge] ?? fallbackConfig;
+      const newBadgeConfigs: BadgeConfigs = {
         ...settings.badgeConfigs,
-        [badge]: { ...settings.badgeConfigs[badge], ...config },
+        [badge]: { ...existingConfig, ...config },
       };
 
       await apiRequest("/api/admin/settings", {
