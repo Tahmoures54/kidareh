@@ -20,7 +20,12 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
   const cat = CATEGORY_META[listing.category];
   const haptic = useHaptics();
   return (
-    <article
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -3 }}
+      transition={{ duration: 0.18 }}
       className={cn(
         "group relative z-0 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-lg",
         compact && "rounded-2xl"
@@ -93,7 +98,8 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  haptic("selection");\n                  onToggleTrip(listing.id);
+                  haptic("selection");
+                  onToggleTrip(listing.id);
                 }}
                 className={cn(
                   "inline-flex h-11 items-center gap-1 rounded-xl px-3 text-sm font-black shadow-sm transition",
@@ -109,6 +115,6 @@ export const ListingCard = memo(function ListingCard({ listing, compact, inTrip,
           </div>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 });
