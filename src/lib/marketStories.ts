@@ -79,7 +79,7 @@ export function mapApiStory(raw: Record<string, unknown>): StoryItem | null {
   const id = String(raw.id ?? "");
   const name = String(raw.name || raw.title || "").trim();
   if (!id || !name) return null;
-  const storeId = raw.storeId ?? raw.store_id ?? id;
+  const storeId = String(raw.storeId ?? raw.store_id ?? id);
   const href = String(raw.href || `/store/${storeId}`);
   const image = (raw.image as string | null | undefined) || null;
   const frames = Array.isArray(raw.frames)
