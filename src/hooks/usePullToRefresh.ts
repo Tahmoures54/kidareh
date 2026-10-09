@@ -33,7 +33,10 @@ export function usePullToRefresh({
   }, []);
 
   const onTouchStart: TouchEventHandler<HTMLElement> = useCallback((event) => {
-    if (busyRef.current || window.scrollY > 2 || event.touches.length !== 1) {
+    const target = event.target;
+    const isInteractive = target instanceof Element
+      && Boolean(target.closest("input, textarea, button, a, select, [data-no-pull], .leaflet-container"));
+    if (isInteractive || busyRef.current || window.scrollY > 2 || event.touches.length !== 1) {
       startY.current = null;
       return;
     }
