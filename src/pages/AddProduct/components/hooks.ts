@@ -8,7 +8,10 @@ import { friendlyError } from "../../../utils/friendlyError";
 import { analytics } from "../../../utils/analytics";
 
 function dataUrlToBlob(dataUrl: string): Blob {
-  const [header, data] = dataUrl.split(",");
+  const separator = dataUrl.indexOf(",");
+  if (separator < 0) throw new Error("فرمت تصویر معتبر نیست");
+  const header = dataUrl.slice(0, separator);
+  const data = dataUrl.slice(separator + 1);
   const mime = /data:(.*?);/.exec(header)?.[1] || "image/jpeg";
   const binary = atob(data);
   const arr = new Uint8Array(binary.length);
