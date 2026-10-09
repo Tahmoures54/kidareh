@@ -14,7 +14,7 @@ import { SettingsProvider } from "./context/SettingsContext";
 import { SupportProvider } from "./context/SupportContext";
 
 import PresenceShell from "./components/presence/Shell";
-import PresenceHome from "./pages/PresenceHome";
+import PresenceHome from "./pages/PresenceHome/index";
 
 const Login = lazy(() => import("./pages/Login"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
