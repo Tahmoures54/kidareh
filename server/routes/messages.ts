@@ -293,13 +293,13 @@ router.post("/", requireAuth, (req: AuthRequest, res: Response) => {
       .prepare(
         `SELECT id, room_id, sender_id, receiver_id, content, is_read, created_at FROM messages WHERE id = ?`
       )
-      .get(result.lastInsertRowid);
+      .get(result.lastInsertRowid) as Record<string, unknown> | undefined;
 
     // Emit via Socket.IO if available
     const io = req.app.get("io");
     if (io) {
       io.to(roomId).emit("receive_message", {
-        ...message,
+        ...(message ?? {}),
         timestamp: new Date((message as any).created_at).toISOString(),
         status: "sent",
       });
