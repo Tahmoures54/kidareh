@@ -5,13 +5,13 @@ import { fetchProductsPage, type FetchProductsParams } from "../services/product
 /* ====================== TYPES ====================== */
 
 export interface Product {
-  id: string;
+  id: number | string;
   name: string;
-  price?: number;
-  image_url?: string;
-  badge?: string;
+  price?: number | string;
+  image_url?: string | null;
+  badge?: string | null;
   store_name?: string;
-  status?: "موجود" | "ناموجود";
+  status?: string;
   city?: string;
   views?: number; 
   // Pro Tip: استفاده از Record بجای any برای حفظ ایمنی تایپ‌ها
