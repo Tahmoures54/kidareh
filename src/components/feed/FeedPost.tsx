@@ -6,6 +6,7 @@ import type { FeedPostData } from "../../lib/feedMappers";
 import { cn } from "../../utils";
 import { analytics } from "../../utils/analytics";
 import { isProductAvailable } from "../../utils/productAvailability";
+import { hapticFeedback } from "../../utils/haptics";
 
 function FeedMedia({ sources, title, storeName }: { sources: string[]; title: string; storeName: string }) {
   const [index, setIndex] = useState(0);
@@ -27,18 +28,18 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
 
   const onMediaClick = (event: React.MouseEvent) => {
     const now = Date.now();
-    if (now - lastTap.current < 320) { event.preventDefault(); if (!liked) like(); setBurst((n) => n + 1); }
+    if (now - lastTap.current < 320) { event.preventDefault(); hapticFeedback("success"); if (!liked) like(); setBurst((n) => n + 1); }
     else if (photos.length > 1) setPhotoIndex((i) => (i + 1) % photos.length);
     lastTap.current = now;
   };
-  const handleSave = async () => { const wasSaved = saved; await save(); if (wasSaved && onRemoved) onRemoved(post); };
+  const handleSave = async () => { hapticFeedback("light"); const wasSaved = saved; await save(); if (wasSaved && onRemoved) onRemoved(post); };
   const available = isProductAvailable(post.status);
   const handleProductOpen = () => {
     analytics.trackEvent({ name: "store_product_open", category: "growth", label: post.kind, value: post.productId });
   };
 
   return (
-    <article className="feed-post" data-testid="feed-post" data-feed-key={post.key}>
+    <article className="feed-post group overflow-hidden rounded-[26px] border border-slate-200/80 bg-white shadow-[0_18px_40px_-32px_rgba(15,42,40,.55)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_22px_48px_-28px_rgba(8,166,166,.28)]" data-testid="feed-post" data-feed-key={post.key}>
       <header className="flex items-center gap-3 px-3 py-2.5">
         <Link to={post.storeHref || post.href} className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--paper-2)] ring-1 ring-[var(--line)]" aria-label={post.storeName}>
           {post.storeAvatar ? <img src={post.storeAvatar} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-black text-[var(--brand-primary)]">{post.storeName.slice(0, 1)}</span>}
@@ -52,15 +53,15 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
         </div>
       </header>
       <div className="relative bg-black">
-        <button type="button" className="feed-post-media block w-full" onClick={onMediaClick} aria-label={post.title}><FeedMedia key={`${post.key}-${photoIndex}`} sources={photos.slice(photoIndex)} title={post.title} storeName={post.storeName} /></button>
+        <button type="button" className="feed-post-media block aspect-[4/3] w-full overflow-hidden" onClick={onMediaClick} aria-label={post.title}><FeedMedia key={`${post.key}-${photoIndex}`} sources={photos.slice(photoIndex)} title={post.title} storeName={post.storeName} /></button>
         {burst > 0 && <Heart key={burst} className="feed-heart-burst pointer-events-none absolute left-1/2 top-1/2 h-24 w-24 fill-white text-white drop-shadow-lg" />}
         {post.badge && <span className="absolute top-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-[10px] font-black text-white">{post.badge}</span>}
         {photos.length > 1 && <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1">{photos.map((_, i) => <span key={i} className={cn("h-1.5 w-1.5 rounded-full", i === photoIndex ? "bg-white" : "bg-white/40")} />)}</div>}
       </div>
       <div className="flex items-center px-1 pt-1">
-        <button type="button" onClick={like} className="flex h-12 w-12 items-center justify-center" aria-label={liked ? "برداشتن پسند" : "پسندیدن"} aria-pressed={liked}><Heart className={cn("h-7 w-7", liked ? "fill-rose-500 text-rose-500" : "text-[var(--ink)]")} /></button>
-        <button type="button" onClick={openComments} className="flex h-12 w-12 items-center justify-center" aria-label="دیدگاه و جزئیات"><MessageCircle className="h-7 w-7" /></button>
-        <button type="button" onClick={() => void share()} className="flex h-12 w-12 items-center justify-center" aria-label="اشتراک‌گذاری"><Send className="h-7 w-7" /></button>
+        <button type="button" onClick={() => { hapticFeedback("light"); like(); }} className="flex h-12 w-12 items-center justify-center rounded-full transition hover:bg-slate-100 active:scale-90" aria-label={liked ? "برداشتن پسند" : "پسندیدن"} aria-pressed={liked}><Heart className={cn("h-7 w-7", liked ? "fill-rose-500 text-rose-500" : "text-[var(--ink)]")} /></button>
+        <button type="button" onClick={() => { hapticFeedback("light"); openComments(); }} className="flex h-12 w-12 items-center justify-center rounded-full transition hover:bg-slate-100 active:scale-90" aria-label="دیدگاه و جزئیات"><MessageCircle className="h-7 w-7" /></button>
+        <button type="button" onClick={() => { hapticFeedback("light"); void share(); }} className="flex h-12 w-12 items-center justify-center rounded-full transition hover:bg-slate-100 active:scale-90" aria-label="اشتراک‌گذاری"><Send className="h-7 w-7" /></button>
         <button type="button" onClick={() => void handleSave()} disabled={busy} className="ms-auto flex h-12 w-12 items-center justify-center" aria-label={saved ? "برداشتن از ذخیره‌ها" : "ذخیره کالا"} aria-pressed={saved}><Bookmark className={cn("h-7 w-7", saved ? "fill-[var(--ink)] text-[var(--ink)]" : "text-[var(--ink)]")} /></button>
       </div>
       <div className="space-y-2 px-3 pb-4">
@@ -70,7 +71,7 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
         {post.caption && <p className="line-clamp-2 text-[13px] font-bold leading-6 text-[var(--ink-soft)]"><span className="font-black text-[var(--ink)]">{post.storeName} </span>{post.caption}</p>}
         <div className="grid grid-cols-2 gap-2 pt-1">
           <Link to={post.href} onClick={handleProductOpen} className={cn("inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-black text-white", available ? "bg-[var(--brand-primary)]" : "bg-slate-700")}><MapPin className="h-4 w-4" /> {available ? "مشاهده کالا و آدرس" : "مشاهده کالا"}</Link>
-          <button type="button" onClick={() => { analytics.trackEvent({ name: "store_product_message_click", category: "growth", label: String(post.storeId ?? "") }); openMessage(); }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--line)] px-3 text-xs font-black"><MessageCircle className="h-4 w-4" /> پیام به فروشنده</button>
+          <button type="button" onClick={() => { hapticFeedback("light"); analytics.trackEvent({ name: "store_product_message_click", category: "growth", label: String(post.storeId ?? "") }); openMessage(); }} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-[var(--line)] px-3 text-xs font-black"><MessageCircle className="h-4 w-4" /> پیام به فروشنده</button>
         </div>
         {flash && <p className="text-[12px] font-bold text-[var(--brand-primary)]" role="status">{flash}</p>}
       </div>
