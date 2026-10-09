@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -8,6 +8,7 @@ import {
   MapPin,
   Navigation,
   Search,
+  RefreshCw,
   ShoppingBag,
   Store,
 } from "lucide-react";
@@ -27,6 +28,9 @@ import { presenceMarketStories } from "../../presence/stories";
 import { useMarketStories } from "../../hooks/useMarketStories";
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../utils/api";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
+import { hapticFeedback } from "../../utils/haptics";
+import BottomSheet from "../../components/ui/BottomSheet";
 
 const PRESENCE_GROUP_TO_LISTING: Record<string, ListingCategory[]> = {
   digital: ["digital", "audio", "gaming"],
@@ -63,6 +67,8 @@ export default function PresenceHome() {
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
   const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [mapSheetOpen, setMapSheetOpen] = useState(false);
   const { items: paidStories } = useMarketStories(cityLocation.city);
 
   const listingCats = useMemo(
@@ -86,23 +92,31 @@ export default function PresenceHome() {
     return raw.filter((item) => listingCats.includes(item.category));
   }, [isTehran, origin, q, listingCats, radiusKm, openNow, sort]);
 
+  const loadShopPosts = useCallback(async () => {
+    const response = await apiRequest<{ products?: Record<string, unknown>[] }>(
+      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""}`
+    );
+    const rows = Array.isArray(response?.products) ? response.products : [];
+    setShopPosts(rows.map((row) => productToFeedPost(row)));
+  }, [cityLocation.city, marketCategory]);
+
   useEffect(() => {
     let cancelled = false;
-    apiRequest<{ products?: Record<string, unknown>[] }>(
-      `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""}`
-    )
-      .then((res) => {
-        if (cancelled) return;
-        const rows = Array.isArray(res?.products) ? res.products : [];
-        setShopPosts(rows.map((row) => productToFeedPost(row)));
-      })
+    setPostsLoading(true);
+    loadShopPosts()
       .catch(() => {
         if (!cancelled) setShopPosts([]);
+      })
+      .finally(() => {
+        if (!cancelled) setPostsLoading(false);
       });
     return () => {
       cancelled = true;
     };
-  }, [cityLocation.city, marketCategory]);
+  }, [loadShopPosts]);
+
+  const pullToRefresh = usePullToRefresh({ onRefresh: loadShopPosts });
+
 
   const listingPosts = useMemo(() => listings.map(listingToFeedPost), [listings]);
 
@@ -133,7 +147,8 @@ export default function PresenceHome() {
       : categoriesData.find((g) => g.slug === marketCategory)?.short || "کالاها";
 
   return (
-    <div className="min-h-full bg-[#f6f8f7] text-[var(--ink)]">
+    <div className="min-h-full bg-[#f6f8f7] text-[var(--ink)]" onTouchStart={pullToRefresh.onTouchStart} onTouchEnd={pullToRefresh.onTouchEnd} onTouchCancel={pullToRefresh.onTouchCancel}>
+      {pullToRefresh.refreshing && <div role="status" aria-live="polite" className="fixed left-1/2 top-[max(12px,env(safe-area-inset-top))] z-[80] flex -translate-x-1/2 items-center gap-2 rounded-full border border-teal-100 bg-white/95 px-4 py-2 text-xs font-black text-teal-800 shadow-lg backdrop-blur"><RefreshCw className="h-4 w-4 animate-spin" /> در حال تازه‌سازی</div>}
       <div className="mx-auto w-full max-w-[1320px] px-3 pb-28 pt-3 sm:px-5 lg:px-7 lg:pb-16 lg:pt-5">
         <section className="relative overflow-hidden rounded-[30px] bg-[var(--ink)] shadow-[0_20px_60px_rgba(15,42,40,0.14)]">
           <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-[var(--accent)]/25 blur-3xl" />
@@ -159,6 +174,7 @@ export default function PresenceHome() {
                 className="mt-7 flex max-w-2xl flex-col gap-2 rounded-2xl bg-white p-2 shadow-2xl sm:flex-row"
                 onSubmit={(e) => {
                   e.preventDefault();
+                  hapticFeedback("light");
                   window.location.assign(`/search?q=${encodeURIComponent(q.trim())}`);
                 }}
               >
@@ -225,7 +241,7 @@ export default function PresenceHome() {
           <div className="flex gap-2 overflow-x-auto pb-1 presence-hide-scroll">
             <button
               type="button"
-              onClick={() => setMarketCategory("all")}
+              onClick={() => { hapticFeedback("light"); setMarketCategory("all"); }}
               className={`flex min-w-[88px] flex-col items-center gap-2 rounded-2xl px-3 py-3 text-[11px] font-black transition ${marketCategory === "all" ? "bg-[var(--accent)] text-white shadow-sm" : "bg-[#f5f7f6] text-[var(--ink)] hover:bg-[var(--accent)]/10"}`}
             >
               <span className="text-xl">همه</span>
@@ -235,7 +251,7 @@ export default function PresenceHome() {
               <button
                 key={group.slug}
                 type="button"
-                onClick={() => setMarketCategory(group.slug)}
+                onClick={() => { hapticFeedback("light"); setMarketCategory(group.slug); }}
                 className={`flex min-w-[88px] flex-col items-center gap-2 rounded-2xl px-3 py-3 text-[11px] font-black transition ${marketCategory === group.slug ? "bg-[var(--accent)] text-white shadow-sm" : "bg-[#f5f7f6] text-[var(--ink)] hover:bg-[var(--accent)]/10"}`}
               >
                 <span className="text-xl">{group.icon}</span>
@@ -270,7 +286,7 @@ export default function PresenceHome() {
                   <button
                     key={r.km}
                     type="button"
-                    onClick={() => setRadiusKm(r.km)}
+                    onClick={() => { hapticFeedback("light"); setRadiusKm(r.km); }}
                     className={`rounded-full px-3 py-1.5 text-[10px] font-black ${radiusKm === r.km ? "bg-[var(--accent)] text-white" : "border border-[var(--line)] bg-white text-[var(--muted)]"}`}
                   >
                     {r.label}
@@ -278,7 +294,7 @@ export default function PresenceHome() {
                 ))}
                 <button
                   type="button"
-                  onClick={() => setOpenNow((v) => !v)}
+                  onClick={() => { hapticFeedback("light"); setOpenNow((v) => !v); }}
                   className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-black ${openNow ? "bg-emerald-600 text-white" : "border border-[var(--line)] bg-white text-[var(--muted)]"}`}
                 >
                   <Clock3 className="h-3 w-3" /> باز
@@ -287,7 +303,18 @@ export default function PresenceHome() {
             )}
           </div>
 
-          {posts.length > 0 ? (
+          {postsLoading && posts.length === 0 ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-label="در حال بارگذاری کالاها">
+              {Array.from({ length: 3 }, (_, index) => (
+                <div key={index} className="overflow-hidden rounded-[24px] border border-slate-200/70 bg-white p-3 shadow-sm">
+                  <div className="aspect-[4/3] animate-pulse rounded-[18px] bg-slate-100" />
+                  <div className="mt-4 h-4 w-3/4 animate-pulse rounded-full bg-slate-100" />
+                  <div className="mt-3 h-3 w-1/2 animate-pulse rounded-full bg-slate-100" />
+                  <div className="mt-5 h-10 animate-pulse rounded-xl bg-teal-50" />
+                </div>
+              ))}
+            </div>
+          ) : posts.length > 0 ? (
             <FeedColumn>
               <FeedStack>
                 {posts.slice(0, 8).map((post) => <FeedPost key={post.key} post={post} />)}
@@ -315,6 +342,21 @@ export default function PresenceHome() {
           )}
         </section>
 
+        <BottomSheet
+          open={mapSheetOpen}
+          onClose={() => setMapSheetOpen(false)}
+          title="فروشگاه‌های نزدیک تو"
+          description="برای جابه‌جایی نقشه حرکت کن؛ برای بستن، پنل را به پایین بکش."
+          snapPoints={[0.58, 0.92]}
+        >
+          <div className="h-[58dvh] min-h-[340px] overflow-hidden rounded-2xl border border-slate-200">
+            <PresenceMap className="h-full w-full" listings={listings.slice(0, 80)} origin={origin} />
+          </div>
+          <Link to="/explore" onClick={() => hapticFeedback("light")} className="mt-3 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[var(--accent)] text-sm font-black text-white">
+            دیدن همه فروشگاه‌های اطراف <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </BottomSheet>
+
         <section className="mt-6 grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
           <div className="overflow-hidden rounded-[26px] border border-[var(--line)] bg-white shadow-sm">
             <div className="flex items-center justify-between border-b border-[var(--line)] px-5 py-4">
@@ -328,9 +370,9 @@ export default function PresenceHome() {
               <PresenceMap className="h-[270px] w-full rounded-2xl" listings={listings.slice(0, 40)} origin={origin} />
             </div>
             <div className="px-4 pb-4">
-              <Link to="/explore" className="flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[var(--ink)] text-xs font-black text-white">
+              <button type="button" onClick={() => { hapticFeedback("light"); setMapSheetOpen(true); }} className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-[var(--ink)] text-xs font-black text-white transition hover:brightness-110 active:scale-[.99]">
                 باز کردن نقشه و اطراف من <ArrowLeft className="h-4 w-4" />
-              </Link>
+              </button>
             </div>
           </div>
 
