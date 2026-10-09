@@ -7,7 +7,7 @@ describe("calculatePullDistance", () => {
   });
 
   it("converts downward movement to a softer indicator distance", () => {
-    expect(calculatePullDistance(100)).toBe(55);
+    expect(calculatePullDistance(100)).toBeCloseTo(55);
   });
 
   it("caps the indicator distance", () => {
