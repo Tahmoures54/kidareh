@@ -177,7 +177,7 @@ router.post("/upload", requireAuth, (req: AuthRequest, res: Response) => {
  * GET /api/support/attachment/:filename — private, authorization-checked attachment download.
  */
 router.get("/attachment/:filename", requireAuth, (req: AuthRequest, res: Response) => {
-  const filename = path.basename(req.params.filename || "");
+  const filename = path.basename(typeof req.params.filename === "string" ? req.params.filename : "");
   if (!/^support_[a-f0-9]{32}\.[a-z0-9]{1,10}$/i.test(filename)) return res.status(400).json({ error: "نام فایل نامعتبر است" });
   const isStaff = req.user!.role === "admin" || req.user!.role === "support";
   const match = db.prepare("SELECT id, user_id, attachments FROM support_tickets WHERE attachments LIKE ? LIMIT 1").get(`%${filename}%`) as any;
