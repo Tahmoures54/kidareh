@@ -160,37 +160,58 @@ export function buildRadar(origin: PresenceOrigin, sku?: string, at?: Date): Rad
 }
 
 export function planTrip(origin: PresenceOrigin, listingIds: string[], at?: Date): TripPlan {
-  const unique = [...new Set(listingIds)];
-  const listings = unique
+  const uniqueIds = [...new Set(listingIds)].slice(0, 8);
+  const listings = uniqueIds
     .map((id) => {
       const raw = listingById.get(id);
       return raw ? enrichListing(raw, origin, at) : null;
     })
-    .filter((x): x is EnrichedListing => Boolean(x));
+    .filter((item): item is EnrichedListing => Boolean(item));
 
-  const ordered = orderByWalk(
-    origin,
-    listings.map((l) => ({ ...l, lat: l.store.lat, lng: l.store.lng }))
-  );
+  // چند کالای یک فروشگاه باید یک توقف باشند، نه چند بار رفتن به یک مغازه.
+  const listingsByStore = new Map<string, EnrichedListing[]>();
+  for (const listing of listings) {
+    const current = listingsByStore.get(listing.storeId) ?? [];
+    current.push(listing);
+    listingsByStore.set(listing.storeId, current);
+  }
+
+  const storeStops = [...listingsByStore.entries()].map(([storeId, items]) => ({
+    ...items[0],
+    lat: items[0].store.lat,
+    lng: items[0].store.lng,
+    storeId,
+    tripListings: items,
+  }));
+  const ordered = orderByWalk(origin, storeStops);
 
   let cursor: GeoPoint = origin;
   let cumulative = 0;
   let totalKm = 0;
-  const stops = ordered.map((listing) => {
-    const km = haversineKm(cursor, { lat: listing.store.lat, lng: listing.store.lng });
+  const stops = ordered.map((storeStop) => {
+    const destination = { lat: storeStop.store.lat, lng: storeStop.store.lng };
+    const km = haversineKm(cursor, destination);
     const walk = walkMinutes(km);
     cumulative += walk;
     totalKm += km;
-    cursor = { lat: listing.store.lat, lng: listing.store.lng };
-    return { listing, walkFromPrev: walk, cumulativeWalk: cumulative };
+    cursor = destination;
+    return {
+      listing: storeStop,
+      listings: storeStop.tripListings,
+      walkFromPrev: walk,
+      cumulativeWalk: cumulative,
+    };
   });
 
   return {
     stops,
     totalWalkMinutes: cumulative,
     totalKm,
-    totalToman: stops.reduce((sum, s) => sum + s.listing.price, 0),
-    stores: new Set(stops.map((s) => s.listing.storeId)).size,
+    totalToman: stops.reduce(
+      (sum, stop) => sum + stop.listings.reduce((storeSum, listing) => storeSum + listing.price, 0),
+      0,
+    ),
+    stores: stops.length,
   };
 }
 
