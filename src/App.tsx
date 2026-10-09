@@ -14,7 +14,6 @@ import { SettingsProvider } from "./context/SettingsContext";
 import { SupportProvider } from "./context/SupportContext";
 
 import PresenceShell from "./components/presence/Shell";
-import PresenceHome from "./pages/PresenceHome";
 
 const Login = lazy(() => import("./pages/Login"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
@@ -139,7 +138,7 @@ export default function App() {
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route path="/" element={<PresenceShell />}>
-                  <Route index element={<PresenceHome />} />
+                  <Route index element={<LegacyHome />} />
                   <Route path="explore" element={<ExplorePage />} />
                   <Route path="radar" element={<RadarPage />} />
                   <Route path="trip" element={<TripPage />} />
