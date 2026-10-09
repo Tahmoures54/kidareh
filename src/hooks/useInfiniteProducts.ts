@@ -1,29 +1,12 @@
 import { useInfiniteQuery, type InfiniteData } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { fetchProductsPage, type FetchProductsParams } from "../services/products.service";
+import type { ProductApiItem, ProductsPageResponse } from "../types/product";
 
 /* ====================== TYPES ====================== */
 
-export interface Product {
-  id: string;
-  name: string;
-  price?: number;
-  image_url?: string;
-  badge?: string;
-  store_name?: string;
-  status?: "موجود" | "ناموجود";
-  city?: string;
-  views?: number; 
-  // Pro Tip: استفاده از Record بجای any برای حفظ ایمنی تایپ‌ها
-  metadata?: Record<string, unknown>; 
-}
-
-export interface ProductsPageResponse {
-  products: Product[];
-  hasMore: boolean;
-  nextCursor?: string | null;
-  total?: number;
-}
+export type Product = ProductApiItem;
+export type { ProductsPageResponse };
 
 export interface UseInfiniteProductsInput {
   enabled?: boolean;
