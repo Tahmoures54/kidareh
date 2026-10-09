@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tripRequestSchema, tripStatusSchema } from "../../../src/presence/tripSchema";
+import { tripArrivalSchema, tripRequestSchema, tripStatusSchema } from "../../../src/presence/tripSchema";
 
 describe("trip request validation", () => {
   it("accepts a valid guest route request", () => {
@@ -18,5 +18,10 @@ describe("trip request validation", () => {
   it("allows only supported trip status transitions", () => {
     expect(tripStatusSchema.safeParse({ status: "started" }).success).toBe(true);
     expect(tripStatusSchema.safeParse({ status: "planned" }).success).toBe(false);
+  });
+
+  it("requires a sufficiently long one-time QR token", () => {
+    expect(tripArrivalSchema.safeParse({ token: "a".repeat(32) }).success).toBe(true);
+    expect(tripArrivalSchema.safeParse({ token: "short" }).success).toBe(false);
   });
 });
