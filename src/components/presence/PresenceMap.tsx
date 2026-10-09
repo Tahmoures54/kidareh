@@ -1,10 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, Marker, Popup, TileLayer, useMap, Polyline } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, useMap, Polyline } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { Link } from "react-router-dom";
+import "leaflet.markercluster";
+import "leaflet.markercluster/dist/MarkerCluster.css";
+import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import type { EnrichedListing, GeoPoint } from "../../presence/types";
-import { formatCompactToman, formatWalk } from "../../presence/engine";
+import { formatCompactToman } from "../../presence/engine";
 
 function pin(color: string, label?: string) {
   return L.divIcon({
@@ -37,6 +39,82 @@ function InvalidateSize() {
     const id = window.setTimeout(() => map.invalidateSize(), 80);
     return () => window.clearTimeout(id);
   }, [map]);
+  return null;
+}
+
+
+interface ClusteredListingsProps {
+  listings: EnrichedListing[];
+  selectedId?: string;
+}
+
+/** نشانگرهای فروشگاه را در زوم‌های دور خوشه‌بندی می‌کند تا نقشه شلوغ نشود. */
+function ClusteredListings({ listings, selectedId }: ClusteredListingsProps) {
+  const map = useMap();
+
+  useEffect(() => {
+    const clusters = L.markerClusterGroup({
+      maxClusterRadius: 48,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      chunkedLoading: true,
+      iconCreateFunction: (cluster) => {
+        const count = cluster.getChildCount();
+        return L.divIcon({
+          className: "presence-cluster-icon",
+          html: "<span style=\"display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:3px solid white;border-radius:999px;background:#08a6a6;color:white;font:900 13px Vazirmatn,sans-serif;box-shadow:0 6px 20px rgba(8,166,166,.35)\">"
+            + count.toLocaleString("fa-IR") + "</span>",
+          iconSize: [42, 42],
+        });
+      },
+    });
+
+    for (const listing of listings) {
+      const point = { lat: listing.store.lat, lng: listing.store.lng };
+      if (!isPoint(point)) continue;
+
+      const marker = L.marker([point.lat, point.lng], {
+        title: listing.store.name,
+        icon: pin(listing.id === selectedId ? "#d6a52b" : "#08a6a6", formatCompactToman(listing.price)),
+        riseOnHover: true,
+      });
+
+      // متن popup با textContent ساخته می‌شود تا نام کالا/فروشگاه HTML اجرا نکند.
+      const popup = document.createElement("div");
+      popup.dir = "rtl";
+      popup.className = "min-w-[160px] text-right";
+
+      const storeName = document.createElement("p");
+      storeName.className = "text-xs font-black";
+      storeName.textContent = listing.store.name;
+
+      const productName = document.createElement("p");
+      productName.className = "mt-1 text-[11px]";
+      productName.textContent = listing.name;
+
+      const price = document.createElement("p");
+      price.className = "mt-1 text-[11px] font-black";
+      price.textContent = formatCompactToman(listing.price);
+
+      const link = document.createElement("a");
+      link.href = "/p/" + encodeURIComponent(listing.id);
+      link.className = "mt-2 inline-block text-[11px] font-black";
+      link.style.color = "#087f80";
+      link.textContent = "جزئیات کالا";
+
+      popup.append(storeName, productName, price, link);
+      marker.bindPopup(popup, { maxWidth: 240, minWidth: 160 });
+      clusters.addLayer(marker);
+    }
+
+    clusters.addTo(map);
+    return () => {
+      clusters.clearLayers();
+      map.removeLayer(clusters);
+    };
+  }, [listings, map, selectedId]);
+
   return null;
 }
 
@@ -102,24 +180,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
               pathOptions={{ color: "#00A693", weight: 4, opacity: 0.9 }}
             />
           )}
-          {uniqueStores.map((l) => (
-            <Marker
-              key={l.storeId}
-              position={[l.store.lat, l.store.lng]}
-              icon={pin(l.id === selectedId ? "#e6b84f" : "#00A693", formatCompactToman(l.price))}
-            >
-              <Popup>
-                <div dir="rtl" className="min-w-[160px] text-right">
-                  <p className="text-xs font-black">{l.store.name}</p>
-                  <p className="text-[11px]">{l.skuLabel}</p>
-                  <p className="text-[11px] font-bold">{formatWalk(l.walkMinutes)}</p>
-                  <Link to={`/p/${l.id}`} className="mt-1 inline-block text-[11px] font-black text-[var(--accent)]">
-                    جزئیات کالا
-                  </Link>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
+          <ClusteredListings listings={uniqueStores} selectedId={selectedId} />
         </MapContainer>
       )}
     </div>
