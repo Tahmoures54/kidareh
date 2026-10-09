@@ -337,8 +337,8 @@ async function startServer() {
 
       app.get("/store/:id", async (req: Request, res: Response) => {
         try {
-          if (!/^\d+$/.test(req.params.id)) return res.sendFile(indexPath);
-          const id = Number(req.params.id);
+          if (!/^\d+$/.test(String(req.params.id ?? ""))) return res.sendFile(indexPath);
+          const id = Number(String(req.params.id ?? ""));
           const store = await cacheGetOrSet(CacheKeys.store(id), CacheTTL.STORES, async () => {
             const row = db.prepare(`
               SELECT s.*, u.name as owner_name, u.phone as owner_phone,
@@ -390,11 +390,11 @@ async function startServer() {
       app.get("/products/:id", async (req: Request, res: Response) => {
         try {
           if (!/^\d+$/.test(req.params.id)) return res.sendFile(indexPath);
-          const product = await getCachedProductDetail(req.params.id);
+          const product = await getCachedProductDetail(String(req.params.id ?? ""));
           if (!product) return res.status(404).sendFile(indexPath);
           const baseHtml = fs.readFileSync(indexPath, "utf8");
           const origin = process.env.APP_URL || "https://kidareh.com";
-          const url = new URL("/products/" + req.params.id, origin).href;
+          const url = new URL("/products/" + String(req.params.id ?? ""), origin).href;
           res.type("html").send(productShareHtml(baseHtml, product, url));
         } catch (error) {
           logger.error("Product share HTML error:", error);
