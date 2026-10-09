@@ -10,6 +10,7 @@ import {
   List,
   X,
   Loader2,
+  RefreshCw,
   AlertCircle,
   MapPin,
   Expand,
@@ -31,6 +32,8 @@ import { SearchSkeleton } from "./components/SearchSkeleton";
 import { FilterSheet } from "./components/FilterSheet";
 import { IdleSection } from "./components/IdleSection";
 import { SPRING_TRANSITION, SORT_OPTIONS } from "./components/constants";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
+import { hapticFeedback } from "../../utils/haptics";
 
 export default function Search() {
   const navigate = useNavigate();
@@ -51,6 +54,8 @@ export default function Search() {
     expandSearchScope, cycleScope, resetFilters,
     searchPlaceholder, scopeLabel,
   } = useSearch();
+
+  const pullToRefresh = usePullToRefresh({ onRefresh: async () => { await refetch(); } });
 
   const handleExpandSearch = () => {
     trackEvent("search_scope_expand_click", {
@@ -103,7 +108,8 @@ export default function Search() {
   }, [filters.scope.type]);
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl">
+    <div className="min-h-[100dvh] bg-slate-50/50 font-sans" dir="rtl" onTouchStart={pullToRefresh.onTouchStart} onTouchEnd={pullToRefresh.onTouchEnd} onTouchCancel={pullToRefresh.onTouchCancel}>
+      {pullToRefresh.refreshing && <div role="status" aria-live="polite" className="fixed left-1/2 top-[max(12px,env(safe-area-inset-top))] z-[90] flex -translate-x-1/2 items-center gap-2 rounded-full border border-teal-100 bg-white/95 px-4 py-2 text-xs font-black text-teal-800 shadow-lg backdrop-blur"><RefreshCw className="h-4 w-4 animate-spin" /> در حال تازه‌سازی نتایج</div>}
       <AnimatePresence>
         {toastMsg && <Toast msg={toastMsg} />}
       </AnimatePresence>
@@ -133,6 +139,7 @@ export default function Search() {
             onSubmit={(e) => {
               e.preventDefault();
               trackSearch(query, "submit");
+              hapticFeedback("light");
               commitSearch(query);
             }}
           >
@@ -168,7 +175,7 @@ export default function Search() {
           </form>
 
           <motion.button
-            onClick={cycleScope}
+            onClick={() => { hapticFeedback("light"); cycleScope(); }}
             whileTap={{ scale: 0.9 }}
             aria-label={`محدوده: ${scopeLabel}`}
             title={scopeLabel}
@@ -180,7 +187,7 @@ export default function Search() {
 
           <motion.button
             whileTap={{ scale: 0.9 }}
-            onClick={() => setShowFilter(true)}
+            onClick={() => { hapticFeedback("light"); setShowFilter(true); }}
             aria-label="فیلترها"
             className={`relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-all ${
               activeFilterCount > 0
