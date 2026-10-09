@@ -18,6 +18,38 @@ type AnyRecord = Record<string, any>;
 
 const RAW_IRAN_CITIES = [...RAW_PART_0, ...RAW_PART_1];
 
+/** نام‌های پرکاربرد انگلیسی برای URLهای پایدار و نگاشت مختصات شهرهای اصلی */
+const CITY_SLUG_BY_FA: Record<string, string> = {
+  "تهران": "tehran",
+  "کرج": "karaj",
+  "مشهد": "mashhad",
+  "اصفهان": "isfahan",
+  "شیراز": "shiraz",
+  "تبریز": "tabriz",
+  "اهواز": "ahvaz",
+  "قم": "qom",
+  "کرمانشاه": "kermanshah",
+  "ارومیه": "urmia",
+  "رشت": "rasht",
+  "کرمان": "kerman",
+  "همدان": "hamadan",
+  "یزد": "yazd",
+  "اردبیل": "ardabil",
+  "زاهدان": "zahedan",
+  "بندرعباس": "bandar-abbas",
+  "اراک": "arak",
+  "ساری": "sari",
+  "گرگان": "gorgan",
+  "قزوین": "qazvin",
+  "زنجان": "zanjan",
+  "خرم‌آباد": "khorramabad",
+  "خرم آباد": "khorramabad",
+  "سنندج": "sanandaj",
+  "بوشهر": "bushehr",
+  "اسلامشهر": "eslamshahr",
+  "کاشان": "kashan",
+};
+
 function expandCompactRaw(): AnyRecord[] {
   return RAW_IRAN_CITIES.map((row) => ({
     "province-fa": row.p,
