@@ -1,10 +1,11 @@
 ﻿import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Link } from "react-router-dom";
-import { MoreHorizontal, Eye, Edit, Share2, Trash2, AlertTriangle, Loader2 } from "lucide-react";
+import { MoreHorizontal, Eye, Edit, Share2, Trash2, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import { formatPrice, getBadgeStyle } from "../../../utils";
 import { Product } from "../types";
 import { FALLBACK_IMAGE, STATUS_STYLE_ANY } from "./constants";
+import StockFreshnessBadge from "../../../components/presence/StockFreshnessBadge";
 
 interface ProductItemProps {
   product: Product;
@@ -13,9 +14,11 @@ interface ProductItemProps {
   onStatusChange: (p: Product) => void;
   onDelete: (id: number) => void;
   onShare: (p: Product) => void;
+  onConfirmStock: (p: Product) => void;
+  isConfirmingStock: boolean;
 }
 
-export const ProductItem = React.memo(({ product, isUpdating, isDeleting, onStatusChange, onDelete, onShare }: ProductItemProps) => {
+export const ProductItem = React.memo(({ product, isUpdating, isDeleting, onStatusChange, onDelete, onShare, onConfirmStock, isConfirmingStock }: ProductItemProps) => {
   const [showMenu, setShowMenu] = useState(false);
   const photo = product.image_url || product.image || FALLBACK_IMAGE;
 
@@ -65,6 +68,22 @@ export const ProductItem = React.memo(({ product, isUpdating, isDeleting, onStat
         >
           {isUpdating ? <Loader2 className="mx-auto h-4 w-4 animate-spin" /> : `وضعیت: ${product.status} · بزن عوض شود`}
         </button>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+          <StockFreshnessBadge
+            lastConfirmedAt={product.last_stock_confirmed_at}
+            confidence={product.stock_confidence}
+            compact
+          />
+          <button
+            type="button"
+            onClick={() => onConfirmStock(product)}
+            disabled={isConfirmingStock}
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-xl border border-teal-200 bg-teal-50 px-3 text-[11px] font-black text-teal-800 transition hover:bg-teal-100 disabled:opacity-50"
+          >
+            {isConfirmingStock ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+            تأیید موجودی
+          </button>
+        </div>
       </div>
 
       <div className="absolute left-3 top-3 z-10">
