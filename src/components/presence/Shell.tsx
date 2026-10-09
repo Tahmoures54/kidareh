@@ -120,7 +120,7 @@ export default function PresenceShell() {
               <button type="button" onClick={() => (user ? setMenu(true) : navigate("/login"))} className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-100 bg-white text-slate-700 shadow-sm transition hover:border-cyan-200 hover:text-cyan-700" aria-label={user ? "حساب" : "ورود"}><User className="h-5 w-5" /></button>
             </div>
           </header>
-          <main id="presence-main" className={cn("relative z-0 w-full flex-1 pb-32 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
+          <main id="presence-main" className={cn("relative z-0 w-full flex-1 pb-24 lg:pb-6", !chrome && "presence-legacy mx-auto w-full max-w-[430px]")}>
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={location.pathname}
@@ -137,10 +137,10 @@ export default function PresenceShell() {
         </div>
       </div>
 
-      <nav className={cn("presence-tabs fixed inset-x-0 bottom-0 border-t border-slate-200/80 bg-white/95 shadow-[0_-6px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl", pickerOpen ? "z-10" : "z-[80]")} aria-label="ناوبری پایین">
-        <div className="mx-auto flex w-full max-w-2xl items-stretch px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1 lg:pb-2 lg:pt-2">
+      <nav className={cn("presence-tabs fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/80 bg-white/95 shadow-[0_-6px_24px_rgba(15,23,42,0.06)] backdrop-blur-xl lg:hidden", pickerOpen ? "z-10" : "z-40")} aria-label="ناوبری پایین">
+        <div className="mx-auto flex w-full max-w-2xl items-stretch px-2 pb-[max(0.45rem,env(safe-area-inset-bottom))] pt-1">
           {TABS.map((tab) => (
-            <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 text-[11px] font-black transition lg:min-h-12 lg:flex-row lg:gap-1.5 lg:text-xs", isActive ? "bg-cyan-50 text-cyan-700" : "text-slate-400 hover:bg-slate-50")}>
+            <NavLink key={tab.to} to={tab.to} end={"end" in tab ? tab.end : false} className={({ isActive }) => cn("relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl py-2 text-[11px] font-black transition", isActive ? "bg-cyan-50 text-cyan-700" : "text-slate-400 hover:bg-slate-50")}>
               <tab.icon className="h-6 w-6" />{tab.label}
               {tab.to === "/saved" && <span className="sr-only">ذخیره‌شده‌ها</span>}
             </NavLink>
