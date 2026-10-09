@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft, ChevronLeft, MapPin, Search, Store,
-  Navigation, Bookmark, Sparkles, Users, Package
+  Navigation, Bookmark, Sparkles
 } from "lucide-react";
 import { analytics } from "../utils/analytics";
 
@@ -14,12 +14,6 @@ const quickLinks = [
 ];
 
 const examples = ["روغن موتور", "کفش ورزشی", "شارژر آیفون", "لوازم خودرو", "هدفون", "باتری"];
-
-const stats = [
-  { icon: Store, value: "۲٬۴۰۰+", label: "فروشگاه فعال" },
-  { icon: Package, value: "۱۸٬۰۰۰+", label: "کالای موجود" },
-  { icon: Users, value: "۹۵٪", label: "رضایت کاربران" },
-];
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -75,7 +69,7 @@ export default function PresenceHome() {
               variants={fadeUp}
               className="mt-5 max-w-xl text-sm font-bold leading-7 text-slate-500 sm:text-base"
             >
-              کالای موردنظرت را پیدا کن، فروشگاه نزدیک را ببین و قبل از راه افتادن از موجودی و قیمت مطمئن شو.
+              کالای موردنظرت را جستجو کن، فروشگاه‌های اطراف را مقایسه کن و برای خرید حضوری آگاهانه‌تر تصمیم بگیر.
             </motion.p>
 
             {/* Smart Search */}
@@ -172,25 +166,6 @@ export default function PresenceHome() {
                 {label}
               </span>
             </Link>
-          </motion.div>
-        ))}
-      </section>
-
-      {/* ─── LIVE STATS ─── */}
-      <section className="mt-8 grid grid-cols-3 gap-3">
-        {stats.map(({ icon: Icon, value, label }, i) => (
-          <motion.div
-            key={label}
-            custom={i}
-            variants={fadeUp}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            className="flex flex-col items-center rounded-2xl border border-slate-100 bg-white/80 px-3 py-4 shadow-sm backdrop-blur"
-          >
-            <Icon className="mb-2 h-5 w-5 text-cyan-600" />
-            <span className="text-lg font-black text-slate-800 sm:text-xl">{value}</span>
-            <span className="mt-0.5 text-[10px] font-bold text-slate-400 sm:text-xs">{label}</span>
           </motion.div>
         ))}
       </section>
