@@ -102,7 +102,7 @@ function originFromAppLocation(location: AppLocation): PresenceOrigin {
     } catch {
       /* ignore */
     }
-    const neighborhood = NEIGHBORHOODS.find((n) => n.id === neighborhoodId) ?? NEIGHBORHOODS[0];
+    const neighborhood = NEIGHBORHOODS.find((n) => n.id === neighborhoodId) ?? NEIGHBORHOODS[0]!;
     return {
       lat: neighborhood.center.lat,
       lng: neighborhood.center.lng,
