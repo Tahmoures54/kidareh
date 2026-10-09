@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
+    branches: [main, fix/typecheck-zero-errors]
   workflow_dispatch:
 
 permissions:
@@ -31,3 +31,7 @@ jobs:
         run: npm ci
       - name: Check TypeScript
         run: npm run typecheck
+      - name: Run unit tests
+        run: npm run test -- --run
+      - name: Build production assets
+        run: npm run build
