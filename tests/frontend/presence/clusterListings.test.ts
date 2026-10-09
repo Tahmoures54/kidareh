@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clusterListings } from "../../src/presence/clusterListings";
+import { clusterListings } from "../../../src/presence/clusterListings";
 import type { EnrichedListing } from "../../src/presence/types";
 
 function listing(id: string, lat: number, lng: number): EnrichedListing {
