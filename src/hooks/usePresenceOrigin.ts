@@ -16,7 +16,7 @@ export function usePresenceOrigin() {
         setOrigin((prev) => {
           if (!prev.neighborhoodId && prev.label === "موقعیت فعلی شما") return prev;
           const neighborhood =
-            NEIGHBORHOODS.find((n) => n.id === prev.neighborhoodId) ?? NEIGHBORHOODS[0];
+            NEIGHBORHOODS.find((n) => n.id === prev.neighborhoodId) ?? NEIGHBORHOODS[0]!;
           if (prev.neighborhoodId === neighborhood.id && prev.label === `${neighborhood.name}، تهران`) {
             return prev;
           }
