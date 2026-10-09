@@ -268,7 +268,7 @@ router.put("/:id/status", requireAuth, async (req: AuthRequest, res: Response) =
 
 router.delete("/:id", requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id ?? "");
     const storeInfo = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(req.user!.id) as any;
     if (!storeInfo) return res.status(403).json({ error: "فروشگاهی یافت نشد" });
     const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(id) as any;
@@ -288,7 +288,7 @@ router.post("/:id/approve", requireAuth, requireRole(["admin"]), async (req: Aut
   try {
     const productId = String(req.params.id ?? "");
     const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(productId) as any;
-    db.prepare("UPDATE products SET moderation_status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(req.params.id);
+    db.prepare("UPDATE products SET moderation_status = 'approved', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(String(req.params.id ?? ""));
     await invalidateProductCache(productId);
     if (productInfo?.store_id) await invalidateStoreCache(productInfo.store_id);
     await invalidateStatsCache();
@@ -302,9 +302,9 @@ router.post("/:id/approve", requireAuth, requireRole(["admin"]), async (req: Aut
 router.post("/:id/reject", requireAuth, requireRole(["admin"]), async (req: AuthRequest, res: Response) => {
   try {
     const { reason } = req.body;
-    const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(req.params.id) as any;
-    db.prepare("UPDATE products SET moderation_status = 'rejected', rejection_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(reason || "نامشخص", req.params.id);
-    await invalidateProductCache(req.params.id);
+    const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(String(req.params.id ?? "")) as any;
+    db.prepare("UPDATE products SET moderation_status = 'rejected', rejection_reason = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(reason || "نامشخص", String(req.params.id ?? ""));
+    await invalidateProductCache(String(req.params.id ?? ""));
     if (productInfo?.store_id) await invalidateStoreCache(productInfo.store_id);
     await invalidateStatsCache();
     return res.json({ success: true, message: "محصول رد شد" });
@@ -318,9 +318,9 @@ router.post("/:id/report", requireAuth, (req: AuthRequest, res) => {
   try {
     const { reason } = req.body;
     if (typeof reason !== "string" || reason.trim().length < 5 || reason.length > 1000) return res.status(400).json({ error: "لطفاً دلیل گزارش را وارد کنید" });
-    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(req.params.id);
+    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(String(req.params.id ?? ""));
     if (!product) return res.status(404).json({ error: "کالا یافت نشد" });
-    db.prepare("INSERT INTO reports (product_id, user_id, reason, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)").run(req.params.id, req.user!.id, reason.trim());
+    db.prepare("INSERT INTO reports (product_id, user_id, reason, created_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP)").run(String(req.params.id ?? ""), req.user!.id, reason.trim());
     return res.json({ success: true, message: "گزارش شما ثبت شد" });
   } catch (error) {
     logger.error("Report error:", error);
@@ -330,9 +330,9 @@ router.post("/:id/report", requireAuth, (req: AuthRequest, res) => {
 
 router.post("/:id/notify", requireAuth, (req: AuthRequest, res) => {
   try {
-    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(req.params.id);
+    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(String(req.params.id ?? ""));
     if (!product) return res.status(404).json({ error: "کالا یافت نشد" });
-    db.prepare("INSERT INTO notify_requests (product_id, user_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)").run(req.params.id, req.user!.id);
+    db.prepare("INSERT INTO notify_requests (product_id, user_id, created_at) VALUES (?, ?, CURRENT_TIMESTAMP)").run(String(req.params.id ?? ""), req.user!.id);
     return res.json({ success: true, message: "با موجود شدن محصول به شما اطلاع می‌دهیم" });
   } catch (error) {
     logger.error("Notify request error:", error);
@@ -342,7 +342,7 @@ router.post("/:id/notify", requireAuth, (req: AuthRequest, res) => {
 
 router.get("/:id/save-status", requireAuth, (req: AuthRequest, res: Response) => {
   try {
-    const row = db.prepare("SELECT 1 as ok FROM saved_products WHERE user_id = ? AND product_id = ?").get(req.user!.id, req.params.id);
+    const row = db.prepare("SELECT 1 as ok FROM saved_products WHERE user_id = ? AND product_id = ?").get(req.user!.id, String(req.params.id ?? ""));
     return res.json({ saved: !!row });
   } catch (error) {
     logger.error("Save status error:", error);
@@ -352,7 +352,7 @@ router.get("/:id/save-status", requireAuth, (req: AuthRequest, res: Response) =>
 
 router.get("/:id/reviews", (req, res) => {
   try {
-    return res.json(db.prepare("SELECT * FROM reviews WHERE product_id = ? AND status = 'approved' ORDER BY created_at DESC").all(req.params.id));
+    return res.json(db.prepare("SELECT * FROM reviews WHERE product_id = ? AND status = 'approved' ORDER BY created_at DESC").all(String(req.params.id ?? "")));
   } catch (error) {
     logger.error("Get reviews error:", error);
     return res.status(500).json({ error: "خطا در دریافت نظرات" });
@@ -368,12 +368,12 @@ router.post("/:id/reviews", requireAuth, (req: AuthRequest, res) => {
     if (content.length > 2000) return res.status(400).json({ error: "متن نظر بیش از حد بلند است" });
     const r = Number(rating ?? 5);
     if (!Number.isFinite(r) || r < 1 || r > 5) return res.status(400).json({ error: "امتیاز باید بین ۱ تا ۵ باشد" });
-    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(req.params.id);
+    const product = db.prepare("SELECT id FROM products WHERE id = ?").get(String(req.params.id ?? ""));
     if (!product) return res.status(404).json({ error: "کالا یافت نشد" });
     const authorName = req.user!.name || "کاربر";
     const result = db.prepare(
       "INSERT INTO reviews (product_id, user_id, author_name, rating, content, status, created_at) VALUES (?, ?, ?, ?, ?, 'pending', CURRENT_TIMESTAMP)"
-    ).run(req.params.id, req.user!.id, authorName, r, content.trim());
+    ).run(String(req.params.id ?? ""), req.user!.id, authorName, r, content.trim());
     return res.status(201).json({
       success: true,
       message: "نظر شما ثبت شد و پس از بررسی نمایش داده می‌شود",
@@ -387,7 +387,7 @@ router.post("/:id/reviews", requireAuth, (req: AuthRequest, res) => {
 
 router.get("/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const id = String(req.params.id ?? "");
     if (isNaN(Number(id))) return res.status(400).json({ error: "شناسه نامعتبر است" });
     setImmediate(() => {
       try { db.prepare("UPDATE products SET views = views + 1 WHERE id = ?").run(id); } catch (e) { logger.error("Failed to increment views:", e); }
