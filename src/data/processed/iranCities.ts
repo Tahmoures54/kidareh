@@ -211,6 +211,6 @@ export function findNearestIranCity(lat: number, lng: number): IranCity | null {
 }
 
 export const DEFAULT_IRAN_CITY: IranCity =
-  findIranCity("تهران", "تهران") ?? iranCities[0];
+  findIranCity("تهران", "تهران") ?? iranCities[0]!;
 
 export default iranCities;
