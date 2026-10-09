@@ -108,7 +108,10 @@ export interface RadarGroup {
 }
 
 export interface TripStop {
+  /** کالای نماینده برای سازگاری با کارت‌ها و نشانگر نقشه */
   listing: EnrichedListing;
+  /** تمام کالاهایی که از همین فروشگاه در سبد مسیر انتخاب شده‌اند */
+  listings: EnrichedListing[];
   walkFromPrev: number;
   cumulativeWalk: number;
 }
