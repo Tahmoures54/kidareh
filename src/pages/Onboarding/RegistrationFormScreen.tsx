@@ -337,7 +337,7 @@ export default function RegistrationFormScreen({
           isOpen={showMap}
           onClose={() => setShowMap(false)}
           location={location}
-          setLocation={handleLocationSelect}
+          setLocation={(loc) => handleLocationSelect(loc.lat, loc.lng)}
         />
       </Suspense>
     </div>
