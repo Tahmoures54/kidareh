@@ -71,7 +71,7 @@ export const PremiumProductCard = memo(
     return (
       <motion.article
         variants={itemVariants}
-        className="group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-slate-200/90 bg-white p-2 shadow-[0_14px_35px_-30px_rgba(7,63,86,.7)] transition-all duration-300 hover:-translate-y-1 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-[0_22px_42px_-25px_rgba(8,76,103,.45)] sm:p-2.5 lg:p-3"
+        className="group relative flex h-full flex-col overflow-hidden rounded-[22px] border border-slate-200/90 bg-white p-2 shadow-[0_14px_35px_-30px_rgba(7,63,86,.7)] transition-all duration-300 hover:-translate-y-1 hover:border-cyan-200 hover:shadow-[0_22px_42px_-25px_rgba(8,76,103,.45)] sm:p-2.5 lg:p-3"
       >
         <Link to={`/products/${product.id}`} className="absolute inset-0 z-0" aria-label={`مشاهده ${product.name}`} />
 
@@ -96,13 +96,13 @@ export const PremiumProductCard = memo(
             type="button"
             onClick={handleFavoriteClick}
             aria-label={isFavorite ? "حذف از علاقه‌مندی‌ها" : "افزودن به علاقه‌مندی‌ها"}
-            className="absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-md transition-all active:scale-90 md:opacity-0 md:group-hover:opacity-100"
+            className="absolute left-2 top-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 shadow-md backdrop-blur-md transition-all active:scale-90 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
           >
             <Heart className={`h-4 w-4 ${isFavorite ? "fill-rose-500 text-rose-500" : "text-slate-700"}`} />
           </button>
 
           {product.badge && (
-            <span className="absolute right-2 top-2 z-10 max-w-[70%] truncate rounded-md bg-cyan-700 px-2 py-1 text-[9px] font-extrabold text-white shadow-sm">
+            <span className="absolute right-2 top-2 z-10 max-w-[70%] truncate rounded-md bg-cyan-700 px-2 py-1 text-[10px] font-extrabold text-white shadow-sm">
               {getCategoryTextByValue(product.badge)}
             </span>
           )}
@@ -110,7 +110,7 @@ export const PremiumProductCard = memo(
           {product.views != null && product.views > 0 && (
             <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-1 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
               <Eye className="h-3 w-3 text-white" />
-              <span className="text-[9px] font-bold text-white">{formatViews(product.views)}</span>
+              <span className="text-[10px] font-bold text-white">{formatViews(product.views)}</span>
             </div>
           )}
         </div>
@@ -127,11 +127,11 @@ export const PremiumProductCard = memo(
               ) : (
                 <>
                   {formatPrice(product.price)}
-                  <span className="mr-1 text-[9px] font-normal text-slate-500">تومان</span>
+                  <span className="mr-1 text-[10px] font-semibold text-slate-500">تومان</span>
                 </>
               )}
             </span>
-            <span className="flex min-w-0 max-w-[42%] shrink-0 items-center gap-1 truncate text-[10px] font-medium text-slate-500 sm:text-[11px]">
+            <span className="flex min-w-0 max-w-[42%] shrink-0 items-center gap-1 truncate text-[11px] font-medium text-slate-600 sm:text-xs">
               <MapPin className="h-3 w-3 shrink-0" />
               <span className="truncate">{product.city}</span>
             </span>
@@ -139,7 +139,7 @@ export const PremiumProductCard = memo(
 
           <div className="mt-auto min-h-[2.25rem] border-t border-slate-100 pt-2">
             {product.store_name ? (
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-500 sm:text-[11px]">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-600 sm:text-xs">
                 <Store className="h-3 w-3 shrink-0 text-slate-400" />
                 <span className="min-w-0 flex-1 truncate">{product.store_name}</span>
                 <ChevronLeft className="h-3.5 w-3.5 shrink-0 text-cyan-600" />
