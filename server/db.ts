@@ -78,7 +78,7 @@ try {
 // 4. Schema Version
 // ============================================================================
 
-const SCHEMA_VERSION = 14; 
+const SCHEMA_VERSION = 15; 
 
 db.exec(`
   CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -742,6 +742,24 @@ const runMigrations = () => {
       db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(14);
     } catch (err: any) {
       logger.error("❌ v14 trip migration failed:", err?.message);
+      throw err;
+    }
+  }
+
+  if (current < 15) {
+    try {
+      safeAlter(
+        "ALTER TABLE products ADD COLUMN last_stock_confirmed_at TEXT",
+        "products.last_stock_confirmed_at",
+      );
+      safeAlter(
+        "ALTER TABLE products ADD COLUMN stock_confidence REAL NOT NULL DEFAULT 0.5 CHECK (stock_confidence >= 0 AND stock_confidence <= 1)",
+        "products.stock_confidence",
+      );
+      db.exec("CREATE INDEX IF NOT EXISTS idx_products_stock_confirmation ON products(last_stock_confirmed_at, stock_confidence)");
+      db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(15);
+    } catch (err: any) {
+      logger.error("❌ v15 stock trust migration failed:", err?.message);
       throw err;
     }
   }

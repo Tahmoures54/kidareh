@@ -20,6 +20,8 @@ export interface ProductData {
   lng?: number;
   address?: string;
   blue_tick_expires_at?: string | null;
+  last_stock_confirmed_at?: string | null;
+  stock_confidence?: number | null;
 }
 
 export interface Review {

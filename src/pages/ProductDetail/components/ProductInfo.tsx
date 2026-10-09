@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { Clock, Star, ShieldAlert, MapPin } from "lucide-react";
 import { ProductData } from "../types";
 import { getBadgeStyle, formatPrice } from "../../../utils";
+import StockFreshnessBadge from "../../../components/presence/StockFreshnessBadge";
 
 interface Props {
   product: ProductData;
@@ -45,6 +46,7 @@ export const ProductInfo = memo(({ product, isAvailable, avgRating }: Props) => 
         </div>
 
         <h1 className="text-2xl font-black leading-snug text-[var(--text-primary)]">{product.name}</h1>
+        <StockFreshnessBadge lastConfirmedAt={product.last_stock_confirmed_at} confidence={product.stock_confidence} />
 
         <div className="flex items-center gap-4 text-xs font-bold text-[var(--text-muted)]">
           <span className="flex items-center gap-1.5">

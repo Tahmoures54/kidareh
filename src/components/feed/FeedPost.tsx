@@ -6,6 +6,8 @@ import type { FeedPostData } from "../../lib/feedMappers";
 import { cn } from "../../utils";
 import { analytics } from "../../utils/analytics";
 import { isProductAvailable } from "../../utils/productAvailability";
+import StockFreshnessBadge from "../presence/StockFreshnessBadge";
+import { getStockFreshness } from "../../utils/stockFreshness";
 
 function FeedMedia({ sources, title, storeName }: { sources: string[]; title: string; storeName: string }) {
   const [index, setIndex] = useState(0);
@@ -33,12 +35,13 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
   };
   const handleSave = async () => { const wasSaved = saved; await save(); if (wasSaved && onRemoved) onRemoved(post); };
   const available = isProductAvailable(post.status);
+  const stockFreshness = getStockFreshness(post.lastStockConfirmedAt, post.stockConfidence);
   const handleProductOpen = () => {
     analytics.trackEvent({ name: "store_product_open", category: "growth", label: post.kind, value: post.productId });
   };
 
   return (
-    <article className="feed-post" data-testid="feed-post" data-feed-key={post.key}>
+    <article className={cn("feed-post", post.kind === "product" && stockFreshness.kind === "stale" && "opacity-75 grayscale-[0.2]")} data-testid="feed-post" data-feed-key={post.key}>
       <header className="flex items-center gap-3 px-3 py-2.5">
         <Link to={post.storeHref || post.href} className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--paper-2)] ring-1 ring-[var(--line)]" aria-label={post.storeName}>
           {post.storeAvatar ? <img src={post.storeAvatar} alt="" className="h-full w-full object-cover" /> : <span className="text-sm font-black text-[var(--brand-primary)]">{post.storeName.slice(0, 1)}</span>}
@@ -67,6 +70,7 @@ export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
         <p className="text-base font-black leading-6"><Link to={post.href}>{post.title}</Link></p>
         <div className="flex items-end justify-between gap-3"><p className="text-lg font-black text-[var(--brand-primary)]">{post.priceLabel}</p>{post.oldPriceLabel && <p className="text-xs font-bold text-[var(--muted)] line-through">{post.oldPriceLabel}</p>}</div>
         {post.meta && <div className="flex flex-wrap items-center gap-2 text-xs font-black"><span className="inline-flex items-center gap-1 rounded-full bg-[var(--paper-2)] px-2.5 py-1.5 text-[var(--ink-soft)]"><MapPin className="h-3.5 w-3.5 text-[var(--brand-primary)]" />{post.meta}</span>{post.status && <span className={cn("rounded-full px-2.5 py-1.5", available ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-600")}>{post.status}</span>}</div>}
+        {post.kind === "product" && <StockFreshnessBadge lastConfirmedAt={post.lastStockConfirmedAt} confidence={post.stockConfidence} compact />}
         {post.caption && <p className="line-clamp-2 text-[13px] font-bold leading-6 text-[var(--ink-soft)]"><span className="font-black text-[var(--ink)]">{post.storeName} </span>{post.caption}</p>}
         <div className="grid grid-cols-2 gap-2 pt-1">
           <Link to={post.href} onClick={handleProductOpen} className={cn("inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-xs font-black text-white", available ? "bg-[var(--brand-primary)]" : "bg-slate-700")}><MapPin className="h-4 w-4" /> {available ? "مشاهده کالا و آدرس" : "مشاهده کالا"}</Link>

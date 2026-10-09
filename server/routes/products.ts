@@ -21,6 +21,44 @@ import { invalidateStoreCache, invalidateStatsCache } from "../services/cache.js
 
 const router = Router();
 
+const stockConfirmationSchema = z.object({
+  status: z.enum(["موجود", "فقط ۱ عدد", "ناموجود", "به‌زودی"]).optional(),
+}).strict();
+
+function notifyStockStatusChanged(
+  productId: number,
+  storeId: number,
+  productName: string,
+  nextStatus: string,
+  ownerId: number,
+): void {
+  const recipients = db.prepare(`
+    SELECT user_id FROM saved_products WHERE product_id = ?
+    UNION
+    SELECT user_id FROM store_followers WHERE store_id = ?
+  `).all(productId, storeId) as Array<{ user_id: number }>;
+  const insertNotification = db.prepare(`
+    INSERT INTO notifications (user_id, type, title, message, data)
+    VALUES (?, 'stock_update', ?, ?, ?)
+  `);
+  const notify = db.transaction(() => {
+    for (const recipient of recipients) {
+      if (recipient.user_id === ownerId) continue;
+      insertNotification.run(
+        recipient.user_id,
+        "وضعیت موجودی کالا تغییر کرد",
+        productName + " اکنون: " + nextStatus,
+        JSON.stringify({ productId, storeId, status: nextStatus }),
+      );
+    }
+  });
+  try {
+    notify();
+  } catch (error) {
+    logger.error("Stock-change notification delivery failed:", error);
+  }
+}
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024, files: 1 },
@@ -247,6 +285,78 @@ router.put("/:id", requireAuth, upload.single("image"), async (req: AuthRequest 
   }
 });
 
+router.post("/:id/confirm-stock", requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const productId = Number(req.params.id);
+    if (!Number.isSafeInteger(productId) || productId < 1) {
+      res.status(400).json({ error: "شناسه کالا معتبر نیست." });
+      return;
+    }
+
+    const parsed = stockConfirmationSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      res.status(400).json({ error: "وضعیت موجودی معتبر نیست.", details: parsed.error.issues });
+      return;
+    }
+
+    const product = db.prepare(`
+      SELECT p.id, p.store_id, p.name, p.status, s.user_id AS owner_id
+      FROM products p
+      JOIN stores s ON s.id = p.store_id
+      WHERE p.id = ?
+    `).get(productId) as {
+      id: number;
+      store_id: number;
+      name: string;
+      status: string;
+      owner_id: number;
+    } | undefined;
+
+    if (!product) {
+      res.status(404).json({ error: "کالا پیدا نشد." });
+      return;
+    }
+    if (req.user?.role !== "admin" && product.owner_id !== req.user?.id) {
+      res.status(403).json({ error: "فقط صاحب فروشگاه می‌تواند موجودی این کالا را تأیید کند." });
+      return;
+    }
+
+    const nextStatus = parsed.data.status ?? product.status;
+    db.prepare(`
+      UPDATE products
+      SET status = ?, last_stock_confirmed_at = CURRENT_TIMESTAMP,
+          stock_confidence = 1.0, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(nextStatus, productId);
+
+    if (nextStatus !== product.status) {
+      notifyStockStatusChanged(product.id, product.store_id, product.name, nextStatus, product.owner_id);
+    }
+
+    await Promise.all([
+      invalidateProductCache(productId),
+      invalidateSearchCache(),
+      invalidateStoreCache(product.store_id),
+      invalidateStatsCache(),
+    ]);
+
+    const updated = db.prepare(
+      "SELECT last_stock_confirmed_at, stock_confidence FROM products WHERE id = ?"
+    ).get(productId) as { last_stock_confirmed_at: string | null; stock_confidence: number };
+
+    res.json({
+      success: true,
+      productId,
+      status: nextStatus,
+      last_stock_confirmed_at: updated.last_stock_confirmed_at,
+      stock_confidence: updated.stock_confidence,
+    });
+  } catch (error) {
+    logger.error("Confirm product stock error:", error);
+    res.status(500).json({ error: "تأیید موجودی انجام نشد. لطفاً دوباره تلاش کنید." });
+  }
+});
+
 router.put("/:id/status", requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const id = typeof String(req.params.id ?? "") === "string" ? String(req.params.id ?? "") : "";
@@ -254,11 +364,16 @@ router.put("/:id/status", requireAuth, async (req: AuthRequest, res: Response) =
     if (!status) return res.status(400).json({ error: "وضعیت نامعتبر است" });
     const storeInfo = db.prepare("SELECT id FROM stores WHERE user_id = ?").get(req.user!.id) as any;
     if (!storeInfo) return res.status(403).json({ error: "فروشگاهی یافت نشد" });
-    const productInfo = db.prepare("SELECT store_id FROM products WHERE id = ?").get(id) as any;
+    const productInfo = db.prepare("SELECT id, store_id, name, status FROM products WHERE id = ?").get(id) as { id: number; store_id: number; name: string; status: string } | undefined;
     if (!productInfo || productInfo.store_id !== storeInfo.id) return res.status(403).json({ error: "شما دسترسی به این کالا ندارید" });
-    db.prepare("UPDATE products SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(status, id);
+    db.prepare("UPDATE products SET status = ?, last_stock_confirmed_at = CURRENT_TIMESTAMP, stock_confidence = 1.0, updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(status, id);
+    if (status !== productInfo.status) {
+      notifyStockStatusChanged(productInfo.id, productInfo.store_id, productInfo.name, status, req.user!.id);
+    }
     await invalidateProductCache(id);
+    await invalidateSearchCache();
     await invalidateStoreCache(storeInfo.id);
+    await invalidateStatsCache();
     return res.json({ success: true, status });
   } catch (error) {
     logger.error("Update product status error:", error);

@@ -47,6 +47,8 @@ function SellerShopHome() {
     lowStockCount,
     filteredProducts,
     updateStatusMut,
+    confirmStockMut,
+    confirmStock,
     updateStoreMut,
     handleDeleteTrigger,
     handleShare,
@@ -250,7 +252,9 @@ function SellerShopHome() {
                 product={product}
                 isUpdating={updateStatusMut.isPending && updateStatusMut.variables?.id === product.id}
                 isDeleting={deletingId === product.id}
+                isConfirmingStock={confirmStockMut.isPending && confirmStockMut.variables === product.id}
                 onStatusChange={cycleStatus}
+                onConfirmStock={confirmStock}
                 onDelete={handleDeleteTrigger}
                 onShare={handleShare}
               />
