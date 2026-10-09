@@ -43,6 +43,7 @@ const OnboardingFlow = lazy(() => import("./pages/Onboarding"));
 const RadarPage = lazy(() => import("./pages/Radar"));
 const ExplorePage = lazy(() => import("./pages/Explore"));
 const TripPage = lazy(() => import("./pages/Trip"));
+const TripCheckIn = lazy(() => import("./pages/TripCheckIn"));
 const HoldsPage = lazy(() => import("./pages/Holds"));
 const PresenceListing = lazy(() => import("./pages/PresenceListing"));
 const LegacyHome = lazy(() => import("./pages/Home"));
@@ -178,6 +179,7 @@ export default function App() {
                   <Route path="admin/stats" element={<AdminProtectedRoute><AdminPanel /></AdminProtectedRoute>} />
                 </Route>
 
+                <Route path="/trip-checkin" element={<TripCheckIn />} />
                 <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
                 <Route path="/onboarding" element={<GuestRoute><OnboardingFlow /></GuestRoute>} />
                 <Route path="/chat/:id" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />

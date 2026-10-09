@@ -47,10 +47,11 @@ interface Props {
   path?: GeoPoint[];
   height?: string;
   selectedId?: string;
+  markerNumbers?: Record<string, number>;
   className?: string;
 }
 
-function StoreMarkerClusters({ listings, selectedId }: { listings: EnrichedListing[]; selectedId?: string }) {
+function StoreMarkerClusters({ listings, selectedId, markerNumbers }: { listings: EnrichedListing[]; selectedId?: string; markerNumbers?: Record<string, number> }) {
   const map = useMap();
   const [zoom, setZoom] = useState(map.getZoom());
 
@@ -69,7 +70,7 @@ function StoreMarkerClusters({ listings, selectedId }: { listings: EnrichedListi
             <Marker
               key={cluster.id}
               position={[cluster.lat, cluster.lng]}
-              icon={pin(listing.id === selectedId ? "#e6b84f" : "#00A693", formatCompactToman(listing.price))}
+              icon={pin(listing.id === selectedId ? "#e6b84f" : "#00A693", markerNumbers?.[listing.id] ? markerNumbers[listing.id].toLocaleString("fa-IR") : formatCompactToman(listing.price))}
             >
               <Popup>
                 <div dir="rtl" className="min-w-[160px] text-right">
@@ -127,7 +128,7 @@ function StoreMarkerClusters({ listings, selectedId }: { listings: EnrichedListi
   );
 }
 
-export default function PresenceMap({ origin, listings, path, height = "100%", selectedId, className }: Props) {
+export default function PresenceMap({ origin, listings, path, height = "100%", selectedId, markerNumbers, className }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
   const uniqueStores = useMemo(() => {
@@ -180,7 +181,7 @@ export default function PresenceMap({ origin, listings, path, height = "100%", s
               pathOptions={{ color: "#00A693", weight: 4, opacity: 0.9 }}
             />
           )}
-          <StoreMarkerClusters listings={uniqueStores} selectedId={selectedId} />
+          <StoreMarkerClusters listings={uniqueStores} selectedId={selectedId} markerNumbers={markerNumbers} />
         </MapContainer>
       )}
     </div>
