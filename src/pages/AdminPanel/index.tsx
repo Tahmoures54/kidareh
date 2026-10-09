@@ -33,7 +33,7 @@ const StatusBadge = ({ status }: { status: string }) => {
     open: { icon: Clock, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-500/10", text: "باز" },
     closed: { icon: XCircle, color: "text-slate-500", bg: "bg-slate-100 dark:bg-slate-800", text: "بسته" },
   };
-  const c = config[status] || config.pending;
+  const c = config[status] ?? config.pending!;
   const Icon = c.icon;
   return (
     <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-black ${c.bg} ${c.color}`}>
