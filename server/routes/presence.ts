@@ -151,8 +151,8 @@ router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
     stopOrder: index + 1,
     token: randomBytes(32).toString("hex"),
   }));
-  const arrivalHashes = new Map(
-    arrivalTokens.map((entry) => [
+  const arrivalHashes = new Map<number, string>(
+    arrivalTokens.map((entry): [number, string] => [
       entry.stopOrder,
       createHash("sha256").update(entry.token).digest("hex"),
     ]),
@@ -182,7 +182,7 @@ router.post("/trips", requireAuth, (req: AuthRequest, res: Response): void => {
           listing.storeId, listing.store.name, listing.store.address, listing.store.phone || "",
           listing.store.openHour, listing.store.closeHour, listing.name, listing.price,
           listing.store.lat, listing.store.lng, stop.walkFromPrev,
-          arrivalHashes.get(stopIndex + 1) ?? "",
+          arrivalHashes.get(stopIndex + 1) ?? createHash("sha256").update(randomBytes(32)).digest("hex"),
         );
       });
     });
@@ -273,7 +273,7 @@ router.post("/trips/:id/stops/:stopOrder/check-in", requireAuth, (req: AuthReque
   const tokenHash = createHash("sha256").update(parsed.data.token).digest("hex");
   const item = db.prepare(`
     SELECT store_phone FROM trip_items
-    WHERE trip_id = ? AND stop_order = ? AND arrival_token_hash = ?
+    WHERE trip_id = ? AND stop_order = ? AND arrival_token_hash = ? AND status = 'pending'
     LIMIT 1
   `).get(tripId, stopOrder, tokenHash) as { store_phone: string } | undefined;
   if (!item) {
