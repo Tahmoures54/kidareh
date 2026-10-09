@@ -66,6 +66,6 @@ export const StatCard = memo(
   )
 );
 
-export const SPRING_TRANSITION = { type: "spring", stiffness: 300, damping: 25 };
+export const SPRING_TRANSITION = { type: "spring" as const, stiffness: 300, damping: 25 };
 export const FALLBACK_PRODUCT =
   "https://placehold.co/300x300/1f2937/a1a1aa?text=No+Image";
