@@ -1,9 +1,10 @@
-import React, { memo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { SlidersHorizontal, X, RotateCcw, Building, Map, Globe } from "lucide-react";
+import React, { memo } from "react";
+import { motion } from "framer-motion";
+import { SlidersHorizontal, RotateCcw, Building, Map, Globe } from "lucide-react";
 import { LocationScopeType, SearchFilters } from "../types";
 import CategoryField from "../../../components/category/CategoryField";
-import { SPRING_TRANSITION, RADIUS_OPTIONS } from "./constants";
+import { RADIUS_OPTIONS } from "./constants";
+import BottomSheet from "../../../components/ui/BottomSheet";
 
 interface FilterSheetProps {
   open: boolean;
@@ -17,81 +18,10 @@ export const FilterSheet = memo(({ open, filters, onChange, onClose, onReset }: 
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "unset";
-    return () => { document.body.style.overflow = "unset"; };
-  }, [open]);
+    return (
+    <BottomSheet open={open} onClose={onClose} title="فیلترها" snapPoints={["72dvh", "92dvh"]} initialSnap={0}>
+      <div className="space-y-6" dir="rtl">
 
-  const scopeOptions: { value: LocationScopeType; label: string; icon: React.ReactNode }[] = [
-    { 
-      value: "city", 
-      label: filters.scope.name ? `شهر ${filters.scope.name}` : "شهر من", 
-      icon: <Building className="w-4 h-4" /> 
-    },
-    { 
-      value: "province", 
-      label: filters.scope.province ? `استان ${filters.scope.province}` : "کل استان", 
-      icon: <Map className="w-4 h-4" /> 
-    },
-    { 
-      value: "country", 
-      label: "سراسری", 
-      icon: <Globe className="w-4 h-4" /> 
-    },
-  ];
-
-  const sortOptions = [
-    { value: "newest", label: "جدیدترین" },
-    { value: "nearest", label: "نزدیک‌ترین" },
-    { value: "cheapest", label: "ارزان‌ترین" },
-  ];
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <div className="fixed inset-0 z-[200]" dir="rtl">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-          />
-
-          {/* Sheet */}
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={SPRING_TRANSITION}
-            drag="y"
-            dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.6 }}
-            onDragEnd={(_, info) => { if (info.offset.y > 100) onClose(); }}
-            className="absolute bottom-0 inset-x-0 bg-white dark:bg-gray-900 rounded-t-3xl shadow-2xl border-t border-gray-100 dark:border-gray-800 max-h-[92vh] overflow-y-auto pb-[max(1.5rem,env(safe-area-inset-bottom))]"
-          >
-            {/* Handle */}
-            <div className="pt-3 pb-1 flex justify-center sticky top-0 bg-white dark:bg-gray-900 z-10">
-              <div className="w-12 h-1.5 bg-gray-300 dark:bg-gray-700 rounded-full" />
-            </div>
-
-            {/* Header */}
-            <div className="sticky top-6 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 px-5 pt-2 pb-4 z-10">
-              <div className="flex items-center justify-between">
-                <h3 className="font-black text-lg flex items-center gap-2 text-gray-900 dark:text-white">
-                  <SlidersHorizontal className="w-5 h-5 text-rose-500" />
-                  فیلترها
-                </h3>
-                <button
-                  onClick={onClose}
-                  aria-label="بستن"
-                  className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center active:scale-90 transition-transform"
-                >
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-5 space-y-6">
 
               <div>
                 <label className="text-xs font-bold text-gray-500 mb-3 block">دسته‌بندی</label>
@@ -242,11 +172,8 @@ export const FilterSheet = memo(({ open, filters, onChange, onClose, onReset }: 
                   نمایش نتایج
                 </button>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+      </div>
+    </BottomSheet>
   );
 });
 
