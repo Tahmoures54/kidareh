@@ -22,7 +22,7 @@ import {
 
 import { Toast, Loading, Empty, StatCard, FALLBACK_PRODUCT } from "./components";
 
-const SPRING_TRANSITION = { type: "spring", bounce: 0.2, duration: 0.6 };
+const SPRING_TRANSITION = { type: "spring" as const, bounce: 0.2, duration: 0.6 };
 
 const StatusBadge = ({ status }: { status: string }) => {
   const config: Record<string, { icon: any; color: string; bg: string; text: string }> = {
