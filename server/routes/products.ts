@@ -52,7 +52,11 @@ function notifyStockStatusChanged(
       );
     }
   });
-  notify();
+  try {
+    notify();
+  } catch (error) {
+    logger.error("Stock-change notification delivery failed:", error);
+  }
 }
 
 const upload = multer({
