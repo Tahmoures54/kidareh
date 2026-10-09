@@ -21,3 +21,9 @@ export const tripStatusSchema = z.object({
 
 export type TripRequest = z.infer<typeof tripRequestSchema>;
 export type TripStatusUpdate = z.infer<typeof tripStatusSchema>;
+
+export const tripArrivalSchema = z.object({
+  token: z.string().min(32).max(128),
+});
+
+export type TripArrivalRequest = z.infer<typeof tripArrivalSchema>;
