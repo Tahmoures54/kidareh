@@ -12,6 +12,8 @@ import { PremiumProductCard, ProductCardSkeleton, SegmentedScope } from "./compo
 import { CategorySlider } from "./components/CategorySlider";
 import EmptyState from "../../components/ui/EmptyState";
 import CityPicker from "../../components/location/CityPicker";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
+import PullToRefreshIndicator from "../../components/ui/PullToRefreshIndicator";
 
 const ActiveFiltersBanner = memo(({ filterCount, onClear }: { filterCount: number; onClear: () => void }) => (
   <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
@@ -41,10 +43,13 @@ export default function Home() {
   const logic = useHomeLogic();
   const { user, effectiveCity, effectiveDisplay, effectiveProvince, gpsEnabled, manualLocation, search, setSearch, activeCategory, setActiveCategory, scope, setScope, sort, setSort, isLocationModalOpen, setIsLocationModalOpen, handleClearFilters, hasActiveFilters, filterCount, error, refetch, isLoading, allProducts, favoritesSet, toggleFavorite, isFetchingNextPage, hasNextPage, loadMoreRef, selectCity, useGps, gpsLoading, gpsError } = logic;
   const openLocation = useCallback(() => setIsLocationModalOpen(true), [setIsLocationModalOpen]);
+  const refreshProducts = useCallback(async () => { await refetch(); }, [refetch]);
+  const pullToRefresh = usePullToRefresh(refreshProducts);
 
   return (
     <HomeErrorBoundary>
-      <div dir="rtl" className="min-h-screen bg-[#f6f9fb] font-sans text-slate-900">
+      <div dir="rtl" className="min-h-screen bg-[#f6f9fb] font-sans text-slate-900" onTouchStart={pullToRefresh.onTouchStart} onTouchMove={pullToRefresh.onTouchMove} onTouchEnd={pullToRefresh.onTouchEnd}>
+        <PullToRefreshIndicator distance={pullToRefresh.pullDistance} refreshing={pullToRefresh.isRefreshing} threshold={pullToRefresh.threshold} />
         <Header user={user} effectiveCity={effectiveCity} effectiveDisplay={effectiveDisplay} gpsEnabled={gpsEnabled} manualLocation={manualLocation} onOpenLocationModal={openLocation} />
         <CityPicker open={isLocationModalOpen} selectedCity={effectiveCity} selectedProvince={effectiveProvince} gpsLoading={gpsLoading} gpsError={gpsError} onClose={() => setIsLocationModalOpen(false)} onSelect={selectCity} onGps={useGps} />
 
