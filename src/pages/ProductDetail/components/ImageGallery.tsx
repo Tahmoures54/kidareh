@@ -48,7 +48,7 @@ export const GalleryModal = memo(({ images, index, name, onClose, onPrev, onNext
   );
 });
 
-export const ImageCarousel = memo(({ images, name, imgIndex, setImgIndex, setGalleryOpen }: any) => {
+export const ImageCarousel = memo(({ images, name, imgIndex, setImgIndex, setGalleryOpen }: { images: string[]; name: string; imgIndex: number; setImgIndex: (index: number) => void; setGalleryOpen: (open: boolean) => void }) => {
   return (
     <div className="relative h-[50vh] bg-[var(--bg-tertiary)] overflow-hidden cursor-pointer" onClick={() => setGalleryOpen(true)}>
       <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/40 to-transparent z-10 pointer-events-none" />
