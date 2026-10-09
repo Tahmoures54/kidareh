@@ -15,10 +15,27 @@ interface FilterSheetProps {
 }
 
 export const FilterSheet = memo(({ open, filters, onChange, onClose, onReset }: FilterSheetProps) => {
-  useEffect(() => {
-    if (open) document.body.style.overflow = "hidden";
-    else document.body.style.overflow = "unset";
-    return (
+  const scopeOptions: { value: LocationScopeType; label: string; icon: React.ReactNode }[] = [
+    {
+      value: "city",
+      label: filters.scope.name ? `شهر ${filters.scope.name}` : "شهر من",
+      icon: <Building className="w-4 h-4" />,
+    },
+    {
+      value: "province",
+      label: filters.scope.province ? `استان ${filters.scope.province}` : "کل استان",
+      icon: <Map className="w-4 h-4" />,
+    },
+    { value: "country", label: "سراسری", icon: <Globe className="w-4 h-4" /> },
+  ];
+
+  const sortOptions = [
+    { value: "newest", label: "جدیدترین" },
+    { value: "nearest", label: "نزدیک‌ترین" },
+    { value: "cheapest", label: "ارزان‌ترین" },
+  ];
+
+  return (
     <BottomSheet open={open} onClose={onClose} title="فیلترها" snapPoints={["72dvh", "92dvh"]} initialSnap={0}>
       <div className="space-y-6" dir="rtl">
 
