@@ -737,6 +737,7 @@ const runMigrations = () => {
         );
         CREATE INDEX IF NOT EXISTS idx_trips_user_updated ON trips(user_id, updated_at DESC);
         CREATE INDEX IF NOT EXISTS idx_trip_items_trip_stop ON trip_items(trip_id, stop_order, item_order);
+        CREATE INDEX IF NOT EXISTS idx_trip_items_arrival_token ON trip_items(trip_id, stop_order, arrival_token_hash, status);
       `);
       db.prepare("INSERT OR IGNORE INTO schema_migrations (version) VALUES (?)").run(14);
     } catch (err: any) {
