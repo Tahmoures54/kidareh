@@ -3,27 +3,27 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
-import WalletPage from "../index";
+import WalletPage from "../../../../src/pages/Referral/index";
 
 /* ─── Mocks ─── */
-vi.mock("../../context/AuthContext", () => ({
+vi.mock("../../../../src/context/AuthContext", () => ({
   useAuth: vi.fn(),
 }));
 
-vi.mock("../../hooks/useWallet", () => ({
+vi.mock("../../../../src/hooks/useWallet", () => ({
   useWallet: vi.fn(),
 }));
 
-vi.mock("../../hooks/useClipboard", () => ({
+vi.mock("../../../../src/hooks/useClipboard", () => ({
   useClipboard: () => ({ copy: vi.fn(), copied: false }),
 }));
 
-vi.mock("../../components/ui/ErrorBoundary", () => ({
+vi.mock("../../../../src/components/ui/ErrorBoundary", () => ({
   default: ({ children }: any) => <>{children}</>,
 }));
 
-vi.mock("motion/react", async () => {
-  const actual = await vi.importActual<any>("motion/react");
+vi.mock("framer-motion", async () => {
+  const actual = await vi.importActual<any>("framer-motion");
   return {
     ...actual,
     motion: new Proxy({}, {
@@ -34,8 +34,8 @@ vi.mock("motion/react", async () => {
 });
 
 /* ─── Helpers ─── */
-import { useAuth }   from "../../context/AuthContext";
-import { useWallet } from "../../hooks/useWallet";
+import { useAuth }   from "../../../../src/context/AuthContext";
+import { useWallet } from "../../../../src/hooks/useWallet";
 
 const mockUseAuth   = vi.mocked(useAuth);
 const mockUseWallet = vi.mocked(useWallet);
