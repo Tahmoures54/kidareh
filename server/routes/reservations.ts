@@ -129,23 +129,26 @@ router.post("/", requireAuth, (req: AuthRequest, res): void => {
   }
 });
 
-router.patch("/:id/status", requireAuth, (req: AuthRequest, res) => {
+router.patch("/:id/status", requireAuth, (req: AuthRequest, res): void => {
   expireStale();
   const next = String(req.body?.status || "");
   const row = db
     .prepare(`SELECT * FROM reservations WHERE public_id = ? OR id = ?`)
     .get(req.params.id, Number(req.params.id) || -1) as any;
-  if (!row) return res.status(404).json({ error: "رزرو پیدا نشد" });
+  if (!row) { res.status(404).json({ error: "رزرو پیدا نشد" }); return; }
   if (Number(row.buyer_id) !== Number(req.user!.id) && req.user!.role !== "admin" && req.user!.role !== "seller") {
-    return res.status(403).json({ error: "دسترسی ندارید" });
+    res.status(403).json({ error: "دسترسی ندارید" });
+    return;
   }
   const allowed = TRANSITIONS[row.status] || [];
   if (!allowed.includes(next)) {
-    return res.status(400).json({ error: "این تغییر وضعیت مجاز نیست" });
+    res.status(400).json({ error: "این تغییر وضعیت مجاز نیست" });
+    return;
   }
   db.prepare(`UPDATE reservations SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(next, row.id);
   const updated = db.prepare(`SELECT * FROM reservations WHERE id = ?`).get(row.id);
   res.json({ reservation: rowToJson(updated) });
+  return;
 });
 
 export default router;
