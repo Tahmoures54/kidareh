@@ -14,7 +14,7 @@ interface CitySelectorProps {
 }
 
 // تنظیمات انیمیشن فنری
-const springTransition = { type: "spring", stiffness: 350, damping: 25 };
+const springTransition = { type: "spring" as const, stiffness: 350, damping: 25 };
 
 /**
  * Premium CitySelector
