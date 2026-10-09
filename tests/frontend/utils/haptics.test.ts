@@ -1,4 +1,4 @@
-import { triggerHaptic } from "../../src/utils/haptics";
+import { triggerHaptic } from "../../../src/utils/haptics";
 
 describe("triggerHaptic", () => {
   it("uses the selected vibration pattern when supported", () => {
