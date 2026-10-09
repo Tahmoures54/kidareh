@@ -337,7 +337,7 @@ async function startServer() {
 
       app.get("/store/:id", async (req: Request, res: Response) => {
         try {
-          if (!/^\d+$/.test(req.params.id)) return res.sendFile(indexPath);
+          if (!/^\d+$/.test(String(req.params.id ?? ""))) return res.sendFile(indexPath);
           const id = Number(req.params.id);
           const store = await cacheGetOrSet(CacheKeys.store(id), CacheTTL.STORES, async () => {
             const row = db.prepare(`
