@@ -9,14 +9,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(({ mode, command }) => {
   const isProd = mode === "production";
-  const isServe = command === "serve";
 
   return {
     plugins: [
-      react({
-        jsxRuntime: "automatic",
-        fastRefresh: isServe,
-      }),
+      react({ jsxRuntime: "automatic" }),
       tailwindcss(),
       VitePWA({
         registerType: "autoUpdate",
