@@ -37,6 +37,32 @@ router.use(requireAuth);
 router.use(requireRole(["admin"]));
 router.use(isMasterAdmin);
 
+router.get("/support-agents", (_req: AuthRequest, res: Response) => {
+  const agents = db.prepare("SELECT phone FROM users WHERE role = 'support' ORDER BY phone").all() as Array<{ phone: string }>;
+  return res.json({ agents: agents.map((agent) => agent.phone) });
+});
+
+router.post("/support-agents", (req: AuthRequest, res: Response) => {
+  const parsed = z.object({ phone: z.string().regex(/^09\\d{9}$/, "شماره همراه معتبر نیست") }).safeParse(req.body);
+  if (!parsed.success) return res.status(400).json({ error: "شماره همراه معتبر نیست" });
+
+  const user = db.prepare("SELECT id FROM users WHERE phone = ?").get(parsed.data.phone) as { id: number } | undefined;
+  if (!user) return res.status(404).json({ error: "ابتدا باید کاربر با این شماره ثبت‌نام کرده باشد" });
+
+  db.prepare("UPDATE users SET role = 'support', updated_at = CURRENT_TIMESTAMP WHERE id = ?").run(user.id);
+  const agents = db.prepare("SELECT phone FROM users WHERE role = 'support' ORDER BY phone").all() as Array<{ phone: string }>;
+  return res.json({ success: true, agents: agents.map((agent) => agent.phone) });
+});
+
+router.delete("/support-agents/:phone", (req: AuthRequest, res: Response) => {
+  const phone = String(req.params.phone ?? "");
+  const result = db.prepare("UPDATE users SET role = 'buyer', updated_at = CURRENT_TIMESTAMP WHERE phone = ? AND role = 'support'").run(phone);
+  if (result.changes === 0) return res.status(404).json({ error: "پشتیبان پیدا نشد" });
+
+  const agents = db.prepare("SELECT phone FROM users WHERE role = 'support' ORDER BY phone").all() as Array<{ phone: string }>;
+  return res.json({ success: true, agents: agents.map((agent) => agent.phone) });
+});
+
 // ═══════════════════════════════════════
 // 2. Dashboard Statistics
 // ═══════════════════════════════════════
