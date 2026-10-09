@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,6 +11,9 @@ import {
   Search,
   ShoppingBag,
   Store,
+  RefreshCw,
+  SlidersHorizontal,
+  Loader2,
 } from "lucide-react";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { useAppLocation } from "../../hooks/useAppLocation";
@@ -27,6 +31,9 @@ import { presenceMarketStories } from "../../presence/stories";
 import { useMarketStories } from "../../hooks/useMarketStories";
 import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../utils/api";
+import BottomSheet from "../../components/ui/BottomSheet";
+import { useHaptics } from "../../hooks/useHaptics";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 
 const PRESENCE_GROUP_TO_LISTING: Record<string, ListingCategory[]> = {
   digital: ["digital", "audio", "gaming"],
@@ -57,12 +64,16 @@ export default function PresenceHome() {
   const { origin } = usePresenceOrigin();
   const { location: cityLocation, isTehran } = useAppLocation();
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const haptic = useHaptics();
   const [q, setQ] = useState("");
   const [marketCategory, setMarketCategory] = useState("all");
   const [radiusKm, setRadiusKm] = useState(3);
   const [openNow, setOpenNow] = useState(false);
   const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
   const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const { items: paidStories } = useMarketStories(cityLocation.city);
 
   const listingCats = useMemo(
@@ -88,6 +99,7 @@ export default function PresenceHome() {
 
   useEffect(() => {
     let cancelled = false;
+    setIsLoadingPosts(true);
     apiRequest<{ products?: Record<string, unknown>[] }>(
       `/api/products/search?limit=12&sort=newest&scope=city&city=${encodeURIComponent(cityLocation.city)}${marketCategory !== "all" ? `&category=${encodeURIComponent(marketCategory)}` : ""}`
     )
@@ -95,14 +107,39 @@ export default function PresenceHome() {
         if (cancelled) return;
         const rows = Array.isArray(res?.products) ? res.products : [];
         setShopPosts(rows.map((row) => productToFeedPost(row)));
+        setIsLoadingPosts(false);
       })
       .catch(() => {
-        if (!cancelled) setShopPosts([]);
+        if (!cancelled) { setShopPosts([]); setIsLoadingPosts(false); }
       });
     return () => {
       cancelled = true;
     };
   }, [cityLocation.city, marketCategory]);
+
+  const refreshHome = useCallback(async () => {
+    setIsLoadingPosts(true);
+    try {
+      const query = "/api/products/search?limit=12&sort=newest&scope=city&city="
+        + encodeURIComponent(cityLocation.city)
+        + (marketCategory !== "all" ? "&category=" + encodeURIComponent(marketCategory) : "");
+      const res = await apiRequest<{ products?: Record<string, unknown>[] }>(query);
+      const rows = Array.isArray(res?.products) ? res.products : [];
+      setShopPosts(rows.map((row) => productToFeedPost(row)));
+    } catch {
+      setShopPosts([]);
+    } finally {
+      setIsLoadingPosts(false);
+      haptic("success");
+    }
+  }, [cityLocation.city, marketCategory, haptic]);
+
+  const pull = usePullToRefresh({ onRefresh: refreshHome });
+
+  const selectCategory = useCallback((slug: string) => {
+    setMarketCategory(slug);
+    haptic("selection");
+  }, [haptic]);
 
   const listingPosts = useMemo(() => listings.map(listingToFeedPost), [listings]);
 
