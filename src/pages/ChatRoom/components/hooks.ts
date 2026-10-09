@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { io, Socket } from "socket.io-client";
 import { apiRequest } from "../../../utils/api";
-import { Msg, MsgStatus } from "./types";
+import type { Msg, MsgStatus } from "../types";
 
 type RoomInfo = { roomId: string; success?: boolean };
 
@@ -54,7 +54,7 @@ export function useChatRoom(id: string | undefined, productId: string | null, us
       setMessages(Array.isArray(data?.messages) ? data.messages.map(m => ({
         ...m,
         status: "sent" as MsgStatus,
-        timestamp: m.timestamp || new Date((m as any).created_at || m.createdAt || Date.now()).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
+        timestamp: m.timestamp || new Date(m.createdAt || Date.now()).toLocaleTimeString("fa-IR", { hour: "2-digit", minute: "2-digit" }),
       })) : []);
     } catch {
       if (mounted.current) setMessages([]);
