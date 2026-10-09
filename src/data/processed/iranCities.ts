@@ -56,7 +56,7 @@ function expandCompactRaw(): AnyRecord[] {
     "province-en": row.p.replace(/\s+/g, "-"),
     cities: row.c.map((name) => ({
       "city-fa": name,
-      "city-en": name.replace(/\s+/g, "-"),
+      "city-en": CITY_SLUG_BY_FA[normalizeCityText(name)] ?? name.replace(/\s+/g, "-"),
     })),
   }));
 }
