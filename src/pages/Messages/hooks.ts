@@ -88,13 +88,18 @@ export function useConversations(user: any, logout: () => Promise<void>) {
           return prev; 
         }
         
-        // آپدیت پیام و انتقال آن به بالای لیست
-        const updated = { 
-          ...prev[idx], 
-          lastMessage: d.text || prev[idx].lastMessage, 
-          timestamp: Date.now(), 
-          time: "هم‌اکنون", 
-          unread: prev[idx].unread + 1 
+        // فهرست ممکن است هم‌زمان تغییر کرده باشد؛ رکورد را دوباره بررسی می‌کنیم.
+        const current = prev[idx];
+        if (!current) {
+          needsFetch = true;
+          return prev;
+        }
+        const updated: Conversation = {
+          ...current,
+          lastMessage: d.text || current.lastMessage,
+          timestamp: Date.now(),
+          time: "هم‌اکنون",
+          unread: current.unread + 1
         };
         
         const next = [...prev];
