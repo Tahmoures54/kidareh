@@ -43,6 +43,9 @@ export interface AuthContextType {
   updateUser: (updates: Partial<User>) => void;
   clearError: () => void;
   error: string | null;
+  supportAgents: string[];
+  addSupportAgent: (phone: string) => Promise<void>;
+  removeSupportAgent: (phone: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -113,6 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [refreshing, setRefreshing] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [supportAgents, setSupportAgents] = useState<string[]>([]);
 
   const isMountedRef = useRef(true);
   const refreshPromiseRef = useRef<Promise<void> | null>(null);
@@ -122,6 +126,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const sessionExpiredHandledRef = useRef(false);
 
   useEffect(() => { userRef.current = user; }, [user]);
+
+  useEffect(() => {
+    let active = true;
+    if (user?.role !== "admin") {
+      setSupportAgents([]);
+      return () => { active = false; };
+    }
+    apiRequest<{ agents: string[] }>("/api/admin/support-agents", { auth: true })
+      .then((response) => { if (active) setSupportAgents(Array.isArray(response.agents) ? response.agents : []); })
+      .catch(() => { if (active) setSupportAgents([]); });
+    return () => { active = false; };
+  }, [user?.role]);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -317,6 +333,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const addSupportAgent = useCallback(async (phone: string) => {
+    const response = await apiRequest<{ agents: string[] }>("/api/admin/support-agents", {
+      method: "POST", auth: true, body: { phone },
+    });
+    setSupportAgents(Array.isArray(response.agents) ? response.agents : []);
+  }, []);
+
+  const removeSupportAgent = useCallback(async (phone: string) => {
+    const response = await apiRequest<{ agents: string[] }>(`/api/admin/support-agents/${encodeURIComponent(phone)}`, {
+      method: "DELETE", auth: true,
+    });
+    setSupportAgents(Array.isArray(response.agents) ? response.agents : []);
+  }, []);
+
   const clearError = useCallback(() => setError(null), []);
 
   const value = useMemo<AuthContextType>(
@@ -338,8 +368,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       updateUser,
       clearError,
       error,
+      supportAgents,
+      addSupportAgent,
+      removeSupportAgent,
     }),
-    [user, loading, refreshing, verifying, sendOtp, verifyOtp, logout, refreshMe, updateUser, clearError, error]
+    [user, loading, refreshing, verifying, sendOtp, verifyOtp, logout, refreshMe, updateUser, clearError, error, supportAgents, addSupportAgent, removeSupportAgent]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
