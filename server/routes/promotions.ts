@@ -68,7 +68,7 @@ router.post("/stories/:id/view", (req, res: Response): void => {
 /** POST /api/promotions/stories/:id/click */
 router.post("/stories/:id/click", (req, res: Response): void => {
   const id = Number(req.params.id);
-  if (!Number.isFinite(id)) return res.json({ ok: true });
+  if (!Number.isFinite(id)) { res.json({ ok: true }); return; }
   recordBannerClick(id);
   res.json({ ok: true });
 });
