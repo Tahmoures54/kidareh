@@ -16,10 +16,10 @@ interface Props {
 
 export const StoreHeader = memo(({ store, hasBlueTick, followersCount, following, followLoading, onFollow, onShare, isOwnStore }: Props) => {
   const hours = (() => { try { return store.opening_hours ? JSON.parse(store.opening_hours) : {}; } catch { return {}; } })();
-  const dayKey = ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()];
+  const dayKey = ["sun","mon","tue","wed","thu","fri","sat"][new Date().getDay()] ?? "mon";
   const today = hours[dayKey];
   const now = new Date(); const minutes = now.getHours() * 60 + now.getMinutes();
-  const toMinutes = (v?: string) => { if (!v) return -1; const [h,m] = v.split(":").map(Number); return h * 60 + m; };
+  const toMinutes = (v?: string) => { if (!v) return -1; const [h = 0, m = 0] = v.split(":").map(Number); return h * 60 + m; };
   const isOpen = !!today && today.closed !== true && minutes >= toMinutes(today.open) && minutes < toMinutes(today.close);
   return (
     <header className="relative bg-gradient-to-br from-[var(--brand-secondary)] to-[var(--brand-primary)] text-white pt-24 pb-16 overflow-hidden px-5 rounded-b-[3rem] shadow-lg shadow-[var(--brand-glow)] lg:rounded-b-[42px] lg:pt-28 lg:pb-12">
