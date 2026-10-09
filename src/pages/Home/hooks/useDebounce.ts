@@ -20,7 +20,7 @@ interface DebouncedState<T> {
 function useDebounce<T>(
   value: T,
   delay: number,
-  options: DebounceOptions = {}
+  options: Partial<DebounceOptions> = {}
 ): DebouncedState<T> {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
