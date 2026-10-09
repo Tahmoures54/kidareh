@@ -8,7 +8,7 @@ import { friendlyError } from "../../../utils/friendlyError";
 import { analytics } from "../../../utils/analytics";
 
 function dataUrlToBlob(dataUrl: string): Blob {
-  const [header, data] = dataUrl.split(",");
+  const [header = "", data = ""] = dataUrl.split(",");
   const mime = /data:(.*?);/.exec(header)?.[1] || "image/jpeg";
   const binary = atob(data);
   const arr = new Uint8Array(binary.length);
