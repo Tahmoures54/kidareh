@@ -18,10 +18,13 @@ describe("usePullToRefresh", () => {
     const onRefresh = vi.fn(async () => undefined);
     const { result } = renderHook(() => usePullToRefresh({ onRefresh, threshold: 60 }));
 
-    await act(async () => {
+    act(() => {
       result.current.onTouchStart(touchAt(100));
       result.current.onTouchMove(touchAt(220));
-      expect(result.current.pullDistance).toBeGreaterThanOrEqual(60);
+    });
+    expect(result.current.pullDistance).toBeGreaterThanOrEqual(60);
+
+    await act(async () => {
       await result.current.onTouchEnd(touchAt(220));
     });
 
