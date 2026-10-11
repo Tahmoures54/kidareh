@@ -43,8 +43,6 @@ export function useLoginLogic() {
         navigate("/admin");
       } else if (user.role === "support") {
         navigate("/support");
-      } else if (user.role === "marketer") {
-        navigate("/referral");
       } else {
         navigate("/");
       }
