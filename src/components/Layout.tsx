@@ -13,7 +13,6 @@ import {
   LogOut,
   User,
   X,
-  TrendingUp,
   Package,
   Grid3X3,
   ChevronLeft,
@@ -41,14 +40,6 @@ const PROFILE_MENU_ITEMS = [
     path: "/saved",
     color: "text-rose-500",
     bg: "bg-rose-50",
-    requiresAuth: true,
-  },
-  {
-    icon: TrendingUp,
-    label: "دعوت از دوستان",
-    path: "/referral",
-    color: "text-amber-600",
-    bg: "bg-amber-50",
     requiresAuth: true,
   },
   {
@@ -158,7 +149,6 @@ function UserCard({ user, onClose }: { user: any; onClose: () => void }) {
       admin: { emoji: "👑", label: "مدیر" },
       seller: { emoji: "🏪", label: "فروشنده" },
       support: { emoji: "🎧", label: "پشتیبان" },
-      referrer: { emoji: "📢", label: "بازاریاب" },
     };
     return roleMap[role] || { emoji: "👤", label: "کاربر" };
   };
@@ -323,12 +313,6 @@ export default function Layout() {
         onClick: () => go("/saved"),
       });
     }
-    actions.push({
-      icon: TrendingUp,
-      label: "دعوت دوستان",
-      color: "bg-gradient-to-br from-fuchsia-500 to-pink-600",
-      onClick: () => go("/referral"),
-    });
     actions.push({
       icon: Headset,
       label: "پشتیبانی",
