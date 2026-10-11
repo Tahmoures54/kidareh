@@ -94,7 +94,6 @@ export default function Profile() {
 
   return (
     <div className="min-h-screen bg-slate-50/50 pb-28 font-sans" dir="rtl">
-      {/* Hero */}
       <header className="relative overflow-hidden bg-gradient-to-br from-cyan-600 via-teal-600 to-sky-700 px-4 pb-20 pt-8 text-white">
         <div className="pointer-events-none absolute right-0 top-0 h-64 w-64 -translate-y-1/2 translate-x-1/3 rounded-full bg-white/10 blur-3xl" />
         <div className="pointer-events-none absolute bottom-0 left-0 h-40 w-40 -translate-x-1/4 translate-y-1/3 rounded-full bg-cyan-300/20 blur-2xl" />
@@ -150,7 +149,6 @@ export default function Profile() {
       </header>
 
       <main className="relative z-10 mx-auto -mt-12 max-w-2xl px-4">
-        {/* Quick links */}
         <div className="mb-6 grid grid-cols-2 gap-3">
           {[
             { to: "/saved", icon: Heart, label: "علاقه‌مندی", color: "text-rose-500" },
@@ -183,30 +181,6 @@ export default function Profile() {
         </div>
 
         <div className="space-y-3">
-          {/* Referral */}
-          <motion.div custom={4} variants={fadeUp} initial="hidden" animate="show">
-            <Link
-              to="/referral"
-              className="flex items-center justify-between rounded-2xl border border-emerald-200 bg-gradient-to-l from-emerald-50 to-green-50 p-4 shadow-sm transition active:scale-[0.98]"
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100">
-                  <Users className="h-6 w-6 text-emerald-600" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-emerald-900">
-                    {isMarketer ? "پنل بازاریاب" : "دعوت دوستان"}
-                  </h3>
-                  <p className="mt-0.5 text-[10px] text-emerald-700">
-                    {isMarketer ? "کد دعوت، موجودی و برداشت" : "معرفی کن و جایزه بگیر"}
-                  </p>
-                </div>
-              </div>
-              <ChevronLeft className="h-5 w-5 text-emerald-400" />
-            </Link>
-          </motion.div>
-
-          {/* Seller store status */}
           {isSeller && !loading && (
             <>
               {!hasStore ? (
@@ -304,7 +278,6 @@ export default function Profile() {
           </Link>
         </div>
 
-        {/* Account info */}
         <div className="mt-8 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
           <h3 className="mb-4 flex items-center gap-2 text-sm font-black text-slate-900">
             <User className="h-5 w-5 text-cyan-500" /> اطلاعات حساب
