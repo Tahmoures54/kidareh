@@ -1,1 +1,377 @@
-PLACEHOLDER
+import "dotenv/config";
+import "express-async-errors";
+import express, { type Request, type Response, type NextFunction } from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import cookieParser from "cookie-parser";
+import { createServer } from "http";
+import { Server, Socket } from "socket.io";
+import helmet from "helmet";
+import compression from "compression";
+import morgan from "morgan";
+import cors, { type CorsOptions } from "cors";
+import rateLimit from "express-rate-limit";
+import crypto from "crypto";
+import fs from "fs";
+import { z } from "zod";
+import timeout from "connect-timeout";
+import jwt from "jsonwebtoken";
+
+import logger from "./logger.js";
+import db from "./db.js";
+import { ensureMessagesRooms } from "./ensureMessagesRooms.js";
+import { bootstrapCache, closeRedis } from "./bootstrapCache.js";
+
+import authRoutes, { handleBecomeSeller } from "./routes/auth.js";
+import { requireAuth } from "./middleware/auth.js";
+import aiRoutes from "./routes/ai.js";
+import productsRoutes from "./routes/products.js";
+import productsSearchRoutes from "./routes/products.search.route.js";
+import reportsRoutes from "./routes/reports.js";
+import adminRoutes from "./routes/admin.js";
+import paymentRoutes from "./routes/payment.js";
+import storesRoutes from "./routes/stores.js";
+import messagesRoutes from "./routes/messages.js";
+import supportRoutes from "./routes/support.js";
+import promotionsRoutes from "./routes/promotions.js";
+import presenceRoutes from "./routes/presence.js";
+import reservationsRoutes from "./routes/reservations.js";
+import { ensurePromotionTables } from "./services/promotions.js";
+import { getCachedProductDetail } from "./services/products.cached.js";
+import { cacheGetOrSet, CacheKeys, CacheTTL } from "./services/cache.js";
+import { normalizeStoreForDetail } from "./routes/stores.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const ROOT_DIR = process.cwd();
+
+const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
+const NODE_ENV = process.env.NODE_ENV || "development";
+const isProd = NODE_ENV === "production";
+
+const MessageSchema = z.object({
+  roomId: z.string().min(1).max(100),
+  senderId: z.string().min(1).max(100),
+  receiverId: z.union([z.string(), z.number()]).optional(),
+  text: z.string().min(1).max(5000),
+  id: z.string().min(1).max(100).optional(),
+});
+const JoinRoomSchema = z.string().min(1).max(100);
+const TypingSchema = z.string().min(1).max(100);
+const MessageReadSchema = z.object({ roomId: z.string().min(1).max(100), messageId: z.string().min(1).max(100) });
+
+function validateEnvironment() {
+  const requiredVars = ["JWT_SECRET", "COOKIE_SECRET", "DATABASE_URL"];
+  const missing = requiredVars.filter((k) => !process.env[k]);
+  if (missing.length > 0 && isProd) {
+    throw new Error(`Missing required env vars: ${missing.join(", ")}`);
+  }
+  if (missing.length > 0) {
+    logger.warn(`Missing env vars (development): ${missing.join(", ")}`);
+  }
+  if (isProd) {
+    if ((process.env.JWT_SECRET || "").length < 32) throw new Error("JWT_SECRET must be at least 32 characters in production");
+    if ((process.env.COOKIE_SECRET || "").length < 32) throw new Error("COOKIE_SECRET must be at least 32 characters in production");
+    if (!process.env.APP_URL) throw new Error("APP_URL is required in production");
+    if (!process.env.ADMIN_PHONE) throw new Error("ADMIN_PHONE is required in production");
+    if (process.env.SHOW_OTP_IN_DEV === "true") throw new Error("SHOW_OTP_IN_DEV must be false in production");
+  }
+}
+
+function getAllowedOrigins(): string[] {
+  const extraOrigins = process.env.ALLOWED_ORIGINS?.split(",").map((s) => s.trim()).filter(Boolean) ?? [];
+  return isProd
+    ? [process.env.APP_URL || "https://kidareh.liara.run", "https://kidareh.iran.liara.run", ...extraOrigins]
+    : ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000", ...extraOrigins];
+}
+
+const CORS_OPTIONS: CorsOptions = (() => {
+  const allowlist = new Set(getAllowedOrigins());
+  return {
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Kidareh-Client", "X-Requested-With"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    origin(origin, callback) {
+      if (!origin || !isProd || allowlist.has(origin)) return callback(null, true);
+      logger.warn(`CORS blocked: ${origin}`);
+      return callback(new Error("Not allowed by CORS"));
+    },
+  };
+})();
+
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: isProd ? 300 : 1000,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "تعداد درخواست‌ها بیش از حد مجاز است. لطفاً بعداً تلاش کنید." },
+  skip: (req) => req.url.startsWith("/api/health") || !req.url.startsWith("/api/"),
+});
+
+const authLimiter = rateLimit({
+  windowMs: 2 * 60 * 1000,
+  max: isProd ? 5 : 50,
+  message: { error: "تعداد درخواست‌های ارسال کد بیش از حد است. ۲ دقیقه صبر کنید." },
+});
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function productShareHtml(baseHtml: string, product: any, url: string): string {
+  const name = String(product.name || "کالا");
+  const price = Number(product.price);
+  const priceText = price > 0 ? "قیمت " + price.toLocaleString("fa-IR") + " تومان" : "قیمت توافقی";
+  const status = String(product.status || "وضعیت نامشخص");
+  const store = String(product.store_name || "فروشگاه");
+  const city = String(product.store_city || "");
+  const description = String(product.description || "").trim();
+  const suffix = city ? " در " + city : "";
+  const fallbackDescription = priceText + " — " + status + " — در " + store + suffix + ". ببین کی داره، حضوری بگیر.";
+  const metaDescription = (description || fallbackDescription).slice(0, 180);
+  const rawImage = String(product.image_url || "https://kidareh.com/og-image-1200x630.jpg");
+  const image = /^https?:\/\//i.test(rawImage) ? rawImage : new URL(rawImage, process.env.APP_URL || "https://kidareh.com").href;
+  const title = name + " — کی‌داره";
+  let html = baseHtml;
+  const replacements: Array<[string, string]> = [
+    ["<title>کی‌داره | ببین کی داره، حضوری بگیر</title>", "<title>" + escapeHtml(title) + "</title>"],
+    ['<meta name="description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="description" content="' + escapeHtml(metaDescription) + '">'],
+    ['<meta property="og:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta property="og:title" content="' + escapeHtml(title) + '">'],
+    ['<meta property="og:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta property="og:description" content="' + escapeHtml(metaDescription) + '">'],
+    ['<meta property="og:url" content="https://kidareh.com/">', '<meta property="og:url" content="' + escapeHtml(url) + '">'],
+    ['<meta property="og:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta property="og:image" content="' + escapeHtml(image) + '">'],
+    ['<meta name="twitter:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta name="twitter:title" content="' + escapeHtml(title) + '">'],
+    ['<meta name="twitter:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="twitter:description" content="' + escapeHtml(metaDescription) + '">'],
+    ['<meta name="twitter:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta name="twitter:image" content="' + escapeHtml(image) + '">'],
+    ['<link rel="canonical" href="https://kidareh.com/">', '<link rel="canonical" href="' + escapeHtml(url) + '">'],
+  ];
+  for (const [from, to] of replacements) html = html.replace(from, to);
+  return html;
+}
+
+function ensureDirectories() {
+  const dirs = ["data/uploads/products", "data/uploads/avatars", "data/uploads/stores", "data/logs", "data/backup", "data/database"];
+  for (const dir of dirs) {
+    const p = path.join(ROOT_DIR, dir);
+    if (!fs.existsSync(p)) {
+      fs.mkdirSync(p, { recursive: true });
+      logger.info(`Created: ${dir}/`);
+    }
+  }
+}
+
+async function checkRoomAccess(userId: string, roomId: string): Promise<boolean> {
+  try {
+    const uid = Number(userId);
+    const room = db.prepare(`SELECT 1 FROM messages_rooms WHERE room_id = ? AND (user1_id = ? OR user2_id = ?) LIMIT 1`).get(roomId, uid, uid);
+    if (room) return true;
+    const legacy = db.prepare(`SELECT 1 FROM messages WHERE room_id = ? AND (sender_id = ? OR receiver_id = ?) LIMIT 1`).get(roomId, uid, uid);
+    return !!legacy;
+  } catch {
+    return false;
+  }
+}
+
+interface SocketData { user: { id: string; role: string }; }
+
+function setupSocket(io: Server) {
+  const onlineUsers = new Map<string, Set<string>>();
+  io.use((socket: Socket, next) => {
+    const cookieHeader = socket.handshake.headers.cookie || "";
+    const cookieName = isProd ? "__Host-kidareh_session" : "kidareh_session";
+    const match = cookieHeader.split(";").map((part) => part.trim()).find((part) => part.startsWith(`${cookieName}=`));
+    const handshakeToken = typeof socket.handshake.auth?.token === "string" ? socket.handshake.auth.token : "";
+    const token = handshakeToken || (match ? decodeURIComponent(match.slice(cookieName.length + 1)) : "");
+    if (!token) return next(new Error("Authentication required"));
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { id: string; role: string };
+      socket.data = { user: decoded };
+      next();
+    } catch {
+      next(new Error("Invalid session"));
+    }
+  });
+  io.on("connection", (socket: Socket) => {
+    const userData = (socket.data as SocketData).user;
+    const userId = String(userData.id);
+    if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
+    onlineUsers.get(userId)!.add(socket.id);
+    socket.broadcast.emit("user_online", { userId });
+    const handleWithAuth = async (roomId: string, handler: Function, ack?: Function) => {
+      if (!(await checkRoomAccess(userId, roomId))) {
+        if (ack) ack({ ok: false, error: "دسترسی غیرمجاز" });
+        else socket.emit("error", { message: "دسترسی به این اتاق ندارید" });
+        return;
+      }
+      handler();
+    };
+    socket.on("join_room", async (r) => {
+      try {
+        const roomId = JoinRoomSchema.parse(r);
+        await handleWithAuth(roomId, () => { socket.join(roomId); socket.emit("joined_room", { roomId }); });
+      } catch {}
+    });
+    socket.on("send_message", async (r, ack) => {
+      try {
+        const d = MessageSchema.parse(r);
+        if (String(d.senderId) !== userId) return ack?.({ ok: false, error: "sender mismatch" });
+        await handleWithAuth(d.roomId, () => {
+          try {
+            const room = db.prepare(`SELECT user1_id, user2_id FROM messages_rooms WHERE room_id = ?`).get(d.roomId) as any;
+            let receiverId = 0;
+            if (room) {
+              receiverId = Number(room.user1_id) === Number(d.senderId)
+                ? Number(room.user2_id)
+                : Number(room.user1_id);
+            }
+            if (!receiverId) { ack?.({ ok: false, error: "receiver unknown" }); return; }
+            if (d.receiverId != null && Number(d.receiverId) !== receiverId) {
+              ack?.({ ok: false, error: "receiver mismatch" });
+              return;
+            }
+            const result = db.prepare(`INSERT INTO messages (room_id, sender_id, receiver_id, content, is_read, created_at) VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`).run(d.roomId, Number(d.senderId), receiverId, d.text);
+            db.prepare(`UPDATE messages_rooms SET updated_at = CURRENT_TIMESTAMP WHERE room_id = ?`).run(d.roomId);
+            const payload = { id: result.lastInsertRowid, roomId: d.roomId, senderId: d.senderId, text: d.text, content: d.text, timestamp: new Date().toISOString(), status: "sent" };
+            socket.to(d.roomId).emit("receive_message", payload);
+            ack?.({ ok: true, message: payload });
+          } catch (err) {
+            logger.error("Socket message persist error:", err);
+            socket.to(d.roomId).emit("receive_message", { ...d, timestamp: new Date().toISOString(), status: "sent" });
+            ack?.({ ok: true });
+          }
+        }, ack);
+      } catch { ack?.({ ok: false }); }
+    });
+    socket.on("typing", async (r) => { try { const roomId = TypingSchema.parse(r); await handleWithAuth(roomId, () => socket.to(roomId).emit("user_typing", { roomId, userId })); } catch {} });
+    socket.on("stop_typing", async (r) => { try { const roomId = TypingSchema.parse(r); await handleWithAuth(roomId, () => socket.to(roomId).emit("user_stop_typing", { roomId, userId })); } catch {} });
+    socket.on("message_read", async (r) => { try { const { roomId, messageId } = MessageReadSchema.parse(r); await handleWithAuth(roomId, () => { db.prepare(`UPDATE messages SET is_read = 1 WHERE id = ? AND receiver_id = ?`).run(messageId, Number(userId)); socket.to(roomId).emit("message_read", { roomId, messageId, userId }); }); } catch {} });
+    socket.on("disconnect", () => { const sockets = onlineUsers.get(userId); if (sockets) { sockets.delete(socket.id); if (sockets.size === 0) { onlineUsers.delete(userId); socket.broadcast.emit("user_offline", { userId }); } } });
+  });
+}
+
+async function startServer() {
+  try {
+    validateEnvironment();
+    ensureDirectories();
+    ensureMessagesRooms();
+    await bootstrapCache();
+    try { ensurePromotionTables(); } catch {}
+
+    const app = express();
+    const httpServer = createServer(app);
+    app.set("trust proxy", isProd ? 1 : "loopback, linklocal, uniquelocal");
+    app.disable("x-powered-by");
+    app.use(compression());
+    app.use(cors(CORS_OPTIONS));
+    app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
+    app.use(timeout("30s"));
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      const incomingRequestId = req.headers["x-request-id"];
+      req.id = typeof incomingRequestId === "string" && /^[A-Za-z0-9._:-]{1,100}$/.test(incomingRequestId)
+        ? incomingRequestId
+        : crypto.randomUUID();
+      res.setHeader("x-request-id", req.id);
+      next();
+    });
+    app.use(morgan(isProd ? "combined" : "dev", { skip: (req) => req.url.startsWith("/api/health") }));
+    app.use(express.json({ limit: "10mb" }));
+    app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+    app.use(cookieParser(process.env.COOKIE_SECRET!));
+
+    app.use((req: Request, res: Response, next: NextFunction) => {
+      if (!isProd || !req.path.startsWith("/api/") || ["GET", "HEAD", "OPTIONS"].includes(req.method)) return next();
+      const sessionCookie = (req as any).cookies?.["__Host-kidareh_session"] || (req as any).cookies?.kidareh_session;
+      if (!sessionCookie) return next();
+      const origin = req.get("origin");
+      const allowed = new Set(getAllowedOrigins());
+      if (!origin || !allowed.has(origin)) return res.status(403).json({ error: "درخواست ناامن رد شد" });
+      next();
+    });
+
+    const io = new Server(httpServer, { cors: { origin: getAllowedOrigins(), credentials: true }, transports: ["websocket", "polling"] });
+    setupSocket(io);
+    app.set("io", io);
+
+    for (const folder of ["products", "avatars", "stores"]) {
+      app.use(`/uploads/${folder}`, express.static(path.join(ROOT_DIR, `data/uploads/${folder}`), { maxAge: "7d" }));
+    }
+    app.use("/api", apiLimiter);
+    app.use("/api/auth/send-otp", authLimiter);
+
+    app.get("/api/health", async (_req, res) => res.status(200).json({ status: "ok" }));
+    app.get("/api/ready", async (_req, res) => {
+      try {
+        db.prepare("SELECT 1").get();
+        res.status(200).json({ status: "ready" });
+      } catch {
+        res.status(503).json({ status: "not_ready" });
+      }
+    });
+    app.use("/api/auth", authRoutes);
+    app.post("/api/user/become-seller", requireAuth, handleBecomeSeller);
+    app.use("/api/ai", aiRoutes);
+    app.use("/api/products", productsSearchRoutes);
+    app.use("/api/products", productsRoutes);
+    app.use("/api/reports", reportsRoutes);
+    app.use("/api/admin", adminRoutes);
+    app.use("/api/stores", storesRoutes);
+    app.use("/api/payment", paymentRoutes);
+    app.use("/api/messages", messagesRoutes);
+    app.use("/api/support", supportRoutes);
+    app.use("/api/promotions", promotionsRoutes);
+    app.use("/api/presence", presenceRoutes);
+    app.use("/api/reservations", reservationsRoutes);
+
+    // NOTE: referral system removed for simplicity
+
+    if (isProd) {
+      const publicPath = fs.existsSync(path.join(ROOT_DIR, "dist/public")) ? path.join(ROOT_DIR, "dist/public") : path.join(ROOT_DIR, "dist");
+      const indexPath = path.join(publicPath, "index.html");
+
+      app.get("/store/:id", async (req: Request, res: Response) => {
+        try {
+          const storeIdParam = typeof req.params.id === "string" ? req.params.id : "";
+          if (!/^\\d+$/.test(storeIdParam)) return res.sendFile(indexPath);
+          const id = Number(storeIdParam);
+          const store = await cacheGetOrSet(CacheKeys.store(id), CacheTTL.STORES, async () => {
+            const row = db.prepare(`\n              SELECT s.*, u.name as owner_name, u.phone as owner_phone,\n                COUNT(DISTINCT p.id) as total_products, AVG(r.rating) as avg_rating, COUNT(DISTINCT r.id) as review_count,\n                COUNT(DISTINCT sf.id) as follower_count,\n                COALESCE(strftime('%Y/%m', s.created_at), '') as joined\n              FROM stores s JOIN users u ON s.user_id = u.id\n              LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'\n              LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'\n              LEFT JOIN store_followers sf ON sf.store_id = s.id\n              WHERE s.id = ? GROUP BY s.id`).get(id) as any;
+            if (!row) return null;
+            return normalizeStoreForDetail(row);
+          });
+          if (!store) return res.sendFile(indexPath);
+          let baseHtml = fs.readFileSync(indexPath, "utf8");
+          // simplified share - keep base for now
+          res.send(baseHtml);
+        } catch {
+          res.sendFile(indexPath);
+        }
+      });
+
+      app.get("*", (_req, res) => res.sendFile(indexPath));
+    }
+
+    httpServer.listen(PORT, HOST, () => {
+      logger.info(`Server running on http://${HOST}:${PORT} (${NODE_ENV})`);
+    });
+
+    const shutdown = async (signal: string) => {
+      logger.info(`${signal} received, shutting down...`);
+      httpServer.close();
+      try { await closeRedis(); } catch {}
+      process.exit(0);
+    };
+    process.on("SIGTERM", () => shutdown("SIGTERM"));
+    process.on("SIGINT", () => shutdown("SIGINT"));
+  } catch (err) {
+    logger.error("Failed to start server:", err);
+    process.exit(1);
+  }
+}
+
+startServer();
