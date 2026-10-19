@@ -15,5 +15,6 @@ describe("extractBearerToken", () => {
     expect(extractBearerToken("")).toBeNull();
     expect(extractBearerToken("Basic abc123")).toBeNull();
     expect(extractBearerToken("Bearer   ")).toBeNull();
+    expect(extractBearerToken("Bearer \nabc123")).toBeNull();
   });
 });
