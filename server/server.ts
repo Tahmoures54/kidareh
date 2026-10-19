@@ -273,10 +273,11 @@ async function startServer() {
     app.use(timeout("30s"));
     app.use((req: Request, res: Response, next: NextFunction) => {
       const incomingRequestId = req.headers["x-request-id"];
-      req.id = typeof incomingRequestId === "string" && /^[A-Za-z0-9._:-]{1,100}$/.test(incomingRequestId)
+      const requestId = typeof incomingRequestId === "string" && /^[A-Za-z0-9._:-]{1,100}$/.test(incomingRequestId)
         ? incomingRequestId
         : crypto.randomUUID();
-      res.setHeader("x-request-id", req.id);
+      (req as Request & { id: string }).id = requestId;
+      res.setHeader("x-request-id", requestId);
       next();
     });
     app.use(morgan(isProd ? "combined" : "dev", { skip: (req) => req.url.startsWith("/api/health") }));
@@ -337,12 +338,12 @@ async function startServer() {
       app.get("/store/:id", async (req: Request, res: Response) => {
         try {
           const storeIdParam = typeof req.params.id === "string" ? req.params.id : "";
-          if (!/^\\d+$/.test(storeIdParam)) return res.sendFile(indexPath);
+          if (!/^\d+$/.test(storeIdParam)) return res.sendFile(indexPath);
           const id = Number(storeIdParam);
           const store = await cacheGetOrSet(CacheKeys.store(id), CacheTTL.STORES, async () => {
             const row = db.prepare(`\n              SELECT s.*, u.name as owner_name, u.phone as owner_phone,\n                COUNT(DISTINCT p.id) as total_products, AVG(r.rating) as avg_rating, COUNT(DISTINCT r.id) as review_count,\n                COUNT(DISTINCT sf.id) as follower_count,\n                COALESCE(strftime('%Y/%m', s.created_at), '') as joined\n              FROM stores s JOIN users u ON s.user_id = u.id\n              LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'\n              LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'\n              LEFT JOIN store_followers sf ON sf.store_id = s.id\n              WHERE s.id = ? GROUP BY s.id`).get(id) as any;
             if (!row) return null;
-            return normalizeStoreForDetail(row);
+            return normalizeStoreForDetail(row, []);
           });
           if (!store) return res.sendFile(indexPath);
           let baseHtml = fs.readFileSync(indexPath, "utf8");
