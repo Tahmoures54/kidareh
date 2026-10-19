@@ -299,7 +299,7 @@ async function startServer() {
     app.set("io", io);
 
     for (const folder of ["products", "avatars", "stores"]) {
-      app.use(`/uploads/${folder}`, express.static(path.join(ROOT_DIR, `data/uploads/${folder}`), { maxAge: "7d" }));
+      app.use(`/uploads/${folder}`, express.static(path.join(ROOT_DIR, `public/uploads/${folder}`), { maxAge: "7d" }));
     }
     app.use("/api", apiLimiter);
     app.use("/api/auth/send-otp", authLimiter);
