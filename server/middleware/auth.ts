@@ -48,7 +48,7 @@ function extractToken(req: Request): string | null {
   // in secure platform storage. This keeps the browser cookie model intact
   // while allowing the Flutter app to use the same API.
   const authorization = req.get("authorization") || "";
-  const bearer = authorization.match(/^Bearer\\s+(.+)$/i);
+  const bearer = authorization.match(/^Bearer\s+(.+)$/i);
   if (bearer?.[1]) return bearer[1].trim();
 
   if ("cookies" in req) {
