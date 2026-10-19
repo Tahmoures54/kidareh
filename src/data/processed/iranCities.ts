@@ -18,6 +18,40 @@ type AnyRecord = Record<string, any>;
 
 const RAW_IRAN_CITIES = [...RAW_PART_0, ...RAW_PART_1];
 
+// The source dataset provides Persian names, while the UI and coordinate catalog
+// use stable English slugs for high-traffic cities.
+const ENGLISH_CITY_SLUGS: Record<string, string> = {
+  "تهران": "tehran",
+  "کرج": "karaj",
+  "مشهد": "mashhad",
+  "اصفهان": "isfahan",
+  "شیراز": "shiraz",
+  "تبریز": "tabriz",
+  "اهواز": "ahvaz",
+  "قم": "qom",
+  "کرمانشاه": "kermanshah",
+  "ارومیه": "urmia",
+  "رشت": "rasht",
+  "کرمان": "kerman",
+  "همدان": "hamadan",
+  "یزد": "yazd",
+  "اردبیل": "ardabil",
+  "زاهدان": "zahedan",
+  "بندرعباس": "bandar-abbas",
+  "بندر عباس": "bandar-abbas",
+  "اراک": "arak",
+  "ساری": "sari",
+  "گرگان": "gorgan",
+  "قزوین": "qazvin",
+  "زنجان": "zanjan",
+  "خرم‌آباد": "khorramabad",
+  "خرم آباد": "khorramabad",
+  "سنندج": "sanandaj",
+  "بوشهر": "bushehr",
+  "اسلامشهر": "eslamshahr",
+  "کاشان": "kashan",
+};
+
 function expandCompactRaw(): AnyRecord[] {
   return RAW_IRAN_CITIES.map((row) => ({
     "province-fa": row.p,
@@ -62,7 +96,7 @@ function makeCity(input: AnyRecord, fallbackProvinceFa = "", fallbackProvinceEn 
   if (!name) return null;
 
   const province = normalizeCityText(input["province-fa"] ?? input.province ?? fallbackProvinceFa);
-  const cityEn = String(input["city-en"] ?? input.slug ?? "").trim();
+  const cityEn = String(input["city-en"] ?? input.slug ?? ENGLISH_CITY_SLUGS[name] ?? "").trim();
   const provinceEn = String(input["province-en"] ?? fallbackProvinceEn ?? "").trim();
   const coords = coordsFor(cityEn, name);
 
