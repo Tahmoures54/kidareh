@@ -250,7 +250,13 @@ router.post("/verify", requireAuth, async (req: AuthRequest, res) => {
         { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, timeout: 15_000 }
       );
     } catch (ppErr: any) {
-      db.prepare(`UPDATE transactions SET status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(transactionId);
+      const failedUpdate = db.prepare(`UPDATE transactions SET status = 'failed', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND status = 'pending'`).run(transactionId, userId);
+      if (failedUpdate.changes === 0) {
+        const latest = db.prepare(`SELECT status FROM transactions WHERE id = ? AND user_id = ?`).get(transactionId, userId) as any;
+        if (latest?.status === "success") {
+          return res.json({ success: true, message: "این تراکنش قبلاً تأیید شده است" });
+        }
+      }
       return res.status(400).json({ error: "تراکنش توسط درگاه تأیید نشد", details: ppErr.response?.data });
     }
 
@@ -258,12 +264,25 @@ router.post("/verify", requireAuth, async (req: AuthRequest, res) => {
     const settings: Record<string, string> = {};
     for (const row of settingsRows) settings[row.key] = row.value;
 
-    db.transaction(() => {
-      db.prepare(`UPDATE transactions SET status = 'success', ref_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(refId, transactionId);
+    const processed = db.transaction(() => {
+      // Atomic claim: only one concurrent verification may transition pending -> success.
+      const claimed = db.prepare(`UPDATE transactions SET status = 'success', ref_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ? AND status = 'pending'`)
+        .run(refId, transactionId, userId);
+      if (claimed.changes !== 1) return false;
+
       const items = tx.metadata ? JSON.parse(tx.metadata) : [];
       if (items.length > 0) activateBadges(userId, items, settings);
       processReferralCommission(userId, tx.amount);
+      return true;
     })();
+
+    if (!processed) {
+      const latest = db.prepare(`SELECT status FROM transactions WHERE id = ? AND user_id = ?`).get(transactionId, userId) as any;
+      if (latest?.status === "success") {
+        return res.json({ success: true, message: "این تراکنش قبلاً تأیید شده است" });
+      }
+      return res.status(409).json({ error: "وضعیت تراکنش تغییر کرده است؛ لطفاً وضعیت را دوباره بررسی کنید" });
+    }
 
     return res.json({ success: true, message: "پرداخت با موفقیت تأیید شد" });
   } catch (err: any) {
