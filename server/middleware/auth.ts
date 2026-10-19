@@ -3,6 +3,7 @@ import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import db from "../db.js";
 import logger from "../logger.js";
+import { extractBearerToken } from "../utils/bearerToken.js";
 
 // ══════════════════════════════════════════════
 // Types
@@ -47,9 +48,8 @@ function extractToken(req: Request): string | null {
   // Mobile/API clients: short-lived Bearer access token stored by the app
   // in secure platform storage. This keeps the browser cookie model intact
   // while allowing the Flutter app to use the same API.
-  const authorization = req.get("authorization") || "";
-  const bearer = authorization.match(/^Bearer\s+(.+)$/i);
-  if (bearer?.[1]) return bearer[1].trim();
+  const bearer = extractBearerToken(req.get("authorization"));
+  if (bearer) return bearer;
 
   if ("cookies" in req) {
     const cookies = (req as any).cookies || {};
