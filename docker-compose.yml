@@ -50,7 +50,7 @@ services:
       - CACHE_TTL_PRODUCT=${CACHE_TTL_PRODUCT:-120}
     volumes:
       - database-data:/data
-      - uploads-data:/app/uploads
+      - uploads-data:/app/public/uploads
       - logs-data:/app/logs
       - backup-data:/app/backup
     networks:
