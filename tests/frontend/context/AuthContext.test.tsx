@@ -84,7 +84,7 @@ describe('AuthContext', () => {
 
     expect(user).toEqual(fakeUser);
     expect(localStorage.getItem('token')).toBeNull();
-    expect(result.current.user).toEqual(fakeUser);
+    await waitFor(() => expect(result.current.user).toEqual(fakeUser));
   });
 
   it('logout clears token and user', async () => {
