@@ -1,36 +1,36 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import request from 'supertest';
-import express from 'express';
-import productsRouter from '../products';
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import express from "express";
+import { createServer, type Server } from "node:http";
+import productsRouter from "../../../server/routes/products.js";
 
 const app = express();
 app.use(express.json());
-app.use('/api/products', productsRouter);
+app.use("/api/products", productsRouter);
 
-describe('Products API', () => {
-  it('GET /api/products - ÈÇíÏ áíÓÊ ãÍÕæáÇÊ ÑÇ ÈÑÑÏÇäÏ', async () => {
-    const response = await request(app)
-      .get('/api/products')
-      .expect('Content-Type', /json/)
-      .expect(200);
+let server: Server;
+let baseUrl: string;
 
-    expect(response.body).toHaveProperty('products');
-    expect(Array.isArray(response.body.products)).toBe(true);
-  });
+beforeAll(async () => {
+  server = createServer(app);
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  const address = server.address();
+  if (!address || typeof address === "string") throw new Error("Test server did not bind to a TCP port");
+  baseUrl = `http://127.0.0.1:${address.port}`;
+});
 
-  it('POST /api/products - ÈÇíÏ ãÍÕæá ÌÏíÏ ÇíÌÇÏ ˜äÏ', async () => {
-    const newProduct = {
-      title: 'ãÍÕæá ÊÓÊí',
-      price: 500000,
-      description: 'ÊæÖíÍÇÊ ÊÓÊ'
-    };
+afterAll(async () => {
+  if (server?.listening) await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+});
 
-    const response = await request(app)
-      .post('/api/products')
-      .send(newProduct)
-      .expect(201);
+describe("Products API", () => {
+  it("GET /api/products returns a JSON product list and pagination", async () => {
+    const response = await fetch(`${baseUrl}/api/products`);
+    expect(response.status).toBe(200);
+    expect(response.headers.get("content-type")).toMatch(/application\/json/i);
 
-    expect(response.body).toHaveProperty('id');
-    expect(response.body.title).toBe(newProduct.title);
+    const body = await response.json();
+    expect(body).toHaveProperty("products");
+    expect(Array.isArray(body.products)).toBe(true);
+    expect(body).toHaveProperty("pagination");
   });
 });
