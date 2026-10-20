@@ -115,7 +115,7 @@ const authLimiter = rateLimit({
 });
 
 function ensureDirectories() {
-  const dirs = ["data/uploads/products", "data/uploads/avatars", "data/uploads/stores", "data/logs", "data/backup", "data/database"];
+  const dirs = ["public/uploads/products", "public/uploads/avatars", "public/uploads/stores", "data/logs", "data/backup", "data/database"];
   for (const dir of dirs) {
     const p = path.join(ROOT_DIR, dir);
     if (!fs.existsSync(p)) {
