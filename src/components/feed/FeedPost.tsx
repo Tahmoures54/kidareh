@@ -1,5 +1,5 @@
 import React, { memo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { BadgeCheck, Bookmark, Heart, MessageCircle, MoreHorizontal, Radio, Send, MapPin, Navigation } from "lucide-react";
 import { useFeedPost } from "../../hooks/useFeedPost";
 import type { FeedPostData } from "../../lib/feedMappers";
@@ -19,7 +19,6 @@ function FeedMedia({ sources, title, storeName }: { sources: string[]; title: st
 interface Props { post: FeedPostData; onRemoved?: (post: FeedPostData) => void; }
 
 export const FeedPost = memo(function FeedPost({ post, onRemoved }: Props) {
-  const navigate = useNavigate();
   const { liked, saved, busy, flash, like, save, share, openComments, openMessage } = useFeedPost(post);
   const [burst, setBurst] = useState(0);
   const [menu, setMenu] = useState(false);
