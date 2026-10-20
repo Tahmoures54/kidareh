@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   redis:
     image: redis:7-alpine
@@ -37,13 +35,13 @@ services:
       - PORT=3000
       - HOST=0.0.0.0
       - DATABASE_URL=/data/app.db
-      - JWT_SECRET=${JWT_SECRET:-your-super-secret-key-minimum-32-characters}
-      - COOKIE_SECRET=${COOKIE_SECRET:-your-cookie-secret-minimum-32-chars}
+      - JWT_SECRET=${JWT_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
       - KAVENEGAR_API_KEY=${KAVENEGAR_API_KEY:-}
       - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - ZIBAL_MERCHANT=${ZIBAL_MERCHANT:-}
-      - APP_URL=${APP_URL:-http://localhost:3000}
+      - APP_URL=${APP_URL}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - REDIS_ENABLED=${REDIS_ENABLED:-true}
       - CACHE_TTL_SEARCH=${CACHE_TTL_SEARCH:-60}
