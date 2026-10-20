@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles, RefreshCw, Search, Loader2, X, SlidersHorizontal } from "lucide-react";
-import { FilterKey, SORT_OPTIONS } from "../types";
+import { SORT_OPTIONS } from "../types";
 
 function FilterChip({
   active,
