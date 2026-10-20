@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-export default defineConfig(({ mode, command }) => {
+export default defineConfig(({ mode, command: _command }) => {
   const isProd = mode === "production";
 
   return {
