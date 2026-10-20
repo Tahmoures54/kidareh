@@ -8,7 +8,10 @@
 
 - [ ] `JWT_SECRET` و `COOKIE_SECRET` قوی و یکتا
 - [ ] `NODE_ENV=production`
+- [ ] `APP_URL` is the public HTTPS URL (never a localhost URL in production)
+- [ ] Docker/host persistent storage is mounted for `DATABASE_URL` and the database `backups` directory; verify data survives a redeploy
 - [ ] `ZIBAL_MERCHANT` واقعی (اگر پرداخت فعال است)
+- [ ] برای Docker Compose، `JWT_SECRET` و `COOKIE_SECRET` را پیش از اجرا تنظیم کنید؛ مقدار پیش‌فرض ناامن وجود ندارد
 - [ ] کلید پیامک (کاوه نگار یا سرویس شما)
 - [ ] `REDIS_URL` در صورت استفاده از کش (اختیاری اما توصیه‌شده)
 - [ ] دامنه و `APP_URL` درست در CORS / ALLOWED_ORIGINS
