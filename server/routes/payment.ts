@@ -137,8 +137,8 @@ const initiateSchema = z.object({
 });
 
 const verifySchema = z.object({
-  refId: z.string({ required_error: "کد پیگیری درگاه الزامی است" }),
-  transactionId: z.number({ required_error: "شناسه تراکنش الزامی است" }),
+  refId: z.string({ required_error: "کد پیگیری درگاه الزامی است" }).trim().min(1).max(200),
+  transactionId: z.number({ required_error: "شناسه تراکنش الزامی است" }).int().positive(),
 });
 
 router.post("/initiate", requireAuth, async (req: AuthRequest, res) => {
@@ -257,7 +257,11 @@ router.post("/verify", requireAuth, async (req: AuthRequest, res) => {
           return res.json({ success: true, message: "این تراکنش قبلاً تأیید شده است" });
         }
       }
-      return res.status(400).json({ error: "تراکنش توسط درگاه تأیید نشد", details: ppErr.response?.data });
+      logger.warn("PayPing verification rejected a transaction", {
+        transactionId,
+        providerStatus: ppErr.response?.status,
+      });
+      return res.status(400).json({ error: "تراکنش توسط درگاه تأیید نشد" });
     }
 
     const settingsRows = db.prepare("SELECT key, value FROM settings").all() as any[];
