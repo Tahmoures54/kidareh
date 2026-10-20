@@ -151,7 +151,7 @@ export function setSecurityHeaders(): void {
   };
 
   // This is a placeholder - actual headers should be set on server
-  console.log('Security headers configuration:', headers);
+  console.warn('Security headers configuration:', headers);
 }
 
 export default {
