@@ -509,7 +509,7 @@ const insertDefaultSettings = () => {
     ["REFERRAL_PERCENTAGE", "10",    "درصد پورسانت رفرال"],
     ["MIN_WITHDRAWAL",      "50000", "حداقل مبلغ برداشت (تومان)"],
     ["BLUE_TICK_DAYS",      "30",    "مدت اعتبار تیک آبی (روز)"],
-    ["PAYPING_TOKEN",       "",      "توکن درگاه پرداخت PayPing"],
+    ["ZIBAL_MERCHANT",      "",      "شناسه پذیرنده درگاه زیبال"],
   ];
 
   const stmt = db.prepare(`
