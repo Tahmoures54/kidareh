@@ -1,5 +1,5 @@
 ﻿// src/components/AIAssistant.tsx
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
@@ -16,7 +16,7 @@ import {
   Check,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { apiRequest, ApiError } from "../utils/api";
+import { apiRequest } from "../utils/api";
 import { useGeolocation } from "../hooks/useGeolocation";
 
 /* ====================== TYPES ====================== */
