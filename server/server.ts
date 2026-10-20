@@ -18,7 +18,7 @@ import timeout from "connect-timeout";
 import jwt from "jsonwebtoken";
 
 import logger from "./logger.js";
-import db from "./db.js";
+import db, { closeDatabaseSafely } from "./db.js";
 import { ensureMessagesRooms } from "./ensureMessagesRooms.js";
 import { bootstrapCache, closeRedis } from "./bootstrapCache.js";
 
@@ -363,8 +363,11 @@ async function startServer() {
 
     const shutdown = async (signal: string) => {
       logger.info(`${signal} received, shutting down...`);
-      httpServer.close();
-      try { await closeRedis(); } catch {}
+      await new Promise<void>((resolve, reject) => {
+        httpServer.close((error) => error ? reject(error) : resolve());
+      });
+      try { await closeRedis(); } catch (error) { logger.error("Redis shutdown failed:", error); }
+      await closeDatabaseSafely();
       process.exit(0);
     };
     process.on("SIGTERM", () => shutdown("SIGTERM"));
