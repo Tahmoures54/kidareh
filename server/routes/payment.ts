@@ -94,7 +94,7 @@ function processReferralCommission(referredUserId: number, purchaseAmount: numbe
 function activateBadges(
   userId: number,
   items: Array<{ badgeId: string; qty: number }>,
-  settings: Record<string, any>
+  _settings: Record<string, any>
 ): void {
   for (const item of items) {
     const { badgeId, qty } = item;
