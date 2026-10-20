@@ -841,12 +841,18 @@ export const getStats = () => {
 // 🛡️ Pro Tip: حالا فایل server.ts این متد را برای بسته شدن ایمن صدا می‌زند
 export const closeDatabaseSafely = async (): Promise<void> => {
   logger.info("🔒 Closing database securely...");
+  if (process.env.BACKUP_ON_SHUTDOWN === "true") {
+    try {
+      await createBackup();
+    } catch (err) {
+      logger.error("❌ Shutdown backup failed:", err);
+    }
+  }
   try {
-    if (process.env.BACKUP_ON_SHUTDOWN === "true") await createBackup();
-    db.close();
-    logger.info("✅ Database closed without killing process");
+    if (db.open) db.close();
+    logger.info("✅ Database closed");
   } catch (err) {
-    logger.error("❌ Database Close error:", err);
+    logger.error("❌ Database close error:", err);
   }
 };
 
