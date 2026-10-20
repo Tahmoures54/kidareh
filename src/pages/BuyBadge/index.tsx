@@ -1,12 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Crown,
   CreditCard,
   Loader2,
   AlertCircle,
   Check,
-  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { BADGES_LIST, CATEGORY_LABELS, type BadgeType } from "../../components/badges";
