@@ -9,7 +9,7 @@ import React, {
   useRef,
 } from "react";
 import { useAuth } from "./AuthContext";
-import { apiRequest, ApiError } from "../utils/api";
+import { apiRequest } from "../utils/api";
 
 export type TicketStatus = "pending" | "reviewing" | "closed";
 
