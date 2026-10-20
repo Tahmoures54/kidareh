@@ -26,7 +26,7 @@ export default function RegistrationFormScreen({
   onBack,
 }: RegistrationFormScreenProps) {
   const navigate = useNavigate();
-  const { user, updateUser } = useAuth();
+  const { updateUser } = useAuth();
 
   const isMountedRef = useRef(true);
 
