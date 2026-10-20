@@ -17,7 +17,7 @@ function useDebounced<T>(value: T, delay = 300) {
   return v;
 }
 
-export default function CitySearchComboBox({ value, onChange, placeholder = 'شهر...' }: Props) {
+export default function CitySearchComboBox({ value: _value, onChange, placeholder = 'شهر...' }: Props) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const deb = useDebounced(q, 250);
