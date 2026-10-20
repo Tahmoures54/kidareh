@@ -2,7 +2,6 @@
  * Promotions API — catalog, public banners, seller stats, tracking
  */
 import { Router, type Response } from "express";
-import { z } from "zod";
 import { requireAuth, type AuthRequest } from "../middleware/auth.js";
 import logger from "../logger.js";
 import {
