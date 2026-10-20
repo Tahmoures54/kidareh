@@ -4,7 +4,6 @@ import {
   ArrowLeft,
   ArrowUpLeft,
   Clock3,
-  LocateFixed,
   MapPin,
   Navigation,
   Search,
@@ -14,7 +13,7 @@ import {
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
 import { useAppLocation } from "../../hooks/useAppLocation";
 import { categoriesData, getCategoryGroupBySlug, getCategoryGroupInfo } from "../../data/processed/categories";
-import { searchListings, toFa } from "../../presence/engine";
+import { searchListings } from "../../presence/engine";
 import type { ListingCategory, PresenceQuery } from "../../presence/types";
 import PresenceMap from "../../components/presence/PresenceMap";
 import PresenceEmpty from "../../components/presence/EmptyState";
@@ -61,7 +60,7 @@ export default function PresenceHome() {
   const [marketCategory, setMarketCategory] = useState("all");
   const [radiusKm, setRadiusKm] = useState(3);
   const [openNow, setOpenNow] = useState(false);
-  const [sort, setSort] = useState<PresenceQuery["sort"]>("nearest");
+  const [sort, _setSort] = useState<PresenceQuery["sort"]>("nearest");
   const [shopPosts, setShopPosts] = useState<FeedPostData[]>([]);
   const { items: paidStories } = useMarketStories(cityLocation.city);
 
