@@ -120,7 +120,7 @@ export function useSearch() {
       setQuery(qFromUrl);
       setDebouncedQuery(qFromUrl);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // TODO: restore exhaustive-deps checks after adding eslint-plugin-react-hooks.
   }, []);
 
   const categoryParam = params.get("category") || "";
