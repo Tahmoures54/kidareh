@@ -87,7 +87,7 @@
 | 📊 پنل فروشنده | کالا، موجودی، آمار بازدید |
 | 🏪 پروفایل فروشگاه | آدرس، نقشه، دسته‌بندی، تصویر |
 | 🎯 پروموشن | بنر و پکیج‌های دیده شدن |
-| 💳 پرداخت | درگاه پی‌پینگ، callback امن |
+| 💳 پرداخت | درگاه زیبال، callback امن |
 
 ### برای ادمین و پشتیبانی
 
@@ -145,7 +145,7 @@
 | ioredis | 5.x | کش (اختیاری) |
 | Google Generative AI | 0.21 | Gemini |
 | Kavenegar / Melipayamak | — | OTP/SMS |
-| PayPing | — | پرداخت |
+| Zibal | — | پرداخت |
 
 ### کیفیت و عملیات
 
@@ -172,7 +172,7 @@
            ├─▶ Redis (اختیاری، کش جستجو/OTP)
            ├─▶ Gemini AI
            ├─▶ SMS (Kavenegar)
-           ├─▶ PayPing
+           ├─▶ Zibal
            └─▶ آپلود محلی / S3
 ```
 
@@ -187,7 +187,7 @@
 - **Node.js** ≥ 20 و **npm** ≥ 10
 - (اختیاری) Docker و Docker Compose
 - (اختیاری) Redis برای کش production
-- کلیدهای: `JWT_SECRET`، `COOKIE_SECRET`، SMS، Gemini، PayPing
+- کلیدهای: `JWT_SECRET`، `COOKIE_SECRET`، SMS، Gemini، Zibal
 
 ---
 
@@ -288,7 +288,7 @@ kidareh/
 | دیتابیس | `DATABASE_URL` / `DB_PATH`, بکاپ خودکار |
 | SMS | `KAVENEGAR_API_KEY`, `KAVENEGAR_TEMPLATE`, `SHOW_OTP_IN_DEV` |
 | AI | `GEMINI_API_KEY` یا `GOOGLE_GEMINI_API_KEY` |
-| پرداخت | `PAYPING_TOKEN` |
+| پرداخت | `ZIBAL_MERCHANT` |
 | Referral | `REFERRAL_PERCENTAGE`, `MIN_WITHDRAWAL` |
 | Redis | `REDIS_URL`, `REDIS_ENABLED`, TTLها |
 | S3 | `S3_ENDPOINT`, `S3_ACCESS_KEY`, ... |

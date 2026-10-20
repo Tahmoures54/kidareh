@@ -55,7 +55,7 @@ export default function AdminPanel() {
   
   const [refPct, setRefPct] = useState(referralPercentage);
   const [localBadges, setLocalBadges] = useState<BadgeConfigs>((badgeConfigs as BadgeConfigs) || {});
-  const [payToken, setPayToken] = useState("");
+  const [zibalMerchant, setZibalMerchant] = useState("");
   const [smsToken, setSmsToken] = useState("");
   const [newBadge, setNewBadge] = useState({ key: "", label: "", price: "", duration: "" });
 
@@ -74,7 +74,7 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (settingsData) {
-      if (settingsData.PAYPING_TOKEN) setPayToken(settingsData.PAYPING_TOKEN);
+      if (settingsData.ZIBAL_MERCHANT) setZibalMerchant(settingsData.ZIBAL_MERCHANT);
       if (settingsData.SMS_TOKEN) setSmsToken(settingsData.SMS_TOKEN);
     }
   }, [settingsData]);
@@ -99,7 +99,7 @@ export default function AdminPanel() {
       description: c.description ?? "",
       color: c.color ?? "#08a6a6",
     }));
-    saveSettingsMut.mutate({ payToken, smsToken });
+    saveSettingsMut.mutate({ zibalMerchant, smsToken });
   };
 
   const handleAddBadge = () => {
@@ -379,11 +379,11 @@ export default function AdminPanel() {
               </div>
 
               <div className="bg-white dark:bg-slate-800/80 rounded-3xl border border-slate-200/60 dark:border-slate-700/50 p-5 shadow-sm backdrop-blur">
-                <div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center"><Key className="w-5 h-5 text-slate-500" /></div><h3 className="text-sm font-black dark:text-white">توکن‌های API</h3></div>
+                <div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center"><Key className="w-5 h-5 text-slate-500" /></div><h3 className="text-sm font-black dark:text-white">تنظیمات درگاه و پیامک</h3></div>
                 <div className="space-y-4">
                   <div className="relative">
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 dark:text-slate-500">PayPing</div>
-                    <input type="text" value={payToken} onChange={e => setPayToken(e.target.value)} placeholder="توکن پی‌پینگ" className="w-full h-12 pl-4 pr-20 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-xs font-mono outline-none focus:border-teal-400 dark:text-white transition" dir="ltr" />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 dark:text-slate-500">زیبال</div>
+                    <input type="text" value={zibalMerchant} onChange={e => setZibalMerchant(e.target.value)} placeholder="شناسه پذیرنده زیبال" className="w-full h-12 pl-4 pr-20 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 rounded-2xl text-xs font-mono outline-none focus:border-teal-400 dark:text-white transition" dir="ltr" />
                   </div>
                   <div className="relative">
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 dark:text-slate-500">SMS</div>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compressImage } from './imageCompression';
+import { compressImage } from '../../../src/utils/imageCompression';
 
 describe('Image Compression Utility', () => {
   it('should reject non-image files immediately', async () => {

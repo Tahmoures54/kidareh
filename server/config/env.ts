@@ -11,7 +11,7 @@ const envSchema = z.object({
   COOKIE_SECRET: z.string().min(16, "COOKIE_SECRET must be at least 16 chars long"),
   KAVENEGAR_API_KEY: z.string().optional(),
   KAVENEGAR_TEMPLATE: z.string().optional(),
-  PAYPING_TOKEN: z.string().optional(),
+  ZIBAL_MERCHANT: z.string().optional(),
   S3_ENDPOINT: z.string().optional(),
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),

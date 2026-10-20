@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { ArrowRight, Info, Sparkles } from "lucide-react";
 
 import { Tab } from "./types";

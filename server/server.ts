@@ -18,7 +18,7 @@ import timeout from "connect-timeout";
 import jwt from "jsonwebtoken";
 
 import logger from "./logger.js";
-import db from "./db.js";
+import db, { closeDatabaseSafely } from "./db.js";
 import { ensureMessagesRooms } from "./ensureMessagesRooms.js";
 import { bootstrapCache, closeRedis } from "./bootstrapCache.js";
 
@@ -37,7 +37,6 @@ import promotionsRoutes from "./routes/promotions.js";
 import presenceRoutes from "./routes/presence.js";
 import reservationsRoutes from "./routes/reservations.js";
 import { ensurePromotionTables } from "./services/promotions.js";
-import { getCachedProductDetail } from "./services/products.cached.js";
 import { cacheGetOrSet, CacheKeys, CacheTTL } from "./services/cache.js";
 import { normalizeStoreForDetail } from "./routes/stores.js";
 
@@ -115,48 +114,8 @@ const authLimiter = rateLimit({
   message: { error: "تعداد درخواست‌های ارسال کد بیش از حد است. ۲ دقیقه صبر کنید." },
 });
 
-function escapeHtml(value: unknown): string {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function productShareHtml(baseHtml: string, product: any, url: string): string {
-  const name = String(product.name || "کالا");
-  const price = Number(product.price);
-  const priceText = price > 0 ? "قیمت " + price.toLocaleString("fa-IR") + " تومان" : "قیمت توافقی";
-  const status = String(product.status || "وضعیت نامشخص");
-  const store = String(product.store_name || "فروشگاه");
-  const city = String(product.store_city || "");
-  const description = String(product.description || "").trim();
-  const suffix = city ? " در " + city : "";
-  const fallbackDescription = priceText + " — " + status + " — در " + store + suffix + ". ببین کی داره، حضوری بگیر.";
-  const metaDescription = (description || fallbackDescription).slice(0, 180);
-  const rawImage = String(product.image_url || "https://kidareh.com/og-image-1200x630.jpg");
-  const image = /^https?:\/\//i.test(rawImage) ? rawImage : new URL(rawImage, process.env.APP_URL || "https://kidareh.com").href;
-  const title = name + " — کی‌داره";
-  let html = baseHtml;
-  const replacements: Array<[string, string]> = [
-    ["<title>کی‌داره | ببین کی داره، حضوری بگیر</title>", "<title>" + escapeHtml(title) + "</title>"],
-    ['<meta name="description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="description" content="' + escapeHtml(metaDescription) + '">'],
-    ['<meta property="og:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta property="og:title" content="' + escapeHtml(title) + '">'],
-    ['<meta property="og:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta property="og:description" content="' + escapeHtml(metaDescription) + '">'],
-    ['<meta property="og:url" content="https://kidareh.com/">', '<meta property="og:url" content="' + escapeHtml(url) + '">'],
-    ['<meta property="og:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta property="og:image" content="' + escapeHtml(image) + '">'],
-    ['<meta name="twitter:title" content="کی‌داره | ببین کی داره، حضوری بگیر">', '<meta name="twitter:title" content="' + escapeHtml(title) + '">'],
-    ['<meta name="twitter:description" content="کالای موردنظرت را در فروشگاه‌های اطراف پیدا کن و حضوری بگیر.">', '<meta name="twitter:description" content="' + escapeHtml(metaDescription) + '">'],
-    ['<meta name="twitter:image" content="https://kidareh.com/og-image-1200x630.jpg">', '<meta name="twitter:image" content="' + escapeHtml(image) + '">'],
-    ['<link rel="canonical" href="https://kidareh.com/">', '<link rel="canonical" href="' + escapeHtml(url) + '">'],
-  ];
-  for (const [from, to] of replacements) html = html.replace(from, to);
-  return html;
-}
-
 function ensureDirectories() {
-  const dirs = ["data/uploads/products", "data/uploads/avatars", "data/uploads/stores", "data/logs", "data/backup", "data/database"];
+  const dirs = ["public/uploads/products", "public/uploads/avatars", "public/uploads/stores", "data/logs", "data/backup", "data/database"];
   for (const dir of dirs) {
     const p = path.join(ROOT_DIR, dir);
     if (!fs.existsSync(p)) {
@@ -273,10 +232,11 @@ async function startServer() {
     app.use(timeout("30s"));
     app.use((req: Request, res: Response, next: NextFunction) => {
       const incomingRequestId = req.headers["x-request-id"];
-      req.id = typeof incomingRequestId === "string" && /^[A-Za-z0-9._:-]{1,100}$/.test(incomingRequestId)
+      const requestId = typeof incomingRequestId === "string" && /^[A-Za-z0-9._:-]{1,100}$/.test(incomingRequestId)
         ? incomingRequestId
         : crypto.randomUUID();
-      res.setHeader("x-request-id", req.id);
+      (req as Request & { id: string }).id = requestId;
+      res.setHeader("x-request-id", requestId);
       next();
     });
     app.use(morgan(isProd ? "combined" : "dev", { skip: (req) => req.url.startsWith("/api/health") }));
@@ -299,7 +259,7 @@ async function startServer() {
     app.set("io", io);
 
     for (const folder of ["products", "avatars", "stores"]) {
-      app.use(`/uploads/${folder}`, express.static(path.join(ROOT_DIR, `data/uploads/${folder}`), { maxAge: "7d" }));
+      app.use(`/uploads/${folder}`, express.static(path.join(ROOT_DIR, `public/uploads/${folder}`), { maxAge: "7d" }));
     }
     app.use("/api", apiLimiter);
     app.use("/api/auth/send-otp", authLimiter);
@@ -337,12 +297,12 @@ async function startServer() {
       app.get("/store/:id", async (req: Request, res: Response) => {
         try {
           const storeIdParam = typeof req.params.id === "string" ? req.params.id : "";
-          if (!/^\\d+$/.test(storeIdParam)) return res.sendFile(indexPath);
+          if (!/^\d+$/.test(storeIdParam)) return res.sendFile(indexPath);
           const id = Number(storeIdParam);
           const store = await cacheGetOrSet(CacheKeys.store(id), CacheTTL.STORES, async () => {
             const row = db.prepare(`\n              SELECT s.*, u.name as owner_name, u.phone as owner_phone,\n                COUNT(DISTINCT p.id) as total_products, AVG(r.rating) as avg_rating, COUNT(DISTINCT r.id) as review_count,\n                COUNT(DISTINCT sf.id) as follower_count,\n                COALESCE(strftime('%Y/%m', s.created_at), '') as joined\n              FROM stores s JOIN users u ON s.user_id = u.id\n              LEFT JOIN products p ON s.id = p.store_id AND p.moderation_status = 'approved'\n              LEFT JOIN reviews r ON p.id = r.product_id AND r.status = 'approved'\n              LEFT JOIN store_followers sf ON sf.store_id = s.id\n              WHERE s.id = ? GROUP BY s.id`).get(id) as any;
             if (!row) return null;
-            return normalizeStoreForDetail(row);
+            return normalizeStoreForDetail(row, []);
           });
           if (!store) return res.sendFile(indexPath);
           let baseHtml = fs.readFileSync(indexPath, "utf8");
@@ -362,8 +322,11 @@ async function startServer() {
 
     const shutdown = async (signal: string) => {
       logger.info(`${signal} received, shutting down...`);
-      httpServer.close();
-      try { await closeRedis(); } catch {}
+      await new Promise<void>((resolve, reject) => {
+        httpServer.close((error) => error ? reject(error) : resolve());
+      });
+      try { await closeRedis(); } catch (error) { logger.error("Redis shutdown failed:", error); }
+      await closeDatabaseSafely();
       process.exit(0);
     };
     process.on("SIGTERM", () => shutdown("SIGTERM"));

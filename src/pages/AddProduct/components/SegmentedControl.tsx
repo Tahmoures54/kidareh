@@ -8,9 +8,6 @@ interface Props {
 }
 
 const SegmentedControl = React.memo(({ options, value, onChange }: Props) => {
-  // فرض می‌کنیم گزینه اول همیشه حالت مثبت است (مثل: موجود)
-  const isPositiveState = value === options[0];
-
   return (
     <div className="relative flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl h-full w-full">
       {options.map((opt) => {

@@ -4,12 +4,12 @@ import { ChevronDown, Search } from 'lucide-react';
 
 interface Props {
   value?: string | null;
-  onChange: (value: string, text: string) => void;
+  onChange: (_value: string, text: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-export default function CategoryComboBox({ value, onChange, placeholder = 'دسته‌بندی...', className = '' }: Props) {
+export default function CategoryComboBox({ onChange, placeholder = 'دسته‌بندی...', className = '' }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [items, setItems] = useState(() => searchCategories(''));

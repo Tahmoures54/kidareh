@@ -34,9 +34,9 @@ RUN groupadd -r -g 1001 kidareh && \
 
 # پوشه‌ها هماهنگ با server.ts ensureDirectories() و db.ts
 RUN mkdir -p \
-    /app/data/uploads/products \
-    /app/data/uploads/avatars \
-    /app/data/uploads/stores \
+    /app/public/uploads/products \
+    /app/public/uploads/avatars \
+    /app/public/uploads/stores \
     /app/data/logs \
     /app/data/backup \
     /app/data/database \
@@ -60,6 +60,9 @@ ENV NODE_ENV=production \
     REDIS_ENABLED=false
 
 USER kidareh
+
+# Persist SQLite data and backups outside the container writable layer.
+VOLUME ["/app/data"]
 
 EXPOSE 3000
 

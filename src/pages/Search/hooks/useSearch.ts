@@ -8,7 +8,6 @@ import {
 import {
   SearchFilters,
   ViewMode,
-  SortType,
   ProductResult,
   LocationScope,
   LocationScopeType,
@@ -121,7 +120,7 @@ export function useSearch() {
       setQuery(qFromUrl);
       setDebouncedQuery(qFromUrl);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // TODO: restore exhaustive-deps checks after adding eslint-plugin-react-hooks.
   }, []);
 
   const categoryParam = params.get("category") || "";
@@ -164,7 +163,7 @@ export function useSearch() {
     else next.delete("scopeName");
 
     setParams(next, { replace: true });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // TODO: restore exhaustive-deps checks after adding eslint-plugin-react-hooks.
   }, [debouncedQuery, filters.scope.type, filters.scope.id, filters.scope.name, filters.category]);
 
   // -------------------- Init --------------------

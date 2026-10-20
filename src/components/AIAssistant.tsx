@@ -1,5 +1,5 @@
 ﻿// src/components/AIAssistant.tsx
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
@@ -15,8 +15,7 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { apiRequest, ApiError } from "../utils/api";
+import { apiRequest } from "../utils/api";
 import { useGeolocation } from "../hooks/useGeolocation";
 
 /* ====================== TYPES ====================== */
@@ -198,7 +197,6 @@ const TypingAnimation = () => (
 /* ====================== MAIN COMPONENT ====================== */
 
 export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
-  const navigate = useNavigate();
   const { city: userCity } = useGeolocation("تهران");
 
   // State

@@ -4,7 +4,7 @@ import { Search } from 'lucide-react';
 
 interface Props {
   value?: string | null;
-  onChange: (city: string, display: string, province: string) => void;
+  onChange: (_city: string, display: string, province: string) => void;
   placeholder?: string;
 }
 
@@ -17,7 +17,7 @@ function useDebounced<T>(value: T, delay = 300) {
   return v;
 }
 
-export default function CitySearchComboBox({ value, onChange, placeholder = 'شهر...' }: Props) {
+export default function CitySearchComboBox({ onChange, placeholder = 'شهر...' }: Props) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const deb = useDebounced(q, 250);
