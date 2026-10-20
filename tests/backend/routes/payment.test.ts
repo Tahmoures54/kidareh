@@ -3,12 +3,17 @@ import type { Server } from "node:http";
 import fs from "node:fs";
 import path from "node:path";
 import express from "express";
+import jwt from "jsonwebtoken";
+import type Database from "better-sqlite3";
 
-describe("Payment API security integration", () => {
+describe("Payment API security and idempotency integration", () => {
   let server: Server;
   let baseUrl: string;
   let databasePath: string;
   let closeDatabase: (() => Promise<void>) | undefined;
+  let db: Database.Database;
+  let userId: number;
+  let accessToken: string;
 
   beforeAll(async () => {
     databasePath = path.join(process.cwd(), "data", `payment-test-${process.pid}.sqlite`);
@@ -29,7 +34,12 @@ describe("Payment API security integration", () => {
       import("../../../server/routes/payment.js"),
       import("../../../server/db.js"),
     ]);
+    db = database.default;
     closeDatabase = database.closeDatabaseSafely;
+
+    const user = db.prepare("INSERT INTO users (phone, role, name) VALUES (?, 'seller', ?)").run("09120000001", "Payment Test");
+    userId = Number(user.lastInsertRowid);
+    accessToken = jwt.sign({ id: userId, phone: "09120000001", role: "seller" }, process.env.JWT_SECRET!);
 
     const app = express();
     app.use(express.json());
@@ -74,5 +84,54 @@ describe("Payment API security integration", () => {
     });
 
     expect(response.status).toBe(401);
+  });
+
+  it("rejects an invalid badge before creating a payment transaction", async () => {
+    const before = (db.prepare("SELECT COUNT(*) AS count FROM transactions").get() as { count: number }).count;
+    const response = await fetch(`${baseUrl}/api/payment/initiate`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        returnUrl: "https://example.test/payment/callback",
+        items: [{ badgeId: "not-a-real-package", qty: 1 }],
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    const after = (db.prepare("SELECT COUNT(*) AS count FROM transactions").get() as { count: number }).count;
+    expect(after).toBe(before);
+  });
+
+  it("grants a purchased item once and rejects duplicate development confirmation", async () => {
+    const initiation = await fetch(`${baseUrl}/api/payment/initiate`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        returnUrl: "https://example.test/payment/callback",
+        items: [{ badgeId: "ارسال فوری", qty: 1 }],
+      }),
+    });
+
+    expect(initiation.status).toBe(200);
+    const created = await initiation.json() as { transactionId: number; devMode?: boolean; amount: number };
+    expect(created.devMode).toBe(true);
+    expect(created.amount).toBe(10_000);
+
+    const confirm = () => fetch(`${baseUrl}/api/payment/dev-confirm`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({ transactionId: created.transactionId }),
+    });
+    const first = await confirm();
+    expect(first.status).toBe(200);
+    const second = await confirm();
+    expect(second.status).toBe(409);
+
+    const inventory = db.prepare("SELECT quantity FROM badge_inventory WHERE user_id = ? AND badge_name = ?")
+      .get(userId, "ارسال فوری") as { quantity: number };
+    expect(inventory.quantity).toBe(1);
+
+    const transaction = db.prepare("SELECT status FROM transactions WHERE id = ?").get(created.transactionId) as { status: string };
+    expect(transaction.status).toBe("success");
   });
 });
