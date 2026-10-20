@@ -4,7 +4,7 @@ import { ChevronDown, Search } from 'lucide-react';
 
 interface Props {
   value?: string | null;
-  onChange: (value: string, text: string) => void;
+  onChange: (_value: string, text: string) => void;
   placeholder?: string;
   className?: string;
 }
