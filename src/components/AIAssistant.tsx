@@ -15,7 +15,6 @@ import {
   Copy,
   Check,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../utils/api";
 import { useGeolocation } from "../hooks/useGeolocation";
 
@@ -198,7 +197,6 @@ const TypingAnimation = () => (
 /* ====================== MAIN COMPONENT ====================== */
 
 export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
-  const navigate = useNavigate();
   const { city: userCity } = useGeolocation("تهران");
 
   // State
