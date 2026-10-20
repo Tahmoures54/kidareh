@@ -288,7 +288,7 @@ kidareh/
 | دیتابیس | `DATABASE_URL` / `DB_PATH`, بکاپ خودکار |
 | SMS | `KAVENEGAR_API_KEY`, `KAVENEGAR_TEMPLATE`, `SHOW_OTP_IN_DEV` |
 | AI | `GEMINI_API_KEY` یا `GOOGLE_GEMINI_API_KEY` |
-| پرداخت | `PAYPING_TOKEN` |
+| پرداخت | `ZIBAL_MERCHANT` |
 | Referral | `REFERRAL_PERCENTAGE`, `MIN_WITHDRAWAL` |
 | Redis | `REDIS_URL`, `REDIS_ENABLED`, TTLها |
 | S3 | `S3_ENDPOINT`, `S3_ACCESS_KEY`, ... |
