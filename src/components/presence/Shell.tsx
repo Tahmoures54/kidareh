@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bookmark, ChevronDown, Home, Map as MapIcon, MapPin, User, MessageCircle, Sparkles, Store, Search, LogOut, ShieldCheck, LocateFixed } from "lucide-react";
+import { Bookmark, ChevronDown, Home, Map as MapIcon, MapPin, User, Store, Search, LogOut, ShieldCheck, LocateFixed } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useAppLocation } from "../../hooks/useAppLocation";
 import { usePresenceOrigin } from "../../hooks/usePresenceOrigin";
