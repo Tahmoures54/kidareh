@@ -9,7 +9,7 @@ interface Props {
   className?: string;
 }
 
-export default function CategoryComboBox({ value: _value, onChange, placeholder = 'دسته‌بندی...', className = '' }: Props) {
+export default function CategoryComboBox({ onChange, placeholder = 'دسته‌بندی...', className = '' }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [items, setItems] = useState(() => searchCategories(''));
