@@ -71,7 +71,7 @@ describe("Payment API security and idempotency integration", () => {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
-        returnUrl: "https://example.test/payment/callback",
+        returnUrl: "http://localhost:3000/payment-callback",
         items: [{ badgeId: "blue_tick_30d", qty: 1 }],
       }),
     });
@@ -89,13 +89,29 @@ describe("Payment API security and idempotency integration", () => {
     expect(response.status).toBe(401);
   });
 
+  it("rejects an external payment callback URL before creating a transaction", async () => {
+    const before = (db.prepare("SELECT COUNT(*) AS count FROM transactions").get() as { count: number }).count;
+    const response = await fetch(`${baseUrl}/api/payment/initiate`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        returnUrl: "https://attacker.example/payment-callback",
+        items: [{ badgeId: "ارسال فوری", qty: 1 }],
+      }),
+    });
+
+    expect(response.status).toBe(400);
+    const after = (db.prepare("SELECT COUNT(*) AS count FROM transactions").get() as { count: number }).count;
+    expect(after).toBe(before);
+  });
+
   it("rejects an invalid badge before creating a payment transaction", async () => {
     const before = (db.prepare("SELECT COUNT(*) AS count FROM transactions").get() as { count: number }).count;
     const response = await fetch(`${baseUrl}/api/payment/initiate`, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
-        returnUrl: "https://example.test/payment/callback",
+        returnUrl: "http://localhost:3000/payment-callback",
         items: [{ badgeId: "not-a-real-package", qty: 1 }],
       }),
     });
@@ -110,7 +126,7 @@ describe("Payment API security and idempotency integration", () => {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({
-        returnUrl: "https://example.test/payment/callback",
+        returnUrl: "http://localhost:3000/payment-callback",
         items: [{ badgeId: "ارسال فوری", qty: 1 }],
       }),
     });
