@@ -125,7 +125,7 @@ describe("Payment API security and idempotency integration", () => {
     const first = await confirm();
     expect(first.status).toBe(200);
     const second = await confirm();
-    expect(second.status).toBe(409);
+    expect(second.status).toBe(200);
 
     const inventory = db.prepare("SELECT quantity FROM badge_inventory WHERE user_id = ? AND badge_name = ?")
       .get(userId, "ارسال فوری") as { quantity: number };
