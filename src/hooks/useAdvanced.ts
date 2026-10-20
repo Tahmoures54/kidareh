@@ -219,7 +219,7 @@ export function useReducerWithLogger<S, A>(
 ) {
   return useReducer((state: S, action: A) => {
     if (process.env.NODE_ENV === 'development' && actionName) {
-      console.log(`[${actionName}]`, action, state);
+      console.warn(`[${actionName}]`, action, state);
     }
     return reducer(state, action);
   }, initialState);
