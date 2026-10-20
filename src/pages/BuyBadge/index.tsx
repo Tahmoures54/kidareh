@@ -54,10 +54,11 @@ export default function BuyBadge() {
         return;
       }
 
-      if (d?.code) {
+      if (d?.paymentUrl && d?.trackId && d?.transactionId) {
         localStorage.setItem("pendingTransactionId", String(d.transactionId));
-        window.location.href = `https://api.payping.ir/v2/pay/gotoipg/${d.code}`;
-      } else throw new Error();
+        localStorage.setItem("pendingPaymentTrackId", String(d.trackId));
+        window.location.href = d.paymentUrl;
+      } else throw new Error("پاسخ درگاه پرداخت معتبر نیست");
     } catch (e: any) {
       setErrorMsg(e?.message || "اتصال به پرداخت برقرار نشد. دوباره تلاش کنید.");
     } finally {
