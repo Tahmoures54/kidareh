@@ -42,7 +42,7 @@ services:
       - KAVENEGAR_API_KEY=${KAVENEGAR_API_KEY:-}
       - GOOGLE_GEMINI_API_KEY=${GOOGLE_GEMINI_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-      - PAYPING_TOKEN=${PAYPING_TOKEN:-}
+      - ZIBAL_MERCHANT=${ZIBAL_MERCHANT:-}
       - APP_URL=${APP_URL:-http://localhost:3000}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - REDIS_ENABLED=${REDIS_ENABLED:-true}
