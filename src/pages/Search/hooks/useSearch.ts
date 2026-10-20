@@ -8,7 +8,6 @@ import {
 import {
   SearchFilters,
   ViewMode,
-  SortType,
   ProductResult,
   LocationScope,
   LocationScopeType,
