@@ -8,7 +8,7 @@
 
 - [ ] `JWT_SECRET` و `COOKIE_SECRET` قوی و یکتا
 - [ ] `NODE_ENV=production`
-- [ ] `PAYPING_TOKEN` واقعی (اگر پرداخت فعال است)
+- [ ] `ZIBAL_MERCHANT` واقعی (اگر پرداخت فعال است)
 - [ ] کلید پیامک (کاوه نگار یا سرویس شما)
 - [ ] `REDIS_URL` در صورت استفاده از کش (اختیاری اما توصیه‌شده)
 - [ ] دامنه و `APP_URL` درست در CORS / ALLOWED_ORIGINS
