@@ -163,7 +163,7 @@ export function useSearch() {
     else next.delete("scopeName");
 
     setParams(next, { replace: true });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // TODO: restore exhaustive-deps checks after adding eslint-plugin-react-hooks.
   }, [debouncedQuery, filters.scope.type, filters.scope.id, filters.scope.name, filters.category]);
 
   // -------------------- Init --------------------
