@@ -2,7 +2,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { AuthProvider, useAuth } from '../../../src/context/AuthContext';
-import { apiRequest } from '../../../src/utils/api';
+import { apiRequest, ApiError } from '../../../src/utils/api';
 
 // Mock the entire api module
 vi.mock('../../../src/utils/api', () => ({
@@ -24,7 +24,7 @@ describe('AuthContext', () => {
 
   it('initial state: no user, not authenticated, loading true at first', async () => {
     // Mock refreshMe to return null (user not logged in)
-    (apiRequest as any).mockRejectedValueOnce(new Error('No token'));
+    (apiRequest as any).mockRejectedValueOnce(new ApiError('Unauthorized', 401));
 
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -44,7 +44,7 @@ describe('AuthContext', () => {
 
   it('sendOtp calls the correct API', async () => {
     // First call: refreshMe fails (no user)
-    (apiRequest as any).mockRejectedValueOnce(new Error('No token'));
+    (apiRequest as any).mockRejectedValueOnce(new ApiError('Unauthorized', 401));
 
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -65,9 +65,9 @@ describe('AuthContext', () => {
     );
   });
 
-  it('verifyOtp returns user and sets token', async () => {
+  it('verifyOtp returns user and stores the user cache without a JavaScript-readable token', async () => {
     // refreshMe fails
-    (apiRequest as any).mockRejectedValueOnce(new Error('No token'));
+    (apiRequest as any).mockRejectedValueOnce(new ApiError('Unauthorized', 401));
 
     const wrapper = ({ children }: any) => <AuthProvider>{children}</AuthProvider>;
     const { result } = renderHook(() => useAuth(), { wrapper });
@@ -75,17 +75,15 @@ describe('AuthContext', () => {
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     const fakeUser = { id: 1, phone: '09123456789', role: 'buyer', is_profile_complete: false };
-    const fakeToken = 'jwt-token-123';
-
+    
     (apiRequest as any).mockResolvedValueOnce({
-      token: fakeToken,
       user: fakeUser,
     });
 
     const user = await result.current.verifyOtp('09123456789', '12345');
 
     expect(user).toEqual(fakeUser);
-    expect(localStorage.getItem('token')).toBe(fakeToken);
+    expect(localStorage.getItem('token')).toBeNull();
     expect(result.current.user).toEqual(fakeUser);
   });
 
@@ -108,7 +106,9 @@ describe('AuthContext', () => {
     await result.current.logout();
 
     expect(localStorage.getItem('token')).toBeNull();
-    expect(result.current.user).toBeNull();
-    expect(result.current.isAuthenticated).toBe(false);
+    await waitFor(() => {
+      expect(result.current.user).toBeNull();
+      expect(result.current.isAuthenticated).toBe(false);
+    });
   });
 });
