@@ -7,7 +7,7 @@ import { apiRequest, ApiError } from "../../utils/api";
 // 📌 1. Types & Interfaces
 // ============================================
 interface AdminSettings {
-  PAYPING_TOKEN?: string;
+  ZIBAL_MERCHANT?: string;
   SMS_TOKEN?: string;
   [key: string]: string | undefined;
 }
@@ -25,7 +25,7 @@ interface StoresResponse {
 }
 
 interface SaveSettingsPayload {
-  payToken?: string;
+  zibalMerchant?: string;
   smsToken?: string;
 }
 
@@ -278,9 +278,9 @@ export const useSaveSettings = (showToast: ToastFn) => {
   const qc = useQueryClient();
   const toast = useStableToast(showToast);
   return createMutationHook<void, SaveSettingsPayload>({
-    mutationFn: async ({ payToken, smsToken }) => {
+    mutationFn: async ({ zibalMerchant, smsToken }) => {
       const reqs: Promise<unknown>[] = [];
-      if (payToken !== undefined) reqs.push(apiRequest("/api/admin/settings", { method: "PUT", auth: true, body: { key: "PAYPING_TOKEN", value: payToken } }));
+      if (zibalMerchant !== undefined) reqs.push(apiRequest("/api/admin/settings", { method: "PUT", auth: true, body: { key: "ZIBAL_MERCHANT", value: zibalMerchant } }));
       if (smsToken !== undefined) reqs.push(apiRequest("/api/admin/settings", { method: "PUT", auth: true, body: { key: "SMS_TOKEN", value: smsToken } }));
       await Promise.all(reqs);
     },
