@@ -13,7 +13,7 @@ describe("SQLite backup and restore smoke test", () => {
   let testPhone: string;
 
   beforeAll(async () => {
-    databasePath = path.join(process.cwd(), "data", `backup-test-${process.pid}.sqlite`);
+    databasePath = path.join(process.cwd(), "data", `backup-test-${process.pid}`, "app.sqlite");
     fs.mkdirSync(path.dirname(databasePath), { recursive: true });
     for (const suffix of ["", "-shm", "-wal"]) {
       try { fs.unlinkSync(databasePath + suffix); } catch { /* file does not exist */ }
@@ -43,13 +43,7 @@ describe("SQLite backup and restore smoke test", () => {
       for (const suffix of ["", "-shm", "-wal"]) {
         try { fs.unlinkSync(databasePath + suffix); } catch { /* file does not exist */ }
       }
-      const backupDir = path.join(path.dirname(databasePath), "backups");
-      try {
-        for (const file of fs.readdirSync(backupDir)) {
-          if (file.startsWith("backup-") && file.endsWith(".db")) fs.unlinkSync(path.join(backupDir, file));
-        }
-        fs.rmdirSync(backupDir);
-      } catch { /* directory may contain files from another process */ }
+      try { fs.rmSync(path.dirname(databasePath), { recursive: true, force: true }); } catch { /* test directory may already be removed */ }
     }
   });
 
