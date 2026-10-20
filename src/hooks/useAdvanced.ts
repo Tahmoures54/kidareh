@@ -4,7 +4,6 @@
  */
 
 import { useCallback, useEffect, useRef, useState, useReducer, Dispatch, SetStateAction } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { errorLogger } from '../utils/analytics';
 
 /* ====================== useAsync HOOK ====================== */
