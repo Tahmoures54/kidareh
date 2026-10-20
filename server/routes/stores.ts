@@ -247,7 +247,6 @@ router.get("/:id(\\d+)", async (req: AuthRequest, res: Response): Promise<void> 
       return;
     }
     const cacheKey = CacheKeys.store(id);
-    let found = false;
     const payload = await cacheGetOrSet(cacheKey, CacheTTL.STORES, async () => {
       const store = db.prepare(`
         SELECT s.*, u.name as owner_name, u.phone as owner_phone,
