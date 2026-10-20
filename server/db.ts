@@ -773,12 +773,12 @@ runMigrations();
 // 11. Backup
 // ============================================================================
 
-export const createBackup = (): string => {
+export const createBackup = async (): Promise<string> => {
   const ts         = new Date().toISOString().replace(/[:.]/g, "-");
   const backupPath = path.join(backupDir, `backup-${ts}.db`);
 
   try {
-    db.backup(backupPath);
+    await db.backup(backupPath);
     logger.info(`💾 Backup: ${backupPath}`);
 
     const files = fs
@@ -799,8 +799,8 @@ export const createBackup = (): string => {
 };
 
 if (process.env.AUTO_BACKUP === "true") {
-  setInterval(() => {
-    try { createBackup(); } catch {}
+  setInterval(async () => {
+    try { await createBackup(); } catch (err) { logger.error("Automatic database backup failed:", err); }
   }, 24 * 60 * 60 * 1000);
   logger.info("🔄 Auto backup enabled");
 }
@@ -839,10 +839,10 @@ export const getStats = () => {
 // ============================================================================
 
 // 🛡️ Pro Tip: حالا فایل server.ts این متد را برای بسته شدن ایمن صدا می‌زند
-export const closeDatabaseSafely = () => {
+export const closeDatabaseSafely = async (): Promise<void> => {
   logger.info("🔒 Closing database securely...");
   try {
-    if (process.env.BACKUP_ON_SHUTDOWN === "true") createBackup();
+    if (process.env.BACKUP_ON_SHUTDOWN === "true") await createBackup();
     db.close();
     logger.info("✅ Database closed without killing process");
   } catch (err) {
