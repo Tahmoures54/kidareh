@@ -7,6 +7,7 @@ import type { default as DbType } from "better-sqlite3";
 describe("SQLite backup and restore smoke test", () => {
   let databasePath: string;
   let backupPath = "";
+  let restoredPath = "";
   let db: DbType;
   let createBackup: () => Promise<string>;
   let closeDatabaseSafely: () => Promise<void>;
@@ -52,7 +53,9 @@ describe("SQLite backup and restore smoke test", () => {
     expect(fs.existsSync(backupPath)).toBe(true);
     expect(path.dirname(backupPath)).toBe(path.join(path.dirname(databasePath), "backups"));
 
-    const restored = new Database(backupPath, { readonly: true, fileMustExist: true });
+    restoredPath = path.join(path.dirname(databasePath), "restored.sqlite");
+    fs.copyFileSync(backupPath, restoredPath);
+    const restored = new Database(restoredPath, { readonly: true, fileMustExist: true });
     try {
       expect(restored.pragma("integrity_check")).toEqual([{ integrity_check: "ok" }]);
       const user = restored.prepare("SELECT phone, name FROM users WHERE phone = ?").get(testPhone) as
