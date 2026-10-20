@@ -4,7 +4,7 @@ import { Search } from 'lucide-react';
 
 interface Props {
   value?: string | null;
-  onChange: (city: string, display: string, province: string) => void;
+  onChange: (_city: string, display: string, province: string) => void;
   placeholder?: string;
 }
 
