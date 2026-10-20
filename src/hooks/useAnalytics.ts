@@ -15,7 +15,7 @@ export function useAnalytics() {
     }
 
     // Custom Analytics (log + backend)
-    console.log('[Analytics]', eventName, properties);
+    console.warn('[Analytics]', eventName, properties);
 
     if (process.env.NODE_ENV === 'production') {
       fetch('/api/analytics/track', {
