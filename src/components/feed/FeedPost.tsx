@@ -1,6 +1,6 @@
 import React, { memo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { BadgeCheck, Bookmark, Heart, MessageCircle, MoreHorizontal, Radio, Send, MapPin, Navigation } from "lucide-react";
+import { BadgeCheck, Bookmark, Heart, MessageCircle, MoreHorizontal, Radio, Send, MapPin } from "lucide-react"
 import { useFeedPost } from "../../hooks/useFeedPost";
 import type { FeedPostData } from "../../lib/feedMappers";
 import { cn } from "../../utils";
