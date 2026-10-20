@@ -23,6 +23,7 @@ export function usePaymentVerification() {
     localStorage.removeItem("pendingTransactionId");
     localStorage.removeItem("pendingPaymentAmount");
     localStorage.removeItem("pendingPaymentTrackId");
+    localStorage.removeItem("pendingPaymentTrackId");
   }, []);
 
   const verify = useCallback(async () => {
