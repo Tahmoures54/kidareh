@@ -149,14 +149,7 @@ class ErrorLogger {
   }
 
   logInfo(message: string, metadata?: Record<string, any>): void {
-    const infoLog: ErrorLog = {
-      message,
-      level: 'info',
-      timestamp: Date.now(),
-      metadata,
-    };
-
-    console.log(`[Info] ${message}`, metadata);
+    console.warn(`[Info] ${message}`, metadata);
   }
 
   private sendToErrorTracker(errorLog: ErrorLog): void {
@@ -218,7 +211,7 @@ class PerformanceLogger {
       totalTime: timing.loadEventEnd - timing.fetchStart,
     };
 
-    console.log('Page Performance Metrics:', metrics);
+    console.warn('Page Performance Metrics:', metrics);
   }
 }
 
