@@ -191,4 +191,23 @@ describe("Payment API security and idempotency integration", () => {
       .get(userId, "تضمین کیفیت") as { quantity: number }).quantity).toBe(1);
   });
 
+
+  it("marks a transaction failed when Zibal request creation throws", async () => {
+    db.prepare("INSERT INTO settings (key, value, description) VALUES ('ZIBAL_MERCHANT', 'test-merchant', 'test') ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+      .run();
+    vi.mocked(axios.post).mockRejectedValueOnce(new Error("simulated provider network failure"));
+
+    const response = await fetch(`${baseUrl}/api/payment/initiate`, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${accessToken}` },
+      body: JSON.stringify({
+        returnUrl: "http://localhost:3000/payment-callback",
+        items: [{ badgeId: "ارسال فوری", qty: 1 }],
+      }),
+    });
+
+    expect(response.status).toBe(502);
+    const transaction = db.prepare("SELECT status FROM transactions ORDER BY id DESC LIMIT 1").get() as { status: string };
+    expect(transaction.status).toBe("failed");
+  });
 });
