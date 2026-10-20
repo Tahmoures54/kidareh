@@ -16,12 +16,13 @@ export function usePaymentVerification() {
   const mounted = useRef(true);
   const abortRef = useRef<AbortController | null>(null);
 
-  const refId = useMemo(() => params.get("refid") || params.get("refId") || "", [params]);
+  const trackId = useMemo(() => params.get("trackId") || params.get("trackid") || "", [params]);
   const txId = useMemo(() => localStorage.getItem("pendingTransactionId") || "", []);
 
   const clearCache = useCallback(() => {
     localStorage.removeItem("pendingTransactionId");
     localStorage.removeItem("pendingPaymentAmount");
+    localStorage.removeItem("pendingPaymentTrackId");
   }, []);
 
   const verify = useCallback(async () => {
@@ -32,7 +33,7 @@ export function usePaymentVerification() {
     const ctrl = new AbortController();
     abortRef.current = ctrl;
 
-    if (!refId) {
+    if (!trackId || params.get("success") !== "1") {
       if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
       setStatus("error"); 
       setErrMsg("پرداخت لغو شده یا اطلاعات درگاه نامعتبر است.");
@@ -44,20 +45,22 @@ export function usePaymentVerification() {
       if(navigator.vibrate) navigator.vibrate([50, 50, 50]);
       setStatus("error");
       setErrMsg("شناسه تراکنش یافت نشد. اگر وجهی کسر شده است، معمولاً تا ۷۲ ساعت آینده به حساب شما بازمی‌گردد.");
-      setTrackCode(refId);
+      setTrackCode(trackId);
       return;
     }
 
     try {
+      const storedTrackId = localStorage.getItem("pendingPaymentTrackId") || "";
+      if (!storedTrackId || storedTrackId !== trackId) throw new Error("کد پیگیری با درخواست پرداخت مطابقت ندارد.");
       const res = await apiRequest<VerifyRes>("/api/payment/verify", {
-        method: "POST", auth: true, body: { refId, transactionId: txNum }, signal: ctrl.signal, timeoutMs: 20000,
+        method: "POST", auth: true, body: { trackId, transactionId: txNum }, signal: ctrl.signal, timeoutMs: 20000,
       });
 
       if (!mounted.current) return;
 
       if (res.success) {
         if(navigator.vibrate) navigator.vibrate(50); 
-        setStatus("success"); setTrackCode(refId); clearCache();
+        setStatus("success"); setTrackCode(trackId); clearCache();
       } else {
         throw new Error(res.error || res.message || "تأیید پرداخت با مشکل مواجه شد.");
       }
@@ -70,9 +73,9 @@ export function usePaymentVerification() {
       if (err instanceof ApiError && err.status === 401) {
         setStatus("error"); setErrMsg("نشست شما منقضی شده است. لطفاً دوباره وارد حساب کاربری شوید."); return;
       }
-      setStatus("error"); setErrMsg(getSafeError(err?.message)); setTrackCode(refId || "");
+      setStatus("error"); setErrMsg(getSafeError(err?.message)); setTrackCode(trackId || "");
     }
-  }, [refId, txId, clearCache]);
+  }, [trackId, txId, clearCache, params]);
 
   const handleRetry = useCallback(() => {
     if (retryCount >= MAX_RETRY) return;
