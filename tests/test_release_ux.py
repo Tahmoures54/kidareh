@@ -676,3 +676,34 @@ def test_registration_collects_only_core_seller_details_and_optional_coordinates
     assert 'name="store_address"' not in html
     assert 'name="store_hours"' not in html
     assert 'name="store_description"' not in html
+
+# ---------- Homepage discovery, sharing and storefront conversion ----------
+def test_homepage_category_stories_are_backed_by_the_real_category_catalog(client):
+    html = client.get("/").get_data(as_text=True)
+    catalog = client.get("/api/categories").get_json()
+    assert 'id="homeCategoryStories"' in html
+    assert 'data-category="all"' in html
+    assert 'id="homeSubcategories"' in html
+    for category in catalog["items"]:
+        assert f'data-category="{category["id"]}"' in html
+        assert category["name"] in html
+
+
+def test_homepage_product_cards_have_real_share_and_storefront_actions():
+    script = read("static/js/app.js")
+    css = read("static/css/home.css")
+    assert 'new URL("/product/" + encodeURIComponent(item.id), window.location.origin)' in script
+    assert "navigator.share" in script
+    assert "navigator.clipboard.writeText(url)" in script
+    assert 'data-share-listing="' in script
+    assert 'href="/store/' in script
+    assert "ببین دیگه چی داره؟" in script
+    assert "اشتراک‌گذاری" in script
+    assert "grid-template-columns:repeat(4,minmax(0,1fr))" in css
+    assert "@media(max-width:700px)" in css
+
+
+def test_homepage_search_is_prominent_and_precedes_category_discovery():
+    html = read("templates/index.html")
+    assert html.index('class="home-search-wrap"') < html.index('id="homeCategoryStories"')
+    assert 'action="/search" method="get"' in html
