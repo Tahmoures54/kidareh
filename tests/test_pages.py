@@ -175,16 +175,19 @@ def test_seller_dashboard_has_storefront_first_layout_and_product_actions(monkey
         'class="seller-hero"',
         'class="seller-metrics"',
         'id="storePanel"',
-        'id="addProductPanel"',
+        'id="myProductsPanel"',
+        'id="addProductDialog"',
+        'id="sellerProductForm"',
         'id="pageListings"',
         'id="sellerStoreMetric"',
         'id="sellerProductMetric"',
     ):
         assert marker in html, marker
-    assert "seller-dashboard" in html
-    # Accept both minified and non-minified spacing.
+    assert "seller-console" in html
+    # The current console uses a dialog-based product form and large tap targets.
     dashboard_css = _read_project_file("static", "css", "seller-dashboard.css")
     compact = dashboard_css.replace(" ", "").replace("\n", "").replace("\t", "")
+    assert ".seller-quick-link{display:flex" in compact
     assert "min-height:48px" in compact
 
 
@@ -274,7 +277,8 @@ def test_city_combobox_uses_full_location_api_and_starts_with_popular_cities(mon
     register_html = client.get("/register").get_data(as_text=True)
     assert 'id="buyerCity"' in register_html and 'name="city"' in register_html
     assert 'id="storeCity"' in register_html and 'name="store_city"' in register_html
-    assert 'list="registerCityOptions"' in register_html
+    assert 'list="iranCityOptions"' in register_html
+    assert 'id="buyerCity"' in register_html
     assert "data-iran-location" in register_html
 
 
@@ -321,11 +325,13 @@ def test_homepage_uses_seller_focused_hero_and_image_promo_carousel(monkeypatch,
     assert 'data-promo-slide' in html
 
     template = _read_project_file("templates", "index.html")
+    script = _read_project_file("static", "js", "home.js")
     assert 'id="homeRotatingMessage"' not in template
     assert 'id="homeMessageAction"' not in template
-    assert 'setInterval(() => show((active + 1) % slides.length), 5000)' in template
-    assert 'prefers-reduced-motion: reduce' in template
-    assert 'dots.forEach((dot, index) => dot.addEventListener("click"' in template
+    assert "window.setInterval(" in script
+    assert "const CYCLE_MS = 5000" in script
+    assert 'prefers-reduced-motion: reduce' in script
+    assert 'dot.addEventListener("click"' in script
 
 
 def test_help_and_policy_pages_render_and_link_from_footer(monkeypatch, tmp_path):
