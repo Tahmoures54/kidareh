@@ -19,16 +19,22 @@
   <section class="seller-hero">
     <div class="seller-hero-copy">
       <span class="seller-eyebrow">🏪 پنل مدیریت فروشگاه</span>
-      <h1 id="sellerWelcomeTitle">ویترینت را بساز؛ مشتری منتظر است</h1>
+      <div class="seller-identity-row">
+        <div class="seller-store-avatar" id="sellerStoreAvatar" aria-hidden="true">ف</div>
+        <div class="seller-identity-copy">
+          <h1 id="sellerWelcomeTitle">فروشگاه من</h1>
+          <p id="sellerWelcomeDescription">کالاها و خدمات ویترینت را ثبت کن و اطلاعات فروشگاهت را از همین‌جا مدیریت کن.</p>
+        </div>
+      </div>
       <p>
         کالاهایت را ثبت کن، ویترینت را به اشتراک بگذار و همه‌چیز را از همین‌جا مدیریت کن.
-        انتشار کالا رایگان است.
+        
       </p>
     </div>
     <div class="seller-hero-actions">
       <button class="button button-primary" type="button"
               data-open-add-product disabled title="در حال آماده‌سازی…">＋ افزودن کالا</button>
-      <a class="button button-outline" href="#storePanel">تنظیمات ویترین ←</a>
+      <button class="button button-outline" type="button" data-open-store-edit data-store-edit-actions hidden>⚙️ تنظیمات فروشگاه</button>
     </div>
   </section>
 
@@ -67,8 +73,8 @@
     <div class="seller-panel-heading">
       <span class="seller-panel-icon" aria-hidden="true">📈</span>
       <div>
-        <h2>عملکرد ویترین</h2>
-        <p>نمایی از بازدید و عملکرد کالاهای فروشگاه شما</p>
+        <h2>عملکرد فروشگاه</h2>
+        <p>نمایی از بازدید صفحه فروشگاه و عملکرد کالاهای ثبت‌شده</p>
       </div>
     </div>
     <div class="seller-metrics" style="margin-bottom:12px">
@@ -88,8 +94,8 @@
       <div class="seller-panel-heading">
         <span class="seller-panel-icon" aria-hidden="true">🏪</span>
         <div>
-          <h2>ویترین فروشگاه</h2>
-          <p>اطلاعاتی که مشتری برای شناخت و پیدا کردن فروشگاهت می‌بیند.</p>
+          <h2>اطلاعات فروشگاه</h2>
+          <p>نام، شهر و نشانی‌ای که مشتری برای شناخت و پیدا کردن فروشگاهت می‌بیند.</p>
         </div>
       </div>
 
@@ -98,16 +104,12 @@
       </div>
 
       {# ── Edit trigger — shown only when a store exists (seller.js flips hidden) ── #}
-      <div class="seller-store-actions" hidden data-store-edit-actions>
-        <button class="button button-outline" type="button" data-open-store-edit>
-          ✏️ ویرایش اطلاعات ویترین
-        </button>
-      </div>
+      
 
       {# ── Create form — inline, only shown when no store exists yet ── #}
       <form id="storeCreateForm" class="stack-form" hidden>
         <div class="seller-empty-hint">
-          فقط نام فروشگاه و شهر را وارد کن؛ بعد از ساخت ویترین می‌توانی کالاهایت را اضافه کنی.
+          فقط نام فروشگاه و شهر را وارد کن؛ بعد از ساخت فروشگاه می‌توانی کالاها و خدماتت را در ویترین ثبت کنی.
         </div>
         <label>نام فروشگاه
           <input name="name" required maxlength="80" placeholder="مثلاً خانه‌چین">
@@ -134,7 +136,7 @@
         <label>درباره فروشگاه (اختیاری)
           <textarea name="description" rows="3" maxlength="500" placeholder="چه کالاهایی ارائه می‌کنی؟"></textarea>
         </label>
-        <button class="button button-primary" type="submit">ساخت ویترین من</button>
+        <button class="button button-primary" type="submit">ساخت فروشگاه</button>
       </form>
     </div>
 
@@ -152,10 +154,10 @@
     <article class="seller-secondary-card">
       <span class="seller-secondary-icon" aria-hidden="true">↗</span>
       <div>
-        <h2>مشتری را به ویترینت دعوت کن</h2>
-        <p>لینک ویترین را برای مشتری‌ها بفرست تا کالاها را ببینند و برای خرید حضوری هماهنگ شوند.</p>
+        <h2>مشتری را به فروشگاهت دعوت کن</h2>
+        <p>لینک صفحه فروشگاه را برای مشتری‌ها بفرست تا کالاها و خدماتت را ببینند و برای خرید حضوری هماهنگ شوند.</p>
         <div class="seller-share-actions">
-          <button id="shareMyStore" class="button button-primary" type="button" hidden>اشتراک‌گذاری ویترین</button>
+          <button id="shareMyStore" class="button button-primary" type="button" hidden>اشتراک‌گذاری فروشگاه</button>
           <button id="copyStorePromo" class="button button-outline" type="button" data-copy-share-text="" hidden>کپی متن معرفی</button>
         </div>
       </div>
@@ -165,8 +167,8 @@
   <section class="page-panel seller-products-panel" id="myProductsPanel">
     <div class="page-results-head">
       <div>
-        <h2>مدیریت کالاهای فروشگاه</h2>
-        <p class="muted-copy">قیمت و موجودی کالاها را به‌روز نگه دار و اطلاعات هر کالا را مدیریت کن.</p>
+        <h2>ویترین کالاها و خدمات</h2>
+        <p class="muted-copy">این همان ویترینی است که مشتری می‌بیند؛ کالاها و خدماتت را اینجا ثبت و مدیریت کن.</p>
       </div>
       <span id="pageResultsCount" role="status" aria-live="polite">— کالا</span>
     </div>
@@ -239,7 +241,7 @@
 <dialog id="storeEditDialog" class="seller-product-dialog" aria-labelledby="storeEditDialogTitle">
   <div class="seller-dialog-header">
     <div>
-      <h2 id="storeEditDialogTitle">ویرایش اطلاعات ویترین</h2>
+      <h2 id="storeEditDialogTitle">تنظیمات فروشگاه</h2>
       <p>نام، شهر، نشانی و موقعیت فروشگاه را می‌توانی اینجا تغییر دهی.</p>
     </div>
     <button class="seller-dialog-close" type="button" aria-label="بستن" data-dialog-close>×</button>
