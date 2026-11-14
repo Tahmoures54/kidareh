@@ -1,12 +1,7 @@
 /**
- * Kidareh homepage — promo carousel only.
- *
- * Loaded as a classic (non-module) deferred script from index.html's
- * {% block scripts %}. Header scroll is handled by header-scroll.js which
- * base.html loads as a module.
- *
- * No dependencies. Safe to load on every page: the function exits early
- * if the promo container does not exist.
+ * Kidareh homepage — accessible, lightweight hero carousel.
+ * Vanilla JS only; pauses for hover, keyboard focus, hidden tabs,
+ * off-screen state, touch interaction and explicit user pause.
  */
 (() => {
   const visual = document.getElementById("homePromoVisual");
@@ -14,33 +9,46 @@
 
   const slides = Array.from(visual.querySelectorAll("[data-promo-slide]"));
   const dots = Array.from(visual.querySelectorAll("[data-promo-dot]"));
+  const previousButton = visual.querySelector("[data-promo-prev]");
+  const nextButton = visual.querySelector("[data-promo-next]");
+  const pauseButton = visual.querySelector("[data-promo-pause]");
   if (slides.length < 2 || dots.length !== slides.length) return;
 
-  let active = 0;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const CYCLE_MS = 3200;
+  const EXIT_MS = 450;
+  let active = Math.max(0, slides.findIndex((slide) => slide.classList.contains("is-active")));
   let timer = null;
-  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const CYCLE_MS = 5000;
-  const EXIT_MS = 800;
+  let manuallyPaused = reduceMotion.matches;
+  let hovered = false;
+  let focused = false;
+  let onScreen = true;
+  let touchStartX = null;
+
+  function renderPauseButton() {
+    if (!pauseButton) return;
+    pauseButton.setAttribute("aria-pressed", String(manuallyPaused));
+    pauseButton.textContent = manuallyPaused ? "ادامه حرکت" : "توقف حرکت";
+    pauseButton.setAttribute("aria-label", manuallyPaused ? "ادامه پخش خودکار پیام‌ها" : "توقف پخش خودکار پیام‌ها");
+  }
 
   function show(next) {
-    if (next === active) return;
-    const previous = active;
+    const index = (next + slides.length) % slides.length;
+    if (index === active) return;
 
-    // Old slide fades out to the left, new one slides in from the right.
+    const previous = active;
     slides[previous].classList.remove("is-active");
     slides[previous].classList.add("is-exiting");
+    slides[previous].setAttribute("aria-hidden", "true");
     dots[previous].setAttribute("aria-current", "false");
 
-    active = (next + slides.length) % slides.length;
-
+    active = index;
     slides[active].classList.remove("is-exiting");
     slides[active].classList.add("is-active");
+    slides[active].setAttribute("aria-hidden", "false");
     dots[active].setAttribute("aria-current", "true");
 
-    window.setTimeout(
-      () => slides[previous].classList.remove("is-exiting"),
-      reduceMotion ? 0 : EXIT_MS
-    );
+    window.setTimeout(() => slides[previous].classList.remove("is-exiting"), reduceMotion.matches ? 0 : EXIT_MS);
   }
 
   function stop() {
@@ -50,37 +58,75 @@
     }
   }
 
-  function start() {
-    stop();
-    if (!reduceMotion && !document.hidden) {
-      timer = window.setInterval(
-        () => show((active + 1) % slides.length),
-        CYCLE_MS
-      );
-    }
+  function shouldRun() {
+    return !manuallyPaused && !hovered && !focused && onScreen && !document.hidden && !reduceMotion.matches;
   }
 
-  dots.forEach((dot, index) => {
-    dot.addEventListener("click", () => {
-      show(index);
-      start();
-    });
+  function start() {
+    stop();
+    if (shouldRun()) timer = window.setInterval(() => show(active + 1), CYCLE_MS);
+  }
+
+  function navigate(next) {
+    show(next);
+    start();
+  }
+
+  dots.forEach((dot, index) => dot.addEventListener("click", () => navigate(index)));
+  previousButton?.addEventListener("click", () => navigate(active - 1));
+  nextButton?.addEventListener("click", () => navigate(active + 1));
+
+  pauseButton?.addEventListener("click", () => {
+    manuallyPaused = !manuallyPaused;
+    renderPauseButton();
+    start();
   });
 
-  // Pause while hovering or focusing so the user can read the active slide.
-  visual.addEventListener("mouseenter", stop);
-  visual.addEventListener("mouseleave", start);
-  visual.addEventListener("focusin", stop);
+  visual.addEventListener("mouseenter", () => { hovered = true; stop(); });
+  visual.addEventListener("mouseleave", () => { hovered = false; start(); });
+  visual.addEventListener("focusin", () => { focused = true; stop(); });
   visual.addEventListener("focusout", (event) => {
-    // Only resume when focus actually leaves the whole visual, not when it
-    // moves between the dots inside it.
-    if (!visual.contains(event.relatedTarget)) start();
+    if (!visual.contains(event.relatedTarget)) {
+      focused = false;
+      start();
+    }
   });
 
-  // Pause when the tab is hidden; resume when it becomes visible again.
-  document.addEventListener("visibilitychange", () => {
-    document.hidden ? stop() : start();
+  visual.addEventListener("keydown", (event) => {
+    if (event.key === "ArrowLeft") { event.preventDefault(); navigate(active + 1); }
+    if (event.key === "ArrowRight") { event.preventDefault(); navigate(active - 1); }
   });
 
+  visual.addEventListener("touchstart", (event) => {
+    touchStartX = event.changedTouches[0]?.clientX ?? null;
+    stop();
+  }, { passive: true });
+  visual.addEventListener("touchend", (event) => {
+    const endX = event.changedTouches[0]?.clientX;
+    if (touchStartX !== null && typeof endX === "number") {
+      const delta = endX - touchStartX;
+      if (Math.abs(delta) > 45) navigate(active + (delta < 0 ? 1 : -1));
+    }
+    touchStartX = null;
+    start();
+  }, { passive: true });
+  visual.addEventListener("touchcancel", () => { touchStartX = null; start(); }, { passive: true });
+
+  document.addEventListener("visibilitychange", start);
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      onScreen = Boolean(entries[0]?.isIntersecting);
+      start();
+    }, { threshold: 0.15 });
+    observer.observe(visual);
+  }
+
+  const onMotionChange = () => {
+    if (reduceMotion.matches) manuallyPaused = true;
+    renderPauseButton();
+    start();
+  };
+  reduceMotion.addEventListener?.("change", onMotionChange);
+  renderPauseButton();
   start();
 })();
