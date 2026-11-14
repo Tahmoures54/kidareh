@@ -1,20 +1,19 @@
 # Storage infrastructure
 
-## Current runtime
+## Runtime behavior
 
-Listing images are still written to the local `static/uploads/` directory through the existing upload flow. The local adapter remains the active implementation; do not remove or rewrite existing upload files until a migration has been completed and verified.
+- **Vercel:** when `BLOB_READ_WRITE_TOKEN` is configured, new listing images are uploaded to the public Vercel Blob store under `listings/`. The database stores the returned absolute Blob URL. Upload failures return HTTP 503; the app never falls back to Vercel's ephemeral filesystem.
+- **Local development and Liara:** without the Blob token, images continue to use the existing sharded `UPLOAD_FOLDER` filesystem path and `/static/uploads/` URL contract.
+- **Deletion:** listing deletion recognizes public Vercel Blob URLs and uses the official SDK. Legacy `/static/uploads/` paths are still deleted from the local upload directory.
 
-## Vercel Blob provisioning
+The official `vercel-blob` Python SDK is used through its synchronous API, suitable for the current synchronous Flask routes. Existing image validation is retained and limits files to 4 MiB, below Vercel Functions' 4.5 MB request-body limit.
 
-A public Vercel Blob store named `kidareh-listing-images` has been created for the Vercel project `kidareh` in region `fra1`. Vercel automatically added `BLOB_READ_WRITE_TOKEN` to the project's Production, Preview, and Development environments. Secret values are managed by Vercel and must never be committed or printed.
+## Provisioned resource
 
-**Provisioned does not mean active:** the Flask upload path has not yet been switched to Blob. Existing image URLs and files have not been migrated. The runtime adapter, URL persistence, deletion behavior, upload validation, and local-development fallback still require implementation and tests. Keep the local adapter as the fallback until those checks pass.
+The public Blob store `kidareh-listing-images` is connected to the `kidareh` Vercel project in region `fra1`. Vercel manages `BLOB_READ_WRITE_TOKEN`; never commit or print its value.
 
-## Migration requirements
+## Existing images and rollback
 
-1. Add a Vercel Blob adapter behind the existing storage interface.
-2. Preserve the existing public image URL contract or provide a backward-compatible resolver for old local paths.
-3. Upload new images to Blob only when the token is configured; otherwise retain local storage for local development.
-4. Keep image validation, size limits, safe generated names, and ownership checks in the Flask route.
-5. Do not delete old local images during the first rollout. Migrate them with a separately verifiable, retryable script and compare counts/checksums before cleanup.
-6. Test upload, retrieval, replacement, deletion, missing-token fallback, and failure rollback before enabling in Production.
+Existing SQLite records and local image files are not migrated or deleted by this change. Existing `/static/uploads/` paths remain supported. Only newly uploaded images go to Blob. Keep old local files until a separately reviewed migration verifies counts and checksums.
+
+If Blob is unavailable, new image uploads fail closed with a retryable 503 instead of being written to ephemeral Vercel storage. Listings without an image remain usable.
