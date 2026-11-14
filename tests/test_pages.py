@@ -324,13 +324,16 @@ def test_homepage_uses_seller_focused_hero_and_image_promo_carousel(monkeypatch,
     assert 'class="promo-banner-slide"' not in html
     assert 'id="homePromoVisual"' in html
     assert 'data-promo-slide' in html
+    assert 'data-promo-pause' in html
+    assert 'data-promo-prev' in html and 'data-promo-next' in html
+    assert html.count("data-promo-slide") == 5
 
     template = _read_project_file("templates", "index.html")
     script = _read_project_file("static", "js", "home.js")
     assert 'id="homeRotatingMessage"' not in template
     assert 'id="homeMessageAction"' not in template
     assert "window.setInterval(" in script
-    assert "const CYCLE_MS = 5000" in script
+    assert "const CYCLE_MS = 3200" in script
     assert 'prefers-reduced-motion: reduce' in script
     assert 'dot.addEventListener("click"' in script
 
