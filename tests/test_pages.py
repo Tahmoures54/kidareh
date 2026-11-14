@@ -334,6 +334,9 @@ def test_homepage_uses_seller_focused_hero_and_image_promo_carousel(monkeypatch,
     assert 'id="homeMessageAction"' not in template
     assert "window.setInterval(" in script
     assert "const CYCLE_MS = 3200" in script
+    assert "mouseenter" not in script and "mouseleave" not in script
+    assert "return !manuallyPaused && onScreen && !document.hidden" in script
+    assert "v=20261114-carousel-fix-2" in html
     assert 'prefers-reduced-motion: reduce' in script
     assert 'dot.addEventListener("click"' in script
 
