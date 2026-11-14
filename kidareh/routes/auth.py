@@ -889,15 +889,21 @@ def auth_me():
     user = current_user()
 
     if not user:
-        return jsonify({"user": None})
+        response = jsonify({"user": None})
+    else:
+        if not session.get("csrf_token"):
+            session["csrf_token"] = uuid.uuid4().hex
 
-    if not session.get("csrf_token"):
-        session["csrf_token"] = uuid.uuid4().hex
+        response = jsonify({
+            "user": user,
+            "csrf_token": session["csrf_token"],
+        })
 
-    return jsonify({
-        "user": user,
-        "csrf_token": session["csrf_token"],
-    })
+    # Authentication state is session-specific and must never be reused from
+    # a browser, CDN, or shared intermediary cache.
+    response.headers["Cache-Control"] = "private, no-store, max-age=0"
+    response.headers["Vary"] = "Cookie"
+    return response
 
 
 @bp.post("/logout")
