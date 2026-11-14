@@ -179,7 +179,7 @@
         const storeMetric = document.querySelector("#sellerStoreMetric");
         const nextMetric = document.querySelector("#sellerNextStepMetric");
         if (storeMetric) storeMetric.textContent = "ساخته نشده";
-        if (nextMetric) nextMetric.textContent = "ساخت ویترین";
+        if (nextMetric) nextMetric.textContent = "ساخت فروشگاه";
         if (status)
           status.innerHTML =
             "<strong>سلام " +
@@ -204,8 +204,9 @@
       }
       const welcomeDescription = document.querySelector("#sellerWelcomeDescription");
       if (welcomeDescription) {
-        welcomeDescription.textContent = [store.city, store.category].filter(Boolean).join(" · ") ||
-          "کالاها و خدمات ویترین فروشگاهت را مدیریت کن.";
+        welcomeDescription.textContent = store.city
+          ? "فروشگاه در " + store.city
+          : "کالاها و خدمات ویترین فروشگاهت را مدیریت کن.";
       }
 
       // Populate the edit dialog form (hidden until user clicks "ویرایش")
