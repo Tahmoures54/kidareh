@@ -1,16 +1,13 @@
 import math
 import re
 import time
-import uuid
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 from flask import Blueprint, current_app, jsonify, request
 from sqlalchemy.exc import OperationalError
 from ..core import (
     CATEGORIES,
     MAX_IMAGE_BYTES,
-    UPLOAD_URL_PREFIX,
     current_user,
     csrf_valid,
     delete_uploaded_image,
