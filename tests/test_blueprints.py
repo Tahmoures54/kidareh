@@ -148,6 +148,7 @@ def test_health_endpoint_reports_unwritable_uploads(tmp_path, isolated_env):
     broken.mkdir()
     original_mode = broken.stat().st_mode
     broken.chmod(0o500)  # read+execute, no write
+    app.config["UPLOAD_FOLDER"] = str(broken)
     try:
         response = app.test_client().get("/api/health")
         assert response.status_code == 200
