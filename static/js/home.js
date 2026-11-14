@@ -1,7 +1,7 @@
 /**
  * Kidareh homepage — accessible, lightweight hero carousel.
- * Vanilla JS only; pauses for hover, keyboard focus, hidden tabs,
- * off-screen state, touch interaction and explicit user pause.
+ * Vanilla JS only; each slide enters from the right, holds centered,
+ * then exits left when the next slide arrives.
  */
 (() => {
   const visual = document.getElementById("homePromoVisual");
@@ -16,7 +16,7 @@
 
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const CYCLE_MS = 3200;
-  const EXIT_MS = 450;
+  const EXIT_MS = 780;
   let active = Math.max(0, slides.findIndex((slide) => slide.classList.contains("is-active")));
   let timer = null;
   let manuallyPaused = false;

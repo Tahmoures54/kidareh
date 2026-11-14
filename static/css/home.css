@@ -621,34 +621,36 @@
 }
 .home-intro[data-home-carousel] .home-promo-slides { inset: 0; }
 .home-intro[data-home-carousel] .home-promo-slide {
-  top: 48%;
-  inset-inline: auto;
-  inset-inline-start: 50%;
-  width: min(720px, calc(100% - 48px));
-  padding: clamp(1.2rem, 3vw, 2rem);
+  top: 50%;
+  /* Use physical left:50% with translateX(-50%) so RTL logical
+     inset-inline-start cannot shift the card away from the true center. */
+  left: 50%;
+  right: auto;
+  width: min(900px, calc(100% - 40px));
+  padding: clamp(1.45rem, 3.2vw, 2.35rem);
   border-color: rgba(255,255,255,.30);
   border-radius: 22px;
   background: rgba(5, 23, 36, .58);
   box-shadow: 0 16px 48px rgba(0,0,0,.16);
-  transform: translate(130%, -50%) scale(.985);
-  transition: transform .42s cubic-bezier(.22,.75,.25,1), opacity .32s ease;
+  transform: translate(135%, -50%) scale(.96);
+  transition: transform .72s cubic-bezier(.22,.75,.25,1), opacity .48s ease;
 }
 .home-intro[data-home-carousel] .home-promo-slide.is-active {
   transform: translate(-50%, -50%) scale(1);
 }
 .home-intro[data-home-carousel] .home-promo-slide.is-exiting {
-  transform: translate(-175%, -50%) scale(.985);
+  transform: translate(-135%, -50%) scale(.96);
 }
 .home-intro[data-home-carousel] .home-promo-slide h2 {
   margin: .9rem 0 .55rem;
-  font-size: clamp(1.45rem, 3.4vw, 2.45rem);
+  font-size: clamp(1.6rem, 3.8vw, 2.7rem);
   line-height: 1.55;
   letter-spacing: -.025em;
 }
 .home-intro[data-home-carousel] .home-promo-slide h2 span { color: #A5F3FC; }
 .home-intro[data-home-carousel] .home-promo-slide p {
-  max-width: 620px;
-  font-size: clamp(.88rem, 1.35vw, 1rem);
+  max-width: 760px;
+  font-size: clamp(.92rem, 1.45vw, 1.06rem);
   line-height: 2;
 }
 .home-intro[data-home-carousel] .home-promo-link {
@@ -724,12 +726,14 @@
   .home-intro.home-intro[data-home-carousel] { width: calc(100% - 24px); margin-top: .75rem; }
   .home-intro[data-home-carousel] .home-promo-visual { min-height: 390px; border-radius: 18px; }
   .home-intro[data-home-carousel] .home-promo-slide {
-    top: 46%;
-    width: calc(100% - 28px);
-    padding: 1rem;
+    top: 48%;
+    left: 50%;
+    right: auto;
+    width: calc(100% - 24px);
+    padding: 1.1rem;
     border-radius: 16px;
   }
-  .home-intro[data-home-carousel] .home-promo-slide h2 { font-size: clamp(1.2rem, 5vw, 1.65rem); }
+  .home-intro[data-home-carousel] .home-promo-slide h2 { font-size: clamp(1.28rem, 5.2vw, 1.8rem); }
   .home-intro[data-home-carousel] .home-promo-slide p { font-size: .8rem; line-height: 1.85; }
   .home-intro[data-home-carousel] .home-promo-caption { display: none; }
   .home-intro[data-home-carousel] .home-promo-controls { bottom: .7rem; gap: .35rem; }
