@@ -11,10 +11,9 @@ This module is hardened compared to the original version:
   commit explicitly so the test does not depend on context-manager behaviour.
 - Tests that used ``app_module.app.test_client()`` directly now go through
   ``setup_empty_database`` so they cannot accidentally touch the real DB.
-- Env vars are cleared in ``setup_empty_database``. A host that exports
-  ``LIARA_APP_ID`` (Liara CI) would otherwise flip the factory into production
-  mode and disable demo seed — the ``/api/listings`` seed tests rely on that
-  seed being present.
+- Env vars are cleared in ``setup_empty_database``. Production hosts such as
+  Liara and Vercel must not seed showcase records; local tests retain the
+  development fixtures used by listing-flow coverage.
 """
 import datetime as dt
 import importlib
@@ -27,6 +26,7 @@ CSRF_TOKEN = "test-token"
 
 _ENV_VARS_TO_CLEAR = (
     "LIARA_APP_ID",
+    "VERCEL",
     "KIDAREH_SEED_DEMO_DATA",
     "KAVENEGAR_API_KEY",
     "ADMIN_PHONE",
@@ -81,9 +81,8 @@ def _logout(client):
 def setup_empty_database(monkeypatch, tmp_path, filename="test-kidareh.sqlite3"):
     """Fresh DB, no seed users/stores. For tests that only need the schema.
 
-    Env vars are cleared so a host that exports ``LIARA_APP_ID`` (Liara CI)
-    cannot flip the factory into production mode and disable demo seed — the
-    ``/api/listings`` seed tests rely on that seed being present.
+    Env vars are cleared so production-only seed guards do not interfere with
+    local fixture-based tests.
     """
     for name in _ENV_VARS_TO_CLEAR:
         monkeypatch.delenv(name, raising=False)
@@ -992,16 +991,65 @@ def test_production_database_does_not_receive_demo_records(monkeypatch, tmp_path
         assert connection.execute("SELECT COUNT(*) FROM stores").fetchone()[0] == 0
 
 
-def test_demo_records_can_be_explicitly_enabled_in_production(monkeypatch, tmp_path):
-    monkeypatch.setenv("LIARA_APP_ID", "test-liara-app")
+def test_demo_records_cannot_be_enabled_in_production(monkeypatch, tmp_path):
+    monkeypatch.setenv("VERCEL", "1")
     monkeypatch.setenv("KIDAREH_SEED_DEMO_DATA", "true")
     _patch_db_path(monkeypatch, tmp_path / "production-demo.sqlite3")
 
     app_module.initialize_database()
 
     with app_module.get_connection() as connection:
-        assert connection.execute("SELECT COUNT(*) FROM listings").fetchone()[0] > 0
-        assert connection.execute("SELECT COUNT(*) FROM stores").fetchone()[0] > 0
+        assert connection.execute("SELECT COUNT(*) FROM listings").fetchone()[0] == 0
+        assert connection.execute("SELECT COUNT(*) FROM stores").fetchone()[0] == 0
+
+
+def test_vercel_startup_removes_legacy_demo_data_but_preserves_real_records(monkeypatch, tmp_path):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("KIDAREH_SEED_DEMO_DATA", "true")
+    _patch_db_path(monkeypatch, tmp_path / "vercel-cleanup.sqlite3")
+    app_module.initialize_database()
+
+    with app_module.get_connection() as connection:
+        real_user_id = _seed_user(connection, "09120000077", role="seller")
+        real_store_id = _seed_store(
+            connection, real_user_id, name="فروشگاه واقعی", city="تهران"
+        )
+        connection.execute(
+            "INSERT INTO listings (title, category, city, price, owner_id, store_id) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            ("کالای واقعی فروشنده", "digital", "تهران", 1500000, real_user_id, real_store_id),
+        )
+        demo_store_id = connection.execute(
+            "INSERT INTO stores (owner_id, name, city) VALUES (NULL, ?, ?)",
+            ("دیجیتال‌کده", "تبریز"),
+        ).lastrowid
+        connection.execute(
+            "INSERT INTO listings (title, category, city, price, store_id) "
+            "VALUES (?, ?, ?, ?, ?)",
+            ("گوشی سامسونگ تمیز و سالم", "digital", "تهران", 12800000, demo_store_id),
+        )
+        connection.commit()
+
+    # A second startup simulates a warm Vercel instance with an old SQLite file.
+    app_module.initialize_database()
+
+    with app_module.get_connection() as connection:
+        assert connection.execute(
+            "SELECT COUNT(*) FROM listings WHERE title = ?",
+            ("گوشی سامسونگ تمیز و سالم",),
+        ).fetchone()[0] == 0
+        assert connection.execute(
+            "SELECT COUNT(*) FROM stores WHERE name = ? AND owner_id IS NULL",
+            ("دیجیتال‌کده",),
+        ).fetchone()[0] == 0
+        assert connection.execute(
+            "SELECT COUNT(*) FROM listings WHERE title = ?",
+            ("کالای واقعی فروشنده",),
+        ).fetchone()[0] == 1
+        assert connection.execute(
+            "SELECT COUNT(*) FROM stores WHERE id = ? AND owner_id = ?",
+            (real_store_id, real_user_id),
+        ).fetchone()[0] == 1
 
 
 def test_production_requires_non_default_secret_and_secure_cookie_settings(monkeypatch, tmp_path):
