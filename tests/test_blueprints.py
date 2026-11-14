@@ -151,8 +151,9 @@ def test_health_endpoint_reports_unwritable_uploads(tmp_path, isolated_env):
     app.config["UPLOAD_FOLDER"] = str(broken)
     try:
         response = app.test_client().get("/api/health")
-        assert response.status_code == 200
+        assert response.status_code == 503
         payload = response.get_json()
+        assert payload["ok"] is False
         assert payload["uploads"] != "writable", (
             "health check claimed uploads are writable when they are not"
         )
