@@ -39,6 +39,7 @@ from kidareh.core import get_connection, initialize_database
 
 _ENV_VARS_TO_CLEAR = (
     "LIARA_APP_ID",
+    "VERCEL",
     "KIDAREH_SEED_DEMO_DATA",
     "KAVENEGAR_API_KEY",
     "ADMIN_PHONE",

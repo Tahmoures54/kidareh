@@ -402,19 +402,116 @@ def _ensure_listings_fts(connection) -> None:
         logger.debug("FTS index: healthy")
 
 
-def _should_seed_demo_data() -> bool:
-    """Seed showcase records locally by default, but require explicit opt-in in production."""
-    configured = os.environ.get("KIDAREH_SEED_DEMO_DATA")
-    is_production = bool(
+def _is_production_environment() -> bool:
+    """Recognize every supported production host, including Vercel."""
+    return bool(
         os.environ.get("LIARA_APP_ID")
+        or os.environ.get("VERCEL")
         or os.environ.get("FLASK_ENV", "").lower() == "production"
         or os.environ.get("ENV", "").lower() == "production"
     )
-    if is_production:
-        return (configured or "").strip().lower() in {"1", "true", "yes"}
+
+
+def _should_seed_demo_data() -> bool:
+    """Keep showcase fixtures local-only; production data must be user-created."""
+    if _is_production_environment():
+        return False
+    configured = os.environ.get("KIDAREH_SEED_DEMO_DATA")
     if configured is None:
         return True
     return configured.strip().lower() in {"1", "true", "yes"}
+
+
+def _remove_legacy_demo_data() -> None:
+    """Remove only the exact ownerless showcase rows created by old releases.
+
+    Real seller-owned records are never selected. Demo stores are removed only
+    after their showcase listings are gone and no remaining listing references
+    them. Related rows are cleaned through discovered foreign-key relations.
+    """
+    demo_titles = (
+        "گوشی سامسونگ تمیز و سالم",
+        "میز کار چوبی مینیمال",
+        "دوچرخه شهری کم‌کارکرد",
+        "کتانی روزمره در حد نو",
+        "تعمیر و سرویس لپ‌تاپ",
+        "چراغ مطالعه مدرن",
+        "هدفون بی‌سیم",
+        "کوله‌پشتی روزانه",
+    )
+    demo_stores = (
+        ("خانه‌چین", "تهران"),
+        ("دیجیتال‌کده", "تبریز"),
+        ("بازار محلی", "شیراز"),
+    )
+
+    def delete_references(connection, target_table: str, target_ids: list[int]) -> None:
+        if not target_ids:
+            return
+        placeholders = ", ".join("?" for _ in target_ids)
+        tables = connection.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' "
+            "AND name NOT LIKE 'sqlite_%'"
+        ).fetchall()
+        for table_row in tables:
+            table_name = str(table_row["name"])
+            if table_name == target_table:
+                continue
+            quoted_table = '"' + table_name.replace('"', '""') + '"'
+            foreign_keys = connection.execute(
+                f"PRAGMA foreign_key_list({quoted_table})"
+            ).fetchall()
+            for foreign_key in foreign_keys:
+                if foreign_key["table"] != target_table:
+                    continue
+                child_column = '"' + str(foreign_key["from"]).replace('"', '""') + '"'
+                connection.execute(
+                    f"DELETE FROM {quoted_table} WHERE {child_column} IN ({placeholders})",
+                    tuple(target_ids),
+                )
+
+    removed_listings = 0
+    removed_stores = 0
+    with get_connection() as connection:
+        title_placeholders = ", ".join("?" for _ in demo_titles)
+        demo_listing_rows = connection.execute(
+            f"SELECT id FROM listings WHERE owner_id IS NULL AND title IN ({title_placeholders})",
+            demo_titles,
+        ).fetchall()
+        listing_ids = [int(row["id"]) for row in demo_listing_rows]
+        if listing_ids:
+            delete_references(connection, "listings", listing_ids)
+            id_placeholders = ", ".join("?" for _ in listing_ids)
+            cursor = connection.execute(
+                f"DELETE FROM listings WHERE id IN ({id_placeholders}) AND owner_id IS NULL",
+                tuple(listing_ids),
+            )
+            removed_listings = cursor.rowcount
+
+        store_conditions = " OR ".join("(name = ? AND city = ?)" for _ in demo_stores)
+        store_parameters = tuple(value for pair in demo_stores for value in pair)
+        demo_store_rows = connection.execute(
+            f"SELECT id FROM stores WHERE owner_id IS NULL AND ({store_conditions})",
+            store_parameters,
+        ).fetchall()
+        for row in demo_store_rows:
+            store_id = int(row["id"])
+            remaining = connection.execute(
+                "SELECT 1 FROM listings WHERE store_id = ? LIMIT 1", (store_id,)
+            ).fetchone()
+            if remaining:
+                continue
+            delete_references(connection, "stores", [store_id])
+            connection.execute(
+                "DELETE FROM stores WHERE id = ? AND owner_id IS NULL", (store_id,)
+            )
+            removed_stores += 1
+
+    if removed_listings or removed_stores:
+        logger.info(
+            "Removed legacy showcase data: %d demo listings, %d demo stores",
+            removed_listings, removed_stores,
+        )
 
 
 def _initialize_schema_v1() -> None:
@@ -779,6 +876,12 @@ def initialize_database() -> None:
         # latest version still gain tables added by feature modules later on.
         logger.debug("Refreshing feature-owned schemas")
         initialize_feature_schemas()
+
+        # Vercel was not recognized by older seed guards. Clean exact legacy
+        # showcase records on every production boot, including databases whose
+        # schema migration ledger already predates this cleanup.
+        if _is_production_environment():
+            _remove_legacy_demo_data()
 
         # Both are idempotent and checked on every start-up, so a running
         # deployment gains new indexes or a missing FTS index without needing a
