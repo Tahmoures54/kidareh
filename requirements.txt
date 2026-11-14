@@ -22,5 +22,5 @@ python-dotenv>=1.0,<2.0
 redis>=5.0,<7.0
 
 # Official Vercel Blob Python SDK (synchronous API for Flask routes)
-vercel-blob>=0.4.3,<1.0
+vercel-blob>=0.6.0,<0.7.0
 
