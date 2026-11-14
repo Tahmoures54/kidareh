@@ -1,7 +1,22 @@
+
+# =========================================================
+# Kidareh - Production Dependencies
+# Python 3.12+
+# =========================================================
+
+# Web framework
 Flask>=3.0,<4.0
+
+# Production WSGI servers
 gunicorn>=22.0,<24.0
+waitress>=3.0,<4.0
+
+# Database and ORM
 SQLAlchemy>=2.0,<2.1
 Alembic>=1.13,<2.0
+
+# Environment configuration
 python-dotenv>=1.0,<2.0
-waitress>=3.0,<4.0
+
+# Optional distributed cache / rate limiting
 redis>=5.0,<7.0
