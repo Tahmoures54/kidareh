@@ -5,6 +5,7 @@ import hmac
 import logging
 import os
 import sqlite3
+import uuid
 from pathlib import Path
 from typing import Any, Iterator
 
@@ -25,7 +26,7 @@ __all__ = [
     "MAX_IMAGE_BYTES", "CATEGORIES", "CATEGORY_LABELS", "DEMO_LISTINGS",
     "UPLOAD_URL_PREFIX", "REQUEST_CONNECTION_KEY",
     "get_connection", "close_request_connection",
-    "upload_relative_path", "delete_uploaded_image",
+    "upload_relative_path", "store_uploaded_image", "delete_uploaded_image",
     "serialize_listing", "current_user", "csrf_valid",
     "initialize_database", "SCHEMA_VERSION", "SCHEMA_MIGRATIONS",
     "PERFORMANCE_INDEXES", "SUPERSEDED_INDEXES",
@@ -191,6 +192,28 @@ def upload_relative_path(filename: str) -> str:
     return f"{filename[:2]}/{filename}"
 
 
+
+def store_uploaded_image(binary: bytes, extension: str) -> str:
+    """Persist a validated image and return its public URL/path.
+
+    Vercel uses Blob when configured. Local and Liara keep filesystem storage.
+    A configured Blob failure is surfaced; it never falls back to ephemeral disk.
+    """
+    if extension not in {".jpg", ".png", ".webp"}:
+        raise ValueError("unsupported_image_extension")
+    filename = f"{uuid.uuid4().hex}{extension}"
+    if os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip():
+        from .infrastructure.storage.object_storage import upload_image
+
+        content_types = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+        return upload_image(f"listings/{filename}", binary, content_types[extension])
+
+    from .infrastructure.storage.local import save_image
+
+    relative_path = upload_relative_path(filename)
+    save_image(_configured_upload_folder(), relative_path, binary)
+    return f"{UPLOAD_URL_PREFIX}{relative_path}"
+
 def _configured_upload_folder() -> Path:
     if has_app_context():
         return Path(current_app.config.get("UPLOAD_FOLDER", UPLOAD_FOLDER))
@@ -203,20 +226,33 @@ def delete_uploaded_image(image_path: str) -> None:
     Both sharded (``ab/name.jpg``) and legacy flat (``name.jpg``) paths are
     supported; path traversal is rejected before anything is unlinked.
     """
-    if not isinstance(image_path, str) or not image_path.startswith(UPLOAD_URL_PREFIX):
+    if not isinstance(image_path, str):
+        return
+    if image_path.startswith("https://"):
+        from urllib.parse import urlsplit
+
+        host = (urlsplit(image_path).hostname or "").lower()
+        if host.endswith(".public.blob.vercel-storage.com") and os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip():
+            try:
+                from .infrastructure.storage.object_storage import delete_image
+
+                delete_image(image_path)
+            except Exception:
+                logger.warning("Could not delete Vercel Blob image", exc_info=True)
+        return
+    if not image_path.startswith(UPLOAD_URL_PREFIX):
         return
     parts = [part for part in image_path[len(UPLOAD_URL_PREFIX):].split("/") if part]
     if not parts or len(parts) > 2:
         return
     if any(part in (".", "..") or "\\" in part for part in parts):
         return
-    target = _configured_upload_folder().joinpath(*parts)
+    from .infrastructure.storage.local import delete_image
+
     try:
-        if target.is_file():
-            target.unlink()
-            logger.debug("Deleted uploaded image %s", target)
-    except OSError:
-        logger.warning("Could not delete uploaded image %s", target, exc_info=True)
+        delete_image(_configured_upload_folder(), *parts)
+    except (OSError, ValueError):
+        logger.warning("Could not delete uploaded image", exc_info=True)
 
 
 # Index name -> exact CREATE statement. Comparing definitions (not just names)
