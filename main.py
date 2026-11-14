@@ -98,9 +98,27 @@ def initialize_database():
     core.DATABASE_PATH = Path(DATABASE_PATH)
     app.config["DATABASE_PATH"] = str(DATABASE_PATH)
     app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
-    # ORM reflection must happen after the legacy bootstrap and inside the
-    # Flask app context so the application-scoped SQLAlchemy engine is used.
+    # The application-scoped SQLAlchemy engine is created by create_app().
+    # Test helpers and maintenance commands may deliberately point the legacy
+    # database path at a temporary SQLite file after importing main. Rebind the
+    # engine before schema work; otherwise legacy queries and ORM reflection
+    # can silently use different database files.
     with app.app_context():
+        from kidareh.infrastructure.database.session import init_app as init_database_extension
+
+        current = app.extensions.get("kidareh_db")
+        configured_path = Path(app.config["DATABASE_PATH"]).expanduser().resolve()
+        engine_path = None
+        if current is not None:
+            engine_database = current.engine.url.database
+            if engine_database:
+                engine_path = Path(engine_database).expanduser().resolve()
+
+        if current is not None and engine_path != configured_path:
+            current.dispose()
+            app.extensions.pop("kidareh_db", None)
+
+        init_database_extension(app)
         return core.initialize_database()
 
 
