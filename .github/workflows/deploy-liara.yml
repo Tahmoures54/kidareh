@@ -23,7 +23,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          # Keep this in sync with runtime.txt / Liara's Python runtime.
+          # Keep this in sync with runtime.txt and the test workflow.
           python-version: "3.12"
           cache: pip
 

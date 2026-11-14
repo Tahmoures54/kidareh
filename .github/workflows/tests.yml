@@ -28,7 +28,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          # IMPORTANT: keep this in sync with runtime.txt / liara.json
+          # IMPORTANT: keep this in sync with runtime.txt and docs/production-readiness.md
           python-version: "3.12"
           cache: pip
 
