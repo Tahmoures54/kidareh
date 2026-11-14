@@ -354,7 +354,7 @@
       all.type = "button";
       all.className = "subcategory-chip is-active";
       all.dataset.subcategory = groupId;
-      all.textContent = "همه " + (document.querySelector('[data-category="' + CSS.escape(groupId) + '"]')?.textContent.trim() || "این دسته");
+      all.textContent = "همه " + (Array.from(document.querySelectorAll("[data-category]")).find((item) => item.dataset.category === groupId)?.textContent.trim() || "این دسته");
       host.appendChild(all);
       children.forEach((item) => {
         const button = document.createElement("button");
