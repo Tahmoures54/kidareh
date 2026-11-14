@@ -221,10 +221,10 @@ def _configured_upload_folder() -> Path:
 
 
 def delete_uploaded_image(image_path: str) -> None:
-    """Remove an uploaded image from disk if it lives under the uploads folder.
+    """Remove an owned listing image from Blob or the legacy local folder.
 
-    Both sharded (``ab/name.jpg``) and legacy flat (``name.jpg``) paths are
-    supported; path traversal is rejected before anything is unlinked.
+    Both remote Vercel Blob URLs and sharded/flat local paths are supported.
+    Local paths are constrained to the configured upload root.
     """
     if not isinstance(image_path, str):
         return
