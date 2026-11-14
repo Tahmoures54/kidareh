@@ -194,6 +194,8 @@ def test_home_has_single_primary_cta_above_the_fold():
     assert 'id="homeRotatingMessage"' not in hero
     assert 'id="homeMessageAction"' not in hero
     assert hero.count("button-primary") == 1
+    assert "data-promo-pause" in hero
+    assert "aria-roledescription=\"carousel\"" in hero
     assert 'class="home-intro-art"' not in hero
 
 
