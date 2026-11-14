@@ -406,7 +406,23 @@
     loadListings();
   });
 
-  clearFilters?.addEventListener("click", () => showAllButton?.click());
+  clearFilters?.addEventListener("click", () => {
+    if (searchInput) searchInput.value = "";
+    currentFilter = "all";
+    if (categorySelect) categorySelect.value = "all";
+    userCoords = null;
+    document.querySelectorAll("[data-category]").forEach((item) => {
+      const selected = item.dataset.category === "all";
+      item.classList.toggle("is-active", selected);
+      item.classList.toggle("active", selected);
+      item.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+    document.querySelectorAll(".filter-chip").forEach((chip) => {
+      chip.classList.toggle("selected", chip.dataset.filter === "all");
+    });
+    renderSubcategories("all");
+    loadListings();
+  });
 
   // Location is requested only after an explicit user action; never on page load.
   function requestNearbyLocation(sourceButton) {
