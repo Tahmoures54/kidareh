@@ -254,10 +254,8 @@ def test_buyer_signup_validates_the_residential_city(app, client, monkeypatch):
 # ---------------------------------------------------------------------------
 def test_database_connection_is_closed_after_use(app, monkeypatch):
     """The adapter must close its SQLAlchemy Connection after each scope."""
-    from kidareh.infrastructure.database.session import get_database
-
     opened = []
-    engine = get_database().engine
+    engine = app.extensions["kidareh_db"].engine
     original_connect = engine.connect
 
     def tracking_connect(*args, **kwargs):
