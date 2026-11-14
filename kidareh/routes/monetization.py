@@ -135,7 +135,9 @@ def create_order():
         return jsonify({"error": "authentication_required", "message": "برای خرید بسته وارد حساب فروشنده شوید."}), 401
     if not csrf_valid():
         return jsonify({"error": "csrf_failed"}), 400
-    payload = request.get_json(silent=True) or {}
+    payload = request.get_json(silent=True)
+    if not isinstance(payload, dict):
+        payload = {}
     all_packages = PACKAGES + TAG_PACKAGES
     package = next((p for p in all_packages if p["id"] == payload.get("package_id")), None)
     if not package:
