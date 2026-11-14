@@ -318,7 +318,7 @@ def test_store_page_includes_local_business_json_ld(client, app):
             connection.commit()
 
     html = client.get(f"/store/{store_id}").get_data(as_text=True)
-    match = re.search(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+    match = re.search(r'<script\b(?=[^>]*type="application/ld\+json")[^>]*>(.*?)</script>', html, re.S)
     assert match, "JSON-LD missing on store page"
     data = json.loads(match.group(1))
     assert data["@type"] == "LocalBusiness"
