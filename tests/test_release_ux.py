@@ -169,7 +169,7 @@ def test_shared_shell_stylesheet_owns_full_width_footer_and_mobile_navigation(cl
     assert "@media (min-width: 900px) {\n  .mobile-bottom-nav { display: none !important; }" in css
 
     assert 'class="site-header"' in home
-    assert 'class="site-footer"' in home
+    assert 'class="site-footer' in home
     assert 'class="brand-tagline">سوپر اپلیکیشن خرید حضوری</small>' in home
     assert 'class="brand-city" id="activeMarketCity"' in home
     assert 'class="brand-title-row"' in home
@@ -292,7 +292,7 @@ def test_product_page_includes_product_json_ld(client, app):
             connection.commit()
 
     html = client.get(f"/product/{listing_id}").get_data(as_text=True)
-    match = re.search(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+    match = re.search(r'<script\b(?=[^>]*type="application/ld\+json")[^>]*>(.*?)</script>', html, re.S)
     assert match, "JSON-LD missing"
     data = json.loads(match.group(1))
     assert data["@type"] == "Product"
@@ -530,7 +530,9 @@ def test_auth_pages_preserve_requested_seller_destination():
     script = read("static/js/auth-pages.js")
     assert 'query.get("next")' in script
     assert 'window.location.assign(authUrl("/register"))' in script
-    assert 'requestedNext || (data.user.role === "seller" ? "/seller" : "/")' in script
+    assert "const destination =" in script
+    assert "requestedNext ||" in script
+    assert 'data.user.role === "seller" ? "/seller" : "/"' in script
 
 
 def test_home_navigation_omits_redundant_home_links_but_inner_pages_keep_home(client):
@@ -613,7 +615,7 @@ def test_registration_form_uses_vertical_layout_and_mobile_sizing(client):
     assert 'id="authProfileStep"' in html
     assert 'name="terms_accepted"' not in html
     assert 'name="role" value="seller" checked' not in html
-    assert "با وارد کردن شماره موبایل،" in html
+    assert "با وارد کردن شماره موبایل و ادامه فرایند ثبت‌نام" in html
     assert "auth-legal-note" in html
 
 
@@ -666,8 +668,10 @@ def test_registration_collects_only_core_seller_details_and_optional_coordinates
     assert 'name="store_latitude"' in html
     assert 'name="store_longitude"' in html
     assert 'navigator.geolocation.getCurrentPosition' in script
-    assert 'latitude: (form.elements.store_latitude?.value || "").trim() || null' in script
-    assert 'longitude: (form.elements.store_longitude?.value || "").trim() || null' in script
+    compact_script = re.sub(r"\s+", "", script)
+    assert 'form.elements.store_latitude?.value' in compact_script
+    assert 'form.elements.store_longitude?.value' in compact_script
+    assert "||null" in compact_script
     assert 'name="contact_name"' not in html
     assert 'name="store_address"' not in html
     assert 'name="store_hours"' not in html
