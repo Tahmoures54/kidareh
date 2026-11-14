@@ -6,10 +6,10 @@
 
 ببین کی داره · آشنا شو · حضوری هماهنگ کن · بفروش
 
-[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![Tests](https://github.com/Tahmoures54/kidareh-pf/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Tahmoures54/kidareh-pf/actions/workflows/tests.yml)
+[![Tests](https://github.com/Tahmoures54/kidareh/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Tahmoures54/kidareh/actions/workflows/tests.yml)
 [![Language](https://img.shields.io/badge/زبان-فارسی-23966F)](#)
 
 </div>
@@ -119,15 +119,15 @@
 ## 🚀 راه‌اندازی در رایانه شخصی
 
 ### پیش‌نیازها
-- Python نسخه ۳.۱۰ یا جدیدتر
+- Python نسخه ۳.۱۲ (مطابق runtime.txt و CI)
 - pip
 - دسترسی به ترمینال یا خط فرمان
 
 ### ۱. دریافت پروژه
 
 ```bash
-git clone https://github.com/Tahmoures54/kidareh-pf.git
-cd kidareh-pf
+git clone https://github.com/Tahmoures54/kidareh.git
+cd kidareh
 ```
 
 ### ۲. ساخت محیط مجازی
@@ -211,7 +211,7 @@ python main.py
 ## 🗂️ ساختار پروژه
 
 ```text
-kidareh-pf/
+kidareh/
 ├── main.py                        # نقطه ورود WSGI
 ├── kidareh/
 │   ├── __init__.py                # Application factory
@@ -291,7 +291,7 @@ node --check static/js/pages.js
 ```
 
 GitHub Actions این بررسی‌ها را روی `main` اجرا می‌کند:
-[مشاهده workflow](https://github.com/Tahmoures54/kidareh-pf/actions/workflows/tests.yml)
+[مشاهده workflow](https://github.com/Tahmoures54/kidareh/actions/workflows/tests.yml)
 
 ---
 
@@ -423,7 +423,7 @@ python scripts/scale_profiles.py --listings 1000000 --stores 100000
 
 ## 🤝 مشارکت و گزارش مشکل
 
-[Issues در GitHub](https://github.com/Tahmoures54/kidareh-pf/issues)
+[Issues در GitHub](https://github.com/Tahmoures54/kidareh/issues)
 
 شاخه جدا بساز، آزمون‌ها را اجرا کن و در Pull Request توضیح روشن بنویس.
 
