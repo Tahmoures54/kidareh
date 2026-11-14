@@ -377,6 +377,22 @@
     }
   }
 
+  const categoryRail = document.querySelector("#homeCategoryStories");
+  categoryRail?.parentElement?.querySelectorAll("[data-rail-scroll]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const direction = button.dataset.railScroll === "prev" ? -1 : 1;
+      categoryRail.scrollBy({
+        left: direction * 260,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+      });
+    });
+  });
+  categoryRail?.addEventListener("wheel", (event) => {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || categoryRail.scrollWidth <= categoryRail.clientWidth) return;
+    event.preventDefault();
+    categoryRail.scrollBy({ left: event.deltaY, behavior: "auto" });
+  }, { passive: false });
+
   document.querySelectorAll("[data-category]").forEach((tile) => {
     tile.addEventListener("click", () => {
       const cat = tile.dataset.category || "all";
