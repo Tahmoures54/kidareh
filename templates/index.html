@@ -3,7 +3,7 @@
 {% block title %}ببین کی داره؟ حضوری بگیر!{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=20261114-storefront">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=20261114-dynamic-hero">
 {% endblock %}
 
 {% block header_brand_extra %}
@@ -41,66 +41,63 @@
   </div>
 </section>
 
-<section class="home-intro" aria-labelledby="homeIntroTitle">
-  <div class="home-intro-copy">
-    <span class="home-intro-eyebrow"><span aria-hidden="true">✦</span> کی‌داره؛ همراه رونق بازارهای شهر</span>
-    <h1 id="homeIntroTitle">منتظر نمون تا مشتری بیاد!<br><span>ویترینت رو به دلِ خونه‌ها بفرست.</span></h1>
-    <p>کی‌داره آمده تا بازارهای شهر را رونق بدهد. در چند دقیقه ویترین فروشگاهت را آنلاین کن، کالاها و خدماتت را به مردم شهر معرفی کن و کمک کن مشتری‌ها راحت‌تر تو را پیدا کنند؛ شروعی ساده برای حضوری پررونق‌تر.</p>
-    <div class="home-intro-actions">
-      <a class="button button-primary" href="/seller">ویترینم رو بساز <span aria-hidden="true">←</span></a>
-      <a class="button home-intro-secondary" href="/stores">دیدن ویترین‌های شهر</a>
-    </div>
-    <ul class="home-intro-points" aria-label="مزیت‌های کی‌داره برای فروشگاه‌داران">
-      <li><span aria-hidden="true">✓</span> راه‌اندازی در چند دقیقه</li>
-      <li><span aria-hidden="true">✓</span> معرفی به مشتری‌های شهر</li>
-      <li><span aria-hidden="true">✓</span> کمک به رونق بازار محلی</li>
-    </ul>
-  </div>
-
-  <div class="home-promo-visual" id="homePromoVisual" aria-label="بنرهای معرفی کی‌داره">
+<section class="home-intro home-intro-carousel" aria-label="معرفی کی‌داره">
+  <div class="home-promo-visual" id="homePromoVisual" role="region"
+       aria-roledescription="carousel" aria-label="پیام‌های معرفی کی‌داره">
     <img class="home-promo-image"
          src="{{ url_for('static', filename='Screen.png') }}"
-         alt="تصویر اصلی کی‌داره؛ بازار و ویترین‌های محلی"
+         alt="بازار و ویترین‌های محلی کی‌داره"
          fetchpriority="high">
     <div class="home-promo-slides" id="homePromoSlides" aria-live="off">
-      <article class="home-promo-slide is-active" data-promo-slide>
-        <span class="home-promo-kicker">🛍️ بازار شهر تو</span>
-        <h2>کالای موردنیازت رو نزدیک پیدا کن</h2>
-        <p>در ویترین فروشگاه‌های شهر جست‌وجو کن و برای خرید حضوری تصمیم بگیر.</p>
-        <a class="home-promo-link" href="/search">جست‌وجوی کالاها <span aria-hidden="true">←</span></a>
+      <article class="home-promo-slide is-active" data-promo-slide aria-hidden="false">
+        <span class="home-promo-kicker">✦ کی‌داره؛ همراه رونق بازارهای شهر</span>
+        <h2>منتظر نمون تا مشتری بیاد!<br><span>ویترینت رو به دلِ خونه‌ها بفرست.</span></h2>
+        <p>کی‌داره آمده تا بازارهای شهر را رونق بدهد. در چند دقیقه ویترین فروشگاهت را آنلاین کن، کالاها و خدماتت را به مردم شهر معرفی کن و کمک کن مشتری‌ها راحت‌تر تو را پیدا کنند؛ شروعی ساده برای حضوری پررونق‌تر.</p>
+        <a class="home-promo-link" href="/seller">ویترین فروشگاهم رو بساز <span aria-hidden="true">←</span></a>
       </article>
-      <article class="home-promo-slide" data-promo-slide>
-        <span class="home-promo-kicker">📍 خرید محلی</span>
-        <h2>فروشگاه‌های اطرافت رو بشناس</h2>
-        <p>بازار شهر خودت رو ببین و راه ارتباط و مراجعه به فروشگاه‌ها رو پیدا کن.</p>
+      <article class="home-promo-slide" data-promo-slide aria-hidden="true">
+        <span class="home-promo-kicker">🛍️ برای خریداران شهر</span>
+        <h2>دنبال چیزی می‌گردی؟<br><span>شاید همین نزدیکی باشه!</span></h2>
+        <p>کالاها و خدمات فروشگاه‌های شهر را ببین، جست‌وجو کن و برای خرید حضوری آگاهانه‌تر تصمیم بگیر.</p>
+        <a class="home-promo-link" href="/search">جست‌وجوی کالا و خدمات <span aria-hidden="true">←</span></a>
+      </article>
+      <article class="home-promo-slide" data-promo-slide aria-hidden="true">
+        <span class="home-promo-kicker">📍 بازار محلی تو</span>
+        <h2>فروشگاه‌های اطرافت رو<br><span>یکی‌یکی کشف کن</span></h2>
+        <p>شهر خودت را انتخاب کن و ویترین فروشگاه‌های محلی را ببین؛ راه ارتباط و مراجعه حضوری را راحت‌تر پیدا کن.</p>
         <a class="home-promo-link" href="/stores">دیدن ویترین‌های شهر <span aria-hidden="true">←</span></a>
       </article>
-      <article class="home-promo-slide" data-promo-slide>
-        <span class="home-promo-kicker">🔎 جست‌وجوی دقیق</span>
-        <h2>نام کالا یا برند رو جست‌وجو کن</h2>
-        <p>کالاهای ثبت‌شده رو پیدا کن، اطلاعاتشون رو بخون و پیش از مراجعه استعلام بگیر.</p>
-        <a class="home-promo-link" href="/search">شروع جست‌وجو <span aria-hidden="true">←</span></a>
-      </article>
-      <article class="home-promo-slide" data-promo-slide>
+      <article class="home-promo-slide" data-promo-slide aria-hidden="true">
         <span class="home-promo-kicker">🏪 برای فروشگاه‌دارها</span>
-        <h2>ویترینت رو به مردم شهر معرفی کن</h2>
-        <p>کالاها و خدماتت رو ثبت کن تا مشتری‌های محلی راحت‌تر پیدات کنن.</p>
+        <h2>فروشگاهت رو آنلاین معرفی کن؛<br><span>ساده، سریع و محلی</span></h2>
+        <p>کالاها و خدماتت را ثبت کن تا مشتری‌های شهر راحت‌تر پیدایت کنند. ویترینت همیشه در دسترس خریداران باشد.</p>
         <a class="home-promo-link" href="/seller">ساخت ویترین فروشگاه <span aria-hidden="true">←</span></a>
       </article>
-      <article class="home-promo-slide" data-promo-slide>
-        <span class="home-promo-kicker">🤝 رونق بازار محلی</span>
-        <h2>خرید نزدیک، پشتیبانی از کسب‌وکارهای شهر</h2>
-        <p>با پیدا کردن فروشگاه‌های محلی، به رونق بازار شهر خودت کمک کن.</p>
+      <article class="home-promo-slide" data-promo-slide aria-hidden="true">
+        <span class="home-promo-kicker">🤝 رونق بازار شهر</span>
+        <h2>خرید نزدیک،<br><span>حمایت از کسب‌وکارهای شهر</span></h2>
+        <p>با شناخت فروشگاه‌های محلی، خریدار و فروشنده را به هم نزدیک‌تر کنیم؛ هر ویترین، فرصتی تازه برای بازار شهر است.</p>
         <a class="home-promo-link" href="/stores">کشف بازار شهر <span aria-hidden="true">←</span></a>
       </article>
     </div>
     <div class="home-promo-caption">کی‌داره؛ ببین کی داره؟ حضوری بگیر!</div>
-    <div class="home-promo-dots" id="homePromoDots" aria-label="انتخاب بنر">
-      <button class="home-promo-dot" type="button" aria-label="بنر بازار شهر" aria-current="true" data-promo-dot="0"></button>
-      <button class="home-promo-dot" type="button" aria-label="بنر خرید محلی" aria-current="false" data-promo-dot="1"></button>
-      <button class="home-promo-dot" type="button" aria-label="بنر جست‌وجوی کالا" aria-current="false" data-promo-dot="2"></button>
-      <button class="home-promo-dot" type="button" aria-label="بنر فروشگاه‌داران" aria-current="false" data-promo-dot="3"></button>
-      <button class="home-promo-dot" type="button" aria-label="بنر فروشگاه‌داران" aria-current="false" data-promo-dot="4"></button>
+    <div class="home-promo-controls" aria-label="کنترل اسلایدها">
+      <button class="home-promo-arrow" type="button" data-promo-prev aria-label="پیام قبلی">‹</button>
+      <div class="home-promo-dots" id="homePromoDots" aria-label="انتخاب پیام">
+        <button class="home-promo-dot" type="button" aria-label="پیام معرفی کی‌داره" aria-current="true" data-promo-dot="0"></button>
+        <button class="home-promo-dot" type="button" aria-label="پیام خریداران" aria-current="false" data-promo-dot="1"></button>
+        <button class="home-promo-dot" type="button" aria-label="پیام بازار محلی" aria-current="false" data-promo-dot="2"></button>
+        <button class="home-promo-dot" type="button" aria-label="پیام فروشگاه‌داران" aria-current="false" data-promo-dot="3"></button>
+        <button class="home-promo-dot" type="button" aria-label="پیام رونق بازار" aria-current="false" data-promo-dot="4"></button>
+      </div>
+      <button class="home-promo-arrow" type="button" data-promo-next aria-label="پیام بعدی">›</button>
+      <button class="home-promo-pause" type="button" data-promo-pause aria-pressed="false">توقف حرکت</button>
+    </div>
+  </div>
+  <div class="home-intro-copy">
+    <div class="home-intro-actions">
+      <a class="button button-primary" href="/seller">ویترینم رو بساز <span aria-hidden="true">←</span></a>
+      <a class="button home-intro-secondary" href="/stores">دیدن ویترین‌های شهر</a>
     </div>
   </div>
 </section>
