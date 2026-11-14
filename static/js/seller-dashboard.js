@@ -129,6 +129,7 @@
         setStatsNote("در حال دریافت آمار…");
         try {
           const response = await fetch("/api/seller/stats", {
+            cache: "no-store",
             credentials: "same-origin",
             headers: { Accept: "application/json" },
             cache: "no-store",
