@@ -239,3 +239,26 @@ def test_fts_table_is_populated_on_initialize(monkeypatch, tmp_path):
     assert listing_count > 0
     assert term_count > 0
     assert matched >= 1
+
+def test_nearby_search_prioritizes_distance_over_featured_placement(monkeypatch, tmp_path):
+    client, _ = setup_test_database(monkeypatch, tmp_path)
+    with app_module.get_connection() as connection:
+        connection.executemany(
+            "INSERT INTO listings"
+            " (title, category, city, price, featured, latitude, longitude)"
+            " VALUES (?, 'home', 'تهران', 1000, ?, ?, ?)",
+            [
+                ("ویژه اما دورتر", 1, 35.71, 51.4),
+                ("نزدیک‌ترین کالا", 0, 35.7005, 51.4),
+                ("کالای کمی دورتر", 0, 35.702, 51.4),
+            ],
+        )
+        connection.commit()
+
+    data = client.get(
+        "/api/listings?lat=35.7&lon=51.4&radius_km=5&limit=1"
+    ).get_json()
+
+    assert data["nearby"] is True
+    assert data["items"][0]["title"] == "نزدیک‌ترین کالا"
+    assert data["items"][0]["distance_km"] < 0.1
