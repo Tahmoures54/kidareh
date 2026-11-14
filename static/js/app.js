@@ -74,6 +74,27 @@
     return btn;
   }
 
+  function availabilityLabel(status) {
+    if (status === "in_stock") return "موجود اعلام شده";
+    if (status === "out_of_stock") return "ناموجود";
+    return "پیش از مراجعه استعلام کن";
+  }
+
+  function informationUpdatedLabel(value) {
+    if (!value) return "زمان تأیید اطلاعات ثبت نشده";
+    const timestamp = Date.parse(value);
+    if (!Number.isFinite(timestamp)) return "زمان تأیید اطلاعات نامشخص";
+    const elapsed = Math.max(0, Date.now() - timestamp);
+    const minutes = Math.floor(elapsed / 60000);
+    if (minutes < 1) return "به‌روزرسانی همین حالا";
+    if (minutes < 60) return "آخرین ثبت: " + numberFormat.format(minutes) + " دقیقه پیش";
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return "آخرین ثبت: " + numberFormat.format(hours) + " ساعت پیش";
+    const days = Math.floor(hours / 24);
+    if (days < 30) return "آخرین ثبت: " + numberFormat.format(days) + " روز پیش";
+    return "آخرین ثبت: " + new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "short", day: "numeric" }).format(timestamp);
+  }
+
   function renderListings(items, append) {
     if (!grid) return;
     if (!append) {
@@ -95,7 +116,12 @@
           <div class="listing-body">
             <div class="listing-meta"><span>${escapeHTML(item.city)}</span><span class="meta-dot"></span><span>${escapeHTML(categoryName(item.category, item.category_name))}</span>${item.distance_km != null ? `<span class="meta-dot"></span><span>${numberFormat.format(item.distance_km)} کیلومتر</span>` : ""}</div>
             <h3>${escapeHTML(item.title)}</h3>
+            ${item.store_name ? `<div class="listing-store-name">⌂ فروشگاه: ${escapeHTML(item.store_name)}</div>` : ""}
             <p>${escapeHTML(item.description || "")}</p>
+            <div class="listing-local-info">
+              <span class="listing-availability status-${escapeHTML(item.availability_status || "ask")}">${availabilityLabel(item.availability_status)}</span>
+              <small>${informationUpdatedLabel(item.price_updated_at)}</small>
+            </div>
             <div class="listing-footer"><strong>${item.price ? numberFormat.format(item.price) + " تومان" : "توافقی"}</strong></div>
           </div>
         </a>`;

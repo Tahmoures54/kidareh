@@ -294,3 +294,35 @@ def test_nearby_fts_search_filters_by_location_before_candidate_limit(
     assert data["nearby"] is True
     assert any(item["title"] == "دریل صنعتی نزدیک" for item in data["items"])
     assert all(item["distance_km"] <= 5 for item in data["items"])
+
+
+def test_listing_cards_receive_store_and_freshness_metadata(monkeypatch, tmp_path):
+    client, owner_id = setup_test_database(monkeypatch, tmp_path)
+    with app_module.get_connection() as connection:
+        store = connection.execute(
+            "SELECT id FROM stores WHERE owner_id = ? LIMIT 1", (owner_id,)
+        ).fetchone()
+        old_timestamp = "2000-01-01T00:00:00+00:00"
+        listing_id = connection.execute(
+            "INSERT INTO listings "
+            "(title, category, city, price, owner_id, store_id, availability_status, price_updated_at) "
+            "VALUES (?, 'home', 'تبریز', 125000, ?, ?, 'ask', ?)",
+            ("کالای دارای فروشگاه", owner_id, store["id"], old_timestamp),
+        ).lastrowid
+        connection.commit()
+
+    public_data = client.get("/api/listings?city=تبریز").get_json()
+    item = next(item for item in public_data["items"] if item["id"] == listing_id)
+    assert item["store_name"] == "ویترین آزمایش"
+    assert item["availability_status"] == "ask"
+    assert item["price_updated_at"] == old_timestamp
+
+    updated = client.patch(
+        f"/api/listings/{listing_id}",
+        json={"availability_status": "in_stock"},
+        headers={"X-CSRF-Token": CSRF_TOKEN},
+    )
+    assert updated.status_code == 200
+    updated_item = updated.get_json()["item"]
+    assert updated_item["availability_status"] == "in_stock"
+    assert updated_item["price_updated_at"] != old_timestamp

@@ -201,7 +201,8 @@ def listings():
         cos_lat = max(0.01, abs(math.cos(math.radians(near_lat))))
         delta_lon = radius_km / (111.0 * cos_lat)
         sql = """
-            SELECT listings.*
+            SELECT listings.*,
+                   (SELECT stores.name FROM stores WHERE stores.id = listings.store_id) AS store_name
             FROM listings
             INNER JOIN (
                 SELECT nearby_listing.id AS candidate_id
@@ -236,7 +237,8 @@ def listings():
         # caps the work (3 ms at the same scale) and, because FTS walks rowids in
         # order, still yields the newest page the user asked for.
         sql = """
-            SELECT listings.*
+            SELECT listings.*,
+                   (SELECT stores.name FROM stores WHERE stores.id = listings.store_id) AS store_name
             FROM listings
             INNER JOIN (
                 SELECT rowid AS candidate_id
@@ -249,7 +251,7 @@ def listings():
         """
         parameters.extend([fts_match, FTS_SEARCH_WINDOW])
     else:
-        sql = "SELECT * FROM listings WHERE 1=1"
+        sql = "SELECT listings.*, (SELECT stores.name FROM stores WHERE stores.id = listings.store_id) AS store_name FROM listings WHERE 1=1"
 
     if category and category != "all":
         category_ids = [category]
@@ -331,7 +333,7 @@ def listings():
             if not fts_match:
                 raise
             current_app.logger.warning("FTS search unavailable (%s); using LIKE fallback", error)
-            fallback_sql = "SELECT * FROM listings WHERE 1=1"
+            fallback_sql = "SELECT listings.*, (SELECT stores.name FROM stores WHERE stores.id = listings.store_id) AS store_name FROM listings WHERE 1=1"
             fallback_params: list[Any] = []
             term = f"%{query}%"
             fallback_sql += " AND (title LIKE ? OR description LIKE ? OR city LIKE ?)"
@@ -568,7 +570,14 @@ def manage_listing(listing_id: int):
             if availability_status not in {"in_stock", "out_of_stock", "ask"}:
                 return jsonify({"error": "invalid_availability_status", "message": "وضعیت موجودی معتبر نیست."}), 400
             price_changed = "price" in payload and str(payload.get("price")) != str(row["price"])
-            price_updated_at = datetime.now(timezone.utc).isoformat() if price_changed else (row["price_updated_at"] if "price_updated_at" in row.keys() else "")
+            availability_changed = (
+                "availability_status" in payload
+                and availability_status != (row["availability_status"] if "availability_status" in row.keys() else "ask")
+            )
+            # This legacy timestamp now tracks the latest seller-confirmed
+            # price OR availability update, as shown to nearby shoppers.
+            information_updated = price_changed or availability_changed
+            price_updated_at = datetime.now(timezone.utc).isoformat() if information_updated else (row["price_updated_at"] if "price_updated_at" in row.keys() else "")
             try:
                 latitude = float(payload.get("latitude", row["latitude"])) if payload.get("latitude", row["latitude"]) not in (None, "") else None
                 longitude = float(payload.get("longitude", row["longitude"])) if payload.get("longitude", row["longitude"]) not in (None, "") else None

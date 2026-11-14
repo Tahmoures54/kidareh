@@ -410,3 +410,50 @@
     transition: none !important;
   }
 }
+
+/* Local-shopping confidence details: store identity and seller-updated status. */
+.listing-store-name {
+  margin-top: 0.35rem;
+  color: var(--color-ink);
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+.listing-local-info {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.65rem;
+  margin-top: 0.65rem;
+  color: var(--color-muted, #64748b);
+  font-size: 0.74rem;
+}
+.listing-availability {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  background: var(--color-surface, #f1f5f9);
+  color: var(--color-ink, #334155);
+  font-weight: 650;
+}
+.listing-availability.status-in_stock {
+  background: #e8f5ed;
+  color: #17643a;
+}
+.listing-availability.status-out_of_stock {
+  background: #fcebea;
+  color: #9f2922;
+}
+.listing-local-info small {
+  line-height: 1.6;
+}
+@media (prefers-color-scheme: dark) {
+  .listing-availability.status-in_stock {
+    background: #173b2a;
+    color: #a7e4bd;
+  }
+  .listing-availability.status-out_of_stock {
+    background: #482522;
+    color: #ffc0ba;
+  }
+}
