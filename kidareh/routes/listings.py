@@ -263,10 +263,26 @@ def listings():
             sql += " AND id < ?"
             parameters.append(before_id)
 
-    # Fetch one extra row to detect has_more without a separate COUNT(*).
-    fetch_limit = page_size + 1 if not use_nearby else min(300, page_size * 3)
-    sql += " ORDER BY featured DESC, id DESC LIMIT ?"
-    parameters.append(fetch_limit)
+    # Nearby discovery must rank by physical distance, not paid placement.
+    # Use an equirectangular distance key in SQLite to select a bounded set of
+    # nearest candidates, then calculate exact haversine distances below.
+    # This avoids letting featured listings crowd genuinely closer shops out
+    # of the candidate window while keeping the query index/bounding-box bound.
+    fetch_limit = page_size + 1
+    if use_nearby:
+        fetch_limit = min(300, max(100, page_size * 3))
+        cos_lat = math.cos(math.radians(near_lat))
+        sql += (
+            " ORDER BY ((latitude - ?) * (latitude - ?) + "
+            "((longitude - ?) * (longitude - ?) * ?)), id DESC LIMIT ?"
+        )
+        parameters.extend([
+            near_lat, near_lat, near_lon, near_lon, cos_lat * cos_lat,
+            fetch_limit,
+        ])
+    else:
+        sql += " ORDER BY featured DESC, id DESC LIMIT ?"
+        parameters.append(fetch_limit)
 
     with get_connection() as connection:
         _expire_featured_promotions(connection)
