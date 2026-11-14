@@ -22,7 +22,7 @@
     if (options.method && options.method !== "GET") {
       headers["X-CSRF-Token"] = tokenMeta?.content || "";
     }
-    const response = await fetch(url, { ...options, headers, credentials: "same-origin" });
+    const response = await fetch(url, { cache: "no-store", ...options, headers, credentials: "same-origin" });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.message || data.error || "درخواست انجام نشد.");
     return data;
@@ -196,7 +196,17 @@
       const storeMetric = document.querySelector("#sellerStoreMetric");
       const welcomeTitle = document.querySelector("#sellerWelcomeTitle");
       if (storeMetric) storeMetric.textContent = "فعال";
-      if (welcomeTitle) welcomeTitle.textContent = "خوش آمدی، " + (me.user.name || "فروشنده گرامی");
+      if (welcomeTitle) welcomeTitle.textContent = store.name || "فروشگاه من";
+      const storeAvatar = document.querySelector("#sellerStoreAvatar");
+      if (storeAvatar) {
+        storeAvatar.textContent = Array.from(String(store.name || "ف").trim())[0] || "ف";
+        storeAvatar.setAttribute("aria-label", "نماد فروشگاه " + (store.name || ""));
+      }
+      const welcomeDescription = document.querySelector("#sellerWelcomeDescription");
+      if (welcomeDescription) {
+        welcomeDescription.textContent = [store.city, store.category].filter(Boolean).join(" · ") ||
+          "کالاها و خدمات ویترین فروشگاهت را مدیریت کن.";
+      }
 
       // Populate the edit dialog form (hidden until user clicks "ویرایش")
       if (editForm && store) {
