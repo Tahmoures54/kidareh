@@ -95,6 +95,44 @@
     return "آخرین ثبت: " + new Intl.DateTimeFormat("fa-IR", { year: "numeric", month: "short", day: "numeric" }).format(timestamp);
   }
 
+  async function shareListing(item, button) {
+    const url = new URL("/product/" + encodeURIComponent(item.id), window.location.origin).href;
+    const title = String(item.title || "کالا در کی‌داره");
+    const text = [title, item.price ? numberFormat.format(item.price) + " تومان" : "قیمت توافقی", item.city || ""].filter(Boolean).join(" · ");
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: title + " | کی‌داره", text, url });
+        return;
+      } catch (error) {
+        if (error && error.name === "AbortError") return;
+      }
+    }
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const field = document.createElement("textarea");
+        field.value = url;
+        field.setAttribute("readonly", "");
+        field.style.position = "fixed";
+        field.style.opacity = "0";
+        document.body.appendChild(field);
+        field.select();
+        const copied = document.execCommand("copy");
+        field.remove();
+        if (!copied) throw new Error("copy_failed");
+      }
+      showToast("پیوند اختصاصی کالا کپی شد.", "success");
+      if (button) {
+        const previous = button.textContent;
+        button.textContent = "کپی شد ✓";
+        window.setTimeout(() => { button.textContent = previous; }, 1800);
+      }
+    } catch (_) {
+      showToast("کپی پیوند ممکن نشد؛ نشانی صفحه را از نوار مرورگر کپی کنید.", "error");
+    }
+  }
+
   function renderListings(items, append) {
     if (!grid) return;
     if (!append) {
@@ -107,30 +145,54 @@
       if (empty) empty.hidden = true;
     }
     const html = items.map((item) => {
+      const productUrl = "/product/" + encodeURIComponent(item.id);
+      const storeId = Number.parseInt(item.store_id, 10);
+      const storeLink = Number.isInteger(storeId) && storeId > 0
+        ? '<a class="listing-store-visit" href="/store/' + storeId + '">ببین دیگه چی داره؟ <span aria-hidden="true">←</span></a>'
+        : "";
+      const image = item.image_path
+        ? '<img class="listing-photo" src="' + escapeHTML(item.image_path) + '" alt="' + escapeHTML(item.title) + '" loading="lazy" decoding="async">'
+        : '<span class="listing-emoji" aria-hidden="true">' + escapeHTML(item.emoji || "🛍️") + '</span>';
       return `
-        <a class="listing-card" href="/product/${escapeHTML(item.id)}">
-          <div class="listing-image category-art-${escapeHTML(item.category)}">
-            ${item.image_path ? '<img class="listing-photo" src="' + escapeHTML(item.image_path) + '" alt="' + escapeHTML(item.title) + '" loading="lazy">' : '<span class="listing-emoji" aria-hidden="true">' + escapeHTML(item.emoji || "🛍️") + '</span>'}
-            ${item.paid_tag ? '<span class="paid-listing-tag tag-' + escapeHTML(item.paid_tag.type) + '">' + escapeHTML(item.paid_tag.label) + '</span>' : ""}
-          </div>
-          <div class="listing-body">
-            <div class="listing-meta"><span>${escapeHTML(item.city)}</span><span class="meta-dot"></span><span>${escapeHTML(categoryName(item.category, item.category_name))}</span>${item.distance_km != null ? `<span class="meta-dot"></span><span>${numberFormat.format(item.distance_km)} کیلومتر</span>` : ""}</div>
-            <h3>${escapeHTML(item.title)}</h3>
-            ${item.store_name ? `<div class="listing-store-name">⌂ فروشگاه: ${escapeHTML(item.store_name)}</div>` : ""}
-            <p>${escapeHTML(item.description || "")}</p>
-            <div class="listing-local-info">
-              <span class="listing-availability status-${escapeHTML(item.availability_status || "ask")}">${availabilityLabel(item.availability_status)}</span>
-              <small>${informationUpdatedLabel(item.price_updated_at)}</small>
+        <article class="listing-card">
+          <a class="listing-card-main" href="${productUrl}" aria-label="مشاهده ${escapeHTML(item.title)}">
+            <div class="listing-image category-art-${escapeHTML(item.category)}">
+              ${image}
+              ${item.paid_tag ? '<span class="paid-listing-tag tag-' + escapeHTML(item.paid_tag.type) + '">' + escapeHTML(item.paid_tag.label) + '</span>' : ""}
             </div>
-            <div class="listing-footer"><strong>${item.price ? numberFormat.format(item.price) + " تومان" : "توافقی"}</strong></div>
+            <div class="listing-body">
+              <div class="listing-meta"><span>${escapeHTML(item.city)}</span><span class="meta-dot"></span><span>${escapeHTML(categoryName(item.category, item.category_name))}</span>${item.distance_km != null ? `<span class="meta-dot"></span><span>${numberFormat.format(item.distance_km)} کیلومتر</span>` : ""}</div>
+              <h3>${escapeHTML(item.title)}</h3>
+              ${item.store_name ? `<div class="listing-store-name">⌂ ${escapeHTML(item.store_name)}</div>` : ""}
+              <p>${escapeHTML(item.description || "")}</p>
+              <div class="listing-local-info">
+                <span class="listing-availability status-${escapeHTML(item.availability_status || "ask")}">${availabilityLabel(item.availability_status)}</span>
+                <small>${informationUpdatedLabel(item.price_updated_at)}</small>
+              </div>
+              <div class="listing-footer"><strong>${item.price ? numberFormat.format(item.price) + " تومان" : "توافقی"}</strong></div>
+            </div>
+          </a>
+          <div class="listing-card-actions">
+            ${storeLink}
+            <button class="listing-share" type="button" data-share-listing="${escapeHTML(item.id)}" aria-label="اشتراک‌گذاری ${escapeHTML(item.title)}">
+              <span aria-hidden="true">↗</span> اشتراک‌گذاری
+            </button>
           </div>
-        </a>`;
+        </article>`;
     }).join("");
     if (append) grid.insertAdjacentHTML("beforeend", html);
     else grid.innerHTML = html;
+    grid.querySelectorAll("[data-share-listing]").forEach((button) => {
+      button.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const item = items.find((entry) => String(entry.id) === button.dataset.shareListing);
+        if (item) shareListing(item, button);
+      });
+    });
   }
 
-  async function loadListings(opts = {}) {
+    async function loadListings(opts = {}) {
     const params = new URLSearchParams();
     const q = (searchInput?.value || "").trim();
     const city = citySelect?.value.trim() || "تهران";
@@ -266,15 +328,86 @@
     });
   });
 
+  let categoryCataloguePromise = null;
+  function loadCategoryCatalogue() {
+    if (!categoryCataloguePromise) {
+      categoryCataloguePromise = fetch("/api/categories", { headers: { Accept: "application/json" } })
+        .then((response) => { if (!response.ok) throw new Error("categories_unavailable"); return response.json(); });
+    }
+    return categoryCataloguePromise;
+  }
+
+  async function renderSubcategories(groupId) {
+    const host = document.querySelector("#homeSubcategories");
+    if (!host) return;
+    if (!groupId || groupId === "all") {
+      host.hidden = true;
+      host.innerHTML = "";
+      return;
+    }
+    try {
+      const catalogue = await loadCategoryCatalogue();
+      const children = (catalogue.subcategories || []).filter((item) => item.group_id === groupId);
+      host.innerHTML = "";
+      if (!children.length) { host.hidden = true; return; }
+      const all = document.createElement("button");
+      all.type = "button";
+      all.className = "subcategory-chip is-active";
+      all.dataset.subcategory = groupId;
+      all.textContent = "همه " + (Array.from(document.querySelectorAll("[data-category]")).find((item) => item.dataset.category === groupId)?.textContent.trim() || "این دسته");
+      host.appendChild(all);
+      children.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "subcategory-chip";
+        button.dataset.subcategory = item.id;
+        button.textContent = item.name;
+        host.appendChild(button);
+      });
+      host.hidden = false;
+      host.querySelectorAll("[data-subcategory]").forEach((button) => {
+        button.addEventListener("click", () => {
+          currentFilter = button.dataset.subcategory;
+          host.querySelectorAll(".subcategory-chip").forEach((chip) => chip.classList.toggle("is-active", chip === button));
+          loadListings();
+        });
+      });
+    } catch (_) {
+      host.hidden = true;
+    }
+  }
+
+  const categoryRail = document.querySelector("#homeCategoryStories");
+  categoryRail?.parentElement?.querySelectorAll("[data-rail-scroll]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const direction = button.dataset.railScroll === "prev" ? -1 : 1;
+      categoryRail.scrollBy({
+        left: direction * 260,
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth"
+      });
+    });
+  });
+  categoryRail?.addEventListener("wheel", (event) => {
+    if (Math.abs(event.deltaY) <= Math.abs(event.deltaX) || categoryRail.scrollWidth <= categoryRail.clientWidth) return;
+    event.preventDefault();
+    categoryRail.scrollBy({ left: event.deltaY, behavior: "auto" });
+  }, { passive: false });
+
   document.querySelectorAll("[data-category]").forEach((tile) => {
     tile.addEventListener("click", () => {
-      const cat = tile.dataset.category;
-      currentFilter = cat || "all";
-      document.querySelectorAll(".category-tile").forEach((c) => c.classList.toggle("active", c === tile));
+      const cat = tile.dataset.category || "all";
+      currentFilter = cat;
+      document.querySelectorAll("[data-category]").forEach((item) => {
+        const selected = item === tile;
+        item.classList.toggle("is-active", selected);
+        item.classList.toggle("active", selected);
+        item.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
       document.querySelectorAll(".filter-chip").forEach((c) => {
         c.classList.toggle("selected", (c.dataset.filter || "") === currentFilter || (currentFilter === "all" && c.dataset.filter === "all"));
       });
-      document.querySelector("#listings")?.scrollIntoView({ behavior: "smooth" });
+      renderSubcategories(cat);
+      document.querySelector("#listings")?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
       loadListings();
     });
   });
@@ -289,7 +422,23 @@
     loadListings();
   });
 
-  clearFilters?.addEventListener("click", () => showAllButton?.click());
+  clearFilters?.addEventListener("click", () => {
+    if (searchInput) searchInput.value = "";
+    currentFilter = "all";
+    if (categorySelect) categorySelect.value = "all";
+    userCoords = null;
+    document.querySelectorAll("[data-category]").forEach((item) => {
+      const selected = item.dataset.category === "all";
+      item.classList.toggle("is-active", selected);
+      item.classList.toggle("active", selected);
+      item.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+    document.querySelectorAll(".filter-chip").forEach((chip) => {
+      chip.classList.toggle("selected", chip.dataset.filter === "all");
+    });
+    renderSubcategories("all");
+    loadListings();
+  });
 
   // Location is requested only after an explicit user action; never on page load.
   function requestNearbyLocation(sourceButton) {
