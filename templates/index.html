@@ -41,46 +41,6 @@
   </div>
 </section>
 
-<div class="home-search-wrap">  <form class="home-product-search" action="/search" method="get" role="search" aria-label="جست‌وجوی کالاهای بازار">
-    <span class="home-product-search-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" focusable="false">
-        <circle cx="10.8" cy="10.8" r="6.8"></circle>
-        <path d="m16 16 5 5"></path>
-      </svg>
-    </span>
-    <label class="sr-only" for="homeProductQuery">نام کالا یا خدمت</label>
-    <input id="homeProductQuery" name="q" type="search"
-           placeholder="دنبال چه کالا یا خدمتی می‌گردی؟" autocomplete="off">
-    <button type="submit">جست‌وجو</button>
-  </form>
-</div>
-
-
-<section class="home-category-section" aria-labelledby="homeCategoriesTitle">
-  <div class="home-category-heading">
-    <div><span class="section-kicker">بازار را کشف کن</span><h2 id="homeCategoriesTitle">دسته‌بندی‌ها</h2><p>از دسته‌ای که دنبالش هستی شروع کن.</p></div>
-    <span class="home-category-hint">برای دیدن زیر‌دسته‌ها انتخاب کن</span>
-  </div>
-  <div class="home-category-rail">
-    <button class="category-rail-control" type="button" data-rail-scroll="next" aria-label="پیمایش دسته‌ها به راست">‹</button>
-    <div class="home-category-stories" id="homeCategoryStories" aria-label="دسته‌بندی کالاها">
-    <button class="category-story is-active" type="button" data-category="all" aria-pressed="true">
-      <span class="category-story-ring"><span class="category-story-icon" aria-hidden="true">✨</span></span><span>همه کالاها</span>
-    </button>
-    {% for category in categories %}
-    <button class="category-story" type="button" data-category="{{ category.id|e }}" aria-pressed="false">
-      <span class="category-story-ring"><span class="category-story-icon" aria-hidden="true">{{ category.icon or '▦' }}</span></span>
-      <span>{{ category.name }}</span>
-    </button>
-    {% endfor %}
-  </div>
-
-    <button class="category-rail-control" type="button" data-rail-scroll="prev" aria-label="پیمایش دسته‌ها به چپ">›</button>
-  </div>  <div class="home-subcategories" id="homeSubcategories" aria-label="زیر دسته‌بندی‌ها" hidden></div>
-</section>
-
-
-
 <section class="home-intro" aria-labelledby="homeIntroTitle">
   <div class="home-intro-copy">
     <span class="home-intro-eyebrow"><span aria-hidden="true">✦</span> کی‌داره؛ همراه رونق بازارهای شهر</span>
@@ -143,6 +103,51 @@
       <button class="home-promo-dot" type="button" aria-label="بنر فروشگاه‌داران" aria-current="false" data-promo-dot="4"></button>
     </div>
   </div>
+</section>
+
+
+<div class="home-search-wrap">  <form class="home-product-search" action="/search" method="get" role="search" aria-label="جست‌وجوی کالاهای بازار">
+    <span class="home-product-search-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+        <path d="m16 16 5 5"></path>
+      </svg>
+    </span>
+    <label class="sr-only" for="homeProductQuery">نام کالا یا خدمت</label>
+    <input id="homeProductQuery" name="q" type="search"
+           placeholder="دنبال چه کالا یا خدمتی می‌گردی؟" autocomplete="off">
+    <button type="submit">جست‌وجو</button>
+  </form>
+</div>
+
+
+
+
+
+
+
+
+<section class="home-category-section" aria-labelledby="homeCategoriesTitle">
+  <div class="home-category-heading">
+    <div><span class="section-kicker">بازار را کشف کن</span><h2 id="homeCategoriesTitle">دسته‌بندی‌ها</h2><p>از دسته‌ای که دنبالش هستی شروع کن.</p></div>
+    <span class="home-category-hint">برای دیدن زیر‌دسته‌ها انتخاب کن</span>
+  </div>
+  <div class="home-category-rail">
+    <button class="category-rail-control" type="button" data-rail-scroll="next" aria-label="پیمایش دسته‌ها به راست">‹</button>
+    <div class="home-category-stories" id="homeCategoryStories" aria-label="دسته‌بندی کالاها">
+    <button class="category-story is-active" type="button" data-category="all" aria-pressed="true">
+      <span class="category-story-ring"><span class="category-story-icon" aria-hidden="true">✨</span></span><span>همه کالاها</span>
+    </button>
+    {% for category in categories %}
+    <button class="category-story" type="button" data-category="{{ category.id|e }}" aria-pressed="false">
+      <span class="category-story-ring"><span class="category-story-icon" aria-hidden="true">{{ category.icon or '▦' }}</span></span>
+      <span>{{ category.name }}</span>
+    </button>
+    {% endfor %}
+  </div>
+
+    <button class="category-rail-control" type="button" data-rail-scroll="prev" aria-label="پیمایش دسته‌ها به چپ">›</button>
+  </div>  <div class="home-subcategories" id="homeSubcategories" aria-label="زیر دسته‌بندی‌ها" hidden></div>
 </section>
 
 <section class="listings-section" id="listings">
