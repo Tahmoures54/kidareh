@@ -253,26 +253,26 @@ def test_buyer_signup_validates_the_residential_city(app, client, monkeypatch):
 # Database plumbing
 # ---------------------------------------------------------------------------
 def test_database_connection_is_closed_after_use(app, monkeypatch):
+    """The adapter must close its SQLAlchemy Connection after each scope."""
+    from kidareh.infrastructure.database.session import get_database
+
     opened = []
-    original_connect = sqlite3.connect
+    engine = get_database().engine
+    original_connect = engine.connect
 
     def tracking_connect(*args, **kwargs):
         connection = original_connect(*args, **kwargs)
         opened.append(connection)
         return connection
 
-    _patch_sqlite_connect(monkeypatch, tracking_connect)
+    monkeypatch.setattr(engine, "connect", tracking_connect)
 
     with app.app_context():
         with get_connection() as connection:
             connection.execute("SELECT 1")
 
-    # If this assertion fires with ``opened == []``, ``kidareh.core`` is
-    # bypassing ``sqlite3.connect`` (e.g. via ``Connection`` or a custom
-    # factory). The test then cannot verify the close-on-exit behaviour.
     assert len(opened) == 1
-    with pytest.raises(sqlite3.ProgrammingError):
-        opened[0].execute("SELECT 1")
+    assert opened[0].closed
 
 
 def test_database_connection_commits_on_success(app):
@@ -399,20 +399,20 @@ def _initialize_in_child(database_path, upload_folder, outcomes):
     os.environ["UPLOAD_FOLDER"] = upload_folder
     os.environ["KIDAREH_SEED_DEMO_DATA"] = "false"
     try:
-        from flask import Flask
-
         # Re-import to be sure the child reads the fresh environment for any
         # module that reads env at import-time.
         for name in list(sys_modules_to_reload()):
             sys_modules_to_reload_pop(name)
 
+        from kidareh import create_app
         from kidareh.core import initialize_database as init_db
 
-        worker_app = Flask(__name__)
-        worker_app.config.update(
-            DATABASE_PATH=database_path,
-            UPLOAD_FOLDER=upload_folder,
-        )
+        worker_app = create_app({
+            "TESTING": True,
+            "SECRET_KEY": "concurrent-worker-test-secret",
+            "DATABASE_PATH": database_path,
+            "UPLOAD_FOLDER": upload_folder,
+        })
         with worker_app.app_context():
             init_db()
         outcomes.put("ok")
