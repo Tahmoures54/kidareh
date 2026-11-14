@@ -29,3 +29,13 @@
 - اسکریپت `scripts/check_production.py` برای پیش‌بررسی تنظیمات و بررسی سلامت SQLite اضافه شد.
 - تست‌های مستقل preflight/backup/restore در محیط فعلی ۲۰ مورد موفق شدند؛ بازتاب ORM روی ۱۸ جدول و SELECT روی جداول users/stores/listings نیز مستقلاً آزمایش شد.
 - همه تست‌های پذیرش در `pytest.ini` فعال شده‌اند؛ با این حال اجرای کامل Flask و انتشار واقعی Liara در این محیط قابل تأیید نیست، زیرا Flask نصب نیست و دسترسی نصب وابستگی‌ها از اینترنت مسدود است. تأیید نهایی منوط به اجرای CI کامل و smoke test روی Liara واقعی است.
+
+
+## وضعیت زیرساخت Vercel (۱۴ نوامبر ۲۰۲۶)
+
+- اتصال Neon برای پروژه Vercel با نام `kidareh` در سطح Environment Variables وجود دارد؛ کلیدهای اتصال توسط Integration مدیریت می‌شوند. این فقط آماده‌بودن credentialها را نشان می‌دهد و به معنی استفاده runtime از PostgreSQL نیست.
+- مسیر runtime دیتابیس در کد فعلی همچنان SQLite است. `DATABASE_URL` عمداً فعال نشده و پشتیبانی اجرایی PostgreSQL، مهاجرت schema و جایگزینی جست‌وجوی FTS5 هنوز انجام نشده‌اند.
+- یک Vercel Blob Store عمومی با نام `kidareh-listing-images` در منطقه `fra1` برای پروژه `kidareh` ایجاد و متصل شده است. Vercel مقدار `BLOB_READ_WRITE_TOKEN` را به محیط‌های Production، Preview و Development اضافه کرده است.
+- با وجود آماده‌شدن Blob، کد آپلود هنوز از مسیر فایل محلی استفاده می‌کند. تا زمان پیاده‌سازی و تست adapter و مهاجرت URLهای تصاویر، تصاویر قبلی را حذف نکنید و آپلودهای Production را به‌عنوان ذخیره‌سازی پایدار تأییدشده تلقی نکنید.
+
+**محدودیت مهم:** هیچ داده‌ای از SQLite به Neon منتقل نشده و هیچ تصویر قدیمی به Blob منتقل نشده است. فعال‌سازی PostgreSQL و Blob در runtime باید در PRهای مستقل با تست سازگاری، backup و بررسی مسیرهای rollback انجام شود.
