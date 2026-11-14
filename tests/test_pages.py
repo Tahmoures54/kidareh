@@ -23,6 +23,7 @@ import main as app_module
 # Liara CI) flips behaviour into production mode and disables demo seed.
 _ENV_VARS_TO_CLEAR = (
     "LIARA_APP_ID",
+    "VERCEL",
     "KIDAREH_SEED_DEMO_DATA",
     "KAVENEGAR_API_KEY",
     "ADMIN_PHONE",
