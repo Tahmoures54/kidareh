@@ -434,9 +434,11 @@ def test_upload_route_refuses_path_traversal(client):
 # ---------------------------------------------------------------------------
 def test_sitemap_is_cached_then_refreshes(client, monkeypatch):
     """Crawlers must be served without re-querying, but new pages must appear."""
+    from kidareh.infrastructure.cache import LocalTTLCache
     from kidareh.routes import pages
 
-    pages._sitemap_cache.clear()
+    cache = LocalTTLCache(default_ttl=600)
+    client.application.extensions["kidareh_cache"] = cache
 
     first = client.get("/sitemap.xml")
     assert first.status_code == 200
@@ -453,8 +455,10 @@ def test_sitemap_is_cached_then_refreshes(client, monkeypatch):
     # Still cached: the brand-new store is not in the response yet.
     assert client.get("/sitemap.xml").get_data() == first_body
 
-    # Once the cache is stale the document is rebuilt and picks the store up.
-    monkeypatch.setattr(pages, "SITEMAP_CACHE_SECONDS", 0)
+    # Explicitly invalidate the shared cache entry to simulate expiry. The
+    # production cache may be Redis or local and intentionally has no module
+    # global sitemap state.
+    cache.delete("sitemap:v1:http://localhost")
     refreshed = client.get("/sitemap.xml").get_data()
     assert refreshed != first_body
     assert f"/store/{store_id}" in refreshed.decode("utf-8")
