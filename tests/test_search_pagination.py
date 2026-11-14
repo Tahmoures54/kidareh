@@ -262,3 +262,35 @@ def test_nearby_search_prioritizes_distance_over_featured_placement(monkeypatch,
     assert data["nearby"] is True
     assert data["items"][0]["title"] == "نزدیک‌ترین کالا"
     assert data["items"][0]["distance_km"] < 0.1
+
+
+def test_nearby_fts_search_filters_by_location_before_candidate_limit(
+    monkeypatch, tmp_path
+):
+    client, _ = setup_test_database(monkeypatch, tmp_path)
+    from kidareh.routes import listings as listings_routes
+
+    monkeypatch.setattr(listings_routes, "FTS_SEARCH_WINDOW", 2)
+    with app_module.get_connection() as connection:
+        # These newer global matches are outside the requested radius. They
+        # must not consume the small FTS candidate window ahead of the local
+        # match inserted first.
+        connection.executemany(
+            "INSERT INTO listings"
+            " (title, category, city, price, latitude, longitude)"
+            " VALUES (?, 'home', ?, 1000, ?, ?)",
+            [
+                ("دریل صنعتی نزدیک", "تهران", 35.7005, 51.4),
+                ("دریل صنعتی دور یک", "اصفهان", 36.5, 51.4),
+                ("دریل صنعتی دور دو", "شیراز", 35.7, 52.5),
+            ],
+        )
+        connection.commit()
+
+    data = client.get(
+        "/api/listings?q=دریل&lat=35.7&lon=51.4&radius_km=5&limit=10"
+    ).get_json()
+
+    assert data["nearby"] is True
+    assert any(item["title"] == "دریل صنعتی نزدیک" for item in data["items"])
+    assert all(item["distance_km"] <= 5 for item in data["items"])
