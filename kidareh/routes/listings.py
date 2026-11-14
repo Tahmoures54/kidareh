@@ -193,7 +193,42 @@ def listings():
     parameters: list[Any] = []
     fts_match = _fts_match_query(query) if query else None
 
-    if fts_match:
+    if fts_match and use_nearby:
+        # For nearby searches, apply the geographic window before limiting FTS
+        # candidates. Otherwise the newest global matches can consume the
+        # candidate budget and hide older listings at the user's location.
+        delta_lat = radius_km / 111.0
+        cos_lat = max(0.01, abs(math.cos(math.radians(near_lat))))
+        delta_lon = radius_km / (111.0 * cos_lat)
+        sql = """
+            SELECT listings.*
+            FROM listings
+            INNER JOIN (
+                SELECT nearby_listing.id AS candidate_id
+                FROM listings_fts
+                INNER JOIN listings AS nearby_listing
+                    ON nearby_listing.id = listings_fts.rowid
+                WHERE listings_fts MATCH ?
+                  AND nearby_listing.latitude IS NOT NULL
+                  AND nearby_listing.longitude IS NOT NULL
+                  AND nearby_listing.latitude BETWEEN ? AND ?
+                  AND nearby_listing.longitude BETWEEN ? AND ?
+                ORDER BY (
+                    (nearby_listing.latitude - ?) * (nearby_listing.latitude - ?) +
+                    (nearby_listing.longitude - ?) * (nearby_listing.longitude - ?) * ?
+                ), nearby_listing.id DESC
+                LIMIT ?
+            ) candidates ON candidates.candidate_id = listings.id
+            WHERE 1=1
+        """
+        parameters.extend([
+            fts_match,
+            near_lat - delta_lat, near_lat + delta_lat,
+            near_lon - delta_lon, near_lon + delta_lon,
+            near_lat, near_lat, near_lon, near_lon, cos_lat * cos_lat,
+            FTS_SEARCH_WINDOW,
+        ])
+    elif fts_match:
         # The candidate window is bounded on purpose. A popular term can match
         # hundreds of thousands of rows, and joining every match back onto the
         # listings table only to throw all but one page away costs ~200 ms on a
