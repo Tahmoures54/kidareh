@@ -16,7 +16,7 @@ from ..core import (
     delete_uploaded_image,
     get_connection,
     serialize_listing,
-    upload_relative_path,
+    store_uploaded_image,
 )
 from ..data_catalog import (
     CATEGORY_ALLOWED_IDS,
@@ -506,14 +506,14 @@ def create_listing():
     image_path = ""
     if image_content:
         binary, extension = image_content
-        filename = f"{uuid.uuid4().hex}{extension}"
-        # Sharded into two-character directories: one flat folder with millions
-        # of images makes every lookup (and backup) slower than it needs to be.
-        relative_path = upload_relative_path(filename)
-        target = Path(current_app.config["UPLOAD_FOLDER"]) / relative_path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes(binary)
-        image_path = f"{UPLOAD_URL_PREFIX}{relative_path}"
+        try:
+            image_path = store_uploaded_image(binary, extension)
+        except Exception:
+            current_app.logger.exception("Listing image storage failed")
+            return jsonify({
+                "error": "image_storage_unavailable",
+                "message": "ذخیره تصویر موقتاً در دسترس نیست؛ دوباره تلاش کنید.",
+            }), 503
 
     with get_connection() as connection:
         store = connection.execute("SELECT id FROM stores WHERE owner_id = ?", (user["id"],)).fetchone()
