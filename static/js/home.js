@@ -19,9 +19,7 @@
   const EXIT_MS = 450;
   let active = Math.max(0, slides.findIndex((slide) => slide.classList.contains("is-active")));
   let timer = null;
-  let manuallyPaused = reduceMotion.matches;
-  let hovered = false;
-  let focused = false;
+  let manuallyPaused = false;
   let onScreen = true;
   let touchStartX = null;
 
@@ -59,7 +57,7 @@
   }
 
   function shouldRun() {
-    return !manuallyPaused && !hovered && !focused && onScreen && !document.hidden && !reduceMotion.matches;
+    return !manuallyPaused && onScreen && !document.hidden;
   }
 
   function start() {
@@ -80,16 +78,6 @@
     manuallyPaused = !manuallyPaused;
     renderPauseButton();
     start();
-  });
-
-  visual.addEventListener("mouseenter", () => { hovered = true; stop(); });
-  visual.addEventListener("mouseleave", () => { hovered = false; start(); });
-  visual.addEventListener("focusin", () => { focused = true; stop(); });
-  visual.addEventListener("focusout", (event) => {
-    if (!visual.contains(event.relatedTarget)) {
-      focused = false;
-      start();
-    }
   });
 
   visual.addEventListener("keydown", (event) => {
@@ -121,12 +109,7 @@
     observer.observe(visual);
   }
 
-  const onMotionChange = () => {
-    if (reduceMotion.matches) manuallyPaused = true;
-    renderPauseButton();
-    start();
-  };
-  reduceMotion.addEventListener?.("change", onMotionChange);
+  // Reduced-motion users still get the content rotation; CSS removes the animation.
   renderPauseButton();
   start();
 })();
