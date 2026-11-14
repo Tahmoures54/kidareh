@@ -185,6 +185,14 @@ def test_seller_dashboard_has_storefront_first_layout_and_product_actions(monkey
     ):
         assert marker in html, marker
     assert "seller-console" in html
+    assert 'id="sellerStoreAvatar"' in html
+    assert 'id="sellerWelcomeTitle">فروشگاه من</h1>' in html
+    assert 'data-store-edit-actions' in html
+    assert "عملکرد فروشگاه" in html
+    assert "عملکرد ویترین" not in html
+    assert "ویترین کالاها و خدمات" in html
+    assert "اطلاعات فروشگاه" in html
+    assert "ویترینت را بساز؛ مشتری منتظر است" not in html
     # The current console uses a dialog-based product form and large tap targets.
     dashboard_css = _read_project_file("static", "css", "seller-dashboard.css")
     compact = dashboard_css.replace(" ", "").replace("\n", "").replace("\t", "")

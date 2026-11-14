@@ -1233,3 +1233,13 @@ def test_listing_accepts_imported_subcategory_and_group_filter(monkeypatch, tmp_
     assert created.status_code == 201
     filtered = client.get("/api/listings?category=vehicles").get_json()
     assert any(item["title"] == "خودروی آزمایشی" for item in filtered["items"])
+
+def test_auth_me_response_is_private_and_never_cached(monkeypatch, tmp_path):
+    client = setup_test_database(monkeypatch, tmp_path, filename="auth-me-cache.sqlite3")
+    response = client.get("/api/auth/me")
+
+    assert response.status_code == 200
+    assert response.get_json()["user"]["role"] == "seller"
+    assert "no-store" in response.headers.get("Cache-Control", "")
+    assert "private" in response.headers.get("Cache-Control", "")
+    assert "Cookie" in response.headers.get("Vary", "")

@@ -129,9 +129,9 @@
         setStatsNote("در حال دریافت آمار…");
         try {
           const response = await fetch("/api/seller/stats", {
+            cache: "no-store",
             credentials: "same-origin",
             headers: { Accept: "application/json" },
-            cache: "no-store",
           });
           if (response.status === 403) {
             setStatsNote("این بخش فقط برای حساب‌های فروشنده قابل مشاهده است.");
