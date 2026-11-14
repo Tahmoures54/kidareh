@@ -34,6 +34,7 @@ CSRF_TOKEN = "test-token"
 
 _ENV_VARS_TO_CLEAR = (
     "LIARA_APP_ID",
+    "BLOB_READ_WRITE_TOKEN",
     "KIDAREH_SEED_DEMO_DATA",
     "KAVENEGAR_API_KEY",
     "ADMIN_PHONE",
@@ -363,3 +364,75 @@ def test_nearby_search_uses_bounding_box_and_excludes_null_coords(monkeypatch, t
     # The Tehran listing must report a distance below the requested radius.
     tehran = next(i for i in data["items"] if i["title"] == "گوشی سامسونگ تمیز و سالم")
     assert 0 <= tehran["distance_km"] <= 30
+
+
+def test_store_uploaded_image_uses_blob_when_token_is_configured(monkeypatch, tmp_path):
+    from kidareh import core
+    from kidareh.infrastructure.storage import object_storage
+
+    upload_folder = _upload_folder(tmp_path)
+    monkeypatch.setitem(app_module.app.config, "UPLOAD_FOLDER", str(upload_folder))
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-token")
+    calls = []
+    monkeypatch.setattr(
+        object_storage, "upload_image",
+        lambda pathname, body, content_type: (
+            calls.append((pathname, body, content_type))
+            or "https://example.public.blob.vercel-storage.com/listings/test.png"
+        ),
+    )
+
+    result = core.store_uploaded_image(b"png-bytes", ".png")
+
+    assert result.startswith("https://example.public.blob.vercel-storage.com/")
+    assert len(calls) == 1
+    assert calls[0][1:] == (b"png-bytes", "image/png")
+    assert not list(upload_folder.rglob("*"))
+
+
+def test_store_uploaded_image_fails_closed_when_blob_upload_fails(monkeypatch, tmp_path):
+    from kidareh import core
+    from kidareh.infrastructure.storage import object_storage
+
+    upload_folder = _upload_folder(tmp_path)
+    monkeypatch.setitem(app_module.app.config, "UPLOAD_FOLDER", str(upload_folder))
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-token")
+
+    def fail_upload(*_args, **_kwargs):
+        raise RuntimeError("Blob unavailable")
+
+    monkeypatch.setattr(object_storage, "upload_image", fail_upload)
+    try:
+        core.store_uploaded_image(b"png-bytes", ".png")
+    except RuntimeError as error:
+        assert str(error) == "Blob unavailable"
+    else:
+        raise AssertionError("Blob failure should be propagated")
+    assert not list(upload_folder.rglob("*"))
+
+
+def test_delete_uploaded_blob_url_uses_blob_adapter(monkeypatch):
+    from kidareh import core
+    from kidareh.infrastructure.storage import object_storage
+
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-token")
+    deleted = []
+    monkeypatch.setattr(object_storage, "delete_image", deleted.append)
+
+    url = "https://example.public.blob.vercel-storage.com/listings/old.png"
+    core.delete_uploaded_image(url)
+
+    assert deleted == [url]
+
+
+def test_delete_uploaded_image_ignores_untrusted_external_urls(monkeypatch):
+    from kidareh import core
+    from kidareh.infrastructure.storage import object_storage
+
+    deleted = []
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-token")
+    monkeypatch.setattr(object_storage, "delete_image", deleted.append)
+
+    core.delete_uploaded_image("https://attacker.example/listings/image.png")
+
+    assert deleted == []
