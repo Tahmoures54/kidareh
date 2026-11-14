@@ -61,7 +61,9 @@
     <div><span class="section-kicker">بازار را کشف کن</span><h2 id="homeCategoriesTitle">دسته‌بندی‌ها</h2><p>از دسته‌ای که دنبالش هستی شروع کن.</p></div>
     <span class="home-category-hint">برای دیدن زیر‌دسته‌ها انتخاب کن</span>
   </div>
-  <div class="home-category-stories" id="homeCategoryStories" aria-label="دسته‌بندی کالاها">
+  <div class="home-category-rail">
+    <button class="category-rail-control" type="button" data-rail-scroll="next" aria-label="پیمایش دسته‌ها به راست">‹</button>
+    <div class="home-category-stories" id="homeCategoryStories" aria-label="دسته‌بندی کالاها">
     <button class="category-story is-active" type="button" data-category="all" aria-pressed="true">
       <span class="category-story-ring"><span class="category-story-icon" aria-hidden="true">✨</span></span><span>همه کالاها</span>
     </button>
@@ -72,7 +74,9 @@
     </button>
     {% endfor %}
   </div>
-  <div class="home-subcategories" id="homeSubcategories" aria-label="زیر دسته‌بندی‌ها" hidden></div>
+
+    <button class="category-rail-control" type="button" data-rail-scroll="prev" aria-label="پیمایش دسته‌ها به چپ">›</button>
+  </div>  <div class="home-subcategories" id="homeSubcategories" aria-label="زیر دسته‌بندی‌ها" hidden></div>
 </section>
 
 
