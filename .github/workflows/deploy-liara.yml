@@ -54,6 +54,9 @@ jobs:
 
   deploy:
     name: Deploy to Liara
+    # Liara is optional for this project: skip deployment until an app name
+    # is configured. If configured, missing credentials must still fail loudly.
+    if: ${{ vars.LIARA_APP_NAME != '' }}
     runs-on: ubuntu-latest
     needs: test
     environment: production
