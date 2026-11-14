@@ -170,6 +170,30 @@
         return;
       }
 
+      // ── Create form submit ──
+      createForm?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await api("/api/stores", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: createForm.name.value.trim(),
+              city: createForm.city.value.trim(),
+              description: createForm.description.value.trim(),
+              category: createForm.category?.value || "",
+              address: createForm.address?.value.trim() || "",
+              latitude: createForm.latitude?.value || null,
+              longitude: createForm.longitude?.value || null,
+            }),
+          });
+          notify("ویترین ساخته شد.");
+          location.reload();
+        } catch (err) {
+          notify(err.message);
+        }
+      });
+
       // ── Seller: check store existence ──
       const mine = await api("/api/my/store");
       const store = mine.item;
@@ -246,30 +270,6 @@
       setAddProductAvailability(true);
       setStoreEditVisibility(true);
       await loadSellerListings(storeId);
-
-      // ── Create form submit ──
-      createForm?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        try {
-          await api("/api/stores", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              name: createForm.name.value.trim(),
-              city: createForm.city.value.trim(),
-              description: createForm.description.value.trim(),
-              category: createForm.category?.value || "",
-              address: createForm.address?.value.trim() || "",
-              latitude: createForm.latitude?.value || null,
-              longitude: createForm.longitude?.value || null,
-            }),
-          });
-          notify("ویترین ساخته شد.");
-          location.reload();
-        } catch (err) {
-          notify(err.message);
-        }
-      });
 
       // ── Edit form submit (inside dialog) ──
       editForm?.addEventListener("submit", async (e) => {
