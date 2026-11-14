@@ -2,7 +2,16 @@
 name = "kidareh"
 version = "0.1.0"
 description = "Persian local marketplace application"
-requires-python = ">=3.10"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "Flask>=3.0,<4.0",
+    "gunicorn>=22.0,<24.0",
+    "SQLAlchemy>=2.0,<2.1",
+    "Alembic>=1.13,<2.0",
+    "python-dotenv>=1.0,<2.0",
+    "waitress>=3.0,<4.0",
+    "redis>=5.0,<7.0",
+]
 
 [tool.pytest.ini_options]
 python_files = ["test_*.py"]
