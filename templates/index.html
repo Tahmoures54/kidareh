@@ -3,7 +3,7 @@
 {% block title %}ببین کی داره؟ حضوری بگیر!{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=20261114-local-info">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=20261114-storefront">
 {% endblock %}
 
 {% block header_brand_extra %}
@@ -40,6 +40,21 @@
     </div>
   </div>
 </section>
+
+<div class="home-search-wrap">  <form class="home-product-search" action="/search" method="get" role="search" aria-label="جست‌وجوی کالاهای بازار">
+    <span class="home-product-search-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+        <path d="m16 16 5 5"></path>
+      </svg>
+    </span>
+    <label class="sr-only" for="homeProductQuery">نام کالا یا خدمت</label>
+    <input id="homeProductQuery" name="q" type="search"
+           placeholder="دنبال چه کالا یا خدمتی می‌گردی؟" autocomplete="off">
+    <button type="submit">جست‌وجو</button>
+  </form>
+</div>
+
 
 <section class="home-category-section" aria-labelledby="homeCategoriesTitle">
   <div class="home-category-heading">
@@ -136,18 +151,6 @@
     <span class="results-count" id="resultsCount">در حال بارگذاری…</span>
   </div>
 
-  <form class="home-product-search" action="/search" method="get" role="search" aria-label="جست‌وجوی کالاهای بازار">
-    <span class="home-product-search-icon" aria-hidden="true">
-      <svg viewBox="0 0 24 24" focusable="false">
-        <circle cx="10.8" cy="10.8" r="6.8"></circle>
-        <path d="m16 16 5 5"></path>
-      </svg>
-    </span>
-    <label class="sr-only" for="homeProductQuery">نام کالا یا خدمت</label>
-    <input id="homeProductQuery" name="q" type="search"
-           placeholder="دنبال چه کالا یا خدمتی می‌گردی؟" autocomplete="off">
-    <button type="submit">جست‌وجو</button>
-  </form>
 
   <div class="listing-grid" id="listingGrid" aria-live="polite">
     <div class="skeleton-card" aria-hidden="true">
