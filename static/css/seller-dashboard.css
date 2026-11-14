@@ -839,3 +839,22 @@
   .seller-metric,
   .seller-quick-link { transition: none; }
 }
+
+
+/* Store identity header: brand avatar + store name + one clear settings action. */
+.seller-identity-row { display:flex; align-items:center; gap:1rem; margin-top:.9rem; min-width:0; }
+.seller-store-avatar {
+  display:grid; place-items:center; flex:0 0 clamp(60px,8vw,78px);
+  width:clamp(60px,8vw,78px); height:clamp(60px,8vw,78px);
+  border:3px solid rgba(255,255,255,.95); border-radius:22px;
+  background:linear-gradient(145deg,#0E7490,#14B8A6);
+  box-shadow:0 8px 22px rgba(14,116,144,.2); color:#fff;
+  font-size:clamp(1.7rem,4vw,2.25rem); font-weight:900;
+}
+.seller-identity-copy { min-width:0; }
+.seller-identity-copy h1 { margin:0 0 .3rem; }
+.seller-identity-copy p { max-width:38rem; }
+@media (max-width:640px) {
+  .seller-identity-row { align-items:flex-start; gap:.75rem; }
+  .seller-store-avatar { flex-basis:58px; width:58px; height:58px; border-radius:17px; }
+}
