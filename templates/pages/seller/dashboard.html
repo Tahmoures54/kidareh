@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% from "macros/category_options.html" import category_options %}
+{% block title %}پنل فروشگاه من | کی‌داره{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/seller-dashboard.css') }}?v=20261115">
+{% endblock %}
+
+{% block content %}
+<div class="seller-console">
+
+  <noscript>
+    <div class="noscript-notice">
+      <strong>⚠ جاوااسکریپت لازم است</strong>
+      برای مدیریت فروشگاه، ثبت کالا و مشاهدهٔ آمار، لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
+    </div>
+  </noscript>
+
+  <section class="seller-hero">
+    <div class="seller-hero-copy">
+      <span class="seller-eyebrow">🏪 پنل مدیریت فروشگاه</span>
+      <h1 id="sellerWelcomeTitle">ویترینت را بساز؛ مشتری منتظر است</h1>
+      <p>
+        کالاهایت را ثبت کن، ویترینت را به اشتراک بگذار و همه‌چیز را از همین‌جا مدیریت کن.
+        انتشار کالا رایگان است.
+      </p>
+    </div>
+    <div class="seller-hero-actions">
+      <button class="button button-primary" type="button"
+              data-open-add-product disabled title="در حال آماده‌سازی…">＋ افزودن کالا</button>
+      <a class="button button-outline" href="#storePanel">تنظیمات ویترین ←</a>
+    </div>
+  </section>
+
+  <section class="seller-metrics" aria-label="خلاصه فروشگاه">
+    <article class="seller-metric">
+      <span class="seller-metric-icon" aria-hidden="true">🏪</span>
+      <div class="seller-metric-copy">
+        <small>وضعیت ویترین</small>
+        <strong id="sellerStoreMetric">در حال بررسی…</strong>
+      </div>
+    </article>
+    <article class="seller-metric">
+      <span class="seller-metric-icon" aria-hidden="true">▦</span>
+      <div class="seller-metric-copy">
+        <small>کالاهای فروشگاه</small>
+        <strong id="sellerProductMetric">—</strong>
+      </div>
+    </article>
+    <article class="seller-metric">
+      <span class="seller-metric-icon" aria-hidden="true">↗</span>
+      <div class="seller-metric-copy">
+        <small>گام بعدی</small>
+        <strong id="sellerNextStepMetric">ساخت ویترین</strong>
+      </div>
+    </article>
+  </section>
+
+  <nav class="seller-quick-links" aria-label="دسترسی سریع">
+    <button class="seller-quick-link primary" type="button"
+            data-open-add-product disabled title="در حال آماده‌سازی…">＋ ثبت کالای جدید</button>
+    <a class="seller-quick-link" href="#pageListings">▦ مدیریت کالاها</a>
+    <a class="seller-quick-link" href="/seller/tags">🏷️ تگ و معرفی کالا</a>
+  </nav>
+
+  <section class="page-panel" id="sellerPerformancePanel">
+    <div class="seller-panel-heading">
+      <span class="seller-panel-icon" aria-hidden="true">📈</span>
+      <div>
+        <h2>عملکرد ویترین</h2>
+        <p>نمایی از بازدید و عملکرد کالاهای فروشگاه شما</p>
+      </div>
+    </div>
+    <div class="seller-metrics" style="margin-bottom:12px">
+      <article class="seller-metric"><div class="seller-metric-copy"><small>بازدید ثبت‌شده</small><strong id="sellerViewsStat">—</strong></div></article>
+      <article class="seller-metric"><div class="seller-metric-copy"><small>سفارش‌های ثبت‌شده</small><strong id="sellerSalesStat">—</strong></div></article>
+      <article class="seller-metric"><div class="seller-metric-copy"><small>کالاهای فروشگاه</small><strong id="sellerListingsStat">—</strong></div></article>
+    </div>
+    <div style="position:relative;height:220px;max-width:720px">
+      <canvas id="sellerStatsChart" role="img" aria-label="نمودار بازدید، سفارش و تعداد کالا"></canvas>
+    </div>
+    <p id="sellerStatsNote" class="muted-copy" role="status" aria-live="polite">در حال دریافت آمار…</p>
+  </section>
+
+  <section class="seller-dashboard-grid">
+
+    <div class="page-panel" id="storePanel">
+      <div class="seller-panel-heading">
+        <span class="seller-panel-icon" aria-hidden="true">🏪</span>
+        <div>
+          <h2>ویترین فروشگاه</h2>
+          <p>اطلاعاتی که مشتری برای شناخت و پیدا کردن فروشگاهت می‌بیند.</p>
+        </div>
+      </div>
+
+      <div id="sellerStatus" class="status-panel" role="status" aria-live="polite">
+        در حال بررسی حساب…
+      </div>
+
+      {# ── Edit trigger — shown only when a store exists (seller.js flips hidden) ── #}
+      <div class="seller-store-actions" hidden data-store-edit-actions>
+        <button class="button button-outline" type="button" data-open-store-edit>
+          ✏️ ویرایش اطلاعات ویترین
+        </button>
+      </div>
+
+      {# ── Create form — inline, only shown when no store exists yet ── #}
+      <form id="storeCreateForm" class="stack-form" hidden>
+        <div class="seller-empty-hint">
+          فقط نام فروشگاه و شهر را وارد کن؛ بعد از ساخت ویترین می‌توانی کالاهایت را اضافه کنی.
+        </div>
+        <label>نام فروشگاه
+          <input name="name" required maxlength="80" placeholder="مثلاً خانه‌چین">
+        </label>
+        <label>صنف فروشگاه
+          <select name="category" aria-label="صنف فروشگاه">
+            {{ category_options(category_tree, include_empty=true, empty_label="انتخاب صنف (اختیاری)") }}
+          </select>
+        </label>
+        <label>شهر
+          <input name="city" required maxlength="100" list="iranCityOptions" data-iran-location autocomplete="off" placeholder="نام شهر را جست‌وجو کنید">
+        </label>
+        <label>نشانی فروشگاه (اختیاری)
+          <input name="address" maxlength="300" placeholder="خیابان، کوچه، پلاک…">
+        </label>
+        <div class="seller-location-tools">
+          <button class="button button-outline" type="button" data-capture-store-location>📍 ثبت خودکار موقعیت فروشگاه</button>
+          <p class="muted-copy" data-location-status role="status" aria-live="polite">با زدن دکمه و اجازهٔ مرورگر، موقعیت فروشگاه به‌صورت خودکار ثبت می‌شود.</p>
+          <div class="seller-coordinate-fields">
+            <label>عرض جغرافیایی <input name="latitude" type="text" readonly placeholder="پس از ثبت موقعیت"></label>
+            <label>طول جغرافیایی <input name="longitude" type="text" readonly placeholder="پس از ثبت موقعیت"></label>
+          </div>
+        </div>
+        <label>درباره فروشگاه (اختیاری)
+          <textarea name="description" rows="3" maxlength="500" placeholder="چه کالاهایی ارائه می‌کنی؟"></textarea>
+        </label>
+        <button class="button button-primary" type="submit">ساخت ویترین من</button>
+      </form>
+    </div>
+
+  </section>
+
+  <section class="seller-secondary-grid" aria-label="ابزارهای بیشتر فروشگاه">
+    <article class="seller-secondary-card">
+      <span class="seller-secondary-icon" aria-hidden="true">🏷️</span>
+      <div>
+        <h2>بیشتر دیده شو</h2>
+        <p>انتشار کالا رایگان است. در صورت نیاز برای هر کالا تگ «حراج»، «فروش ویژه» یا «تخفیف‌دار» انتخاب کن.</p>
+        <a class="text-link" href="/seller/tags">مدیریت تگ کالاها ←</a>
+      </div>
+    </article>
+    <article class="seller-secondary-card">
+      <span class="seller-secondary-icon" aria-hidden="true">↗</span>
+      <div>
+        <h2>مشتری را به ویترینت دعوت کن</h2>
+        <p>لینک ویترین را برای مشتری‌ها بفرست تا کالاها را ببینند و برای خرید حضوری هماهنگ شوند.</p>
+        <div class="seller-share-actions">
+          <button id="shareMyStore" class="button button-primary" type="button" hidden>اشتراک‌گذاری ویترین</button>
+          <button id="copyStorePromo" class="button button-outline" type="button" data-copy-share-text="" hidden>کپی متن معرفی</button>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section class="page-panel seller-products-panel" id="myProductsPanel">
+    <div class="page-results-head">
+      <div>
+        <h2>مدیریت کالاهای فروشگاه</h2>
+        <p class="muted-copy">قیمت و موجودی کالاها را به‌روز نگه دار و اطلاعات هر کالا را مدیریت کن.</p>
+      </div>
+      <span id="pageResultsCount" role="status" aria-live="polite">— کالا</span>
+    </div>
+    <div id="pageListings" class="page-card-grid" aria-busy="true">
+      <div class="loading-card">در حال دریافت کالاهای ویترین…</div>
+    </div>
+  </section>
+
+</div>
+
+{# ============================================================
+   Add Product Dialog
+   ============================================================ #}
+<dialog id="addProductDialog" class="seller-product-dialog" aria-labelledby="addProductDialogTitle">
+  <div class="seller-dialog-header">
+    <div>
+      <h2 id="addProductDialogTitle">ثبت کالای جدید</h2>
+      <p>فقط نام و قیمت لازم است؛ بقیه اختیاری‌اند.</p>
+    </div>
+    <button class="seller-dialog-close" type="button" aria-label="بستن" data-dialog-close>×</button>
+  </div>
+
+  <form id="sellerProductForm" class="stack-form seller-dialog-body" enctype="multipart/form-data">
+    <label>نام کالا
+      <input name="title" required maxlength="100" placeholder="مثلاً روغن موتور، مانتو، میز ناهارخوری" autocomplete="off">
+    </label>
+    <input name="city" type="hidden" value="">
+    <label>دسته‌بندی کالا
+      <select name="category" required>
+        {{ category_options(category_tree, include_empty=true, empty_label="انتخاب دسته‌بندی") }}
+      </select>
+      <small class="muted-copy">اگر صنف فروشگاهت ثبت شده باشد، این گزینه خودکار انتخاب می‌شود.</small>
+    </label>
+    <label>قیمت (تومان)
+      <input name="price" type="number" min="0" max="1000000000000" step="1" placeholder="مثلاً ۲۵۰۰۰۰" inputmode="numeric" required>
+    </label>
+    <label>وضعیت موجودی
+      <select name="availability_status" required>
+        <option value="in_stock" selected>موجود است</option>
+        <option value="ask">برای اطمینان تماس بگیرید</option>
+        <option value="out_of_stock">فعلاً ناموجود است</option>
+      </select>
+    </label>
+    <details class="seller-optional-product-details">
+      <summary>افزودن عکس و توضیحات (اختیاری)</summary>
+      <div class="stack-form">
+        <label>عکس کالا (حداکثر ۴ مگابایت)
+          <input name="image" type="file" accept="image/jpeg,image/png,image/webp">
+        </label>
+        <label>توضیحات کوتاه
+          <textarea name="description" rows="3" maxlength="1000" placeholder="برند، اندازه یا نکتهٔ مهم کالا"></textarea>
+        </label>
+        <label>شماره تماس متفاوت برای این کالا (اختیاری)
+          <input name="seller_phone" type="tel" maxlength="16" placeholder="09123456789" dir="ltr" inputmode="tel">
+        </label>
+      </div>
+    </details>
+    <p class="form-note" id="sellerProductFeedback" role="status" aria-live="polite"></p>
+  </form>
+
+  <div class="seller-dialog-footer">
+    <button class="button button-outline" type="button" data-dialog-close>انصراف</button>
+    <button class="button button-primary" type="submit" form="sellerProductForm" data-dialog-submit>ثبت کالا</button>
+  </div>
+</dialog>
+
+{# ============================================================
+   Store Edit Dialog
+   ============================================================ #}
+<dialog id="storeEditDialog" class="seller-product-dialog" aria-labelledby="storeEditDialogTitle">
+  <div class="seller-dialog-header">
+    <div>
+      <h2 id="storeEditDialogTitle">ویرایش اطلاعات ویترین</h2>
+      <p>نام، شهر، نشانی و موقعیت فروشگاه را می‌توانی اینجا تغییر دهی.</p>
+    </div>
+    <button class="seller-dialog-close" type="button" aria-label="بستن" data-dialog-close>×</button>
+  </div>
+
+  <form id="storeEditForm" class="stack-form seller-dialog-body">
+    <label>نام فروشگاه
+      <input name="name" required maxlength="80">
+    </label>
+    <label>صنف فروشگاه
+      <select name="category" aria-label="صنف فروشگاه">
+        {{ category_options(category_tree, include_empty=true, empty_label="انتخاب صنف (اختیاری)") }}
+      </select>
+    </label>
+    <label>شهر یا روستا
+      <input name="city" required maxlength="100" list="iranCityOptions" data-iran-location autocomplete="off">
+    </label>
+    <label>درباره فروشگاه
+      <textarea name="description" rows="3" maxlength="500"></textarea>
+    </label>
+    <label>نشانی حضوری
+      <input name="address" maxlength="300" placeholder="خیابان، کوچه، پلاک…">
+    </label>
+    <div class="seller-location-tools">
+      <button class="button button-outline" type="button" data-capture-store-location>📍 ثبت خودکار موقعیت فروشگاه</button>
+      <p class="muted-copy" data-location-status role="status" aria-live="polite">برای به‌روزرسانی موقعیت، دکمه را بزن و اجازهٔ مرورگر را تأیید کن.</p>
+      <div class="seller-coordinate-fields">
+        <label>عرض جغرافیایی <input name="latitude" type="text" readonly placeholder="ثبت نشده"></label>
+        <label>طول جغرافیایی <input name="longitude" type="text" readonly placeholder="ثبت نشده"></label>
+      </div>
+    </div>
+  </form>
+
+  <div class="seller-dialog-footer">
+    <button class="button button-outline" type="button" data-dialog-close>انصراف</button>
+    <button class="button button-primary" type="submit" form="storeEditForm">ذخیره تغییرات</button>
+  </div>
+</dialog>
+
+<div class="seller-mobile-cta" aria-label="اقدام سریع">
+  <button class="button button-primary" type="button"
+          data-open-add-product disabled title="در حال آماده‌سازی…">＋ کالا</button>
+  <a class="button button-outline" href="#storePanel">ویترین</a>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script nonce="{{ csp_nonce() }}">window.KIDAREH_PAGE = { type: "seller" };</script>
+<script
+  src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+  defer
+></script>
+<script src="{{ url_for('static', filename='js/seller.js') }}?v=20261115" defer></script>
+<script src="{{ url_for('static', filename='js/seller-dashboard.js') }}?v=20261115" defer></script>
+{% endblock %}

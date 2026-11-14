@@ -1,0 +1,844 @@
+{% extends "base.html" %}
+{% block title %}حریم خصوصی | کی‌داره{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Privacy page ── */
+  .page-heading {
+    padding: 1.75rem 0 1.25rem;
+  }
+  .page-heading .section-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: #ECFEFF;
+    border: 1px solid #A5F3FC;
+    color: #0E7490;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .page-heading h1 {
+    margin: 0.85rem 0 0.6rem;
+    font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--color-ink, #0F172A);
+    line-height: 1.35;
+  }
+  .page-heading p {
+    margin: 0;
+    max-width: 42rem;
+    color: var(--color-muted, #64748B);
+    font-size: 0.95rem;
+    line-height: 1.85;
+  }
+  .policy-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-muted, #64748B);
+  }
+
+  .policy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1.5rem;
+    align-items: start;
+    padding-bottom: 2rem;
+  }
+  .policy-content {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .policy-panel {
+    padding: 1.5rem 1.4rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 16px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  }
+
+  .policy-section {
+    padding-block: 1.35rem;
+    border-bottom: 1px solid var(--color-line-soft, #E2E8F0);
+    scroll-margin-top: 90px;
+  }
+  .policy-section:first-child { padding-top: 0; }
+  .policy-section:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .policy-section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+  }
+  .policy-section-num {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #ECFEFF;
+    color: #0E7490;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+  .policy-section h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-ink, #0F172A);
+    line-height: 1.4;
+    padding-top: 0.35rem;
+  }
+  .policy-section p {
+    margin: 0;
+    color: var(--color-muted, #475569);
+    font-size: 0.92rem;
+    line-height: 1.9;
+  }
+  .policy-section a {
+    color: #0E7490;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .policy-section a:hover { text-decoration: underline; }
+
+  .privacy-list {
+    margin: 0.55rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .privacy-list li {
+    position: relative;
+    padding: 0.7rem 0.9rem;
+    padding-inline-start: 2.5rem;
+    border-radius: 12px;
+    background: #F0F9FF;
+    border: 1px solid #BAE6FD;
+    color: var(--color-ink, #0F172A);
+    font-size: 0.88rem;
+    line-height: 1.75;
+  }
+  .privacy-list li::before {
+    content: "•";
+    position: absolute;
+    inset-inline-start: 0.85rem;
+    top: 0.75rem;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: #E0F2FE;
+    color: #0284C7;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .policy-callout {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1.1rem 1.2rem;
+    border-radius: 14px;
+    border: 1px solid #A5F3FC;
+    background: linear-gradient(135deg, #ECFEFF, #F0F9FF);
+    color: var(--color-ink, #0F172A);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .policy-callout-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #CFFAFE;
+    color: #0E7490;
+    font-size: 1.1rem;
+  }
+
+  .policy-toc {
+    position: sticky;
+    top: 80px;
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.1rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 14px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  }
+  .policy-toc-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--color-ink, #0F172A);
+  }
+  .policy-toc a {
+    display: block;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    color: var(--color-muted, #64748B);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s, background 0.15s;
+  }
+  .policy-toc a:hover,
+  .policy-toc a:focus-visible {
+    color: #0E7490;
+    background: #ECFEFF;
+  }
+  .policy-toc-divider {
+    height: 1px;
+    margin: 0.45rem 0;
+    background: var(--color-line-soft, #E2E8F0);
+  }
+  .policy-toc-related {
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-muted, #94A3B8);
+  }
+
+  /* ═══════════ Enhancements ═══════════ */
+
+  /* ── Summary card ── */
+  .policy-summary {
+    padding: 1.25rem 1.3rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #F0FDFA, #ECFEFF);
+    border: 1px solid #A5F3FC;
+  }
+  .policy-summary-title {
+    margin: 0 0 0.7rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0E7490;
+  }
+  .policy-summary ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .policy-summary li {
+    position: relative;
+    padding-inline-start: 1.5rem;
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: var(--color-ink, #0F172A);
+  }
+  .policy-summary li::before {
+    content: "✓";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    color: #0891B2;
+    font-weight: 800;
+  }
+
+  /* ── Anchor links on headings ── */
+  .policy-anchor {
+    margin-inline-start: 0.4rem;
+    font-size: 0.85em;
+    color: #94A3B8;
+    font-weight: 700;
+    text-decoration: none;
+    opacity: 0;
+    vertical-align: middle;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .policy-section:hover .policy-anchor,
+  .policy-anchor:focus-visible {
+    opacity: 1;
+  }
+  .policy-anchor:hover { color: #0E7490; }
+
+  /* ── Active TOC link (scroll spy) ── */
+  .policy-toc a.is-active,
+  .policy-toc a[aria-current="true"] {
+    color: #0E7490;
+    background: #ECFEFF;
+    font-weight: 800;
+  }
+
+  /* ── Reading progress bar ── */
+  .reading-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: transparent;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .reading-progress__bar {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #06B6D4, #0E7490);
+    transition: width 0.1s linear;
+  }
+
+  /* ── Back-to-top button ── */
+  .back-to-top {
+    position: fixed;
+    inset-inline-end: 1.25rem;
+    inset-block-end: 1.25rem;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid #A5F3FC;
+    background: #fff;
+    color: #0E7490;
+    font-size: 1.15rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+    z-index: 40;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .back-to-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  }
+  .back-to-top[hidden] { display: none; }
+
+  /* ── Print button ── */
+  .policy-print-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.85rem;
+    width: 100%;
+    border: 1px solid #CBD5E1;
+    background: #F8FAFC;
+    color: #334155;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .policy-print-btn:hover {
+    background: #ECFEFF;
+    border-color: #A5F3FC;
+    color: #0E7490;
+  }
+
+  /* ── Focus states ── */
+  .policy-toc a:focus-visible,
+  .policy-section a:focus-visible,
+  .policy-anchor:focus-visible,
+  .back-to-top:focus-visible,
+  .policy-print-btn:focus-visible {
+    outline: 2px solid #0891B2;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .policy-anchor,
+    .back-to-top,
+    .reading-progress__bar,
+    .policy-toc a,
+    .policy-print-btn {
+      transition: none !important;
+    }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 860px) {
+    .policy-layout { grid-template-columns: 1fr; }
+    .policy-toc {
+      position: static;
+      order: -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      padding: 0.85rem;
+    }
+    .policy-toc-title,
+    .policy-toc-divider,
+    .policy-toc-related { width: 100%; }
+    .policy-toc a {
+      padding: 0.4rem 0.7rem;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      font-size: 0.78rem;
+    }
+    .policy-toc a.is-active,
+    .policy-toc a[aria-current="true"] {
+      background: #ECFEFF;
+      border-color: #A5F3FC;
+    }
+    .policy-anchor { opacity: 1; }
+  }
+
+  /* ── Print styles ── */
+  @media print {
+    .reading-progress,
+    .back-to-top,
+    .policy-toc,
+    .policy-print-btn,
+    .policy-callout-icon { display: none !important; }
+    .policy-layout {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding: 0;
+    }
+    .policy-panel {
+      box-shadow: none;
+      border: 0;
+      padding: 0;
+    }
+    .policy-section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      border-bottom: 1px solid #ccc;
+    }
+    .policy-callout {
+      border: 1px solid #ccc;
+      background: #f8f9fa;
+    }
+    .policy-anchor { display: none; }
+    a { color: inherit; text-decoration: underline; }
+    a[href^="http"]::after {
+      content: " (" attr(href) ")";
+      font-size: 0.8em;
+      color: #666;
+    }
+  }
+
+  /* ── Dark mode additions ── */
+  @media (prefers-color-scheme: dark) {
+    .policy-panel,
+    .policy-toc {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+    }
+    .policy-section {
+      border-bottom-color: var(--color-line-soft, #1E293B);
+    }
+    .policy-section-num {
+      background: #083344;
+      color: #67E8F9;
+    }
+    .privacy-list li {
+      background: #0C2233;
+      border-color: #155E75;
+      color: #E2E8F0;
+    }
+    .privacy-list li::before {
+      background: #155E75;
+      color: #67E8F9;
+    }
+    .policy-callout {
+      background: linear-gradient(135deg, #083344, #0C2233);
+      border-color: #155E75;
+      color: #E2E8F0;
+    }
+    .policy-callout-icon {
+      background: #155E75;
+      color: #67E8F9;
+    }
+    .page-heading .section-kicker {
+      background: #083344;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+    /* New elements */
+    .policy-summary {
+      background: linear-gradient(135deg, #083344, #0C2233);
+      border-color: #155E75;
+    }
+    .policy-summary-title { color: #67E8F9; }
+    .policy-summary li { color: #E2E8F0; }
+    .policy-summary li::before { color: #22D3EE; }
+
+    .policy-anchor { color: #64748B; }
+    .policy-anchor:hover { color: #67E8F9; }
+
+    .policy-toc a.is-active,
+    .policy-toc a[aria-current="true"] {
+      color: #67E8F9;
+      background: #083344;
+    }
+
+    .back-to-top {
+      background: #111B2A;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+
+    .policy-print-btn {
+      background: #0F172A;
+      border-color: #334155;
+      color: #CBD5E1;
+    }
+    .policy-print-btn:hover {
+      background: #083344;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+
+    @media (max-width: 860px) {
+      .policy-toc a {
+        background: #0F172A;
+        border-color: #334155;
+      }
+      .policy-toc a.is-active,
+      .policy-toc a[aria-current="true"] {
+        background: #083344;
+        border-color: #155E75;
+      }
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Reading progress -->
+<div class="reading-progress" aria-hidden="true">
+  <span class="reading-progress__bar"></span>
+</div>
+
+<section class="page-heading">
+  <span class="section-kicker"><span aria-hidden="true">🔒</span> اطلاعات شما مهم است</span>
+  <h1>حریم خصوصی در کی‌داره</h1>
+  <p>
+    این راهنما توضیح می‌دهد هنگام استفاده از کی‌داره چه اطلاعاتی پردازش می‌شود،
+    چگونه از آن‌ها استفاده و محافظت می‌کنیم، و شما چه حقوقی نسبت به اطلاعات خود دارید.
+  </p>
+  <div class="policy-meta">
+    <span>آخرین به‌روزرسانی: آبان ۱۴۰۴</span>
+    <span aria-hidden="true">·</span>
+    <span>نسخه عمومی سرویس · ۲.۰</span>
+  </div>
+</section>
+
+<div class="policy-layout">
+  <div class="policy-content">
+
+    <!-- Summary card -->
+    <div class="policy-summary" role="note" aria-labelledby="policy-summary-title">
+      <h2 class="policy-summary-title" id="policy-summary-title">خلاصه در یک نگاه</h2>
+      <ul>
+        <li>برای ارائه خدمات، اطلاعات حساب و ویترین شما پردازش می‌شود.</li>
+        <li>محتوایی که در ویترین عمومی منتشر می‌کنید برای همه قابل مشاهده است.</li>
+        <li>رمز بانکی و کد یک‌بارمصرف خود را هرگز با هیچ‌کس به اشتراک نگذارید.</li>
+        <li>برای هر پرسش یا درخواست مربوط به اطلاعاتتان، از بخش پشتیبانی کمک بگیرید.</li>
+      </ul>
+    </div>
+
+    <article class="policy-panel">
+
+      <section class="policy-section" id="data-collected">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۱</span>
+          <h2>چه اطلاعاتی ممکن است پردازش شود؟<a class="policy-anchor" href="#data-collected" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          برای ارائه خدمات، ممکن است اطلاعاتی را که هنگام ساخت حساب وارد می‌کنید (مانند شماره همراه)،
+          اطلاعات ویترین و کالاهایی که منتشر می‌کنید، و محتوای گفت‌وگوها یا درخواست‌های پشتیبانی
+          مرتبط با استفاده از سایت پردازش کنیم.
+          همچنین داده‌های فنی لازم برای کارکرد، عیب‌یابی و حفاظت از سرویس ممکن است ثبت شوند.
+        </p>
+      </section>
+
+      <section class="policy-section" id="why-use">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۲</span>
+          <h2>چرا از اطلاعات استفاده می‌شود؟<a class="policy-anchor" href="#why-use" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <ul class="privacy-list">
+          <li>ایجاد و ایمن‌سازی حساب و تأیید شماره همراه.</li>
+          <li>نمایش ویترین‌ها و کالاها و فراهم کردن امکانات ارتباطی سایت.</li>
+          <li>رسیدگی به گزارش‌ها، درخواست‌های پشتیبانی و سوءاستفاده‌های احتمالی.</li>
+          <li>حفظ پایداری، امنیت و بهبود عملکرد سرویس.</li>
+          <li>انجام تعهدات قانونی و پاسخ به درخواست‌های مجاز مراجع صالح.</li>
+        </ul>
+      </section>
+
+      <section class="policy-section" id="cookies">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۳</span>
+          <h2>کوکی‌ها و فناوری‌های مشابه<a class="policy-anchor" href="#cookies" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          برای نگه‌داشتن نشست ورود، به‌خاطر سپردن تنظیمات و کمک به امنیت سرویس، ممکن است از کوکی‌ها
+          و فناوری‌های مشابه استفاده شود. برخی کوکی‌ها برای کارکرد ضروری سایت لازم‌اند و برخی دیگر
+          به بهبود تجربه یا اندازه‌گیری عملکرد کمک می‌کنند. می‌توانید تنظیمات کوکی‌ها را از مرورگر
+          خود مدیریت کنید؛ البته محدود کردن کوکی‌های ضروری ممکن است برخی امکانات را مختل کند.
+        </p>
+      </section>
+
+      <section class="policy-section" id="public-content">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۴</span>
+          <h2>چه چیزهایی را عمومی منتشر می‌کنید؟<a class="policy-anchor" href="#public-content" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          اطلاعات فروشگاه، توضیحات و تصاویر کالا و هر مطلبی که در ویترین عمومی منتشر می‌کنید
+          ممکن است برای بازدیدکنندگان قابل مشاهده باشد.
+          پیش از انتشار، شماره‌های شخصی، نشانی منزل، مدارک هویتی یا اطلاعات خصوصی دیگران را حذف کنید؛
+          مگر آنکه انتشار آن ضروری و مجاز باشد.
+        </p>
+      </section>
+
+      <section class="policy-section" id="sharing">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۵</span>
+          <h2>اشتراک‌گذاری و نگهداری<a class="policy-anchor" href="#sharing" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          اطلاعات فقط در حد لازم برای ارائه، نگهداری، امنیت و اداره خدمات، و انجام تعهدات قانونی پردازش می‌شود.
+          دسترسی به داده‌ها محدود به نیاز عملیاتی است و ارائه‌دهندگان زیرساخت و پیمانکاران مرتبط
+          موظف به رعایت محرمانگی هستند. اطلاعات ممکن است در پاسخ به الزامات قانونی یا درخواست
+          مراجع صالح ارائه شود. مدت نگهداری داده‌ها تابع نیازهای فنی و الزامات قابل اعمال است.
+        </p>
+      </section>
+
+      <section class="policy-section" id="account-security">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۶</span>
+          <h2>امنیت حساب شما<a class="policy-anchor" href="#account-security" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          از کد یک‌بارمصرف، گذرواژه و اطلاعات ورود خود محافظت کنید.
+          کی‌داره هرگز نباید از شما بخواهد رمز بانکی یا کد تأیید را در گفت‌وگو با فروشنده به اشتراک بگذارید.
+          در صورت مشاهده فعالیت مشکوک، هر چه سریع‌تر از طریق پشتیبانی اطلاع دهید.
+          توجه داشته باشید که هیچ سامانه‌ای مصونیت کامل در برابر تهدیدها ندارد؛ اما تلاش می‌شود
+          لایه‌های حفاظتی متناسب با ریسک اعمال شود.
+        </p>
+      </section>
+
+      <section class="policy-section" id="your-rights">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۷</span>
+          <h2>حقوق شما درباره اطلاعات<a class="policy-anchor" href="#your-rights" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <ul class="privacy-list">
+          <li>درخواست دسترسی به اطلاعات حساب و دریافت توضیح درباره پردازش آن.</li>
+          <li>اصلاح اطلاعات نادرست یا ناقص حساب.</li>
+          <li>درخواست حذف اطلاعات یا بستن حساب، مشروط به الزامات قانونی و نیازهای عملیاتی.</li>
+          <li>اعتراض یا محدود کردن برخی پردازش‌ها در حد امکان.</li>
+        </ul>
+        <p style="margin-top:0.6rem;">
+          برای اعمال این حقوق، از <a href="/support">بخش پشتیبانی</a> استفاده کنید.
+        </p>
+      </section>
+
+      <section class="policy-section" id="requests">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۸</span>
+          <h2>درخواست یا پرسش درباره اطلاعات<a class="policy-anchor" href="#requests" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          برای مطرح کردن پرسش یا درخواست مرتبط با حساب و اطلاعات خود،
+          از <a href="/support">بخش پشتیبانی</a> استفاده کنید.
+          ممکن است برای رسیدگی امن به درخواست، تأیید مالکیت حساب لازم باشد.
+        </p>
+      </section>
+
+      <section class="policy-section" id="changes">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۹</span>
+          <h2>تغییرات این راهنما<a class="policy-anchor" href="#changes" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          ممکن است این راهنما برای هماهنگی با تغییرات سرویس یا الزامات قانونی به‌روزرسانی شود.
+          تاریخ آخرین به‌روزرسانی در بالای همین صفحه درج می‌شود. ادامه استفاده از خدمات پس از
+          انتشار نسخه جدید، به‌منزله پذیرش تغییرات است. در صورت تغییرات مهم، اطلاع‌رسانی
+          مناسب انجام خواهد شد.
+        </p>
+      </section>
+
+    </article>
+
+    <div class="policy-callout" role="note">
+      <span class="policy-callout-icon" aria-hidden="true">ℹ</span>
+      <div>
+        این متن اطلاع‌رسانی عمومی است و جایگزین مشاوره حقوقی نیست.
+        جزئیات نهایی باید با شیوه‌های واقعی پردازش داده و الزامات قانونی قابل اعمال هماهنگ نگه داشته شود.
+      </div>
+    </div>
+  </div>
+
+  <aside class="policy-toc" aria-label="فهرست مطالب و پیوندهای مرتبط">
+    <p class="policy-toc-title">فهرست مطالب</p>
+    <a href="#data-collected">۱. اطلاعات پردازش‌شده</a>
+    <a href="#why-use">۲. دلیل استفاده</a>
+    <a href="#cookies">۳. کوکی‌ها</a>
+    <a href="#public-content">۴. محتوای عمومی</a>
+    <a href="#sharing">۵. اشتراک‌گذاری</a>
+    <a href="#account-security">۶. امنیت حساب</a>
+    <a href="#your-rights">۷. حقوق شما</a>
+    <a href="#requests">۸. درخواست‌ها</a>
+    <a href="#changes">۹. تغییرات</a>
+    <div class="policy-toc-divider" aria-hidden="true"></div>
+    <p class="policy-toc-related">مطالعه بیشتر</p>
+    <a href="/terms">قوانین استفاده</a>
+    <a href="/safety">خرید امن</a>
+    <a href="/help">مرکز راهنما</a>
+    <a href="/support">پشتیبانی</a>
+    <button type="button" class="policy-print-btn">
+      <span aria-hidden="true">🖨</span>
+      چاپ این صفحه
+    </button>
+  </aside>
+</div>
+
+<button type="button" class="back-to-top" aria-label="بازگشت به بالای صفحه" hidden>
+  <span aria-hidden="true">↑</span>
+</button>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Reading progress ── */
+  var progressBar = document.querySelector('.reading-progress__bar');
+  if (progressBar) {
+    var updateProgress = function () {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - doc.clientHeight;
+      var pct = max > 0 ? (doc.scrollTop / max) * 100 : 0;
+      progressBar.style.width = pct + '%';
+    };
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  /* ── Back-to-top ── */
+  var backTop = document.querySelector('.back-to-top');
+  if (backTop) {
+    var toggleBackTop = function () {
+      backTop.hidden = window.scrollY < 400;
+    };
+    window.addEventListener('scroll', toggleBackTop, { passive: true });
+    toggleBackTop();
+    backTop.addEventListener('click', function () {
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+    });
+  }
+
+  /* ── Print button ── */
+  var printBtn = document.querySelector('.policy-print-btn');
+  if (printBtn) {
+    printBtn.addEventListener('click', function () { window.print(); });
+  }
+
+  /* ── TOC: smooth scroll + scroll spy ── */
+  var toc = document.querySelector('.policy-toc');
+  if (!toc) return;
+
+  var links = Array.prototype.slice.call(
+    toc.querySelectorAll('a[href^="#"]')
+  );
+  var sections = [];
+  var linkBySection = new Map();
+
+  links.forEach(function (link) {
+    var id = link.getAttribute('href').slice(1);
+    var section = document.getElementById(id);
+    if (section) {
+      sections.push(section);
+      linkBySection.set(section, link);
+    }
+  });
+
+  // Sort sections by document order to make spy logic simple
+  sections.sort(function (a, b) {
+    return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+  });
+
+  var setActive = function (section) {
+    links.forEach(function (link) {
+      link.classList.remove('is-active');
+      link.removeAttribute('aria-current');
+    });
+    var active = linkBySection.get(section);
+    if (active) {
+      active.classList.add('is-active');
+      active.setAttribute('aria-current', 'true');
+    }
+  };
+
+  // Smooth scroll with header offset
+  links.forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      var href = link.getAttribute('href');
+      if (!href || href.charAt(0) !== '#') return;
+      var target = document.getElementById(href.slice(1));
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start'
+      });
+      if (history.replaceState) {
+        history.replaceState(null, '', href);
+      }
+    });
+  });
+
+  // Scroll spy
+  if (!sections.length) return;
+
+  var offset = 120;
+  var ticking = false;
+
+  var updateActive = function () {
+    var scrollPos = window.scrollY + offset;
+    var current = sections[0];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].offsetTop <= scrollPos) {
+        current = sections[i];
+      } else {
+        break;
+      }
+    }
+    setActive(current);
+    ticking = false;
+  };
+
+  window.addEventListener('scroll', function () {
+    if (!ticking) {
+      window.requestAnimationFrame(updateActive);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  updateActive();
+})();
+</script>
+{% endblock %}

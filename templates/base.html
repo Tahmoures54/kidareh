@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="fa" dir="rtl" data-version="20261114">
+<head>
+  {# ── charset: اولین عنصر head، در 1024 بایت اول ── #}
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+
+  {# ── Theme & color-scheme: قبل از CSS برای حذف FOUC ── #}
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#0E7490" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B1322" media="(prefers-color-scheme: dark)">
+
+  {# ── Security ── #}
+  <meta name="csp-nonce" content="{{ csp_nonce() }}">
+  <meta http-equiv="Permissions-Policy"
+        content="camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+
+  {# ── PWA ── #}
+  <meta name="application-name" content="کی‌داره">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="کی‌داره">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.webmanifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='icons/icon-192.png') }}" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+
+  {# ── SEO & Social ── #}
+  <title>{% block title %}ببین کی داره؟ حضوری بگیر!{% endblock %}</title>
+  <meta name="description" content="{{ meta_description or 'ببین کی‌داره؟ حضوری بگیر! کالای دلخواهت را پیدا کن و از فروشگاه محلی حضوری تحویل بگیر.' }}">
+
+  <meta property="og:site_name" content="کی‌داره">
+  <meta property="og:locale" content="fa_IR">
+  <meta property="og:type" content="{{ meta_type or 'website' }}">
+  <meta property="og:title" content="{{ meta_title or 'ببین کی داره؟ حضوری بگیر!' }}">
+  <meta property="og:description" content="{{ meta_description or 'کالاهای نزدیکت را پیدا کن و حضوری تحویل بگیر.' }}">
+  <link rel="canonical" href="{{ request.url_root.rstrip('/') ~ request.path }}">
+  <meta property="og:url" content="{{ request.url_root.rstrip('/') ~ request.path }}">
+  <meta property="og:image" content="{{ meta_image or (request.url_root.rstrip('/') ~ url_for('static', filename='icons/icon-512.png')) }}">
+  <meta property="og:image:alt" content="لوگوی کی‌داره">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ meta_title or 'ببین کی داره؟ حضوری بگیر!' }}">
+  <meta name="twitter:description" content="{{ meta_description or 'کالاها و ویترین‌های کی‌داره را ببین.' }}">
+
+  {# ── Resource hints ── #}
+  <link rel="preconnect" href="{{ request.url_root.rstrip('/') }}" crossorigin>
+  <link rel="preload" href="{{ url_for('static', filename='fonts/Vazirmatn-Variable.woff2') }}"
+        as="font" type="font/woff2" crossorigin>
+
+  {# ── View Transitions (progressive enhancement) ── #}
+  <style nonce="{{ csp_nonce() }}">
+    @view-transition { navigation: auto; }
+  </style>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     CSS — 5 فایل مشترک.
+     auth-pages.css فقط در /login و /register از {% block head %} لود می‌شود.
+     ═══════════════════════════════════════════════════════════════════ #}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=20261114">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme-mh.css') }}?v=20261114">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/site-shell.css') }}?v=20261114">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}?v=20261114">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/pages.css') }}?v=20261114">
+
+  {% if structured_data %}
+  <script type="application/ld+json" nonce="{{ csp_nonce() }}">{{ structured_data|tojson }}</script>
+  {% endif %}
+
+  {% block head %}{% endblock %}
+</head>
+
+<body class="inner-page" data-page="{{ request.path }}">
+  <a class="skip-link" href="#main-content">رفتن به محتوای اصلی</a>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     HEADER
+     ═══════════════════════════════════════════════════════════════════ #}
+  <header class="site-header" id="siteHeader">
+    <div class="site-header-inner">
+      <a class="brand" href="/" aria-label="صفحه اصلی کی‌داره">
+        <span class="brand-copy">
+          <span class="brand-title-row">
+            <strong>کی‌داره</strong>
+            <small class="brand-tagline">سوپر اپلیکیشن خرید حضوری</small>
+          </span>
+          {% block header_brand_extra %}{% endblock %}
+        </span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="ناوبری اصلی">
+        <a href="/search" {% if request.path.startswith('/search') %}aria-current="page"{% endif %}>جست‌وجوی کالا</a>
+        <a href="/stores" {% if request.path.startswith('/stores') or request.path.startswith('/store/') %}aria-current="page"{% endif %}>فروشگاه‌ها</a>
+        <a id="headerSellerLink" href="/seller" title="مدیریت فروشگاه و ویترین آنلاین" aria-label="مدیریت فروشگاه و ویترین آنلاین"
+           {% if request.path.startswith('/seller') %}aria-current="page"{% endif %}>مدیریت فروشگاه</a>
+        <a href="/messages" {% if request.path.startswith('/messages') %}aria-current="page"{% endif %}>گفت‌وگوها</a>
+        <a href="/support" {% if request.path.startswith('/support') %}aria-current="page"{% endif %}>پشتیبانی</a>
+      </nav>
+
+      <div class="header-actions">
+        <a class="header-utility-link" id="headerSavedLink" href="/saved">ذخیره‌ها</a>
+        <a class="button button-outline header-auth-button" id="headerLoginLink" href="/login">ورود</a>
+        <a class="button button-primary header-auth-button" id="headerRegisterLink" href="/register">ثبت‌نام</a>
+        <a class="button button-outline" id="headerAccountLink" href="/account" hidden>حساب من</a>
+        <button class="button button-outline" id="headerLogoutButton" type="button" hidden>خروج</button>
+        <button class="button button-outline" id="installAppButton" type="button"
+                hidden aria-label="نصب اپلیکیشن کی‌داره">نصب اپ</button>
+      </div>
+    </div>
+  </header>
+
+  <datalist id="iranCityOptions"></datalist>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     MOBILE BOTTOM NAV
+     ═══════════════════════════════════════════════════════════════════ #}
+  {% if request.path == '/' %}
+  <nav class="mobile-bottom-nav home-bottom-nav" aria-label="ناوبری پایین">
+    <a class="mobile-nav-item" href="/search"><span aria-hidden="true">⌕</span><span>جست‌وجو</span></a>
+    <a class="mobile-nav-item" href="/stores"><span aria-hidden="true">▦</span><span>فروشگاه‌ها</span></a>
+    <a class="mobile-nav-item nav-cta" id="mobileSellerLink" href="/seller"><span aria-hidden="true">＋</span><span>مدیریت فروشگاه</span></a>
+  </nav>
+  {% else %}
+  <nav class="mobile-bottom-nav" aria-label="ناوبری پایین">
+    <a class="mobile-nav-item" href="/" {% if request.path == '/' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true">⌂</span><span>خانه</span>
+    </a>
+    <a class="mobile-nav-item" href="/search" {% if request.path.startswith('/search') %}aria-current="page"{% endif %}>
+      <span aria-hidden="true">⌕</span><span>جست‌وجو</span>
+    </a>
+    <a class="mobile-nav-item" href="/stores" {% if request.path.startswith('/stores') or request.path.startswith('/store/') %}aria-current="page"{% endif %}>
+      <span aria-hidden="true">▦</span><span>فروشگاه‌ها</span>
+    </a>
+    <a class="mobile-nav-item nav-cta" id="mobileSellerLink" href="/seller"
+       {% if request.path.startswith('/seller') %}aria-current="page"{% endif %}>
+      <span aria-hidden="true">＋</span><span>مدیریت فروشگاه</span>
+    </a>
+    <a class="mobile-nav-item" href="/support" {% if request.path.startswith('/support') %}aria-current="page"{% endif %}>
+      <span aria-hidden="true">？</span><span>پشتیبانی</span>
+    </a>
+  </nav>
+  {% endif %}
+
+  {# ═══════════════════════════════════════════════════════════════════
+     MAIN — main_class قابل override برای صفحهٔ اصلی
+     ═══════════════════════════════════════════════════════════════════ #}
+  <main class="{% block main_class %}page-shell{% endblock %}" id="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     FOOTER
+     ═══════════════════════════════════════════════════════════════════ #}
+  <footer class="site-footer inner-footer" aria-label="پیوندهای حقوقی">
+    <nav class="footer-links" aria-label="پیوندهای تکمیلی">
+      <a href="/support">پشتیبانی</a>
+      <a href="/guide">راهنمای کاربر</a>
+      <a href="/safety">خرید امن</a>
+      <a href="/help">سؤالات رایج</a>
+    </nav>
+
+    {# پیوندهای حقوقی پس از تأیید وضعیت نشست توسط header-auth.js نمایش داده می‌شوند. #}
+    <nav class="footer-links" id="legalLinks" aria-label="پیوندهای حقوقی" hidden>
+      <a href="/terms">قوانین استفاده</a>
+      <a href="/privacy">حریم خصوصی</a>
+    </nav>
+
+    <div class="footer-bottom">
+      <span>© {{ now().year if now is defined else '۲۰۲۶' }} کی‌داره</span>
+    </div>
+  </footer>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     LIVE REGION — toast واحد.
+     ui.js, header-auth.js, pwa.js, pages.js, seller.js, communications.js
+     همه به همین المان می‌نویسند.
+     ═══════════════════════════════════════════════════════════════════ #}
+  <div id="pageToast" class="toast" role="status"></div>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     1) SPECULATION RULES — پیش‌واکشی هوشمند
+        prefetch: moderate (روی hover شروع می‌شود)
+        prerender: conservative (فقط روی mousedown/click)
+     ═══════════════════════════════════════════════════════════════════ #}
+  <script type="speculationrules" nonce="{{ csp_nonce() }}">
+  {
+    "prefetch": [
+      { "where": { "selector_matches": "a[href='/']" },        "eagerness": "moderate" },
+      { "where": { "selector_matches": "a[href^='/stores']" }, "eagerness": "moderate" },
+      { "where": { "selector_matches": "a[href^='/search']" }, "eagerness": "moderate" },
+      { "where": { "selector_matches": "a[href^='/seller']" }, "eagerness": "moderate" }
+    ],
+    "prerender": [
+      { "where": { "selector_matches": "a[href^='/store/']" },   "eagerness": "conservative" },
+      { "where": { "selector_matches": "a[href^='/product/']" }, "eagerness": "conservative" }
+    ]
+  }
+  </script>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     2) MODULE PRELOADS — شروع دانلود قبل از رسیدن parser به <script>
+        فقط ماژول‌های مسیر بحرانی؛ ماژول‌های خاص هر صفحه از طریق
+        import در boot module به‌طور خودکار preload می‌شوند.
+     ═══════════════════════════════════════════════════════════════════ #}
+  <link rel="modulepreload" href="{{ url_for('static', filename='js/ui.js') }}">
+  <link rel="modulepreload" href="{{ url_for('static', filename='js/header-scroll.js') }}">
+  <link rel="modulepreload" href="{{ url_for('static', filename='js/header-auth.js') }}">
+  <link rel="modulepreload" href="{{ url_for('static', filename='js/location-picker.js') }}">
+  <link rel="modulepreload" href="{{ url_for('static', filename='js/pwa-rules.js') }}">
+  <link rel="modulepreload" href="{{ url_for('static', filename='js/pwa.js') }}">
+
+  {# ═══════════════════════════════════════════════════════════════════
+     3) IMPORT MAP — نام‌های کوتاه برای ماژول‌ها.
+        فقط ماژول‌های ES؛ فایل‌های کلاسیک (app.js, home.js, seller.js, ...)
+        از {% block scripts %} لود می‌شوند.
+     ═══════════════════════════════════════════════════════════════════ #}
+  <script type="importmap" nonce="{{ csp_nonce() }}">
+  {
+    "imports": {
+      "kidareh-ui":          "{{ url_for('static', filename='js/ui.js') }}",
+      "kidareh-location":    "{{ url_for('static', filename='js/location-picker.js') }}",
+      "kidareh-pwa-rules":   "{{ url_for('static', filename='js/pwa-rules.js') }}",
+      "kidareh-pwa":         "{{ url_for('static', filename='js/pwa.js') }}",
+      "kidareh-pages":       "{{ url_for('static', filename='js/pages.js') }}",
+      "kidareh-header-auth": "{{ url_for('static', filename='js/header-auth.js') }}",
+      "kidareh-reports":     "{{ url_for('static', filename='js/reports.js') }}",
+      "kidareh-onboarding":  "{{ url_for('static', filename='js/onboarding.js') }}",
+      "kidareh-app-ux":      "{{ url_for('static', filename='js/app-ux.js') }}",
+      "kidareh-pages-ux":    "{{ url_for('static', filename='js/pages-ux.js') }}",
+      "kidareh-header-scroll":"{{ url_for('static', filename='js/header-scroll.js') }}"
+    }
+  }
+  </script>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     4) PAGE DATA — JSON (اختیاری، CSP-safe با nonce)
+        قالب‌های فرزند می‌توانند page_data پاس دهند:
+          {% set page_data = {"type": "search", "productId": 42} %}
+          {{ render_template(..., page_data=page_data) }}
+        در JS: window.KIDAREH_PAGE به‌طور خودکار از این JSON پر می‌شود.
+     ═══════════════════════════════════════════════════════════════════ #}
+  {% if page_data %}
+  <script type="application/json" id="kidareh-page-data" nonce="{{ csp_nonce() }}">{{ page_data|tojson }}</script>
+  {% endif %}
+
+  {# ═══════════════════════════════════════════════════════════════════
+     5) BOOT MODULE — بارگذاری شرطی بر اساس path
+        هستهٔ همیشه‌حاضر: 8 ماژول
+        صفحه‌محور: pages, pages-ux, app-ux بر اساس request.path
+     ═══════════════════════════════════════════════════════════════════ #}
+  {% set path = request.path %}
+  {% set is_home      = path == '/' %}
+  {% set is_search    = path.startswith('/search') %}
+  {% set is_stores    = path.startswith('/stores') or path.startswith('/store/') %}
+  {% set is_product   = path.startswith('/product/') %}
+  {% set is_seller    = path.startswith('/seller') %}
+  {% set is_saved     = path.startswith('/saved') %}
+  {% set is_following = path.startswith('/following') %}
+  {% set is_account   = path.startswith('/account') %}
+
+  {% set needs_pages    = is_search or is_stores or is_product or is_seller or is_saved or is_following or is_account %}
+  {% set needs_pages_ux = is_search or is_stores or is_seller %}
+  {% set needs_app_ux   = is_home or is_search or is_stores or is_product %}
+
+  <script type="module" nonce="{{ csp_nonce() }}">
+    // ── 1) Hydrate page data (JSON -> window.KIDAREH_PAGE) ──
+    {
+      const el = document.getElementById("kidareh-page-data");
+      if (el && !window.KIDAREH_PAGE) {
+        try { window.KIDAREH_PAGE = JSON.parse(el.textContent); } catch (_) {}
+      }
+    }
+
+    // ── 2) Core modules (every page) ──
+    import "kidareh-header-scroll";
+    import "kidareh-ui";
+    import "kidareh-location";
+    import "kidareh-pwa-rules";
+    import "kidareh-pwa";
+    import "kidareh-header-auth";
+    import "kidareh-reports";
+    import "kidareh-onboarding";
+
+    // ── 3) Page-specific modules ──
+    {% if needs_app_ux %}  import "kidareh-app-ux";{% endif %}
+    {% if needs_pages %}   import "kidareh-pages";{% endif %}
+    {% if needs_pages_ux %}import "kidareh-pages-ux";{% endif %}
+
+    // ── 4) Global error boundary — خطاهای ماژول‌ها را بی‌صدا نگه نمی‌داریم ──
+    window.addEventListener("unhandledrejection", (event) => {
+      if (window.KidarehUI?.toast) {
+        window.KidarehUI.toast("مشکلی پیش آمد؛ دوباره تلاش کنید.", { kind: "error" });
+      }
+      console.error("[Kidareh] unhandled:", event.reason);
+    });
+  </script>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     6) PAGE-SPECIFIC SCRIPTS — کلاسیک، defer
+        نمونه:
+          {% block scripts %}
+            <script src="{{ url_for('static', filename='js/home.js') }}" defer></script>
+          {% endblock %}
+     ═══════════════════════════════════════════════════════════════════ #}
+  {% block scripts %}{% endblock %}
+
+  {# ═══════════════════════════════════════════════════════════════════
+     7) NOSCRIPT FALLBACK
+     ═══════════════════════════════════════════════════════════════════ #}
+  <noscript>
+    <div role="alert" class="noscript-banner">
+      برای استفادهٔ کامل از کی‌داره، لطفاً JavaScript را در مرورگر خود فعال کنید.
+    </div>
+  </noscript>
+</body>
+</html>

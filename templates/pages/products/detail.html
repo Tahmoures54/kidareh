@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+{% block title %}{{ meta_title or 'جزئیات کالا' }} | کی‌داره{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Product detail ── */
+  .page-heading { padding: 1.5rem 0 1.1rem; }
+  .back-link {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    margin-bottom: 0.85rem; color: #0E7490;
+    font-size: 0.85rem; font-weight: 700; text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .back-link:hover { opacity: 0.8; }
+
+  .page-heading .section-kicker {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.28rem 0.7rem; border-radius: 999px;
+    background: #ECFEFF; border: 1px solid #A5F3FC;
+    color: #0E7490; font-size: 0.78rem; font-weight: 700;
+  }
+  .page-heading h1 {
+    margin: 0.75rem 0 0;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    color: var(--color-ink, #0F172A); line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  /* Loading shimmer for the h1 while JS fetches the real title. */
+  #productTitle.is-loading {
+    display: inline-block;
+    min-width: 12ch;
+    min-height: 1em;
+    background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+    background-size: 200% 100%;
+    animation: titleShimmer 1.4s ease-in-out infinite;
+    color: transparent;
+    border-radius: 6px;
+  }
+  @keyframes titleShimmer { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    #productTitle.is-loading { animation: none; background: #E2E8F0; }
+  }
+
+  .product-detail-panel {
+    display: grid;
+    grid-template-columns: minmax(240px, 0.85fr) 1.15fr;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 18px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 14px rgba(15, 23, 42, 0.05);
+    margin-bottom: 1.15rem;
+    min-height: 280px;
+  }
+
+  /* Loading / skeleton inside panel */
+  .product-detail-panel > .loading-card,
+  .product-detail-loading {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: minmax(200px, 0.85fr) 1.15fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+  .pd-skel-art {
+    min-height: 260px; border-radius: 14px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .pd-skel-body { display: grid; gap: 0.65rem; padding-top: 0.5rem; }
+  .pd-skel-line {
+    height: 14px; border-radius: 6px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .pd-skel-line.w-80 { width: 80%; }
+  .pd-skel-line.w-50 { width: 50%; }
+  .pd-skel-line.w-65 { width: 65%; }
+  .pd-skel-line.w-40 { width: 40%; height: 28px; border-radius: 8px; }
+  .pd-skel-art::after,
+  .pd-skel-line::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer { to { transform: translateX(100%); } }
+
+  /* Enhance injected product content */
+  .product-detail-panel .product-detail-art {
+    min-height: 260px; display: grid; place-items: center;
+    overflow: hidden; border-radius: 14px;
+    background: linear-gradient(145deg, #ECFEFF, #F0F9FF);
+    font-size: 4rem;
+  }
+  .product-detail-panel .product-detail-art img {
+    width: 100%; height: 100%; max-height: 360px; object-fit: cover;
+  }
+  .product-detail-panel .product-detail-copy h2 {
+    margin: 0.2rem 0 0.65rem;
+    font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+    font-weight: 800; color: var(--color-ink, #0F172A);
+  }
+  .product-detail-panel .product-detail-copy p {
+    color: var(--color-muted, #64748B);
+    line-height: 1.85; font-size: 0.92rem;
+  }
+  .product-detail-panel .product-detail-price {
+    display: block; margin: 1rem 0;
+    color: #0E7490; font-size: 1.45rem; font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  /* Trust notice */
+  .trust-notice {
+    display: flex; gap: 0.85rem; align-items: flex-start;
+    margin-bottom: 1.15rem; padding: 1.05rem 1.15rem;
+    border-radius: 14px; border: 1px solid #FDE68A;
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    color: var(--color-ink, #0F172A);
+  }
+  .trust-notice > span {
+    flex-shrink: 0; width: 36px; height: 36px;
+    display: grid; place-items: center;
+    border-radius: 10px; background: #FDE68A;
+    color: #B45309; font-size: 1.1rem;
+  }
+  .trust-notice strong {
+    display: block; margin-bottom: 0.2rem;
+    color: #92400E; font-size: 0.95rem;
+  }
+  .trust-notice p {
+    margin: 0; color: #78716C; font-size: 0.88rem; line-height: 1.75;
+  }
+  .trust-notice a {
+    color: #0E7490; font-weight: 700; text-decoration: none;
+  }
+  .trust-notice a:hover { text-decoration: underline; }
+
+  /* Chat CTA */
+  .product-chat-panel {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: 1.25rem 1.35rem;
+    border: 1px solid var(--color-line, #CBD5E1); border-radius: 16px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    margin-bottom: 1.75rem;
+  }
+  .product-chat-panel p {
+    margin: 0; color: var(--color-muted, #475569);
+    font-size: 0.92rem; line-height: 1.7; max-width: 28rem;
+  }
+  .product-chat-panel strong {
+    display: block; margin-bottom: 0.2rem;
+    color: var(--color-ink, #0F172A); font-size: 1rem;
+  }
+  #startConversation {
+    min-height: 46px; padding-inline: 1.25rem;
+    font-weight: 700; border-radius: 11px;
+    white-space: nowrap;
+  }
+
+  .noscript-notice {
+    padding: 1rem 1.15rem; border-radius: 12px;
+    background: #FFFBEB; border: 1px solid #FDE68A;
+    color: #92400E; font-size: 0.9rem; line-height: 1.8;
+    margin-bottom: 1rem;
+  }
+  .noscript-notice strong { display: block; margin-bottom: 0.35rem; }
+  .noscript-notice a {
+    color: #0E7490; font-weight: 700; text-decoration: none;
+  }
+  .noscript-notice a:hover { text-decoration: underline; }
+
+  @media (max-width: 700px) {
+    .product-detail-panel,
+    .product-detail-panel > .loading-card,
+    .product-detail-loading {
+      grid-template-columns: 1fr;
+    }
+    .pd-skel-art { min-height: 200px; }
+    .product-chat-panel {
+      flex-direction: column; align-items: stretch;
+    }
+    #startConversation { width: 100%; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .product-detail-panel,
+    .product-chat-panel {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+    }
+    .pd-skel-art,
+    .pd-skel-line { background: #334155; }
+    .trust-notice {
+      background: linear-gradient(135deg, #2E2208, #1C1917);
+      border-color: #92400E; color: #E2E8F0;
+    }
+    .trust-notice strong { color: #FBBF24; }
+    .trust-notice p { color: #A8A29E; }
+    .trust-notice > span { background: #92400E; color: #FDE68A; }
+    .noscript-notice {
+      background: #2E2208; border-color: #92400E; color: #FBBF24;
+    }
+    .noscript-notice a { color: #67E8F9; }
+    #productTitle.is-loading { background: #334155; }
+    .page-heading .section-kicker {
+      background: #083344; border-color: #155E75; color: #67E8F9;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pd-skel-art::after,
+    .pd-skel-line::after { animation: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <a class="back-link" href="/search">← بازگشت به جست‌وجو</a>
+  <span class="section-kicker"><span aria-hidden="true">▦</span> جزئیات کالا</span>
+  {#
+    The h1 is intentionally a *static* fallback ("جزئیات کالا") rather than
+    "در حال دریافت کالا…". If `pages.js` fails to load — a network glitch,
+    a CDN outage, an ad blocker — a persistent "loading…" h1 would be
+    misleading, and search engines would index the wrong text. `pages.js`
+    overwrites this text with the real title once the fetch completes.
+    `.is-loading` applies a subtle shimmer so sighted users still get the
+    "content is coming" cue without an inaccurate string.
+  #}
+  <h1 id="productTitle" class="is-loading" data-product-id="{{ product_id }}">جزئیات کالا</h1>
+</section>
+
+<noscript>
+  <div class="noscript-notice">
+    <strong>⚠ جاوااسکریپت لازم است</strong>
+    برای مشاهدهٔ جزئیات، تصویر و قیمت این کالا، لطفاً جاوااسکریپت را فعال کنید.
+    یا از <a href="/search">جست‌وجوی کالا</a> و <a href="/stores">ویترین فروشگاه‌ها</a> دیدن کنید.
+  </div>
+</noscript>
+
+{#
+  `pages.js` fills `#productDetail` with image + copy + price. `aria-busy`
+  tells screen readers "content is loading"; the MutationObserver below
+  flips it to "false" once the skeleton is replaced. `aria-live` is
+  intentionally NOT set here — a full product description is too much to
+  announce at once, and the loading status is already conveyed via
+  `aria-busy` + the `role="status"` loading text.
+#}
+<section
+  id="productDetail"
+  class="product-detail-panel"
+  data-product-id="{{ product_id }}"
+  role="region"
+  aria-label="جزئیات کالا"
+  aria-busy="true"
+>
+  <div class="product-detail-loading" aria-hidden="true">
+    <div class="pd-skel-art"></div>
+    <div class="pd-skel-body">
+      <div class="pd-skel-line w-80"></div>
+      <div class="pd-skel-line w-50"></div>
+      <div class="pd-skel-line w-65"></div>
+      <div class="pd-skel-line w-40"></div>
+      <div class="pd-skel-line w-65"></div>
+    </div>
+  </div>
+  <p class="sr-only" role="status">در حال دریافت جزئیات کالا…</p>
+</section>
+
+<aside class="trust-notice" role="note" aria-label="هشدار امنیتی خرید حضوری">
+  <span aria-hidden="true">⚠</span>
+  <div>
+    <strong>هرگز قبل از بازدید بیعانه ندهید.</strong>
+    <p>
+      خرید حضوری را در محل و پس از دیدن کالا انجام دهید.
+      <a href="/safety">راهنمای خرید امن</a>
+    </p>
+  </div>
+</aside>
+
+<div class="product-chat-panel" role="group" aria-labelledby="productChatTitle">
+  <div>
+    <strong id="productChatTitle">سؤالی درباره این کالا دارید؟</strong>
+    <p>مستقیماً با فروشنده گفت‌وگو کنید و موجودی، قیمت نهایی و ساعات مراجعه را هماهنگ کنید.</p>
+  </div>
+  {#
+    `communications.js::initStartConversation` binds to `#startConversation`.
+    The button is disabled by default so a stray click before the handlers
+    are attached does nothing; `initProductDetail` (from `pages.js`) and
+    `initStartConversation` both run on `DOMContentLoaded` and the button
+    is expected to work as soon as the page is interactive.
+  #}
+  <button
+    id="startConversation"
+    class="button button-primary"
+    type="button"
+    aria-controls="productDetail"
+  >
+    گفت‌وگوی مستقیم با فروشنده
+  </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.KIDAREH_PAGE = {
+    type: "product-detail",
+    productId: {{ product_id|tojson }}
+  };
+
+  (() => {
+    // Two small enhancements that `pages.js` intentionally does not own:
+    //
+    //   1. Swap the shimmer class off `#productTitle` once the real title
+    //      is filled in, so the loading animation does not keep running
+    //      after the content arrives.
+    //   2. Flip `aria-busy` to "false" on `#productDetail` once the
+    //      skeleton is replaced, so assistive tech knows the region is
+    //      ready.
+    //
+    // Both observe the DOM instead of modifying `pages.js`, keeping that
+    // file focused on rendering. A 10-second fallback replaces a permanently
+    // stuck skeleton with a "retry" link so users are never trapped on an
+    // empty page.
+    const titleEl = document.getElementById("productTitle");
+    const detailEl = document.getElementById("productDetail");
+    if (!titleEl || !detailEl) return;
+
+    const isLoading = () => detailEl.querySelector(".product-detail-loading") !== null;
+
+    const settle = () => {
+      if (isLoading()) return false;
+      detailEl.setAttribute("aria-busy", "false");
+      titleEl.classList.remove("is-loading");
+      return true;
+    };
+
+    new MutationObserver(settle).observe(detailEl, { childList: true, subtree: true });
+    settle();
+
+    window.setTimeout(() => {
+      if (!isLoading()) return;
+      const fallback = document.createElement("div");
+      fallback.className = "loading-card";
+      fallback.setAttribute("role", "alert");
+      fallback.style.gridColumn = "1 / -1";
+      fallback.style.textAlign = "center";
+      fallback.style.padding = "2rem";
+      fallback.innerHTML =
+        "<p>دریافت اطلاعات این کالا بیش از حد معمول طول کشید.</p>" +
+        '<p style="margin-top:.75rem">' +
+        '<a class="button button-outline" href="/search">بازگشت به جست‌وجو</a> ' +
+        '<button class="button button-primary" type="button" id="retryProductDetail">تلاش دوباره</button>' +
+        "</p>";
+      detailEl.replaceChildren(fallback);
+      detailEl.setAttribute("aria-busy", "false");
+      titleEl.classList.remove("is-loading");
+      fallback.querySelector("#retryProductDetail")?.addEventListener("click", () => window.location.reload());
+    }, 10000);
+  })();
+</script>
+{#
+  `pages.js` and `location-picker.js` are loaded by `base.html`.
+  `communications.js` is loaded here because only product pages need the
+  "start conversation" button; loading it globally would bind a click
+  handler on every page for a button that only exists here.
+#}
+<script src="{{ url_for('static', filename='js/communications.js') }}" defer></script>
+{% endblock %}

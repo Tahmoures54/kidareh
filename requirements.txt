@@ -1,0 +1,7 @@
+Flask>=3.0,<4.0
+gunicorn>=22.0,<24.0
+SQLAlchemy>=2.0,<2.1
+Alembic>=1.13,<2.0
+python-dotenv>=1.0,<2.0
+waitress>=3.0,<4.0
+redis>=5.0,<7.0

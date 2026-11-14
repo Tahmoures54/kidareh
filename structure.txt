@@ -1,0 +1,414 @@
+kidareh
+|   .env.example
+|   .gitignore
+|   alembic.ini
+|   config.py
+|   gunicorn.conf.py
+|   liaraignore
+|   main.py
+|   Procfile
+|   pyproject.toml
+|   pytest.ini
+|   README.md
+|   requirements-dev.txt
+|   requirements.txt
+|   runtime.txt
+|   structure.txt
+|   wsgi.py
+|   
++---.github
+|   +---ISSUE_TEMPLATE
+|   |       .gitkeep
+|   |       
+|   \---workflows
+|           deploy-liara.yml
+|           tests.yml
+|           
++---docs
+|       architecture.md
+|       migration-status.md
+|       production-readiness.md
+|       RELEASE_CHECKLIST.md
+|       
++---instance
++---kidareh
+|   |   core.py
+|   |   data_catalog.py
+|   |   dependencies.py
+|   |   extensions.py
+|   |   schema_init.py
+|   |   __init__.py
+|   |   
+|   +---api
+|   |   |   README.md
+|   |   |   __init__.py
+|   |   |   
+|   |   \---v1
+|   |       |   auth.py
+|   |       |   categories.py
+|   |       |   favorites.py
+|   |       |   listings.py
+|   |       |   locations.py
+|   |       |   messages.py
+|   |       |   notifications.py
+|   |       |   payments.py
+|   |       |   reports.py
+|   |       |   search.py
+|   |       |   stores.py
+|   |       |   users.py
+|   |       |   __init__.py
+|   |       |   
+|   |       \---schemas
+|   |               __init__.py
+|   |               
+|   +---data
+|   |       categories.json
+|   |       iran_locations.json
+|   |       trades.json
+|   |       
+|   +---infrastructure
+|   |   |   __init__.py
+|   |   |   
+|   |   +---cache
+|   |   |       interface.py
+|   |   |       local.py
+|   |   |       redis.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---database
+|   |   |       base.py
+|   |   |       legacy_adapter.py
+|   |   |       README.md
+|   |   |       repository.py
+|   |   |       session.py
+|   |   |       transaction.py
+|   |   |       types.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---monitoring
+|   |   |       audit.py
+|   |   |       health.py
+|   |   |       metrics.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---payments
+|   |   |       __init__.py
+|   |   |       
+|   |   +---queue
+|   |   |       interface.py
+|   |   |       local.py
+|   |   |       worker.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---search
+|   |   |       database_search.py
+|   |   |       external_search.py
+|   |   |       interface.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---sms
+|   |   |       __init__.py
+|   |   |       
+|   |   \---storage
+|   |           image_processor.py
+|   |           interface.py
+|   |           local.py
+|   |           object_storage.py
+|   |           README.md
+|   |           __init__.py
+|   |           
+|   +---modules
+|   |   |   README.md
+|   |   |   __init__.py
+|   |   |   
+|   |   +---accounts
+|   |   |       models.py
+|   |   |       policies.py
+|   |   |       repository.py
+|   |   |       schemas.py
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---admin
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---catalog
+|   |   |       categories.py
+|   |   |       repository.py
+|   |   |       service.py
+|   |   |       trades.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---communications
+|   |   |   |   service.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---providers
+|   |   |           notification.py
+|   |   |           sms.py
+|   |   |           __init__.py
+|   |   |           
+|   |   +---favorites
+|   |   |       models.py
+|   |   |       repository.py
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---listings
+|   |   |       filters.py
+|   |   |       models.py
+|   |   |       policies.py
+|   |   |       repository.py
+|   |   |       schemas.py
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---locations
+|   |   |       models.py
+|   |   |       repository.py
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---messaging
+|   |   |       models.py
+|   |   |       policies.py
+|   |   |       repository.py
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---moderation
+|   |   |       models.py
+|   |   |       policies.py
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---monetization
+|   |   |   |   models.py
+|   |   |   |   pricing.py
+|   |   |   |   service.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---providers
+|   |   |           .gitkeep
+|   |   |           __init__.py
+|   |   |           
+|   |   +---reports
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   +---stores
+|   |   |       models.py
+|   |   |       repository.py
+|   |   |       service.py
+|   |   |       __init__.py
+|   |   |       
+|   |   \---support
+|   |           service.py
+|   |           __init__.py
+|   |           
+|   +---routes
+|   |       auth.py
+|   |       communications.py
+|   |       listings.py
+|   |       moderation.py
+|   |       monetization.py
+|   |       pages.py
+|   |       stores.py
+|   |       system.py
+|   |       __init__.py
+|   |       
+|   +---services
+|   |       rate_limits.py
+|   |       sms.py
+|   |       __init__.py
+|   |       
+|   +---shared
+|   |       constants.py
+|   |       exceptions.py
+|   |       logging.py
+|   |       pagination.py
+|   |       responses.py
+|   |       security.py
+|   |       time.py
+|   |       validators.py
+|   |       __init__.py
+|   |       
+|   \---web
+|       |   __init__.py
+|       |   
+|       \---routes
+|               account.py
+|               auth.py
+|               listings.py
+|               pages.py
+|               seller.py
+|               stores.py
+|               __init__.py
+|               
++---migrations
+|   |   env.py
+|   |   README.md
+|   |   script.py.mako
+|   |   
+|   \---versions
+|           .gitkeep
+|           0001_adopt_existing_schema.py
+|           
++---scripts
+|       backup_sqlite.py
+|       check_production.py
+|       maintain_db.py
+|       README.md
+|       restore_sqlite.py
+|       scale_profiles.py
+|       
++---static
+|   |   icon.svg
+|   |   manifest.webmanifest
+|   |   offline.html
+|   |   Screen.png
+|   |   sw.js
+|   |   
+|   +---css
+|   |       auth-pages.css
+|   |       components.css
+|   |       home.css
+|   |       pages.css
+|   |       seller-dashboard.css
+|   |       seller-monetization.css
+|   |       seller-tags.css
+|   |       site-shell.css
+|   |       style.css
+|   |       theme-mh.css
+|   |       
+|   +---fonts
+|   |       OFL.txt
+|   |       README.md
+|   |       Vazirmatn-Variable.woff2
+|   |       
+|   +---icons
+|   |       apple-touch-icon.png
+|   |       icon-192-maskable.png
+|   |       icon-192.png
+|   |       icon-512-maskable.png
+|   |       icon-512.png
+|   |       
+|   +---js
+|   |       app-ux.js
+|   |       app.js
+|   |       auth-pages.js
+|   |       auth.js
+|   |       communications.js
+|   |       header-auth.js
+|   |       header-scroll.js
+|   |       home.js
+|   |       location-picker.js
+|   |       onboarding.js
+|   |       pages-ux.js
+|   |       pages.js
+|   |       pwa-rules.js
+|   |       pwa.js
+|   |       reports.js
+|   |       seller-dashboard.js
+|   |       seller-monetization.js
+|   |       seller-tags.js
+|   |       seller.js
+|   |       ui.js
+|   |       
+|   \---uploads
+|           .gitkeep
+|           
++---storage
+|       .gitkeep
+|       
++---templates
+|   |   base.html
+|   |   index.html
+|   |   
+|   +---macros
+|   |       category_options.html
+|   |       
+|   \---pages
+|       |   guide.html
+|       |   help.html
+|       |   privacy.html
+|       |   safety.html
+|       |   terms.html
+|       |   
+|       +---account
+|       |       following.html
+|       |       messages.html
+|       |       profile.html
+|       |       saved.html
+|       |       support.html
+|       |       
+|       +---admin
+|       |       dashboard.html
+|       |       reports.html
+|       |       
+|       +---auth
+|       |       login.html
+|       |       register.html
+|       |       
+|       +---catalog
+|       |       search.html
+|       |       
+|       +---products
+|       |       detail.html
+|       |       
+|       +---seller
+|       |       dashboard.html
+|       |       monetization.html
+|       |       tags.html
+|       |       
+|       \---stores
+|               detail.html
+|               list.html
+|               
+\---tests
+    |   test_advanced_features.py
+    |   test_alembic_migration.py
+    |   test_app.py
+    |   test_backup.py
+    |   test_blueprints.py
+    |   test_cache_infrastructure.py
+    |   test_communications.py
+    |   test_end_to_end_journeys.py
+    |   test_image_and_store_fixes.py
+    |   test_monetization_journey.py
+    |   test_pages.py
+    |   test_production_preflight.py
+    |   test_release_smoke.py
+    |   test_release_ux.py
+    |   test_restore.py
+    |   test_scale_and_limits.py
+    |   test_search_pagination.py
+    |   test_sms.py
+    |   test_sqlalchemy_database.py
+    |   test_structural_basics.py
+    |   
+    +---api
+    |       __init__.py
+    |       
+    +---database
+    |       __init__.py
+    |       
+    +---e2e
+    |       __init__.py
+    |       
+    +---integration
+    |       __init__.py
+    |       
+    +---performance
+    |       __init__.py
+    |       
+    +---security
+    |       __init__.py
+    |       
+    +---unit
+    |       __init__.py
+    |       
+    \---web
+            __init__.py
+            

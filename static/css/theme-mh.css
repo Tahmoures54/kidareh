@@ -1,0 +1,4 @@
+/* Compatibility theme overlay. Keep component and shell layout rules in their owning stylesheets. */
+:root {
+  color-scheme: light dark;
+}

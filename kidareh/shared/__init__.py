@@ -1,0 +1,1 @@
+"""Kidareh architecture package."""

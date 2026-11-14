@@ -1,0 +1,66 @@
+{% macro category_options(
+    category_tree,
+    selected='',
+    include_empty=false,
+    empty_label='انتخاب دسته‌بندی',
+    group_all_label='همهٔ زیردسته‌ها'
+) -%}
+{#
+  Render the `<option>` / `<optgroup>` body of a category `<select>`.
+
+  Every top-level group becomes an `<optgroup>` whose *first* option selects
+  the whole group. Placing the group option **inside** the optgroup keeps the
+  visual hierarchy intact: a bare `<option>` sitting between `<optgroup>`
+  siblings renders at the same indent as the subcategory list in native
+  dropdowns, which led users to pick a single subcategory when they meant the
+  whole group. Keeping the group-level option inside the optgroup also avoids
+  the "group name shown twice" effect some browsers produce when the label
+  and the option text are identical.
+
+  The macro emits only the options; the caller owns the surrounding `<select>`
+  (id, name, required, class, aria-label). That is what lets `/search`,
+  `/seller`, and `/register` reuse the same markup with different attributes.
+
+  Parameters
+  ----------
+  category_tree
+      The raw ``CATEGORY_TREE`` loaded from ``categories.json`` — a list of
+      dicts with ``id``, ``group`` (the Persian label) and ``types``. Do not
+      pass the normalized ``CATEGORIES`` list; its keys are ``name``/``types``
+      and would render without group labels.
+  selected
+      Currently selected value. Matches either a group id (``"everyday_goods"``)
+      or a subcategory ``value`` (``"food"``). Comparison is strict string
+      equality on purpose — the JSON loader returns strings for both, and a
+      numeric ``selected`` must not accidentally match a string id.
+  include_empty
+      Prepend ``<option value="">`` when ``true``. With ``selected=''`` the
+      empty option is the effective default because no other option carries
+      ``selected``. Pass ``include_empty=true`` together with ``required`` on
+      the surrounding ``<select>`` to force an explicit choice.
+  empty_label
+      Text of the empty option.
+  group_all_label
+      Text of the "select the whole group" entry inside each optgroup.
+
+  Caller example
+  --------------
+  .. code-block:: jinja
+
+     <select id="pageCategory" name="category" aria-label="دسته‌بندی">
+       <option value="">همهٔ دسته‌بندی‌ها</option>
+       {{ category_options(category_tree, selected=selected_category) }}
+     </select>
+-#}
+{% if include_empty -%}
+<option value="">{{ empty_label }}</option>
+{% endif -%}
+{% for group in category_tree -%}
+<optgroup label="{{ group.group }}">
+  <option value="{{ group.id }}"{% if selected == group.id %} selected{% endif %}>{{ group.group }} — {{ group_all_label }}</option>
+  {% for item in group.types -%}
+  <option value="{{ item.value }}"{% if selected == item.value %} selected{% endif %}>{{ item.text }}</option>
+  {% endfor -%}
+</optgroup>
+{% endfor -%}
+{%- endmacro %}

@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+{% block title %}محصولات ذخیره‌شده | کی‌داره{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Saved listings ── */
+  .page-heading { padding: 1.75rem 0 1.15rem; }
+  .page-heading .section-kicker {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.75rem; border-radius: 999px;
+    background: #FEF2F2; border: 1px solid #FECACA;
+    color: #DC2626; font-size: 0.78rem; font-weight: 700;
+  }
+  .page-heading h1 {
+    margin: 0.85rem 0 0.5rem;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    color: var(--color-ink, #0F172A); line-height: 1.35;
+  }
+  .page-heading p {
+    margin: 0; max-width: 38rem; color: var(--color-muted, #64748B);
+    font-size: 0.92rem; line-height: 1.8;
+  }
+
+  .account-subnav {
+    display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.15rem;
+  }
+  .account-subnav a {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.45rem 0.9rem; border-radius: 999px;
+    border: 1px solid var(--color-line, #CBD5E1);
+    background: var(--color-surface, #fff);
+    color: var(--color-muted, #64748B);
+    font-size: 0.82rem; font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s, background 0.15s, border-color 0.15s;
+  }
+  .account-subnav a:hover {
+    color: #0E7490; border-color: #0891B2; background: #ECFEFF;
+  }
+  .account-subnav a[aria-current="page"] {
+    color: #fff;
+    background: linear-gradient(180deg, #0891B2, #0E7490);
+    border-color: transparent; font-weight: 700;
+  }
+
+  .page-panel {
+    padding: 1.35rem 1.25rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 16px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    margin-bottom: 1.5rem;
+  }
+
+  .page-results-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.75rem; margin-bottom: 1.1rem; flex-wrap: wrap;
+  }
+  .page-results-head h2 {
+    margin: 0; font-size: 1.1rem; font-weight: 800;
+    color: var(--color-ink, #0F172A);
+  }
+  .results-badge {
+    display: inline-flex; align-items: center;
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+    background: #FEF2F2; color: #DC2626;
+    font-size: 0.78rem; font-weight: 700;
+  }
+
+  #clearSaved {
+    min-height: 38px; padding-inline: 0.95rem;
+    font-size: 0.8rem; font-weight: 700; border-radius: 10px;
+  }
+  #clearSaved:disabled { opacity: 0.55; cursor: not-allowed; }
+
+  .page-card-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem; min-height: 120px;
+  }
+
+  .saved-skeleton {
+    border: 1px solid var(--color-line-soft, #E2E8F0);
+    border-radius: 14px; background: #F8FAFC; overflow: hidden;
+  }
+  .saved-skeleton-art {
+    height: 140px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .saved-skeleton-body {
+    padding: 0.9rem; display: grid; gap: 0.45rem;
+  }
+  .saved-skeleton-line {
+    height: 11px; border-radius: 6px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .saved-skeleton-line.w-70 { width: 70%; }
+  .saved-skeleton-line.w-45 { width: 45%; }
+  .saved-skeleton-line.w-55 { width: 55%; }
+  .saved-skeleton-art::after,
+  .saved-skeleton-line::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer { to { transform: translateX(100%); } }
+
+  #savedHint {
+    margin: 1rem 0 0; color: var(--color-muted, #64748B);
+    font-size: 0.85rem; line-height: 1.75;
+  }
+  #savedHint:empty { display: none; }
+
+  .saved-footer-hint {
+    margin: 0; color: var(--color-muted, #64748B);
+    font-size: 0.82rem; line-height: 1.7;
+  }
+  .saved-footer-hint a {
+    color: #0E7490; font-weight: 700; text-decoration: none;
+  }
+  .saved-footer-hint a:hover { text-decoration: underline; }
+
+  .noscript-notice {
+    padding: 0.9rem 1.05rem; border-radius: 12px;
+    background: #FFFBEB; border: 1px solid #FDE68A;
+    color: #92400E; font-size: 0.88rem; line-height: 1.7;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 850px) {
+    .page-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 520px) {
+    .page-card-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .page-panel {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+    }
+    .account-subnav a {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+      color: var(--color-muted, #B6C2D2);
+    }
+    .account-subnav a[aria-current="page"] {
+      background: linear-gradient(180deg, #0891B2, #0E7490);
+      color: #fff; border-color: transparent;
+    }
+    .saved-skeleton {
+      background: #17243A; border-color: #334155;
+    }
+    .saved-skeleton-art,
+    .saved-skeleton-line { background: #334155; }
+    .results-badge {
+      background: #2D1111; color: #F87171;
+    }
+    .noscript-notice {
+      background: #2E2208; border-color: #92400E; color: #FBBF24;
+    }
+    .page-heading .section-kicker {
+      background: #2D1111; border-color: #7F1D1D; color: #F87171;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .saved-skeleton-art::after,
+    .saved-skeleton-line::after { animation: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <span class="section-kicker"><span aria-hidden="true">♡</span> برای بعد نگه دار</span>
+  <h1>محصولات ذخیره‌شده</h1>
+  <p>
+    کالاهایی را که پسندیده‌ای اینجا پیدا کن.
+    ذخیرهٔ مهمان روی همین دستگاه نگهداری می‌شود؛ با ورود، روی حسابت هم می‌ماند.
+  </p>
+</section>
+
+<nav class="account-subnav" aria-label="بخش‌های حساب">
+  <a href="/account">حساب من</a>
+  <a href="/saved" aria-current="page">ذخیره‌ها</a>
+  <a href="/following">دنبال‌شده‌ها</a>
+  <a href="/messages">گفت‌وگوها</a>
+</nav>
+
+<section class="page-panel">
+  <noscript>
+    <p class="noscript-notice">
+      <strong>⚠ جاوااسکریپت لازم است</strong><br>
+      برای مشاهدهٔ کالاهای ذخیره‌شده، لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
+    </p>
+  </noscript>
+
+  <div class="page-results-head">
+    <div style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;">
+      <h2>فهرست ذخیره‌ها</h2>
+      <span class="results-badge" id="savedCount" role="status" aria-live="polite" hidden>۰ کالا</span>
+    </div>
+    <button id="clearSaved" class="button button-outline" type="button" disabled>
+      پاک‌کردن ذخیره‌ها
+    </button>
+  </div>
+
+  <div id="pageListings" class="page-card-grid" aria-live="polite" aria-busy="true">
+    <div class="saved-skeleton" aria-hidden="true">
+      <div class="saved-skeleton-art"></div>
+      <div class="saved-skeleton-body">
+        <div class="saved-skeleton-line w-70"></div>
+        <div class="saved-skeleton-line w-45"></div>
+        <div class="saved-skeleton-line w-55"></div>
+      </div>
+    </div>
+    <div class="saved-skeleton" aria-hidden="true">
+      <div class="saved-skeleton-art"></div>
+      <div class="saved-skeleton-body">
+        <div class="saved-skeleton-line w-70"></div>
+        <div class="saved-skeleton-line w-45"></div>
+        <div class="saved-skeleton-line w-55"></div>
+      </div>
+    </div>
+    <div class="saved-skeleton" aria-hidden="true">
+      <div class="saved-skeleton-art"></div>
+      <div class="saved-skeleton-body">
+        <div class="saved-skeleton-line w-70"></div>
+        <div class="saved-skeleton-line w-45"></div>
+        <div class="saved-skeleton-line w-55"></div>
+      </div>
+    </div>
+  </div>
+
+  <p id="savedHint" class="muted-copy"></p>
+
+  <p class="saved-footer-hint">
+    هنوز چیزی ذخیره نکرده‌ای؟ از
+    <a href="/search">جست‌وجوی کالا</a>
+    یا
+    <a href="/">صفحه اصلی</a>
+    کالاهای شهر را ببین و ذخیره کن.
+  </p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.KIDAREH_PAGE = { type: "saved" };
+</script>
+<script>
+  (() => {
+    // `pages.js::initSaved` fills `#pageListings` and `pages.js::saveProduct`
+    // toggles individual items, but nothing in `pages.js` owns the badge
+    // (`#savedCount`), the bulk-clear button (`#clearSaved`), or the storage
+    // hint (`#savedHint`). This script supplies those three, without touching
+    // `pages.js` so its behavior stays unchanged.
+    const grid = document.getElementById("pageListings");
+    const badge = document.getElementById("savedCount");
+    const clearButton = document.getElementById("clearSaved");
+    const hint = document.getElementById("savedHint");
+    if (!grid || !badge || !clearButton || !hint) return;
+
+    const nf = new Intl.NumberFormat("fa-IR");
+    const csrfMeta = () => document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = () => csrfMeta()?.content || "";
+
+    // Keep the badge and the clear button in sync with the rendered grid.
+    const refreshBadge = () => {
+      grid.setAttribute("aria-busy", "false");
+      const count = grid.querySelectorAll(".page-listing-card").length;
+      if (count > 0) {
+        badge.textContent = nf.format(count) + " کالا";
+        badge.hidden = false;
+        clearButton.disabled = false;
+      } else {
+        badge.hidden = true;
+        clearButton.disabled = true;
+      }
+    };
+    new MutationObserver(refreshBadge).observe(grid, { childList: true, subtree: true });
+    refreshBadge();
+
+    // Pick the storage-hint text from the signed-in state. Guests save to
+    // localStorage; signed-in users save to their account, so the hint would
+    // otherwise be wrong for one of them.
+    fetch("/api/auth/me", { credentials: "same-origin", headers: { Accept: "application/json" } })
+      .then((response) => response.ok ? response.json() : { user: null })
+      .then((data) => {
+        hint.textContent = data.user
+          ? "این فهرست روی حساب شما ذخیره شده و در دستگاه‌های دیگر هم در دسترس است."
+          : "این فهرست روی همین دستگاه ذخیره شده است. با ورود به حساب، روی حسابت هم ذخیره می‌شود.";
+      })
+      .catch(() => { /* Leave the hint empty if the session check fails. */ });
+
+    // Bulk clear. There is no bulk-delete endpoint, so signed-in users toggle
+    // each item off (the API's toggle endpoint is the only way to remove a
+    // saved product). Guests clear their localStorage key.
+    clearButton.addEventListener("click", async () => {
+      if (!confirm("همه کالاهای ذخیره‌شده پاک شوند؟")) return;
+      clearButton.disabled = true;
+      const originalLabel = clearButton.textContent;
+      clearButton.textContent = "در حال پاک کردن…";
+      try {
+        const me = await fetch("/api/auth/me", { credentials: "same-origin", headers: { Accept: "application/json" } })
+          .then((r) => r.ok ? r.json() : { user: null });
+        if (me.user) {
+          const items = await fetch("/api/products/saved", { credentials: "same-origin", headers: { Accept: "application/json" } })
+            .then((r) => r.ok ? r.json() : { items: [] })
+            .then((d) => d.items || []);
+          await Promise.all(items.map((item) =>
+            fetch(`/api/listings/${encodeURIComponent(item.id)}/save`, {
+              method: "POST",
+              credentials: "same-origin",
+              headers: { "X-CSRF-Token": csrfToken(), Accept: "application/json" },
+            })
+          ));
+        } else {
+          localStorage.removeItem("kidareh-saved-products");
+        }
+        window.location.reload();
+      } catch (error) {
+        clearButton.disabled = false;
+        clearButton.textContent = originalLabel;
+        alert(error.message || "پاک کردن ذخیره‌ها ممکن نشد؛ دوباره تلاش کنید.");
+      }
+    });
+  })();
+</script>
+{% endblock %}

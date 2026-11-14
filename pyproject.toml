@@ -1,0 +1,13 @@
+[project]
+name = "kidareh"
+version = "0.1.0"
+description = "Persian local marketplace application"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+
+[tool.kidareh.database]
+orm = "SQLAlchemy 2.x"
+migrations = "Alembic"
+legacy_adapter = "sqlite3 (incremental migration)"

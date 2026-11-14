@@ -1,0 +1,64 @@
+# =====================
+# Environment & secrets
+# =====================
+.env
+.env.*
+!.env.example
+
+# =====================
+# Python / tooling
+# =====================
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+
+# =====================
+# Local runtime data
+# =====================
+instance/*.sqlite3
+instance/*.db
+instance/*.sqlite3-wal
+instance/*.sqlite3-shm
+instance/*.db-wal
+instance/*.db-shm
+*.sqlite3-wal
+*.sqlite3-shm
+*.db-journal
+
+# Startup migration lock (SQLite file beside the DB)
+kidareh-migrations.lock
+kidareh-migrations.lock-wal
+kidareh-migrations.lock-shm
+
+# =====================
+# Local storage / uploads
+# =====================
+# Keep the .gitkeep so the folder exists in fresh clones
+storage/*
+!storage/.gitkeep
+static/uploads/*
+!static/uploads/.gitkeep
+
+# =====================
+# Local migration/backup artifacts
+# =====================
+.migration_archive/
+backups/
+*.log
+
+# =====================
+# OS / editor
+# =====================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

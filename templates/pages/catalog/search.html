@@ -1,0 +1,462 @@
+{% extends "base.html" %}
+{% from "macros/category_options.html" import category_options %}
+{% block title %}جست‌وجوی کالاها | کی‌داره{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Catalog search ── */
+  .page-heading { padding: 1.75rem 0 1.15rem; }
+  .page-heading .section-kicker {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.75rem; border-radius: 999px;
+    background: #ECFEFF; border: 1px solid #A5F3FC;
+    color: #0E7490; font-size: 0.78rem; font-weight: 700;
+  }
+  .page-heading h1 {
+    margin: 0.85rem 0 0.5rem;
+    font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    color: var(--color-ink, #0F172A); line-height: 1.35;
+  }
+  .page-heading p {
+    margin: 0; max-width: 36rem; color: var(--color-muted, #64748B);
+    font-size: 0.92rem; line-height: 1.8;
+  }
+
+  .page-panel {
+    padding: 1.35rem 1.25rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 16px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Search form */
+  .page-search {
+    display: flex; gap: 0.55rem; align-items: center; flex-wrap: wrap;
+    padding: 0.5rem; border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 14px; background: #F8FAFC; margin-bottom: 1.25rem;
+  }
+  .page-search input,
+  .page-search select {
+    min-height: 46px; padding: 0.6rem 0.9rem;
+    border: 1px solid transparent; border-radius: 10px;
+    background: #fff; color: var(--color-ink, #0F172A);
+    font: inherit; font-size: 0.9rem; outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .page-search input:focus,
+  .page-search select:focus {
+    border-color: #0E7490; box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.12);
+  }
+  .page-search input:first-of-type { flex: 1 1 180px; min-width: 160px; }
+  .page-search select { flex: 0 1 160px; min-width: 140px; }
+  .page-search #searchCityCombobox { position: relative; flex: 0 1 190px; min-width: 160px; }
+  .search-city-input-row { display: flex; align-items: center; gap: .25rem; width: 100%; }
+  .search-city-input-row #pageCity { flex: 1 1 auto; width: 1%; min-width: 0; }
+  .page-search #pageCity { width: 100%; min-width: 0; }
+  .search-city-input-row .market-city-picker-toggle {
+    flex: 0 0 38px; width: 38px; height: 38px;
+    border: 1px solid #CBD5E1; border-radius: 9px;
+    background: #fff; color: #0E7490; cursor: pointer;
+  }
+  .search-city-options {
+    position: absolute; z-index: 100; inset-inline: 0; top: calc(100% + 5px);
+    max-height: 260px; overflow: auto; padding: 5px;
+    border: 1px solid #CBD5E1; border-radius: 12px;
+    background: #fff; box-shadow: 0 12px 30px rgba(15,23,42,.14);
+  }
+  .search-city-options[hidden] { display: none; }
+  .search-city-options .market-city-option {
+    display: flex; width: 100%; flex-direction: column; align-items: flex-start; gap: 3px;
+    padding: 9px 11px; border: 0; border-radius: 8px;
+    background: transparent; text-align: right; cursor: pointer;
+  }
+  .search-city-options .market-city-option:hover,
+  .search-city-options .market-city-option.active { background: #ECFEFF; }
+  .search-city-options .market-city-option-meta { color: #64748B; font-size: .75rem; }
+  .search-city-options .market-city-empty { padding: 12px; color: #64748B; font-size: .82rem; }
+
+  .nearby-search-controls {
+    display: flex; align-items: stretch; gap: .65rem;
+    margin: -.25rem 0 1.1rem;
+  }
+  .nearby-search-button {
+    display: flex; align-items: center; justify-content: center; gap: .45rem;
+    flex: 1; min-height: 44px; margin: 0;
+    border: 1px solid #A5F3FC; border-radius: 11px;
+    background: #ECFEFF; color: #0E7490;
+    font: inherit; font-weight: 750; cursor: pointer;
+  }
+  .nearby-search-button:disabled { opacity: .65; cursor: wait; }
+  .nearby-radius-control {
+    display: flex; align-items: center; gap: .5rem;
+    padding: .4rem .7rem; border: 1px solid #A5F3FC; border-radius: 11px;
+    color: #0E7490; font-size: .82rem; font-weight: 700; white-space: nowrap;
+  }
+  .nearby-radius-control select {
+    min-height: 34px; border: 1px solid #CFFAFE; border-radius: 8px;
+    background: #fff; color: #164E63; font: inherit; padding: .2rem .4rem;
+  }
+  .page-search .button-primary {
+    min-height: 46px; padding-inline: 1.2rem;
+    font-weight: 700; font-size: 0.88rem; border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  /* Popular chips */
+  .search-popular {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+    margin: -0.5rem 0 1.15rem;
+    color: var(--color-muted, #64748B); font-size: 0.78rem;
+  }
+  .search-popular button {
+    padding: 0.28rem 0.7rem;
+    border: 1px solid var(--color-line, #CBD5E1); border-radius: 999px;
+    background: #fff; color: #64748B;
+    font-size: 0.75rem; font-weight: 600; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .search-popular button:hover {
+    color: #0E7490; border-color: #0891B2; background: #ECFEFF;
+  }
+
+  .search-expansion {
+    width: 100%; padding: 1.2rem;
+    border: 1px solid #BAE6FD; border-radius: 16px;
+    background: linear-gradient(135deg, #F0FDFA, #ECFEFF);
+    color: #164E63; text-align: center;
+  }
+  .search-expansion strong { display: block; font-size: 1.05rem; }
+  .search-expansion p { margin: .5rem 0 1rem; color: #475569; }
+  .search-expansion-actions {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem;
+  }
+  .search-expansion-actions button { cursor: pointer; }
+  .search-expansion-actions .button { min-height: 42px; }
+
+  .page-results-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .page-results-head h2 {
+    margin: 0; font-size: 1.1rem; font-weight: 800;
+    color: var(--color-ink, #0F172A);
+  }
+  #pageResultsCount {
+    display: inline-flex; align-items: center;
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+    background: #ECFEFF; color: #0E7490;
+    font-size: 0.8rem; font-weight: 700;
+  }
+
+  .page-card-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem; min-height: 140px;
+  }
+
+  /* Skeleton */
+  .search-skeleton {
+    border: 1px solid var(--color-line-soft, #E2E8F0);
+    border-radius: 14px; background: #F8FAFC; overflow: hidden;
+  }
+  .search-skeleton-art {
+    height: 140px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .search-skeleton-body {
+    padding: 0.9rem; display: grid; gap: 0.45rem;
+  }
+  .search-skeleton-line {
+    height: 11px; border-radius: 6px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .search-skeleton-line.w-70 { width: 70%; }
+  .search-skeleton-line.w-45 { width: 45%; }
+  .search-skeleton-line.w-55 { width: 55%; }
+  .search-skeleton-art::after,
+  .search-skeleton-line::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer { to { transform: translateX(100%); } }
+
+  .loading-card {
+    grid-column: 1 / -1;
+    padding: 2rem; text-align: center;
+    color: var(--color-muted, #64748B); font-size: 0.9rem;
+  }
+
+  /* No-JS fallback: honest about the limitation and offers a way forward. */
+  .noscript-notice {
+    padding: 0.95rem 1.1rem; border-radius: 12px;
+    background: #FFFBEB; border: 1px solid #FDE68A;
+    color: #92400E; font-size: 0.9rem; line-height: 1.8;
+    margin-bottom: 1.25rem;
+  }
+  .noscript-notice strong { display: block; margin-bottom: 0.35rem; }
+  .noscript-notice a {
+    color: #0E7490; font-weight: 700; text-decoration: none;
+    text-underline-offset: 3px;
+  }
+  .noscript-notice a:hover { text-decoration: underline; }
+
+  @media (max-width: 850px) {
+    .page-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 620px) {
+    .page-search { flex-direction: column; align-items: stretch; }
+    .page-search input,
+    .page-search select,
+    .page-search #searchCityCombobox,
+    .page-search .button-primary {
+      width: 100%; min-width: 0; flex: none;
+    }
+    .page-card-grid { grid-template-columns: 1fr; }
+    .nearby-search-controls { flex-direction: column; }
+    .nearby-radius-control { justify-content: space-between; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .page-panel {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+    }
+    .page-search { background: #17243A; border-color: #334155; }
+    .page-search input,
+    .page-search select {
+      background: #111B2A; border-color: #334155; color: #E2E8F0;
+    }
+    .search-popular button {
+      background: #17243A; border-color: #334155; color: #B6C2D2;
+    }
+    .search-skeleton { background: #17243A; border-color: #334155; }
+    .search-skeleton-art,
+    .search-skeleton-line { background: #334155; }
+    #pageResultsCount { background: #083344; color: #67E8F9; }
+    .noscript-notice {
+      background: #2E2208; border-color: #92400E; color: #FBBF24;
+    }
+    .noscript-notice a { color: #67E8F9; }
+    .page-heading .section-kicker {
+      background: #083344; border-color: #155E75; color: #67E8F9;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .search-skeleton-art::after,
+    .search-skeleton-line::after { animation: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+  <span class="section-kicker"><span aria-hidden="true">⌖</span> اول، شهر خودت</span>
+  <h1>به رونق شهرت کمک کن</h1>
+  <p>اگر همین‌جا پیدا می‌شود، اینترنتی نخر؛ ببین، لمس کن، مقایسه کن، هماهنگ کن و حضوری بخر.</p>
+</section>
+
+<section class="page-panel">
+  <noscript>
+    <p class="noscript-notice">
+      <strong>⚠ جاوااسکریپت لازم است</strong>
+      نتایج جست‌وجو توسط مرورگر و از سرور دریافت می‌شوند و بدون جاوااسکریپت نمایش داده نمی‌شوند.
+      لطفاً جاوااسکریپت را فعال کنید، یا مستقیماً
+      <a href="/stores">ویترین فروشگاه‌ها</a> را ببینید و از آن‌جا کالا را پیدا کنید.
+    </p>
+  </noscript>
+
+  {#
+    The form is a real `<form action="/search" method="get">`. Without JS
+    it still navigates to a server-rendered page (which itself needs JS to
+    fetch results, hence the `<noscript>` above). With JS, `pages.js` calls
+    `preventDefault()` and does an AJAX fetch instead.
+  #}
+  <form id="pageSearchForm" class="page-search" role="search" action="/search" method="get">
+    <label class="sr-only" for="pageQuery">جست‌وجو</label>
+    <input
+      id="pageQuery"
+      name="q"
+      type="search"
+      value="{{ query }}"
+      placeholder="مثلاً گوشی، میز، خدمات فنی…"
+      autocomplete="off"
+    >
+    <select id="pageCategory" name="category" aria-label="دسته‌بندی">
+      <option value="">همهٔ دسته‌بندی‌ها</option>
+      {{ category_options(category_tree, selected=selected_category) }}
+    </select>
+    <select id="pageAvailability" name="availability" aria-label="وضعیت موجودی">
+      <option value="">همهٔ وضعیت‌ها</option>
+      <option value="in_stock">فقط موجود</option>
+      <option value="ask">نیازمند تأیید فروشنده</option>
+      <option value="out_of_stock">ناموجود</option>
+    </select>
+    <div class="search-city-picker" id="searchCityCombobox">
+      <div class="search-city-input-row">
+        <input
+          id="pageCity"
+          name="city"
+          value="{{ city }}"
+          autocomplete="off"
+          placeholder="انتخاب شهر"
+          aria-label="انتخاب شهر"
+          aria-autocomplete="list"
+          aria-haspopup="listbox"
+          aria-expanded="false"
+          aria-controls="searchCityOptions"
+        >
+        <button
+          class="market-city-picker-toggle"
+          id="toggleSearchCityPicker"
+          type="button"
+          aria-label="نمایش فهرست شهرها"
+        >⌄</button>
+      </div>
+      <div
+        class="search-city-options"
+        id="searchCityOptions" role="listbox"
+        aria-label="شهرهای ایران"
+        hidden
+      ></div>
+    </div>
+    <button class="button button-primary" type="submit">
+      جست‌وجو <span aria-hidden="true">←</span>
+    </button>
+  </form>
+
+  <div class="nearby-search-controls" role="group" aria-label="جست‌وجوی اطراف من">
+    <button
+      class="nearby-search-button"
+      id="pageNearbySearchButton"
+      type="button"
+      aria-describedby="pageNearbyRadius"
+    >⌖ یافتن کالاهای اطراف من</button>
+    <label class="nearby-radius-control" for="pageNearbyRadius">
+      محدوده جست‌وجو
+      <select id="pageNearbyRadius" aria-label="محدوده جست‌وجوی اطراف">
+        <option value="3">۳ کیلومتر</option>
+        <option value="5">۵ کیلومتر</option>
+        <option value="10" selected>۱۰ کیلومتر</option>
+        <option value="25">۲۵ کیلومتر</option>
+        <option value="50">۵۰ کیلومتر</option>
+      </select>
+    </label>
+  </div>
+
+  <div class="search-popular" aria-label="جست‌وجوهای محبوب">
+    <span>محبوب:</span>
+    <button type="button" data-fill-query="گوشی">گوشی</button>
+    <button type="button" data-fill-query="میز">میز</button>
+    <button type="button" data-fill-query="خدمات">خدمات</button>
+    <button type="button" data-fill-query="لباس">لباس</button>
+    <button type="button" data-fill-query="لپ‌تاپ">لپ‌تاپ</button>
+  </div>
+
+  <div class="page-results-head">
+    <h2>نتایج جست‌وجو</h2>
+    <span id="pageResultsCount" role="status" aria-live="polite">در حال بارگذاری…</span>
+  </div>
+
+  {#
+    `aria-busy="true"` tells screen readers "the content is still changing".
+    A `MutationObserver` below flips it to "false" once `pages.js` replaces
+    the skeletons. `aria-live` is intentionally NOT on `#pageListings`: a
+    page of 50 cards would make the reader announce all 50 at once, which is
+    worse than silence. `#pageResultsCount` above carries the "N results"
+    message that matters for assistive tech.
+  #}
+  <div id="pageListings" class="page-card-grid" aria-busy="true">
+    <div class="search-skeleton" aria-hidden="true">
+      <div class="search-skeleton-art"></div>
+      <div class="search-skeleton-body">
+        <div class="search-skeleton-line w-70"></div>
+        <div class="search-skeleton-line w-45"></div>
+        <div class="search-skeleton-line w-55"></div>
+      </div>
+    </div>
+    <div class="search-skeleton" aria-hidden="true">
+      <div class="search-skeleton-art"></div>
+      <div class="search-skeleton-body">
+        <div class="search-skeleton-line w-70"></div>
+        <div class="search-skeleton-line w-45"></div>
+        <div class="search-skeleton-line w-55"></div>
+      </div>
+    </div>
+    <div class="search-skeleton" aria-hidden="true">
+      <div class="search-skeleton-art"></div>
+      <div class="search-skeleton-body">
+        <div class="search-skeleton-line w-70"></div>
+        <div class="search-skeleton-line w-45"></div>
+        <div class="search-skeleton-line w-55"></div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+{#
+  `pages.js` and `location-picker.js` are loaded by `base.html` (both are
+  `defer`). Do NOT re-include them here: re-including them would attach the
+  form submit handler, the popstate handler, the nearby-geolocation handler,
+  the `#pageListings` MutationObserver, and the city-combobox listeners
+  twice. `pages.js` reads `window.KIDAREH_PAGE` at module-eval time, so the
+  object below must exist before `pages.js` runs — deferred scripts run
+  after parsing, which is why the inline `<script>` below (also deferred by
+  position at the end of `<body>`) works.
+#}
+<script>
+  window.KIDAREH_PAGE = {
+    type: "search",
+    query: {{ query|tojson }},
+    category: {{ selected_category|tojson }},
+    city: {{ city|tojson }}
+  };
+
+  (() => {
+    // Popular-chip fill: sets the query input and submits. Guarded with a
+    // dataset flag so the handler is idempotent if this template is ever
+    // included more than once (e.g. via a future partial).
+    const initChips = () => {
+      document.querySelectorAll("[data-fill-query]").forEach((button) => {
+        if (button.dataset.fillQueryBound === "1") return;
+        button.dataset.fillQueryBound = "1";
+        button.addEventListener("click", () => {
+          const input = document.getElementById("pageQuery");
+          const form = document.getElementById("pageSearchForm");
+          if (!input || !form) return;
+          input.value = button.getAttribute("data-fill-query") || "";
+          if (typeof form.requestSubmit === "function") form.requestSubmit();
+          else form.submit();
+        });
+      });
+    };
+
+    // Flip `aria-busy` to "false" once `pages.js` replaces the skeleton.
+    // `pages.js` never touches `aria-busy`; doing it here keeps `pages.js`
+    // unchanged while letting assistive tech know when the region is ready.
+    const initBusyObserver = () => {
+      const grid = document.getElementById("pageListings");
+      if (!grid) return;
+      const sync = () => {
+        if (!grid.querySelector(".search-skeleton")) {
+          grid.setAttribute("aria-busy", "false");
+        }
+      };
+      new MutationObserver(sync).observe(grid, { childList: true, subtree: true });
+      sync();
+    };
+
+    const run = () => { initChips(); initBusyObserver(); };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", run, { once: true });
+    } else {
+      run();
+    }
+  })();
+</script>
+{% endblock %}

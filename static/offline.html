@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0E7490" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0B1322" media="(prefers-color-scheme: dark)">
+  <meta name="robots" content="noindex">
+  <link rel="manifest" href="/static/manifest.webmanifest">
+  <title>اتصال برقرار نیست | کی‌داره</title>
+  <style>
+    @font-face { font-family: "Vazirmatn"; src: url("/static/fonts/Vazirmatn-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+    :root { color-scheme: light dark; --surface: #FFFFFF; --page: #F1F5F9; --ink: #0F172A; --muted: #475569; --line: #CBD5E1; --primary: #0E7490; --on-primary: #FFFFFF; }
+    @media (prefers-color-scheme: dark) {
+      :root { --surface: #111B2A; --page: #0B1322; --ink: #E2E8F0; --muted: #B6C2D2; --line: #334155; --primary: #22D3EE; --on-primary: #042F3A; }
+    }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; min-height: 100svh; margin: 0; padding: 24px; display: grid; place-items: center; background: var(--page); color: var(--ink); font-family: "Vazirmatn", Tahoma, sans-serif; }
+    main { width: min(100%, 420px); padding: 28px; border: 1px solid var(--line); border-radius: 20px; background: var(--surface); text-align: center; box-shadow: 0 12px 32px rgba(15,23,42,.12); }
+    .mark { width: 64px; height: 64px; margin: 0 auto 18px; display: grid; place-items: center; border-radius: 20px; background: var(--primary); color: var(--on-primary); font-size: 34px; font-weight: 800; }
+    h1 { margin: 0 0 12px; font-size: 1.35rem; }
+    p { margin: 0 0 22px; color: var(--muted); line-height: 1.9; }
+    button, .link { min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0 20px; border: 0; border-radius: 12px; background: var(--primary); color: var(--on-primary); font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; transition: opacity .2s ease, background .2s ease; }
+    button:disabled { opacity: .7; cursor: progress; }
+    button:focus-visible, .link:focus-visible, a:focus-visible { outline: 3px solid #0891B2; outline-offset: 2px; }
+    .cached { margin: 22px 0 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+    .cached a { display: block; padding: 12px; border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; font-weight: 600; transition: border-color .2s ease; }
+    .cached a:hover { border-color: var(--primary); }
+    .cached:empty, .cached-title[hidden] { display: none; }
+    .cached-title { margin: 22px 0 8px; font-size: .95rem; color: var(--muted); }
+    small { display: block; margin-top: 18px; color: var(--muted); }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="mark" aria-hidden="true">ک</div>
+    <h1>فعلاً به اینترنت دسترسی نداریم</h1>
+    <p>ارتباط برقرار نشد، دوباره امتحان می‌کنیم؟ صفحه‌هایی که قبلاً باز کرده‌ای، در دسترس‌اند.</p>
+    <button type="button" id="retryButton">تلاش دوباره</button>
+    <p class="cached-title" id="cachedTitle" hidden>صفحه‌های ذخیره‌شده</p>
+    <ul class="cached" id="cachedList" aria-labelledby="cachedTitle"></ul>
+    <small>کی‌داره؛ ببین کی‌داره؟ حضوری بگیر!</small>
+  </main>
+  <script>
+    const btn = document.getElementById("retryButton");
+    btn.addEventListener("click", () => {
+      btn.disabled = true;
+      const prev = btn.textContent;
+      btn.textContent = "در حال تلاش…";
+      setTimeout(() => { btn.disabled = false; btn.textContent = prev; }, 3000);
+      window.location.reload();
+    });
+
+    (async () => {
+      if (!("caches" in window)) return;
+      const list  = document.getElementById("cachedList");
+      const title = document.getElementById("cachedTitle");
+      const known = new Map([
+        ["/",       "خانه"],
+        ["/search", "جست‌وجوی کالا"],
+        ["/stores", "فروشگاه‌ها"],
+      ]);
+      const norm = p => (p.length > 1 && p.endsWith("/")) ? p.slice(0, -1) : p;
+      const found = new Map();
+      try {
+        for (const name of await caches.keys()) {
+          const cache = await caches.open(name);
+          for (const req of await cache.keys()) {
+            if (req.method !== "GET") continue;
+            const u = new URL(req.url);
+            if (u.origin !== location.origin) continue;
+            const key = norm(u.pathname);
+            if (known.has(key) && !found.has(key)) found.set(key, known.get(key));
+          }
+        }
+      } catch (_) {}
+      for (const [path, label] of found) {
+        const li = document.createElement("li");
+        const a  = document.createElement("a");
+        a.href = path; a.textContent = label;
+        li.append(a); list.append(li);
+      }
+      title.hidden = list.children.length === 0;
+    })();
+  </script>
+</body>
+</html>

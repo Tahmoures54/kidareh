@@ -1,0 +1,434 @@
+{% extends "base.html" %}
+{% block title %}{{ meta_title or 'ویترین فروشگاه' }} | کی‌داره{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Store detail ── */
+  .store-detail-page { padding-bottom: 1.75rem; }
+
+  .back-link {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    margin-bottom: 0.85rem; color: #0E7490;
+    font-size: 0.85rem; font-weight: 700; text-decoration: none;
+    transition: opacity 0.15s;
+  }
+  .back-link:hover { opacity: 0.8; }
+
+  .store-hero {
+    position: relative; overflow: hidden;
+    margin-bottom: 1.15rem;
+    padding: clamp(1.35rem, 3.5vw, 2rem);
+    border: 1px solid #A5F3FC; border-radius: 20px;
+    background: linear-gradient(125deg, #ECFEFF 0%, #F0F9FF 50%, #fff 100%);
+    box-shadow: 0 8px 28px rgba(14, 116, 144, 0.08);
+  }
+  .store-hero::after {
+    content: ""; position: absolute;
+    inset-inline-end: -40px; top: -60px;
+    width: 180px; height: 180px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(8, 145, 178, 0.12), transparent 70%);
+    pointer-events: none;
+  }
+  .store-hero .section-kicker {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.28rem 0.7rem; border-radius: 999px;
+    background: #fff; border: 1px solid #A5F3FC;
+    color: #0E7490; font-size: 0.75rem; font-weight: 700;
+  }
+  .store-hero h1 {
+    margin: 0.75rem 0 0.45rem;
+    font-size: clamp(1.45rem, 3vw, 2rem);
+    font-weight: 800; letter-spacing: -0.03em;
+    color: var(--color-ink, #0F172A); line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+  .store-hero > p {
+    margin: 0 0 1rem;
+    max-width: 40rem;
+    color: var(--color-muted, #64748B);
+    font-size: 0.92rem; line-height: 1.85;
+  }
+
+  /* Loading shimmer for the store title. */
+  #storeTitle.is-loading {
+    display: inline-block;
+    min-width: 14ch; min-height: 1em;
+    background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
+    background-size: 200% 100%;
+    animation: titleShimmer 1.4s ease-in-out infinite;
+    color: transparent; border-radius: 6px;
+  }
+  @keyframes titleShimmer { to { background-position: -200% 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    #storeTitle.is-loading { animation: none; background: #E2E8F0; }
+  }
+
+  .store-detail-meta {
+    display: flex; flex-wrap: wrap; gap: 0.45rem;
+    margin-bottom: 0.85rem; min-height: 1.5em;
+  }
+  .store-detail-meta:empty { display: none; }
+
+  .store-contact-details {
+    margin-bottom: 0.85rem;
+    font-size: 0.88rem; color: #475569; line-height: 1.8;
+  }
+  .store-contact-details:empty { display: none; }
+
+  .store-navigate-host { margin-bottom: 1rem; }
+  .store-navigate-host:empty { display: none; }
+
+  .store-actions {
+    display: flex; flex-wrap: wrap; gap: 0.55rem;
+    margin-top: 0.25rem;
+  }
+  .store-actions .button {
+    min-height: 44px; padding-inline: 1.1rem;
+    font-weight: 700; font-size: 0.85rem; border-radius: 11px;
+  }
+
+  /* Growth / share prompt */
+  .store-growth-prompt {
+    display: flex; flex-wrap: wrap; align-items: center;
+    justify-content: space-between; gap: 1rem;
+    margin: 1.15rem 0; padding: 1.15rem 1.25rem;
+    border: 1px solid #BAE6FD; border-radius: 16px;
+    background: linear-gradient(135deg, #F0F9FF, #ECFEFF);
+  }
+  .store-growth-prompt strong {
+    display: block; margin-bottom: 0.25rem;
+    color: #0F172A; font-size: 0.95rem;
+  }
+  .store-growth-prompt p {
+    margin: 0; max-width: 28rem;
+    color: #475569; font-size: 0.85rem; line-height: 1.75;
+  }
+  #shareStore {
+    min-height: 44px; white-space: nowrap; font-weight: 700;
+  }
+
+  /* Safety note */
+  .store-safety-note {
+    display: flex; gap: 0.7rem; align-items: flex-start;
+    margin-bottom: 1.15rem; padding: 0.9rem 1.05rem;
+    border-radius: 12px; border: 1px solid #FDE68A;
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    color: #78716C; font-size: 0.85rem; line-height: 1.75;
+  }
+  .store-safety-note span[aria-hidden] {
+    flex-shrink: 0; width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: 9px; background: #FDE68A;
+    color: #B45309; font-size: 0.95rem;
+  }
+  .store-safety-note a {
+    color: #0E7490; font-weight: 700; text-decoration: none;
+  }
+  .store-safety-note a:hover { text-decoration: underline; }
+
+  /* Products panel */
+  .store-products-panel {
+    padding: 1.35rem 1.25rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 16px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  }
+  .page-results-head {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;
+  }
+  .page-results-head h2 {
+    margin: 0; font-size: 1.1rem; font-weight: 800;
+    color: var(--color-ink, #0F172A);
+  }
+  #pageResultsCount {
+    display: inline-flex; align-items: center;
+    padding: 0.3rem 0.7rem; border-radius: 999px;
+    background: #ECFEFF; color: #0E7490;
+    font-size: 0.8rem; font-weight: 700;
+  }
+  #pageResultsCount:empty { display: none; }
+
+  .page-card-grid {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.9rem; min-height: 100px;
+  }
+
+  /* Skeleton while loading */
+  .store-skel {
+    border: 1px solid #E2E8F0; border-radius: 14px;
+    background: #F8FAFC; overflow: hidden;
+  }
+  .store-skel-art {
+    height: 130px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .store-skel-body { padding: 0.85rem; display: grid; gap: 0.4rem; }
+  .store-skel-line {
+    height: 11px; border-radius: 6px; background: #E2E8F0;
+    position: relative; overflow: hidden;
+  }
+  .store-skel-line.w-70 { width: 70%; }
+  .store-skel-line.w-45 { width: 45%; }
+  .store-skel-art::after,
+  .store-skel-line::after {
+    content: ""; position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer { to { transform: translateX(100%); } }
+
+  .loading-card {
+    grid-column: 1 / -1;
+    padding: 2rem; text-align: center;
+    color: #64748B; font-size: 0.9rem;
+    border: 1px dashed #CBD5E1; border-radius: 14px;
+    background: #F8FAFC;
+  }
+
+  .noscript-notice {
+    padding: 0.95rem 1.1rem; border-radius: 12px;
+    background: #FFFBEB; border: 1px solid #FDE68A;
+    color: #92400E; font-size: 0.9rem; line-height: 1.8;
+    margin-bottom: 1rem;
+  }
+  .noscript-notice strong { display: block; margin-bottom: 0.35rem; }
+  .noscript-notice a {
+    color: #0E7490; font-weight: 700; text-decoration: none;
+  }
+  .noscript-notice a:hover { text-decoration: underline; }
+
+  .store-fallback {
+    padding: 1.25rem 1.4rem; border-radius: 14px;
+    border: 1px solid #FDE68A;
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    color: #78350F; font-size: 0.9rem; line-height: 1.8;
+    text-align: center;
+  }
+  .store-fallback p { margin: 0.35rem 0; }
+  .store-fallback a, .store-fallback button {
+    margin-top: 0.75rem; display: inline-block;
+    min-height: 42px; padding: 0.6rem 1.1rem;
+    border-radius: 10px;
+    border: 1px solid #B45309; background: #B45309; color: #fff;
+    font: inherit; font-weight: 700; text-decoration: none;
+    cursor: pointer;
+  }
+
+  @media (max-width: 850px) {
+    .page-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 560px) {
+    .page-card-grid { grid-template-columns: 1fr; }
+    .store-growth-prompt { flex-direction: column; align-items: stretch; }
+    #shareStore { width: 100%; }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .store-hero {
+      background: linear-gradient(125deg, #083344 0%, #0C2233 50%, #111B2A 100%);
+      border-color: #155E75;
+    }
+    .store-hero h1 { color: #E2E8F0; }
+    .store-hero > p { color: #B6C2D2; }
+    .store-hero .section-kicker {
+      background: #083344; border-color: #155E75; color: #67E8F9;
+    }
+    .store-growth-prompt {
+      background: linear-gradient(135deg, #0C2233, #083344);
+      border-color: #155E75;
+    }
+    .store-growth-prompt strong { color: #E2E8F0; }
+    .store-growth-prompt p { color: #B6C2D2; }
+    .store-products-panel {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+    }
+    .store-skel { background: #17243A; border-color: #334155; }
+    .store-skel-art, .store-skel-line { background: #334155; }
+    .store-safety-note {
+      background: linear-gradient(135deg, #2E2208, #1C1917);
+      border-color: #92400E; color: #A8A29E;
+    }
+    #pageResultsCount { background: #083344; color: #67E8F9; }
+    #storeTitle.is-loading { background: #334155; }
+    .loading-card { background: #17243A; border-color: #334155; color: #B6C2D2; }
+    .noscript-notice {
+      background: #2E2208; border-color: #92400E; color: #FBBF24;
+    }
+    .noscript-notice a { color: #67E8F9; }
+    .store-fallback {
+      background: linear-gradient(135deg, #2E2208, #1C1917);
+      border-color: #92400E; color: #FBBF24;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .store-skel-art::after,
+    .store-skel-line::after { animation: none; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="store-detail-page">
+
+  <section class="store-hero page-heading">
+    <a class="back-link" href="/stores">← بازگشت به فروشگاه‌ها</a>
+    <span class="section-kicker"><span aria-hidden="true">🏪</span> ویترین فروشنده</span>
+    {#
+      The h1 is a static fallback ("ویترین فروشگاه"), not "loading…".
+      If `pages.js` fails to load — network glitch, ad blocker — a persistent
+      "loading…" h1 is misleading for sighted users and search engines.
+      `pages.js::initStoreDetail` overwrites this text once the fetch
+      completes; the `.is-loading` shimmer class is removed by an inline
+      MutationObserver at the bottom of this template so the animation does
+      not keep running after the content arrives.
+    #}
+    <h1 id="storeTitle" class="is-loading" data-store-id="{{ store_id }}">ویترین فروشگاه</h1>
+    <p id="storeDescription">محصولات و اطلاعات این فروشگاه</p>
+
+    <div class="store-detail-meta" id="storeMeta"></div>
+    <div class="store-contact-details" id="storeContactDetails"></div>
+    <div id="storeNavigate" class="store-navigate-host"></div>
+
+    <div class="store-actions">
+      <button id="followStore" class="button button-primary" type="button">
+        ♡ دنبال‌کردن فروشگاه
+      </button>
+    </div>
+  </section>
+
+  <noscript>
+    <div class="noscript-notice">
+      <strong>⚠ جاوااسکریپت لازم است</strong>
+      برای مشاهدهٔ کالاها و اطلاعات کامل این ویترین، لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
+      یا از <a href="/stores">فهرست فروشگاه‌ها</a> و <a href="/search">جست‌وجوی کالا</a> دیدن کنید.
+    </div>
+  </noscript>
+
+  <div class="store-growth-prompt">
+    <div>
+      <strong>این ویترین را به مشتری‌هایت معرفی کن</strong>
+      <p>
+        پیوند ویترینت را در پروفایل واتساپ، وضعیت واتساپ و استوری شبکه‌های اجتماعی بگذار
+        تا مشتری‌ها مستقیم کالاهایت را ببینند.
+      </p>
+    </div>
+    <button
+      id="shareStore"
+      class="button button-primary"
+      type="button"
+      data-share-url=""
+      data-share-title=""
+    >
+      ↗ معرفی ویترین در شبکه‌های اجتماعی
+    </button>
+  </div>
+
+  <div class="store-safety-note" role="note">
+    <span aria-hidden="true">⚠</span>
+    <div>
+      خرید حضوری است؛ قبل از مراجعه موجودی و قیمت را با فروشنده هماهنگ کنید.
+      <a href="/safety">راهنمای خرید امن</a>
+    </div>
+  </div>
+
+  <section class="page-panel store-products-panel">
+    <div class="page-results-head">
+      <h2>کالاهای این ویترین</h2>
+      <span id="pageResultsCount" role="status" aria-live="polite"></span>
+    </div>
+    {#
+      `aria-busy="true"` signals "loading" to screen readers. `aria-live`
+      is intentionally NOT set: a whole product grid announced at once is
+      worse than silence. `#pageResultsCount` above carries the "N items"
+      message that matters for assistive tech, and it is what the reader
+      will announce when it changes.
+    #}
+    <div id="pageListings" class="page-card-grid" aria-busy="true">
+      <div class="store-skel" aria-hidden="true">
+        <div class="store-skel-art"></div>
+        <div class="store-skel-body">
+          <div class="store-skel-line w-70"></div>
+          <div class="store-skel-line w-45"></div>
+        </div>
+      </div>
+      <div class="store-skel" aria-hidden="true">
+        <div class="store-skel-art"></div>
+        <div class="store-skel-body">
+          <div class="store-skel-line w-70"></div>
+          <div class="store-skel-line w-45"></div>
+        </div>
+      </div>
+      <div class="store-skel" aria-hidden="true">
+        <div class="store-skel-art"></div>
+        <div class="store-skel-body">
+          <div class="store-skel-line w-70"></div>
+          <div class="store-skel-line w-45"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{#
+  `pages.js` is loaded by `base.html` and dispatches on
+  `window.KIDAREH_PAGE.type === "store-detail"` (or `"store"`). Do NOT
+  re-include `pages.js` here: doing so would attach `initStoreDetail`
+  twice, producing two concurrent fetches and two event listeners on
+  `#followStore` and `#shareStore`.
+#}
+<script>
+  window.KIDAREH_PAGE = {
+    type: "store-detail",
+    storeId: {{ store_id|tojson }}
+  };
+
+  (() => {
+    const titleEl = document.getElementById("storeTitle");
+    const gridEl = document.getElementById("pageListings");
+    if (!titleEl || !gridEl) return;
+
+    const isLoading = () => gridEl.querySelector(".store-skel") !== null;
+    const settle = () => {
+      if (isLoading()) return false;
+      gridEl.setAttribute("aria-busy", "false");
+      titleEl.classList.remove("is-loading");
+      return true;
+    };
+
+    new MutationObserver(settle).observe(gridEl, { childList: true, subtree: true });
+    settle();
+
+    // Fallback: if `pages.js` never replaces the skeleton, show a retry
+    // card after 10 seconds so users are not trapped on an empty page.
+    window.setTimeout(() => {
+      if (!isLoading()) return;
+      const fallback = document.createElement("div");
+      fallback.className = "store-fallback";
+      fallback.style.gridColumn = "1 / -1";
+      fallback.setAttribute("role", "alert");
+      fallback.innerHTML =
+        "<strong>دریافت اطلاعات این ویترین بیش از حد معمول طول کشید.</strong>" +
+        "<p>ممکن است اتصال شبکه یا سرور کند باشد.</p>";
+      const retry = document.createElement("button");
+      retry.type = "button";
+      retry.textContent = "تلاش دوباره";
+      retry.addEventListener("click", () => window.location.reload());
+      const back = document.createElement("a");
+      back.href = "/stores";
+      back.textContent = "بازگشت به فهرست فروشگاه‌ها";
+      back.style.marginInlineStart = "0.5rem";
+      fallback.append(retry, back);
+      gridEl.replaceChildren(fallback);
+      gridEl.setAttribute("aria-busy", "false");
+      titleEl.classList.remove("is-loading");
+    }, 10000);
+  })();
+</script>
+{% endblock %}

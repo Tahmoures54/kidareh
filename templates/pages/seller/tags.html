@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}فروشگاه تگ کالاها | کی‌داره{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/seller-tags.css') }}?v=20261114">
+{% endblock %}
+
+{% block content %}
+<section class="tag-hero">
+  <span class="section-kicker"><span aria-hidden="true">🏷️</span> ویترین تگ‌های کی‌داره</span>
+  <h1>کالایت رایگان؛ تگش به انتخاب تو.</h1>
+  <p>
+    برای هر کالا می‌توانی یک تگ چشم‌گیر مثل «حراج»، «فروش ویژه» یا «تخفیف‌دار» انتخاب کنی.
+    تگ روی همان کالا نمایش داده می‌شود و بعد از مدت خریداری‌شده خودکار منقضی می‌شود.
+  </p>
+  <div class="tag-hero-actions">
+    <a class="button button-outline" href="/seller">بازگشت به ویترین من</a>
+    <a class="button button-ghost" href="#tagPackages">مشاهده تگ‌ها ↓</a>
+  </div>
+</section>
+
+<nav class="seller-subnav" aria-label="بخش‌های پنل فروشنده">
+  <a href="/seller">ویترین من</a>
+  <a href="/seller/tags" aria-current="page">تگ کالاها</a>
+  <a href="/monetization">تبلیغات و نشان</a>
+</nav>
+
+<noscript>
+  <div class="noscript-notice">
+    <strong>⚠ جاوااسکریپت لازم است</strong>
+    برای خرید تگ و مشاهدهٔ وضعیت تگ کالاها، لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
+  </div>
+</noscript>
+
+<section class="tag-value-strip" aria-label="مزایای تگ">
+  <div class="tag-value-item">
+    <span class="tag-value-icon" aria-hidden="true">👁</span>
+    <div>
+      <strong>جلب توجه در فهرست</strong>
+      <span>تگ رنگی کنار عنوان کالا، نگاه خریدار را نگه می‌دارد.</span>
+    </div>
+  </div>
+  <div class="tag-value-item">
+    <span class="tag-value-icon" aria-hidden="true">⏱</span>
+    <div>
+      <strong>زمان‌دار و شفاف</strong>
+      <span>مدت اعتبار مشخص است؛ بعد از پایان خودکار حذف می‌شود.</span>
+    </div>
+  </div>
+  <div class="tag-value-item">
+    <span class="tag-value-icon" aria-hidden="true">🎯</span>
+    <div>
+      <strong>روی همان کالا</strong>
+      <span>تگ فقط به کالای انتخابی شما می‌چسبد، نه کل ویترین.</span>
+    </div>
+  </div>
+</section>
+
+<div class="tag-free-note" role="note">
+  <span class="tag-free-note-icon" aria-hidden="true">✓</span>
+  <div>
+    <strong>انتشار کالا همیشه رایگان است.</strong>
+    برای استفاده از تگ هیچ اجباری وجود ندارد. ابتدا کالا را رایگان ثبت کن، سپس در صورت نیاز تگ دلخواه را بخر.
+    خرید تگ تضمین‌کننده فروش کالا نیست.
+  </div>
+</div>
+
+<section class="tag-steps" aria-label="مراحل خرید تگ">
+  <div class="tag-step">
+    <span class="tag-step-num">۱</span>
+    <strong>کالا را انتخاب کن</strong>
+    <p>از فهرست کالاهای ویترینت، کالایی که می‌خواهی برجسته شود را برگزین.</p>
+  </div>
+  <div class="tag-step">
+    <span class="tag-step-num">۲</span>
+    <strong>تگ را بخر</strong>
+    <p>بستهٔ مناسب را انتخاب و از درگاه امن زیبال پرداخت کن.</p>
+  </div>
+  <div class="tag-step">
+    <span class="tag-step-num">۳</span>
+    <strong>روی کالا ظاهر می‌شود</strong>
+    <p>تگ فوراً فعال می‌شود و تا پایان مدت روی همان کالا می‌ماند.</p>
+  </div>
+</section>
+
+<h2 class="tag-section-title" id="tagPackages">تگ‌های قابل خرید</h2>
+<section class="tag-store-grid" aria-label="تگ‌های قابل خرید">
+  {% for package in tag_packages %}
+  <article class="tag-product-card">
+    <div class="tag-product-card-top">
+      <span class="tag-product-icon" aria-hidden="true">{{ package.icon }}</span>
+      <span class="money-tag">{{ package.tag }}</span>
+    </div>
+
+    {% if package.id == 'listing_tag_sale' or 'sale' in package.id %}
+    <span class="tag-preview sale" aria-hidden="true">🏷 حراج</span>
+    {% elif package.id == 'listing_tag_special' or 'special' in package.id %}
+    <span class="tag-preview special" aria-hidden="true">⭐ فروش ویژه</span>
+    {% elif package.id == 'listing_tag_discount' or 'discount' in package.id %}
+    <span class="tag-preview discount" aria-hidden="true">٪ تخفیف‌دار</span>
+    {% else %}
+    <span class="tag-preview special" aria-hidden="true">{{ package.tag }}</span>
+    {% endif %}
+
+    <h2>{{ package.name }}</h2>
+    <p>{{ package.description }}</p>
+    <div class="tag-product-price">
+      {{ "{:,}".format(package.price) }}
+      <small>تومان · {{ package.days }} روز</small>
+    </div>
+    <ul>
+      {% for feature in package.features %}
+      <li>{{ feature }}</li>
+      {% endfor %}
+    </ul>
+    <label class="tag-select">
+      برای کدام کالا؟
+      <select class="tag-listing-select" aria-label="انتخاب کالا برای {{ package.name }}">
+        <option value="">در حال بارگذاری کالاها…</option>
+      </select>
+    </label>
+    <button class="button button-primary tag-buy-button" type="button" data-package="{{ package.id }}">
+      انتخاب کالا و پرداخت
+    </button>
+  </article>
+  {% endfor %}
+</section>
+
+<p id="tagBuyStatus" class="tag-buy-status" role="status" aria-live="polite"></p>
+
+<section class="tag-owned-panel page-panel">
+  <h2>کالاهای من و وضعیت تگ</h2>
+  <p class="muted-copy">اگر کالایی تگ فعال داشته باشد، وضعیت و زمان پایان آن را اینجا می‌بینی.</p>
+  <div id="tagOwnedListings" class="tag-owned-list" aria-busy="true">در حال بارگذاری…</div>
+</section>
+
+<div class="tag-trust" role="note">
+  <span><span aria-hidden="true">🔒</span> پرداخت امن از طریق درگاه زیبال</span>
+  <span><span aria-hidden="true">⏱</span> تگ زمان‌دار · انقضای خودکار</span>
+  <span><span aria-hidden="true">✓</span> انتشار کالا همیشه رایگان</span>
+  <span><span aria-hidden="true">ℹ</span> تگ تضمین فروش نیست</span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/seller-tags.js') }}?v=20261114" defer></script>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}ببین کی داره؟ حضوری بگیر!{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}?v=20261114">
+{% endblock %}
+
+{% block header_brand_extra %}
+<small class="brand-city" id="activeMarketCity" aria-live="polite">تهران</small>
+{% endblock %}
+
+{% block main_class %}home-main{% endblock %}
+
+{% block content %}
+
+<section class="home-location-bar" aria-label="انتخاب بازار محلی">
+  <div class="home-location-inner">
+    <div class="home-location-copy">
+      <span class="home-location-icon" aria-hidden="true">⌖</span>
+      <div>
+        <strong>بازار شهر خودت را پیدا کن</strong>
+        <small>کالاهای نزدیکت را ببین و حضوری خرید کن.</small>
+      </div>
+    </div>
+    <div class="home-location-controls">
+      <div class="market-city-picker home-city-picker" id="marketCityCombobox">
+        <label class="market-city-picker-label" for="citySelect">شهر</label>
+        <input id="citySelect" aria-label="انتخاب شهر" aria-autocomplete="list"
+               aria-haspopup="listbox" aria-expanded="false" aria-controls="marketCityOptions"
+               value="تهران" autocomplete="off" placeholder="انتخاب شهر">
+        <button class="market-city-picker-toggle" id="toggleMarketCityPicker" type="button"
+                aria-label="نمایش فهرست شهرها">⌄</button>
+        <div class="market-city-options" id="marketCityOptions" role="listbox"
+             aria-label="شهرهای ایران" hidden></div>
+      </div>
+      <button class="home-location-nearby" id="findMyLocationButton" type="button">
+        <span aria-hidden="true">◎</span> پیدا کردن کالاهای اطراف من
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="home-intro" aria-labelledby="homeIntroTitle">
+  <div class="home-intro-copy">
+    <span class="home-intro-eyebrow"><span aria-hidden="true">✦</span> کی‌داره؛ همراه رونق بازارهای شهر</span>
+    <h1 id="homeIntroTitle">منتظر نمون تا مشتری بیاد!<br><span>ویترینت رو به دلِ خونه‌ها بفرست.</span></h1>
+    <p>کی‌داره آمده تا بازارهای شهر را رونق بدهد. در چند دقیقه ویترین فروشگاهت را آنلاین کن، کالاها و خدماتت را به مردم شهر معرفی کن و کمک کن مشتری‌ها راحت‌تر تو را پیدا کنند؛ شروعی ساده برای حضوری پررونق‌تر.</p>
+    <div class="home-intro-actions">
+      <a class="button button-primary" href="/seller">ویترینم رو بساز <span aria-hidden="true">←</span></a>
+      <a class="button home-intro-secondary" href="/stores">دیدن ویترین‌های شهر</a>
+    </div>
+    <ul class="home-intro-points" aria-label="مزیت‌های کی‌داره برای فروشگاه‌داران">
+      <li><span aria-hidden="true">✓</span> راه‌اندازی در چند دقیقه</li>
+      <li><span aria-hidden="true">✓</span> معرفی به مشتری‌های شهر</li>
+      <li><span aria-hidden="true">✓</span> کمک به رونق بازار محلی</li>
+    </ul>
+  </div>
+
+  <div class="home-promo-visual" id="homePromoVisual" aria-label="بنرهای معرفی کی‌داره">
+    <img class="home-promo-image"
+         src="{{ url_for('static', filename='Screen.png') }}"
+         alt="تصویر اصلی کی‌داره؛ بازار و ویترین‌های محلی"
+         fetchpriority="high">
+    <div class="home-promo-slides" id="homePromoSlides" aria-live="off">
+      <article class="home-promo-slide is-active" data-promo-slide>
+        <span class="home-promo-kicker">🚗 برای ماشینت</span>
+        <h2>تایر ماشین می‌خوای؟</h2>
+        <p>سایز تایرت رو جست‌وجو کن، ویترین فروشگاه‌های شهرت رو ببین، قیمت‌ها رو مقایسه کن و حضوری بخر.</p>
+        <a class="home-promo-link" href="/search?q=لاستیک%20خودرو">ببین کی داره؟ <span aria-hidden="true">←</span></a>
+      </article>
+      <article class="home-promo-slide" data-promo-slide>
+        <span class="home-promo-kicker">🏠 برای خونه‌ات</span>
+        <h2>فریزر پارس می‌خوای؟</h2>
+        <p>مدل و قیمت‌های موجود در ویترین فروشگاه‌ها رو بررسی کن؛ بعد با خیال راحت برای خرید حضوری تصمیم بگیر.</p>
+        <a class="home-promo-link" href="/search?q=فریزر%20پارس">ببین کی داره؟ <span aria-hidden="true">←</span></a>
+      </article>
+      <article class="home-promo-slide" data-promo-slide>
+        <span class="home-promo-kicker">📺 دقیقاً همون مدل</span>
+        <h2>تلویزیون ال‌جی ۵۵ اینچ مدل UT8000 می‌خوای؟</h2>
+        <p>اسم برند و مدل رو جست‌وجو کن تا کالاهای ثبت‌شده رو پیدا کنی و گزینه‌ها رو کنار هم بسنجی.</p>
+        <a class="home-promo-link" href="/search?q=تلویزیون%20ال%20جی%2055%20اینچ%20UT8000">ببین کی داره؟ <span aria-hidden="true">←</span></a>
+      </article>
+      <article class="home-promo-slide" data-promo-slide>
+        <span class="home-promo-kicker">🔎 انتخاب آگاهانه</span>
+        <h2>قیمت‌ها رو مقایسه کن، حضوری بخر</h2>
+        <p>به‌جای گشتن از این مغازه به اون مغازه، کالاها و قیمت‌های درج‌شده رو در ویترین‌های محلی بررسی کن.</p>
+        <a class="home-promo-link" href="/stores">دیدن ویترین فروشگاه‌ها <span aria-hidden="true">←</span></a>
+      </article>
+      <article class="home-promo-slide" data-promo-slide>
+        <span class="home-promo-kicker">🏪 برای فروشگاه‌دارها</span>
+        <h2>می‌خوای مشتری‌ها ویترینت رو ببینن؟</h2>
+        <p>کالاها و خدماتت رو معرفی کن تا خریدارهای شهر راحت‌تر پیدات کنن.</p>
+        <a class="home-promo-link" href="/seller">ساخت ویترین فروشگاه <span aria-hidden="true">←</span></a>
+      </article>
+    </div>
+    <div class="home-promo-caption">کی‌داره؛ ببین کی داره؟ حضوری بگیر!</div>
+    <div class="home-promo-dots" id="homePromoDots" aria-label="انتخاب بنر">
+      <button class="home-promo-dot" type="button" aria-label="بنر تایر خودرو" aria-current="true" data-promo-dot="0"></button>
+      <button class="home-promo-dot" type="button" aria-label="بنر فریزر پارس" aria-current="false" data-promo-dot="1"></button>
+      <button class="home-promo-dot" type="button" aria-label="بنر تلویزیون ال‌جی" aria-current="false" data-promo-dot="2"></button>
+      <button class="home-promo-dot" type="button" aria-label="بنر مقایسه قیمت" aria-current="false" data-promo-dot="3"></button>
+      <button class="home-promo-dot" type="button" aria-label="بنر فروشگاه‌داران" aria-current="false" data-promo-dot="4"></button>
+    </div>
+  </div>
+</section>
+
+<section class="listings-section" id="listings">
+  <div class="section-heading">
+    <div>
+      <span class="section-kicker">از ویترین فروشگاه‌ها</span>
+      <h2 class="market-section-title" id="marketListingsTitle">بازار تهران</h2>
+      <p class="section-subtitle">این‌ها کالاها و خدمات ویترین فروشگاه‌ها هستند؛ برای خرید، حضوری به فروشگاه مراجعه کن.</p>
+    </div>
+    <span class="results-count" id="resultsCount">در حال بارگذاری…</span>
+  </div>
+
+  <form class="home-product-search" action="/search" method="get" role="search" aria-label="جست‌وجوی کالاهای بازار">
+    <span class="home-product-search-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" focusable="false">
+        <circle cx="10.8" cy="10.8" r="6.8"></circle>
+        <path d="m16 16 5 5"></path>
+      </svg>
+    </span>
+    <label class="sr-only" for="homeProductQuery">نام کالا یا خدمت</label>
+    <input id="homeProductQuery" name="q" type="search"
+           placeholder="دنبال چه کالا یا خدمتی می‌گردی؟" autocomplete="off">
+    <button type="submit">جست‌وجو</button>
+  </form>
+
+  <div class="listing-grid" id="listingGrid" aria-live="polite">
+    <div class="skeleton-card" aria-hidden="true">
+      <div class="skeleton-block"></div>
+      <div class="skeleton-line w-70"></div>
+      <div class="skeleton-line w-40"></div>
+    </div>
+    <div class="skeleton-card" aria-hidden="true">
+      <div class="skeleton-block"></div>
+      <div class="skeleton-line w-70"></div>
+      <div class="skeleton-line w-40"></div>
+    </div>
+    <div class="skeleton-card" aria-hidden="true">
+      <div class="skeleton-block"></div>
+      <div class="skeleton-line w-70"></div>
+      <div class="skeleton-line w-40"></div>
+    </div>
+  </div>
+
+  <div class="empty-state" id="emptyState" hidden>
+    <span aria-hidden="true">⌕</span>
+    <h3>چیزی پیدا نشد</h3>
+    <p>عبارت جست‌وجو یا فیلترها را تغییر بده و دوباره امتحان کن.</p>
+    <button class="button button-primary" id="clearFilters" type="button">نمایش همه کالاها</button>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}?v=20261114" defer></script>
+<script src="{{ url_for('static', filename='js/home.js') }}?v=20261114" defer></script>
+{% endblock %}

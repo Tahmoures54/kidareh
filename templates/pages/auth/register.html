@@ -1,0 +1,514 @@
+
+{% extends "base.html" %}
+{% from "macros/category_options.html" import category_options %}
+
+{% block title %}ثبت‌نام | کی‌داره{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261114">
+{% endblock %}
+
+{% block content %}
+<section class="auth-page" data-auth-mode="register">
+  <div class="auth-shell">
+
+    <div class="auth-visual auth-visual-register">
+      <div class="auth-visual-inner">
+        <div class="auth-brand-mark" aria-hidden="true">ک</div>
+
+        <h2>ساخت حساب در کی‌داره</h2>
+
+        <p>
+          در ۴ گام ساده ثبت‌نام کنید.
+          قبلاً ثبت‌نام کرده‌اید؟
+          <a href="/login">وارد شوید</a>
+        </p>
+
+        <ul class="auth-benefits">
+          <li>
+            <span class="benefit-icon" aria-hidden="true">✓</span>
+            راه‌اندازی در چند دقیقه
+          </li>
+          <li>
+            <span class="benefit-icon" aria-hidden="true">✓</span>
+            ویترین آنلاین رایگان
+          </li>
+          <li>
+            <span class="benefit-icon" aria-hidden="true">✓</span>
+            ارتباط مستقیم با مشتری محلی
+          </li>
+        </ul>
+      </div>
+
+      <div class="auth-visual-glow" aria-hidden="true"></div>
+    </div>
+
+    <div class="auth-panel">
+
+      <noscript>
+        <p class="auth-noscript">
+          <strong>⚠ جاوااسکریپت لازم است</strong><br>
+          برای ساخت حساب و دریافت کد تأیید،
+          لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
+        </p>
+      </noscript>
+
+      <div
+        class="auth-steps-indicator"
+        id="registerStepsIndicator"
+        aria-hidden="true"
+      >
+        <span class="step-dot active" data-step="role"></span>
+        <span class="step-line"></span>
+        <span class="step-dot" data-step="phone"></span>
+        <span class="step-line"></span>
+        <span class="step-dot" data-step="code"></span>
+        <span class="step-line"></span>
+        <span class="step-dot" data-step="profile"></span>
+      </div>
+
+      <form
+        id="authPageForm"
+        class="auth-form"
+        novalidate
+        autocomplete="on"
+      >
+
+        <!-- گام اول: انتخاب نوع حساب -->
+        <div
+          class="auth-step"
+          id="authRoleStep"
+          data-step="role"
+        >
+          <h2 class="auth-step-title">
+            نوع حساب را انتخاب کنید
+          </h2>
+
+          <p class="auth-step-help">
+            انتخاب شما مسیر ثبت‌نام را مشخص می‌کند.
+            بعداً می‌توانید این انتخاب را تغییر دهید.
+          </p>
+
+          <div
+            class="auth-role-grid"
+            role="radiogroup"
+            aria-label="نوع حساب"
+          >
+            <label class="auth-role-card auth-role-card-priority">
+              <input
+                type="radio"
+                name="role"
+                value="seller"
+                required
+              >
+
+              <div class="role-card-inner">
+                <span class="role-icon" aria-hidden="true">🏪</span>
+
+                <strong>
+                  فروشگاه‌دار
+                  <span class="role-recommended">
+                    پیشنهاد کی‌داره
+                  </span>
+                </strong>
+
+                <span>
+                  ویترین بسازید، کالا اضافه کنید
+                  و مشتری محلی جذب کنید.
+                </span>
+              </div>
+            </label>
+
+            <label class="auth-role-card">
+              <input
+                type="radio"
+                name="role"
+                value="buyer"
+                required
+              >
+
+              <div class="role-card-inner">
+                <span class="role-icon" aria-hidden="true">🛍️</span>
+
+                <strong>خریدار / مشتری</strong>
+
+                <span>
+                  کالاهای نزدیک خود را پیدا کنید
+                  و حضوری هماهنگ شوید.
+                </span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- گام دوم: شماره همراه و محاسبه امنیتی -->
+        <div
+          class="auth-step"
+          id="authPhoneStep"
+          data-step="phone"
+          hidden
+        >
+          <h2 class="auth-step-title">
+            شماره موبایل خود را وارد کنید
+          </h2>
+
+          <p class="auth-step-help">
+            یک کد ۶ رقمی برای تأیید شماره
+            به این موبایل ارسال می‌شود.
+          </p>
+
+          <label class="auth-label" for="regPhone">
+            شماره همراه
+          </label>
+
+          <input
+            class="auth-input"
+            type="tel"
+            id="regPhone"
+            name="phone"
+            inputmode="numeric"
+            autocomplete="tel"
+            placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+            maxlength="11"
+            required
+            dir="ltr"
+            aria-describedby="regPhoneHint"
+          >
+
+          <p class="auth-hint" id="regPhoneHint">
+            شماره کامل همراه، بدون فاصله —
+            مثلاً ۰۹۱۲۳۴۵۶۷۸۹
+          </p>
+
+          <label class="auth-label" for="regCaptcha">
+            پاسخ محاسبه امنیتی
+          </label>
+
+          <div class="auth-captcha-row">
+            <span
+              class="auth-captcha-question"
+              id="captchaQuestion"
+              aria-live="polite"
+            >
+              …
+            </span>
+
+            <input
+              class="auth-input auth-captcha-input"
+              type="text"
+              id="regCaptcha"
+              name="captcha"
+              inputmode="numeric"
+              autocomplete="off"
+              placeholder="پاسخ"
+              required
+              dir="ltr"
+              aria-label="پاسخ محاسبه امنیتی"
+            >
+          </div>
+
+          <p class="auth-legal-note">
+            با وارد کردن شماره موبایل و ادامه فرایند ثبت‌نام،
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+            >قوانین و شرایط استفاده</a>
+            و
+            <a
+              href="/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+            >حریم خصوصی</a>
+            کی‌داره را می‌پذیرید.
+          </p>
+
+          <div class="auth-actions-row">
+            <button
+              class="button button-outline"
+              type="button"
+              id="backToRoleButton"
+            >
+              بازگشت
+            </button>
+
+            <button
+              class="button button-primary auth-submit"
+              type="submit"
+            >
+              دریافت کد تأیید
+            </button>
+          </div>
+        </div>
+
+        <!-- گام سوم: تأیید کد پیامکی -->
+        <div
+          class="auth-step"
+          id="authCodeStep"
+          data-step="code"
+          hidden
+        >
+          <h2 class="auth-step-title">
+            کد تأیید را وارد کنید
+          </h2>
+
+          <p class="auth-step-help">
+            کد ۶ رقمی به
+            <strong id="otpPhoneLabel" dir="ltr">—</strong>
+            ارسال شد.
+            اگر دریافت نکردید، با دکمه زیر شماره را تغییر دهید.
+          </p>
+
+          <label class="auth-label" for="regOtp">
+            کد تأیید
+          </label>
+
+          <input
+            class="auth-input auth-otp-input"
+            type="text"
+            id="regOtp"
+            name="otp"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="• • • • • •"
+            maxlength="6"
+            minlength="6"
+            pattern="[0-9۰-۹٠-٩]{6}"
+            required
+            dir="ltr"
+            aria-describedby="regOtpHint"
+          >
+
+          <p class="auth-hint" id="regOtpHint">
+            کد تا ۵ دقیقه معتبر است.
+          </p>
+
+          <div class="auth-actions-row">
+            <button
+              class="button button-outline"
+              type="button"
+              id="backToPhoneButton"
+            >
+              تغییر شماره
+            </button>
+
+            <button
+              class="button button-primary auth-submit"
+              type="submit"
+            >
+              تأیید کد
+            </button>
+          </div>
+        </div>
+
+        <!-- گام چهارم: تکمیل اطلاعات حساب -->
+        <div
+          class="auth-step"
+          id="authProfileStep"
+          data-step="profile"
+          hidden
+        >
+          <h2 class="auth-step-title">
+            اطلاعات حساب را کامل کنید
+          </h2>
+
+          <p class="auth-step-help">
+            این اطلاعات در پروفایل شما نمایش داده می‌شود.
+          </p>
+
+          <label class="auth-label" for="regName">
+            نام و نام خانوادگی
+          </label>
+
+          <input
+            class="auth-input"
+            type="text"
+            id="regName"
+            name="name"
+            maxlength="80"
+            required
+            placeholder="مثلاً علی رضایی"
+            autocomplete="name"
+          >
+
+          <!-- اطلاعات خریدار -->
+          <div id="buyerDetails" hidden>
+            <label class="auth-label" for="buyerCity">
+              شهر محل سکونت
+            </label>
+
+            <input
+              class="auth-input"
+              type="text"
+              id="buyerCity"
+              name="city"
+              maxlength="60"
+              placeholder="نام شهر را جست‌وجو کنید"
+              list="iranCityOptions"
+              data-iran-location
+              required
+              autocomplete="off"
+            >
+
+            <p class="auth-hint">
+              برای نمایش بازار و پیشنهادهای شهر شما؛
+              مکان‌یابی خودکار انجام نمی‌شود.
+            </p>
+          </div>
+
+          <!-- اطلاعات فروشنده -->
+          <div id="sellerDetails" hidden>
+            <div class="auth-divider">
+              <span>اطلاعات ویترین فروشگاه</span>
+            </div>
+
+            <label class="auth-label" for="storeName">
+              نام فروشگاه / ویترین
+            </label>
+
+            <input
+              class="auth-input"
+              type="text"
+              id="storeName"
+              name="store_name"
+              maxlength="80"
+              placeholder="مثلاً گالری نور"
+            >
+
+            <div class="auth-field-row">
+              <div>
+                <label class="auth-label" for="storeCity">
+                  شهر
+                </label>
+
+                <input
+                  class="auth-input"
+                  type="text"
+                  id="storeCity"
+                  name="store_city"
+                  maxlength="60"
+                  placeholder="نام شهر را جست‌وجو کنید"
+                  list="iranCityOptions"
+                  data-iran-location
+                  autocomplete="off"
+                >
+              </div>
+
+              <div>
+                <label class="auth-label" for="storeCategory">
+                  صنف فروشگاه
+                </label>
+
+                <select
+                  class="auth-input"
+                  id="storeCategory"
+                  name="store_category"
+                  aria-label="صنف فروشگاه"
+                >
+                  {{
+                    category_options(
+                      category_tree,
+                      include_empty=true,
+                      empty_label="انتخاب صنف (اختیاری)"
+                    )
+                  }}
+                </select>
+              </div>
+            </div>
+
+            <!-- موقعیت مکانی فروشگاه اختیاری است -->
+            <div class="seller-location-tools">
+              <p class="auth-hint">
+                موقعیت فروشگاه برای مسیریابی مشتری‌ها استفاده می‌شود؛
+                نیازی به نوشتن آدرس نیست.
+              </p>
+
+              <button
+                class="button button-outline"
+                type="button"
+                id="registerStoreLocationButton"
+              >
+                📍 دریافت موقعیت فروشگاه
+              </button>
+
+              <p
+                class="auth-hint"
+                id="registerStoreLocationStatus"
+                role="status"
+                aria-live="polite"
+              >
+                اختیاری؛ می‌توانید بعداً هم موقعیت را ثبت کنید.
+              </p>
+
+              <div class="seller-coordinate-fields">
+                <label
+                  class="auth-label"
+                  for="registerStoreLatitude"
+                >
+                  عرض جغرافیایی
+
+                  <input
+                    class="auth-input"
+                    type="text"
+                    id="registerStoreLatitude"
+                    name="store_latitude"
+                    inputmode="decimal"
+                    readonly
+                    aria-label="عرض جغرافیایی فروشگاه"
+                  >
+                </label>
+
+                <label
+                  class="auth-label"
+                  for="registerStoreLongitude"
+                >
+                  طول جغرافیایی
+
+                  <input
+                    class="auth-input"
+                    type="text"
+                    id="registerStoreLongitude"
+                    name="store_longitude"
+                    inputmode="decimal"
+                    readonly
+                    aria-label="طول جغرافیایی فروشگاه"
+                  >
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <button
+            class="button button-primary auth-submit"
+            type="submit"
+          >
+            تکمیل ثبت‌نام
+          </button>
+        </div>
+
+        <p
+          class="auth-feedback"
+          id="authFeedback"
+          role="status"
+          aria-live="polite"
+        ></p>
+
+      </form>
+
+      <div class="auth-footer-links">
+        <p class="auth-note">
+          حساب شما فقط پس از تأیید کد پیامکی فعال می‌شود.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script
+  src="{{ url_for('static', filename='js/auth-pages.js') }}?v=20261114"
+  defer
+></script>
+{% endblock %}

@@ -1,0 +1,939 @@
+{% extends "base.html" %}
+{% block title %}قوانین و مقررات استفاده | کی‌داره{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Policy / Terms page ── */
+  .page-heading {
+    padding: 1.75rem 0 1.25rem;
+  }
+  .page-heading .section-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: #ECFEFF;
+    border: 1px solid #A5F3FC;
+    color: #0E7490;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .page-heading h1 {
+    margin: 0.85rem 0 0.6rem;
+    font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--color-ink, #0F172A);
+    line-height: 1.35;
+  }
+  .page-heading p {
+    margin: 0;
+    max-width: 40rem;
+    color: var(--color-muted, #64748B);
+    font-size: 0.95rem;
+    line-height: 1.85;
+  }
+  .policy-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--color-muted, #64748B);
+  }
+  .policy-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+
+  .policy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1.5rem;
+    align-items: start;
+    padding-bottom: 2rem;
+  }
+
+  .policy-content {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .policy-panel {
+    padding: 1.5rem 1.4rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 16px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  }
+
+  .policy-section {
+    padding-block: 1.35rem;
+    border-bottom: 1px solid var(--color-line-soft, #E2E8F0);
+    scroll-margin-top: 90px;
+  }
+  .policy-section:first-child { padding-top: 0; }
+  .policy-section:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .policy-section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+  }
+  .policy-section-num {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #ECFEFF;
+    color: #0E7490;
+    font-size: 0.9rem;
+    font-weight: 800;
+  }
+  .policy-section h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--color-ink, #0F172A);
+    line-height: 1.4;
+    padding-top: 0.35rem;
+  }
+  .policy-section p {
+    margin: 0;
+    color: var(--color-muted, #475569);
+    font-size: 0.92rem;
+    line-height: 1.9;
+  }
+  .policy-section p + p { margin-top: 0.6rem; }
+  .policy-section a {
+    color: #0E7490;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .policy-section a:hover { text-decoration: underline; }
+
+  .policy-list {
+    margin: 0.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .policy-list li {
+    position: relative;
+    padding: 0.7rem 0.9rem 0.7rem 0.9rem;
+    padding-inline-start: 2.4rem;
+    border-radius: 12px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #7F1D1D;
+    font-size: 0.88rem;
+    line-height: 1.75;
+  }
+  .policy-list li::before {
+    content: "✕";
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    top: 0.75rem;
+    width: 22px;
+    height: 22px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: #FEE2E2;
+    color: #DC2626;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  /* Neutral variant (informational lists) */
+  .policy-list.neutral li {
+    background: #F0F9FF;
+    border-color: #BAE6FD;
+    color: var(--color-ink, #0F172A);
+  }
+  .policy-list.neutral li::before {
+    content: "•";
+    background: #E0F2FE;
+    color: #0284C7;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  .policy-callout {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1.1rem 1.2rem;
+    border-radius: 14px;
+    border: 1px solid #A5F3FC;
+    background: linear-gradient(135deg, #ECFEFF, #F0F9FF);
+    color: var(--color-ink, #0F172A);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .policy-callout-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #CFFAFE;
+    color: #0E7490;
+    font-size: 1.1rem;
+  }
+  .policy-callout a {
+    color: #0E7490;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .policy-callout a:hover { text-decoration: underline; }
+
+  /* Sidebar TOC */
+  .policy-toc {
+    position: sticky;
+    top: 80px;
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.1rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 14px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  }
+  .policy-toc-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--color-ink, #0F172A);
+    letter-spacing: -0.01em;
+  }
+  .policy-toc a {
+    display: block;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    color: var(--color-muted, #64748B);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s, background 0.15s;
+  }
+  .policy-toc a:hover,
+  .policy-toc a:focus-visible {
+    color: #0E7490;
+    background: #ECFEFF;
+  }
+  .policy-toc a.is-active,
+  .policy-toc a[aria-current="true"] {
+    color: #0E7490;
+    background: #ECFEFF;
+    font-weight: 800;
+  }
+  .policy-toc-divider {
+    height: 1px;
+    margin: 0.45rem 0;
+    background: var(--color-line-soft, #E2E8F0);
+  }
+  .policy-toc-related {
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-muted, #94A3B8);
+    text-transform: none;
+  }
+
+  /* ═══════════ Enhancements ═══════════ */
+
+  /* Summary card */
+  .policy-summary {
+    padding: 1.25rem 1.3rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #F0FDFA, #ECFEFF);
+    border: 1px solid #A5F3FC;
+  }
+  .policy-summary-title {
+    margin: 0 0 0.7rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0E7490;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .policy-summary ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .policy-summary li {
+    position: relative;
+    padding-inline-start: 1.5rem;
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: var(--color-ink, #0F172A);
+  }
+  .policy-summary li::before {
+    content: "✓";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    color: #0891B2;
+    font-weight: 800;
+  }
+
+  /* Anchor links on headings */
+  .policy-anchor {
+    margin-inline-start: 0.4rem;
+    font-size: 0.85em;
+    color: #94A3B8;
+    font-weight: 700;
+    text-decoration: none;
+    opacity: 0;
+    vertical-align: middle;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .policy-section:hover .policy-anchor,
+  .policy-anchor:focus-visible {
+    opacity: 1;
+  }
+  .policy-anchor:hover { color: #0E7490; }
+
+  /* Reading progress bar */
+  .reading-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: transparent;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .reading-progress__bar {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #06B6D4, #0E7490);
+    transition: width 0.1s linear;
+  }
+
+  /* Back-to-top button */
+  .back-to-top {
+    position: fixed;
+    inset-inline-end: 1.25rem;
+    inset-block-end: 1.25rem;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid #A5F3FC;
+    background: #fff;
+    color: #0E7490;
+    font-size: 1.15rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+    z-index: 40;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .back-to-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  }
+  .back-to-top[hidden] { display: none; }
+
+  /* Print button */
+  .policy-print-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.85rem;
+    width: 100%;
+    border: 1px solid #CBD5E1;
+    background: #F8FAFC;
+    color: #334155;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .policy-print-btn:hover {
+    background: #ECFEFF;
+    border-color: #A5F3FC;
+    color: #0E7490;
+  }
+
+  /* Focus states */
+  .policy-toc a:focus-visible,
+  .policy-section a:focus-visible,
+  .policy-anchor:focus-visible,
+  .back-to-top:focus-visible,
+  .policy-print-btn:focus-visible {
+    outline: 2px solid #0891B2;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .policy-anchor,
+    .back-to-top,
+    .reading-progress__bar,
+    .policy-toc a,
+    .policy-print-btn {
+      transition: none !important;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .policy-layout {
+      grid-template-columns: 1fr;
+    }
+    .policy-toc {
+      position: static;
+      order: -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      padding: 0.85rem;
+    }
+    .policy-toc-title,
+    .policy-toc-divider,
+    .policy-toc-related {
+      width: 100%;
+    }
+    .policy-toc a {
+      padding: 0.4rem 0.7rem;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      font-size: 0.78rem;
+    }
+    .policy-toc a.is-active,
+    .policy-toc a[aria-current="true"] {
+      background: #ECFEFF;
+      border-color: #A5F3FC;
+    }
+    .policy-anchor { opacity: 1; }
+  }
+
+  /* Print styles */
+  @media print {
+    .reading-progress,
+    .back-to-top,
+    .policy-toc,
+    .policy-print-btn,
+    .policy-callout-icon { display: none !important; }
+    .policy-layout {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding: 0;
+    }
+    .policy-panel {
+      box-shadow: none;
+      border: 0;
+      padding: 0;
+    }
+    .policy-section {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      border-bottom: 1px solid #ccc;
+    }
+    .policy-callout {
+      border: 1px solid #ccc;
+      background: #f8f9fa;
+    }
+    .policy-anchor { display: none; }
+    a { color: inherit; text-decoration: underline; }
+    a[href^="http"]::after {
+      content: " (" attr(href) ")";
+      font-size: 0.8em;
+      color: #666;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .policy-panel,
+    .policy-toc {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+    }
+    .policy-section {
+      border-bottom-color: var(--color-line-soft, #1E293B);
+    }
+    .policy-section-num {
+      background: #083344;
+      color: #67E8F9;
+    }
+    .policy-list li {
+      background: #2D1111;
+      border-color: #7F1D1D;
+      color: #FECACA;
+    }
+    .policy-list li::before {
+      background: #450A0A;
+      color: #F87171;
+    }
+    .policy-list.neutral li {
+      background: #0C2233;
+      border-color: #155E75;
+      color: #E2E8F0;
+    }
+    .policy-list.neutral li::before {
+      background: #155E75;
+      color: #67E8F9;
+    }
+    .policy-callout {
+      background: linear-gradient(135deg, #083344, #0C2233);
+      border-color: #155E75;
+      color: #E2E8F0;
+    }
+    .policy-callout-icon {
+      background: #155E75;
+      color: #67E8F9;
+    }
+    .page-heading .section-kicker {
+      background: #083344;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+    /* Inline links readability */
+    .policy-section a,
+    .policy-callout a {
+      color: #67E8F9;
+    }
+
+    /* New elements */
+    .policy-summary {
+      background: linear-gradient(135deg, #083344, #0C2233);
+      border-color: #155E75;
+    }
+    .policy-summary-title { color: #67E8F9; }
+    .policy-summary li { color: #E2E8F0; }
+    .policy-summary li::before { color: #22D3EE; }
+
+    .policy-anchor { color: #64748B; }
+    .policy-anchor:hover { color: #67E8F9; }
+
+    .policy-toc a.is-active,
+    .policy-toc a[aria-current="true"] {
+      color: #67E8F9;
+      background: #083344;
+    }
+
+    .back-to-top {
+      background: #111B2A;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+
+    .policy-print-btn {
+      background: #0F172A;
+      border-color: #334155;
+      color: #CBD5E1;
+    }
+    .policy-print-btn:hover {
+      background: #083344;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+
+    @media (max-width: 860px) {
+      .policy-toc a {
+        background: #0F172A;
+        border-color: #334155;
+      }
+      .policy-toc a.is-active,
+      .policy-toc a[aria-current="true"] {
+        background: #083344;
+        border-color: #155E75;
+      }
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Reading progress -->
+<div class="reading-progress" aria-hidden="true">
+  <span class="reading-progress__bar"></span>
+</div>
+
+<section class="page-heading">
+  <span class="section-kicker"><span aria-hidden="true">✦</span> شفاف و روشن</span>
+  <h1>قوانین و مقررات استفاده از کی‌داره</h1>
+  <p>
+    کی‌داره بستری برای معرفی فروشگاه‌ها و کالاها و هماهنگی مستقیم میان خریدار و فروشنده است.
+    استفاده از سایت به معنی پذیرش این قواعد است.
+  </p>
+  <div class="policy-meta">
+    <span aria-hidden="true">📅</span>
+    <span>آخرین به‌روزرسانی: آبان ۱۴۰۴</span>
+    <span aria-hidden="true">·</span>
+    <span>نسخه عمومی سرویس · ۲.۰</span>
+  </div>
+</section>
+
+<div class="policy-layout">
+  <div class="policy-content">
+
+    <!-- Summary card -->
+    <div class="policy-summary" role="note" aria-labelledby="policy-summary-title">
+      <h2 class="policy-summary-title" id="policy-summary-title">
+        <span aria-hidden="true">📋</span> خلاصه در یک نگاه
+      </h2>
+      <ul>
+        <li>استفاده از کی‌داره یعنی پذیرش این قوانین.</li>
+        <li>کی‌داره فقط معرفی می‌کند؛ معامله، پرداخت و تحویل حضوری بین خریدار و فروشنده است.</li>
+        <li>صحت اطلاعات کالا و ویترین با فروشنده است.</li>
+        <li>محتوای ممنوع یا مشکوک را از طریق پشتیبانی گزارش دهید.</li>
+      </ul>
+    </div>
+
+    <article class="policy-panel">
+
+      <section class="policy-section" id="account">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۱</span>
+          <h2>حساب کاربری<a class="policy-anchor" href="#account" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          اطلاعاتی که وارد می‌کنید باید صحیح و متعلق به خودتان یا دارای مجوز استفاده باشد.
+          مسئولیت حفاظت از شماره همراه و کد یک‌بارمصرف بر عهده شماست.
+          حساب خود را در اختیار دیگران قرار ندهید.
+        </p>
+        <p>
+          برای استفاده از امکانات حساب، لازم است صلاحیت قانونی لازم را داشته باشید.
+          اگر متوجه فعالیت مشکوکی در حساب خود شدید، هر چه سریع‌تر از طریق
+          <a href="/support">پشتیبانی</a> اطلاع دهید.
+        </p>
+      </section>
+
+      <section class="policy-section" id="listings">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۲</span>
+          <h2>مسئولیت اطلاعات و کالاها<a class="policy-anchor" href="#listings" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          فروشنده مسئول صحت عنوان، تصاویر، توضیحات، قیمت، موجودی، نشانی و ساعات کاری اعلام‌شده است
+          و باید تغییرات مهم را به‌موقع اصلاح کند.
+          از درج محتوای گمراه‌کننده، تکراری یا متعلق به دیگران بدون اجازه خودداری کنید.
+        </p>
+      </section>
+
+      <section class="policy-section" id="in-person">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۳</span>
+          <h2>خرید و فروش حضوری<a class="policy-anchor" href="#in-person" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          کی‌داره در این نسخه برای معرفی کالاها و فروشگاه‌ها و برقراری ارتباط طراحی شده است؛
+          سبد خرید کالا، پرداخت آنلاین کالا و ارسال سفارش ارائه نمی‌شود.
+          بررسی کالا، توافق بر قیمت نهایی، پرداخت و تحویل مستقیماً میان خریدار و فروشنده انجام می‌شود.
+        </p>
+        <p>
+          برای نکات ایمنی بیشتر در این نوع معامله، <a href="/safety">راهنمای خرید امن</a> را مطالعه کنید.
+        </p>
+      </section>
+
+      <section class="policy-section" id="prohibited">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۴</span>
+          <h2>رفتارهای ممنوع<a class="policy-anchor" href="#prohibited" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <ul class="policy-list">
+          <li>انتشار کالا یا خدمات غیرقانونی، اطلاعات جعلی یا محتوای ناقض حقوق دیگران.</li>
+          <li>آزار، تهدید، مزاحمت، تبعیض یا ارسال پیام‌های ناخواسته و گمراه‌کننده.</li>
+          <li>جعل هویت، تلاش برای فریب کاربران یا سوءاستفاده از امکانات سایت.</li>
+          <li>انتشار شماره تماس، نشانی، تصاویر یا اطلاعات شخصی دیگران بدون مجوز.</li>
+          <li>استخراج خودکار، انبوه یا سیستماتیک داده‌های سایت یا دور زدن محدودیت‌های فنی.</li>
+          <li>استفاده تجاری از محتوا یا نشان‌های سایت بدون اجازه کتبی.</li>
+        </ul>
+      </section>
+
+      <section class="policy-section" id="ip">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۵</span>
+          <h2>مالکیت معنوی<a class="policy-anchor" href="#ip" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          طراحی، متن، نشان تجاری و سایر اجزای کی‌داره متعلق به کی‌داره یا دارندگان مجوز آن است
+          و استفاده تجاری یا بازنشر آن بدون اجازه مجاز نیست.
+        </p>
+        <p>
+          محتوایی که در ویترین یا آگهی منتشر می‌کنید باید متعلق به خودتان باشد یا مجوز استفاده از آن را داشته باشید.
+          با انتشار محتوا، به کی‌داره اجازه می‌دهید آن را در حد لازم برای نمایش سرویس پردازش و نمایش دهد؛
+          مالکیت محتوا همچنان متعلق به شما باقی می‌ماند.
+        </p>
+      </section>
+
+      <section class="policy-section" id="reports">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۶</span>
+          <h2>گزارش و رسیدگی<a class="policy-anchor" href="#reports" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          می‌توانید محتوای مشکوک یا رفتار ناقض قواعد را گزارش کنید.
+          برای حفظ کیفیت و ایمنی سرویس، کی‌داره ممکن است محتوا را بررسی، محدود یا حذف کند
+          و در صورت لزوم دسترسی حساب را محدود سازد.
+        </p>
+        <ul class="policy-list neutral">
+          <li>لینک یا مشخصات مورد را در گزارش ذکر کنید.</li>
+          <li>در صورت امکان از پیام‌ها یا محتوای مورد، شواهد نگه دارید.</li>
+          <li>گزارش خود را از طریق <a href="/support">بخش پشتیبانی</a> ثبت کنید.</li>
+          <li>تا پایان بررسی، از تعامل پرهزینه با طرف مقابل خودداری کنید.</li>
+        </ul>
+      </section>
+
+      <section class="policy-section" id="privacy">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۷</span>
+          <h2>حریم خصوصی<a class="policy-anchor" href="#privacy" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          اطلاعات حساب و محتوایی که برای استفاده از خدمات ارائه می‌کنید باید فقط در حد لازم
+          برای اداره سرویس، امنیت، پشتیبانی و الزامات قانونی پردازش شود.
+          جزئیات بیشتر در <a href="/privacy">صفحه حریم خصوصی</a> آمده است.
+        </p>
+      </section>
+
+      <section class="policy-section" id="termination">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۸</span>
+          <h2>تعلیق و خاتمه حساب<a class="policy-anchor" href="#termination" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          در صورت نقض این قوانین، فعالیت مشکوک، گزارش‌های معتبر یا درخواست مراجع صالح،
+          ممکن است دسترسی حساب محدود، معلق یا خاتمه یابد. تلاش می‌شود تصمیم‌ها
+          متناسب با شدت و تکرار موضوع گرفته شوند.
+        </p>
+        <p>
+          می‌توانید درخواست بستن حساب خود را از طریق <a href="/support">پشتیبانی</a> مطرح کنید.
+          خاتمه حساب، تعهدات قبلی طرفین و الزامات قانونی مربوط به نگهداری اطلاعات را از بین نمی‌برد.
+        </p>
+      </section>
+
+      <section class="policy-section" id="liability">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۹</span>
+          <h2>محدودیت مسئولیت<a class="policy-anchor" href="#liability" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          کی‌داره نقش بستر معرفی و ارتباط را دارد و تضمین‌کننده کیفیت، اصالت، ایمنی یا قانونی بودن کالا،
+          و همچنین هویت یا رفتار طرفین معامله نیست. مسئولیت بررسی نهایی کالا و هماهنگی معامله
+          بر عهده خریدار و فروشنده است.
+        </p>
+        <p>
+          سرویس در حد امکانات موجود و «همان‌گونه که هست» ارائه می‌شود.
+          کی‌داره مسئول خسارات ناشی از معامله میان کاربران یا محتوای منتشرشده توسط آنان نیست،
+          مگر در حدی که قوانین قابل اعمال الزام کنند.
+        </p>
+      </section>
+
+      <section class="policy-section" id="changes">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۱۰</span>
+          <h2>تغییرات و دسترس‌پذیری سرویس<a class="policy-anchor" href="#changes" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          ممکن است برای نگهداری، امنیت یا بهبود، بخش‌هایی از سرویس تغییر کنند یا موقتاً در دسترس نباشند.
+          تلاش می‌کنیم تغییرات مهم را به‌صورت روشن اطلاع‌رسانی کنیم.
+        </p>
+        <p>
+          این قوانین نیز ممکن است به‌روزرسانی شوند؛ تاریخ آخرین به‌روزرسانی در بالای همین صفحه درج می‌شود.
+          ادامه استفاده از خدمات پس از انتشار نسخه جدید، به‌منزله پذیرش تغییرات است.
+        </p>
+      </section>
+
+      <section class="policy-section" id="governing-law">
+        <div class="policy-section-header">
+          <span class="policy-section-num" aria-hidden="true">۱۱</span>
+          <h2>قانون حاکم و حل اختلاف<a class="policy-anchor" href="#governing-law" aria-label="پیوند به این بخش">#</a></h2>
+        </div>
+        <p>
+          این قوانین تابع قوانین قابل اعمال در ایران است.
+          در صورت بروز اختلاف، ابتدا تلاش می‌شود موضوع از طریق
+          <a href="/support">پشتیبانی</a> و مذاکره دوستانه حل شود.
+          در غیر این صورت، مراجع صالح قانونی رسیدگی خواهند کرد.
+        </p>
+      </section>
+
+    </article>
+
+    <div class="policy-callout" role="note">
+      <span class="policy-callout-icon" aria-hidden="true">ℹ</span>
+      <div>
+        این متن راهنمای عمومی استفاده از سرویس است و جایگزین مشاوره حقوقی نیست.
+        برای پرسش یا گزارش، به <a href="/support">پشتیبانی</a> مراجعه کنید.
+      </div>
+    </div>
+  </div>
+
+  <aside class="policy-toc" aria-label="فهرست مطالب و پیوندهای مرتبط">
+    <p class="policy-toc-title">فهرست مطالب</p>
+    <a href="#account">۱. حساب کاربری</a>
+    <a href="#listings">۲. مسئولیت اطلاعات</a>
+    <a href="#in-person">۳. خرید حضوری</a>
+    <a href="#prohibited">۴. رفتارهای ممنوع</a>
+    <a href="#ip">۵. مالکیت معنوی</a>
+    <a href="#reports">۶. گزارش و رسیدگی</a>
+    <a href="#privacy">۷. حریم خصوصی</a>
+    <a href="#termination">۸. تعلیق و خاتمه</a>
+    <a href="#liability">۹. محدودیت مسئولیت</a>
+    <a href="#changes">۱۰. تغییرات سرویس</a>
+    <a href="#governing-law">۱۱. قانون حاکم</a>
+    <div class="policy-toc-divider" aria-hidden="true"></div>
+    <p class="policy-toc-related">پیوندهای مرتبط</p>
+    <a href="/guide">راهنمای کاربر</a>
+    <a href="/safety">خرید امن</a>
+    <a href="/privacy">حریم خصوصی</a>
+    <a href="/help">مرکز راهنما</a>
+    <a href="/support">پشتیبانی</a>
+    <button type="button" class="policy-print-btn">
+      <span aria-hidden="true">🖨</span>
+      چاپ این صفحه
+    </button>
+  </aside>
+</div>
+
+<button type="button" class="back-to-top" aria-label="بازگشت به بالای صفحه" hidden>
+  <span aria-hidden="true">↑</span>
+</button>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Reading progress ── */
+  var progressBar = document.querySelector('.reading-progress__bar');
+  if (progressBar) {
+    var updateProgress = function () {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - doc.clientHeight;
+      var pct = max > 0 ? (doc.scrollTop / max) * 100 : 0;
+      progressBar.style.width = pct + '%';
+    };
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  /* ── Back-to-top ── */
+  var backTop = document.querySelector('.back-to-top');
+  if (backTop) {
+    var toggleBackTop = function () {
+      backTop.hidden = window.scrollY < 400;
+    };
+    window.addEventListener('scroll', toggleBackTop, { passive: true });
+    toggleBackTop();
+    backTop.addEventListener('click', function () {
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+    });
+  }
+
+  /* ── Print button ── */
+  var printBtn = document.querySelector('.policy-print-btn');
+  if (printBtn) {
+    printBtn.addEventListener('click', function () { window.print(); });
+  }
+
+  /* ── TOC: smooth scroll + scroll spy ── */
+  var toc = document.querySelector('.policy-toc');
+  if (!toc) return;
+
+  var links = Array.prototype.slice.call(
+    toc.querySelectorAll('a[href^="#"]')
+  );
+  var sections = [];
+  var linkBySection = new Map();
+
+  links.forEach(function (link) {
+    var id = link.getAttribute('href').slice(1);
+    var section = document.getElementById(id);
+    if (section) {
+      sections.push(section);
+      linkBySection.set(section, link);
+    }
+  });
+
+  sections.sort(function (a, b) {
+    return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+  });
+
+  var setActive = function (section) {
+    links.forEach(function (link) {
+      link.classList.remove('is-active');
+      link.removeAttribute('aria-current');
+    });
+    var active = linkBySection.get(section);
+    if (active) {
+      active.classList.add('is-active');
+      active.setAttribute('aria-current', 'true');
+    }
+  };
+
+  links.forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      var href = link.getAttribute('href');
+      if (!href || href.charAt(0) !== '#') return;
+      var target = document.getElementById(href.slice(1));
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start'
+      });
+      if (history.replaceState) {
+        history.replaceState(null, '', href);
+      }
+    });
+  });
+
+  if (!sections.length) return;
+
+  var offset = 120;
+  var ticking = false;
+
+  var updateActive = function () {
+    var scrollPos = window.scrollY + offset;
+    var current = sections[0];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].offsetTop <= scrollPos) {
+        current = sections[i];
+      } else {
+        break;
+      }
+    }
+    setActive(current);
+    ticking = false;
+  };
+
+  window.addEventListener('scroll', function () {
+    if (!ticking) {
+      window.requestAnimationFrame(updateActive);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  updateActive();
+})();
+</script>
+{% endblock %}

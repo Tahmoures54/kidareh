@@ -1,0 +1,864 @@
+{% extends "base.html" %}
+{% block title %}راهنمای خرید امن | کی‌داره{% endblock %}
+
+{% block head %}
+<style>
+  /* ── Safety guide page ── */
+  .page-heading {
+    padding: 1.75rem 0 1.25rem;
+  }
+  .page-heading .section-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    background: #ECFEFF;
+    border: 1px solid #A5F3FC;
+    color: #0E7490;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+  .page-heading h1 {
+    margin: 0.85rem 0 0.6rem;
+    font-size: clamp(1.55rem, 3.2vw, 2.15rem);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--color-ink, #0F172A);
+    line-height: 1.35;
+  }
+  .page-heading p {
+    margin: 0;
+    max-width: 42rem;
+    color: var(--color-muted, #64748B);
+    font-size: 0.95rem;
+    line-height: 1.85;
+  }
+
+  .policy-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 1.5rem;
+    align-items: start;
+    padding-bottom: 2rem;
+  }
+  .policy-content {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .safety-card {
+    padding: 1.4rem 1.3rem;
+    border-radius: 16px;
+    border: 1px solid var(--color-line, #CBD5E1);
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+    scroll-margin-top: 90px;
+  }
+  .safety-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .safety-card-icon {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 1.25rem;
+  }
+  .safety-card-icon.before {
+    background: #ECFEFF;
+    color: #0E7490;
+  }
+  .safety-card-icon.during {
+    background: #FFFBEB;
+    color: #B45309;
+  }
+  .safety-card-icon.warning {
+    background: #FEF2F2;
+    color: #B91C1C;
+  }
+  .safety-card-icon.after {
+    background: #F0FDF4;
+    color: #047857;
+  }
+  .safety-card-icon.report {
+    background: #F5F3FF;
+    color: #6D28D9;
+  }
+  .safety-card h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--color-ink, #0F172A);
+    line-height: 1.35;
+  }
+  .safety-card-subtitle {
+    margin: 0.25rem 0 0;
+    color: var(--color-muted, #64748B);
+    font-size: 0.82rem;
+    line-height: 1.6;
+  }
+
+  .safety-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.55rem;
+  }
+  .safety-list li {
+    position: relative;
+    padding: 0.75rem 0.9rem;
+    padding-inline-start: 2.5rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--color-ink, #0F172A);
+  }
+
+  /* Positive checklist (before / during) */
+  .safety-list.check li {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+  }
+  .safety-list.check li::before {
+    content: "✓";
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    top: 0.8rem;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: #DCFCE7;
+    color: #059669;
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  /* Warning list */
+  .safety-list.warn li {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #7F1D1D;
+  }
+  .safety-list.warn li::before {
+    content: "!";
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    top: 0.8rem;
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    border-radius: 7px;
+    background: #FEE2E2;
+    color: #DC2626;
+    font-size: 0.85rem;
+    font-weight: 800;
+  }
+
+  /* Steps list (report) */
+  .safety-list.steps {
+    counter-reset: step;
+  }
+  .safety-list.steps li {
+    background: #F5F3FF;
+    border: 1px solid #DDD6FE;
+    padding-inline-start: 2.9rem;
+  }
+  .safety-list.steps li::before {
+    counter-increment: step;
+    content: counter(step);
+    position: absolute;
+    inset-inline-start: 0.75rem;
+    top: 0.75rem;
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 8px;
+    background: #EDE9FE;
+    color: #6D28D9;
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+
+  .policy-callout {
+    display: flex;
+    gap: 0.85rem;
+    align-items: flex-start;
+    padding: 1.15rem 1.2rem;
+    border-radius: 14px;
+    border: 1px solid #FDE68A;
+    background: linear-gradient(135deg, #FFFBEB, #FEF3C7);
+    color: var(--color-ink, #0F172A);
+    font-size: 0.9rem;
+    line-height: 1.8;
+  }
+  .policy-callout-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: #FDE68A;
+    color: #B45309;
+    font-size: 1.1rem;
+  }
+  .policy-callout strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: #92400E;
+  }
+  .policy-callout a {
+    color: #0E7490;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .policy-callout a:hover { text-decoration: underline; }
+
+  /* Sidebar */
+  .policy-toc {
+    position: sticky;
+    top: 80px;
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.1rem;
+    border: 1px solid var(--color-line, #CBD5E1);
+    border-radius: 14px;
+    background: var(--color-surface, #fff);
+    box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+  }
+  .policy-toc-title {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--color-ink, #0F172A);
+  }
+  .policy-toc a {
+    display: block;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    color: var(--color-muted, #64748B);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.15s, background 0.15s;
+  }
+  .policy-toc a:hover,
+  .policy-toc a:focus-visible {
+    color: #0E7490;
+    background: #ECFEFF;
+  }
+  .policy-toc a.is-active,
+  .policy-toc a[aria-current="true"] {
+    color: #0E7490;
+    background: #ECFEFF;
+    font-weight: 800;
+  }
+  .policy-toc-divider {
+    height: 1px;
+    margin: 0.45rem 0;
+    background: var(--color-line-soft, #E2E8F0);
+  }
+  .policy-toc-related {
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-muted, #94A3B8);
+  }
+
+  /* ═══════════ Enhancements ═══════════ */
+
+  /* ── Quick checklist summary ── */
+  .safety-summary {
+    padding: 1.25rem 1.3rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #F0FDFA, #ECFEFF);
+    border: 1px solid #A5F3FC;
+  }
+  .safety-summary-title {
+    margin: 0 0 0.7rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0E7490;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .safety-summary ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    gap: 0.5rem;
+  }
+  .safety-summary li {
+    position: relative;
+    padding-inline-start: 1.5rem;
+    font-size: 0.88rem;
+    line-height: 1.75;
+    color: var(--color-ink, #0F172A);
+  }
+  .safety-summary li::before {
+    content: "✓";
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    color: #0891B2;
+    font-weight: 800;
+  }
+
+  /* ── Anchor links on headings ── */
+  .safety-anchor {
+    margin-inline-start: 0.4rem;
+    font-size: 0.85em;
+    color: #94A3B8;
+    font-weight: 700;
+    text-decoration: none;
+    opacity: 0;
+    vertical-align: middle;
+    transition: opacity 0.15s, color 0.15s;
+  }
+  .safety-card:hover .safety-anchor,
+  .safety-anchor:focus-visible {
+    opacity: 1;
+  }
+  .safety-anchor:hover { color: #0E7490; }
+
+  /* ── Reading progress bar ── */
+  .reading-progress {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: transparent;
+    z-index: 60;
+    pointer-events: none;
+  }
+  .reading-progress__bar {
+    display: block;
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg, #06B6D4, #0E7490);
+    transition: width 0.1s linear;
+  }
+
+  /* ── Back-to-top button ── */
+  .back-to-top {
+    position: fixed;
+    inset-inline-end: 1.25rem;
+    inset-block-end: 1.25rem;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    border: 1px solid #A5F3FC;
+    background: #fff;
+    color: #0E7490;
+    font-size: 1.15rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(15, 23, 42, 0.12);
+    z-index: 40;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .back-to-top:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  }
+  .back-to-top[hidden] { display: none; }
+
+  /* ── Print button ── */
+  .safety-print-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+    padding: 0.55rem 0.85rem;
+    width: 100%;
+    border: 1px solid #CBD5E1;
+    background: #F8FAFC;
+    color: #334155;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .safety-print-btn:hover {
+    background: #ECFEFF;
+    border-color: #A5F3FC;
+    color: #0E7490;
+  }
+
+  /* ── Focus states ── */
+  .policy-toc a:focus-visible,
+  .safety-card a:focus-visible,
+  .safety-anchor:focus-visible,
+  .back-to-top:focus-visible,
+  .safety-print-btn:focus-visible {
+    outline: 2px solid #0891B2;
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  /* ── Reduced motion ── */
+  @media (prefers-reduced-motion: reduce) {
+    .safety-anchor,
+    .back-to-top,
+    .reading-progress__bar,
+    .policy-toc a,
+    .safety-print-btn {
+      transition: none !important;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .policy-layout { grid-template-columns: 1fr; }
+    .policy-toc {
+      position: static;
+      order: -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      padding: 0.85rem;
+    }
+    .policy-toc-title,
+    .policy-toc-divider,
+    .policy-toc-related { width: 100%; }
+    .policy-toc a {
+      padding: 0.4rem 0.7rem;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      font-size: 0.78rem;
+    }
+    .policy-toc a.is-active,
+    .policy-toc a[aria-current="true"] {
+      background: #ECFEFF;
+      border-color: #A5F3FC;
+    }
+    .safety-anchor { opacity: 1; }
+  }
+
+  /* ── Print styles ── */
+  @media print {
+    .reading-progress,
+    .back-to-top,
+    .policy-toc,
+    .safety-print-btn { display: none !important; }
+    .policy-layout {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding: 0;
+    }
+    .safety-card {
+      box-shadow: none;
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+    .policy-callout {
+      border: 1px solid #ccc;
+      background: #f8f9fa;
+    }
+    .safety-anchor { display: none; }
+    a { color: inherit; text-decoration: underline; }
+    a[href^="http"]::after {
+      content: " (" attr(href) ")";
+      font-size: 0.8em;
+      color: #666;
+    }
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .safety-card,
+    .policy-toc {
+      background: var(--color-surface, #111B2A);
+      border-color: var(--color-line, #334155);
+    }
+    .safety-card-icon.before { background: #083344; color: #67E8F9; }
+    .safety-card-icon.during { background: #2E2208; color: #FBBF24; }
+    .safety-card-icon.warning { background: #2D1111; color: #F87171; }
+    .safety-card-icon.after { background: #052E24; color: #34D399; }
+    .safety-card-icon.report { background: #1E1B4B; color: #A78BFA; }
+    .safety-list.check li {
+      background: #052E24;
+      border-color: #065F46;
+      color: #A7F3D0;
+    }
+    .safety-list.check li::before {
+      background: #064E3B;
+      color: #34D399;
+    }
+    .safety-list.warn li {
+      background: #2D1111;
+      border-color: #7F1D1D;
+      color: #FECACA;
+    }
+    .safety-list.warn li::before {
+      background: #450A0A;
+      color: #F87171;
+    }
+    .safety-list.steps li {
+      background: #1E1B4B;
+      border-color: #4C1D95;
+      color: #E2E8F0;
+    }
+    .safety-list.steps li::before {
+      background: #312E81;
+      color: #A78BFA;
+    }
+    .policy-callout {
+      background: linear-gradient(135deg, #2E2208, #1C1917);
+      border-color: #92400E;
+      color: #E2E8F0;
+    }
+    .policy-callout strong { color: #FBBF24; }
+    .policy-callout-icon {
+      background: #92400E;
+      color: #FDE68A;
+    }
+    .page-heading .section-kicker {
+      background: #083344;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+    /* New elements */
+    .safety-summary {
+      background: linear-gradient(135deg, #083344, #0C2233);
+      border-color: #155E75;
+    }
+    .safety-summary-title { color: #67E8F9; }
+    .safety-summary li { color: #E2E8F0; }
+    .safety-summary li::before { color: #22D3EE; }
+
+    .safety-anchor { color: #64748B; }
+    .safety-anchor:hover { color: #67E8F9; }
+
+    .policy-toc a.is-active,
+    .policy-toc a[aria-current="true"] {
+      color: #67E8F9;
+      background: #083344;
+    }
+
+    .back-to-top {
+      background: #111B2A;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+
+    .safety-print-btn {
+      background: #0F172A;
+      border-color: #334155;
+      color: #CBD5E1;
+    }
+    .safety-print-btn:hover {
+      background: #083344;
+      border-color: #155E75;
+      color: #67E8F9;
+    }
+
+    @media (max-width: 860px) {
+      .policy-toc a {
+        background: #0F172A;
+        border-color: #334155;
+      }
+      .policy-toc a.is-active,
+      .policy-toc a[aria-current="true"] {
+        background: #083344;
+        border-color: #155E75;
+      }
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Reading progress -->
+<div class="reading-progress" aria-hidden="true">
+  <span class="reading-progress__bar"></span>
+</div>
+
+<section class="page-heading">
+  <span class="section-kicker"><span aria-hidden="true">🛡</span> با دقت انتخاب کنید</span>
+  <h1>راهنمای خرید امن</h1>
+  <p>
+    کی‌داره راه پیدا کردن کالا و فروشگاه را آسان‌تر می‌کند؛
+    تصمیم نهایی و هماهنگی معامله باید با بررسی و احتیاط انجام شود.
+    این راهنما مهم‌ترین نکات را در چهار مرحله — پیش از خرید، هنگام پرداخت،
+    بعد از خرید و گزارش تخلف — مرور می‌کند.
+  </p>
+</section>
+
+<div class="policy-layout">
+  <div class="policy-content">
+
+    <!-- Quick checklist summary -->
+    <div class="safety-summary" role="note" aria-labelledby="safety-summary-title">
+      <h2 class="safety-summary-title" id="safety-summary-title">
+        <span aria-hidden="true">📋</span> چک‌لیست سریع
+      </h2>
+      <ul>
+        <li>قیمت و مشخصات را پیش از پرداخت با فروشنده تأیید کنید.</li>
+        <li>رمز یک‌بارمصرف، رمز کارت و کد تأیید را هرگز به کسی ندهید.</li>
+        <li>کالا را پیش از پرداخت نهایی بررسی کنید.</li>
+        <li>هر نشانه مشکوک را از طریق پشتیبانی گزارش دهید.</li>
+      </ul>
+    </div>
+
+    <section class="safety-card" id="before">
+      <div class="safety-card-header">
+        <span class="safety-card-icon before" aria-hidden="true">①</span>
+        <div>
+          <h2 id="before-title">پیش از مراجعه<a class="safety-anchor" href="#before" aria-label="پیوند به این بخش">#</a></h2>
+          <p class="safety-card-subtitle">قبل از رفتن به فروشگاه، این موارد را روشن کنید.</p>
+        </div>
+      </div>
+      <ul class="safety-list check" aria-labelledby="before-title">
+        <li>قیمت، موجودی، نشانی دقیق، ساعات کاری و شرایط تحویل را با فروشنده تأیید کنید.</li>
+        <li>اگر قیمت یا پیشنهاد به‌طور غیرعادی وسوسه‌کننده است، بیشتر بررسی کنید و برای تصمیم‌گیری عجله نکنید.</li>
+        <li>درباره وضعیت کالا، اصالت، لوازم همراه، ضمانت و امکان بررسی پیش از خرید سؤال کنید.</li>
+        <li>برای معامله حضوری، محل عمومی و امن را ترجیح دهید و در صورت امکان فرد مورد اعتمادی را مطلع کنید.</li>
+        <li>نشانی و مشخصات فروشگاه را با منبع مستقل (نقشه، تلفن ثابت) تطبیق دهید.</li>
+      </ul>
+    </section>
+
+    <section class="safety-card" id="during">
+      <div class="safety-card-header">
+        <span class="safety-card-icon during" aria-hidden="true">②</span>
+        <div>
+          <h2 id="during-title">هنگام گفت‌وگو و پرداخت<a class="safety-anchor" href="#during" aria-label="پیوند به این بخش">#</a></h2>
+          <p class="safety-card-subtitle">از اطلاعات حساس خود محافظت کنید.</p>
+        </div>
+      </div>
+      <ul class="safety-list check" aria-labelledby="during-title">
+        <li>رمز یک‌بارمصرف، رمز کارت، اطلاعات ورود یا کد تأیید حساب خود را برای هیچ‌کس ارسال نکنید.</li>
+        <li>برای دریافت پول، نصب برنامه ناشناس یا ورود به لینک پرداختی که به آن اطمینان ندارید، اقدام نکنید.</li>
+        <li>پیش از پرداخت، کالا را بررسی کنید و مبلغ و شرایط نهایی را روشن کنید.</li>
+        <li>اگر معامله با توضیحات اولیه متفاوت شد، می‌توانید آن را متوقف کنید.</li>
+        <li>برای ردیابی، رسید یا فیش پرداخت را نگه دارید و در صورت امکان، تأیید کتبی شرایط را بگیرید.</li>
+      </ul>
+    </section>
+
+    <section class="safety-card" id="warnings">
+      <div class="safety-card-header">
+        <span class="safety-card-icon warning" aria-hidden="true">⚠</span>
+        <div>
+          <h2 id="warnings-title">نشانه‌های هشدار<a class="safety-anchor" href="#warnings" aria-label="پیوند به این بخش">#</a></h2>
+          <p class="safety-card-subtitle">اگر یکی از این موارد را دیدید، محتاط باشید یا معامله را متوقف کنید.</p>
+        </div>
+      </div>
+      <ul class="safety-list warn" aria-labelledby="warnings-title">
+        <li>فشار برای واریز فوری بیعانه یا انتقال وجه به حساب نامرتبط.</li>
+        <li>امتناع از ارائه اطلاعات معقول درباره کالا یا فروشگاه.</li>
+        <li>درخواست مدارک هویتی یا اطلاعات بانکی غیرضروری.</li>
+        <li>لینک‌ها، رسیدها یا پیام‌هایی که شما را برای وارد کردن رمز یا اطلاعات کارت هدایت می‌کنند.</li>
+        <li>پیشنهادهایی که شما را به خارج از بستر رسمی سایت (پیام‌رسان ناشناس یا لینک کوتاه) هدایت می‌کنند.</li>
+        <li>رسید یا فیشی که با مبلغ، تاریخ یا شماره پیگیری معامله هم‌خوانی ندارد.</li>
+      </ul>
+    </section>
+
+    <section class="safety-card" id="after">
+      <div class="safety-card-header">
+        <span class="safety-card-icon after" aria-hidden="true">③</span>
+        <div>
+          <h2 id="after-title">بعد از خرید<a class="safety-anchor" href="#after" aria-label="پیوند به این بخش">#</a></h2>
+          <p class="safety-card-subtitle">رسید و شرایط را نگه دارید تا پیگیری آسان باشد.</p>
+        </div>
+      </div>
+      <ul class="safety-list check" aria-labelledby="after-title">
+        <li>رسید پرداخت، فاکتور و مکالمات مهم با فروشنده را نگه دارید.</li>
+        <li>اگر پنجره بازگشت کالا یا ضمانت وجود دارد، مهلت و شرایط آن را ثبت کنید.</li>
+        <li>در صورت بروز مشکل، ابتدا با فروشنده پیگیری کنید و نتیجه را مکتوب نگه دارید.</li>
+        <li>اگر توافق حاصل نشد، مدارک را برای بررسی از طریق پشتیبانی ارسال کنید.</li>
+      </ul>
+    </section>
+
+    <section class="safety-card" id="report">
+      <div class="safety-card-header">
+        <span class="safety-card-icon report" aria-hidden="true">④</span>
+        <div>
+          <h2 id="report-title">گزارش و پیگیری<a class="safety-anchor" href="#report" aria-label="پیوند به این بخش">#</a></h2>
+          <p class="safety-card-subtitle">چگونه یک محتوای مشکوک را به تیم پشتیبانی اطلاع دهید.</p>
+        </div>
+      </div>
+      <ol class="safety-list steps" aria-labelledby="report-title">
+        <li>لینک آگهی، ویترین یا گفت‌وگوی مشکوک را کپی کنید.</li>
+        <li>در صورت امکان از پیام‌ها، رسید یا صفحه اسکرین‌شات تهیه کنید.</li>
+        <li>از <a href="/support">بخش پشتیبانی</a> درخواست خود را ثبت کنید و مشخصات مورد را شرح دهید.</li>
+        <li>تا پایان بررسی، از واریز وجه یا انجام تعهدات خودداری کنید.</li>
+        <li>در صورت مشاهده تهدید یا کلاهبرداری، علاوه بر کی‌داره، به مراجع ذی‌ربط نیز اطلاع دهید.</li>
+      </ol>
+    </section>
+
+    <div class="policy-callout" role="note">
+      <span class="policy-callout-icon" aria-hidden="true">!</span>
+      <div>
+        <strong>نکته مهم</strong>
+        کی‌داره ویترین و ابزار ارتباط را فراهم می‌کند و تضمین‌کننده کیفیت کالا، هویت همه فروشندگان یا نتیجه معامله نیست.
+        مسئولیت نهایی بررسی کالا و هماهنگی معامله با خریدار و فروشنده است.
+        محتوای مشکوک را از طریق <a href="/support">پشتیبانی</a> گزارش کنید.
+      </div>
+    </div>
+
+  </div>
+
+  <aside class="policy-toc" aria-label="فهرست مطالب و پیوندهای مرتبط">
+    <p class="policy-toc-title">فهرست مطالب</p>
+    <a href="#before">۱. پیش از مراجعه</a>
+    <a href="#during">۲. گفت‌وگو و پرداخت</a>
+    <a href="#warnings">۳. نشانه‌های هشدار</a>
+    <a href="#after">۴. بعد از خرید</a>
+    <a href="#report">۵. گزارش و پیگیری</a>
+    <div class="policy-toc-divider" aria-hidden="true"></div>
+    <p class="policy-toc-related">پیوندهای مفید</p>
+    <a href="/help">مرکز راهنما</a>
+    <a href="/guide">راهنمای کاربر</a>
+    <a href="/terms">قوانین استفاده</a>
+    <a href="/privacy">حریم خصوصی</a>
+    <a href="/support">پشتیبانی</a>
+    <button type="button" class="safety-print-btn">
+      <span aria-hidden="true">🖨</span>
+      چاپ این صفحه
+    </button>
+  </aside>
+</div>
+
+<button type="button" class="back-to-top" aria-label="بازگشت به بالای صفحه" hidden>
+  <span aria-hidden="true">↑</span>
+</button>
+
+<script>
+(function () {
+  'use strict';
+
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ── Reading progress ── */
+  var progressBar = document.querySelector('.reading-progress__bar');
+  if (progressBar) {
+    var updateProgress = function () {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - doc.clientHeight;
+      var pct = max > 0 ? (doc.scrollTop / max) * 100 : 0;
+      progressBar.style.width = pct + '%';
+    };
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    window.addEventListener('resize', updateProgress, { passive: true });
+    updateProgress();
+  }
+
+  /* ── Back-to-top ── */
+  var backTop = document.querySelector('.back-to-top');
+  if (backTop) {
+    var toggleBackTop = function () {
+      backTop.hidden = window.scrollY < 400;
+    };
+    window.addEventListener('scroll', toggleBackTop, { passive: true });
+    toggleBackTop();
+    backTop.addEventListener('click', function () {
+      window.scrollTo({
+        top: 0,
+        behavior: reduceMotion ? 'auto' : 'smooth'
+      });
+    });
+  }
+
+  /* ── Print button ── */
+  var printBtn = document.querySelector('.safety-print-btn');
+  if (printBtn) {
+    printBtn.addEventListener('click', function () { window.print(); });
+  }
+
+  /* ── TOC: smooth scroll + scroll spy ── */
+  var toc = document.querySelector('.policy-toc');
+  if (!toc) return;
+
+  var links = Array.prototype.slice.call(
+    toc.querySelectorAll('a[href^="#"]')
+  );
+  var sections = [];
+  var linkBySection = new Map();
+
+  links.forEach(function (link) {
+    var id = link.getAttribute('href').slice(1);
+    var section = document.getElementById(id);
+    if (section) {
+      sections.push(section);
+      linkBySection.set(section, link);
+    }
+  });
+
+  sections.sort(function (a, b) {
+    return a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
+  });
+
+  var setActive = function (section) {
+    links.forEach(function (link) {
+      link.classList.remove('is-active');
+      link.removeAttribute('aria-current');
+    });
+    var active = linkBySection.get(section);
+    if (active) {
+      active.classList.add('is-active');
+      active.setAttribute('aria-current', 'true');
+    }
+  };
+
+  links.forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      var href = link.getAttribute('href');
+      if (!href || href.charAt(0) !== '#') return;
+      var target = document.getElementById(href.slice(1));
+      if (!target) return;
+      e.preventDefault();
+      target.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start'
+      });
+      if (history.replaceState) {
+        history.replaceState(null, '', href);
+      }
+    });
+  });
+
+  if (!sections.length) return;
+
+  var offset = 120;
+  var ticking = false;
+
+  var updateActive = function () {
+    var scrollPos = window.scrollY + offset;
+    var current = sections[0];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].offsetTop <= scrollPos) {
+        current = sections[i];
+      } else {
+        break;
+      }
+    }
+    setActive(current);
+    ticking = false;
+  };
+
+  window.addEventListener('scroll', function () {
+    if (!ticking) {
+      window.requestAnimationFrame(updateActive);
+      ticking = true;
+    }
+  }, { passive: true });
+
+  updateActive();
+})();
+</script>
+{% endblock %}

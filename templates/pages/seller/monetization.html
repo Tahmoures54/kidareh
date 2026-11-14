@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}تبلیغات و نشان‌های فروشگاه | کی‌داره{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/seller-monetization.css') }}?v=20261114">
+{% endblock %}
+
+{% block content %}
+<section class="money-intro">
+  <span class="section-kicker"><span aria-hidden="true">✦</span> رشد فروشگاه · به انتخاب شما</span>
+  <h1>بیشتر دیده شو؛ حرفه‌ای‌تر به نظر برس</h1>
+  <p>
+    خریدارها همچنان رایگان کالاها را می‌بینند.
+    اگر خواستی برای ویترینت جایگاه تبلیغاتی یا نشان زمان‌دار بگیری، از اینجا انتخاب کن.
+    هیچ بسته‌ای فروش یا نتیجه قطعی را تضمین نمی‌کند.
+  </p>
+  <a class="button button-outline" href="/seller">بازگشت به ویترین من</a>
+</section>
+
+<nav class="seller-subnav" aria-label="بخش‌های پنل فروشنده">
+  <a href="/seller">ویترین من</a>
+  <a href="/seller/tags">تگ کالاها</a>
+  <a href="/monetization" aria-current="page">تبلیغات و نشان</a>
+</nav>
+
+<div class="money-note" role="note">
+  <span class="money-note-icon" aria-hidden="true">🔒</span>
+  <div>
+    <strong>شفافیت:</strong>
+    تیک آبیِ خریدنی فقط یک نشان تبلیغاتیِ زمان‌دار است و به معنی احراز هویت یا تضمین کیفیت کالا نیست.
+    بنرهای پولی در صورت نمایش باید با عنوان «تبلیغ» مشخص شوند.
+  </div>
+</div>
+
+<noscript>
+  <div class="noscript-notice">
+    <strong>⚠ جاوااسکریپت لازم است</strong>
+    برای خرید بستهٔ تبلیغاتی و مشاهدهٔ سفارش‌ها، لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
+  </div>
+</noscript>
+
+<section id="moneyPackages" class="money-grid" aria-live="polite">
+  {% for package in packages %}
+  <article class="money-card">
+    <div class="money-card-top">
+      <span class="money-icon" aria-hidden="true">{{ package.icon }}</span>
+      <span class="money-tag">{{ package.tag }}</span>
+    </div>
+    <h2>{{ package.name }}</h2>
+    <p>{{ package.description }}</p>
+    <div class="money-price">
+      {{ "{:,}".format(package.price) }} <small>تومان</small>
+    </div>
+    <ul>
+      {% for feature in package.features %}
+      <li>{{ feature }}</li>
+      {% endfor %}
+    </ul>
+    <button
+      class="button button-primary buy-package"
+      type="button"
+      data-package="{{ package.id }}"
+    >
+      انتخاب و پرداخت
+    </button>
+  </article>
+  {% endfor %}
+</section>
+
+<p id="moneyStatus" class="money-status" role="status" aria-live="polite"></p>
+
+<section class="money-orders page-panel">
+  <h2>سفارش‌های من</h2>
+  <p class="muted-copy">وضعیت خریدها پس از بازگشت از درگاه در این بخش قابل پیگیری است.</p>
+  <div id="moneyOrders" aria-busy="true">در حال بارگذاری سفارش‌ها…</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/seller-monetization.js') }}?v=20261114" defer></script>
+{% endblock %}

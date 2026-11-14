@@ -1,0 +1,255 @@
+/* =========================================================
+   Seller Console — Monetization (/monetization)
+   Loaded only on the ads & badges page.
+   ========================================================= */
+
+.money-intro {
+  position: relative; overflow: hidden;
+  margin-bottom: 1.25rem;
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse 70% 80% at 90% 20%, rgba(103, 232, 249, 0.18), transparent 50%),
+    linear-gradient(125deg, #073B4C 0%, #087F8C 55%, #0E7490 100%);
+  color: #fff;
+  box-shadow: 0 12px 36px rgba(7, 59, 76, 0.25);
+}
+.money-intro .section-kicker {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.3rem 0.75rem; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(185, 255, 255, 0.35);
+  color: #B9FFFF; font-size: 0.78rem; font-weight: 700;
+}
+.money-intro h1 {
+  margin: 0.85rem 0 0.6rem;
+  font-size: clamp(1.55rem, 3.2vw, 2.25rem);
+  font-weight: 800; letter-spacing: -0.03em;
+  line-height: 1.35; color: #fff;
+}
+.money-intro p {
+  max-width: 42rem; margin: 0 0 1.15rem;
+  line-height: 1.9; color: #E4FBFB; font-size: 0.92rem;
+}
+.money-intro .button {
+  background: #fff; color: #07515A;
+  border-color: #fff; font-weight: 700;
+  min-height: 44px; border-radius: 11px;
+}
+.money-intro .button:hover { background: #ECFEFF; }
+
+/* Shared seller sub-nav */
+.seller-subnav {
+  display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1.15rem;
+}
+.seller-subnav a {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.9rem; border-radius: 999px;
+  border: 1px solid var(--color-line, #CBD5E1);
+  background: #fff; color: var(--color-muted, #64748B);
+  font-size: 0.82rem; font-weight: 600; text-decoration: none;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.seller-subnav a:hover {
+  color: var(--color-primary, #0E7490);
+  border-color: var(--color-secondary, #0891B2);
+  background: var(--color-primary-soft, #ECFEFF);
+}
+.seller-subnav a[aria-current="page"] {
+  color: #fff;
+  background: linear-gradient(180deg, var(--color-secondary, #0891B2), var(--color-primary, #0E7490));
+  border-color: transparent; font-weight: 700;
+}
+
+/* Transparency note */
+.money-note {
+  display: flex; gap: 0.85rem; align-items: flex-start;
+  margin: 0 0 1.35rem; padding: 1.05rem 1.15rem;
+  border-radius: 14px; border: 1px solid #F0DFB5;
+  background: linear-gradient(135deg, #FFF8E7, #FEF3C7);
+  color: #6C541A; font-size: 0.88rem; line-height: 1.85;
+}
+.money-note-icon {
+  flex-shrink: 0; width: 36px; height: 36px;
+  display: grid; place-items: center;
+  border-radius: 10px; background: #FDE68A; font-size: 1.05rem;
+}
+.money-note strong { color: #92400E; }
+
+/* Packages grid */
+.money-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 1rem; margin-bottom: 0.75rem;
+}
+.money-card {
+  display: flex; flex-direction: column; gap: 0.75rem;
+  padding: 1.35rem 1.25rem;
+  border: 1px solid #DCE8EB; border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.money-card:hover {
+  border-color: var(--color-secondary, #0891B2);
+  box-shadow: 0 10px 28px rgba(14, 116, 144, 0.1);
+  transform: translateY(-3px);
+}
+.money-card-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 0.5rem;
+}
+.money-icon { font-size: 1.85rem; line-height: 1; }
+.money-tag {
+  align-self: flex-start;
+  padding: 0.28rem 0.7rem; border-radius: 999px;
+  background: #E6F7F5; color: #087F8C;
+  font-size: 0.75rem; font-weight: 700;
+}
+.money-card h2 {
+  margin: 0; font-size: 1.1rem;
+  font-weight: 800; color: var(--color-ink, #0F172A);
+}
+.money-card > p {
+  margin: 0; color: #5D6E76;
+  font-size: 0.88rem; line-height: 1.8;
+}
+.money-price {
+  font-size: 1.5rem; font-weight: 900;
+  color: #073B4C; letter-spacing: -0.02em;
+}
+.money-price small { font-size: 0.8rem; font-weight: 600; color: #657780; }
+.money-card ul {
+  margin: 0; padding: 0; list-style: none;
+  display: grid; gap: 0.4rem; flex: 1;
+}
+.money-card ul li {
+  display: flex; align-items: flex-start; gap: 0.45rem;
+  color: #40555E; font-size: 0.85rem; line-height: 1.7;
+}
+.money-card ul li::before {
+  content: "✓"; flex-shrink: 0;
+  width: 20px; height: 20px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-soft, #ECFEFF);
+  color: var(--color-primary, #0E7490);
+  font-size: 0.7rem; font-weight: 800;
+  margin-top: 0.15rem;
+}
+.money-card .buy-package {
+  width: 100%; min-height: 46px; margin-top: 0.35rem;
+  font-weight: 700; border-radius: 11px;
+}
+.money-card .buy-package:disabled { opacity: 0.65; cursor: wait; }
+
+/* Status line */
+.money-status {
+  margin: 0.5rem 0 1.25rem; min-height: 1.4em;
+  font-size: 0.9rem; font-weight: 600;
+  line-height: 1.75; color: var(--color-primary, #0E7490);
+}
+.money-status:not(:empty) {
+  padding: 0.75rem 1rem; border-radius: 12px;
+  background: var(--color-primary-soft, #ECFEFF);
+  border: 1px solid var(--color-primary-line, #A5F3FC);
+}
+.money-status.is-error:not(:empty) {
+  background: var(--color-danger-soft, #FEF2F2);
+  border-color: #FECACA; color: var(--color-danger, #B91C1C);
+}
+.money-status.is-success:not(:empty) {
+  background: var(--color-success-soft, #ECFDF5);
+  border-color: #A7F3D0; color: var(--color-success, #047857);
+}
+
+/* Orders panel */
+.money-orders {
+  margin-top: 0.5rem; margin-bottom: 1.75rem;
+  padding: 1.35rem 1.25rem;
+  border: 1px solid var(--color-line-soft, #E2E8F0);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.04);
+}
+.money-orders h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem; font-weight: 800; color: var(--color-ink, #0F172A);
+}
+.money-orders .muted-copy {
+  margin: 0 0 1rem;
+  color: var(--color-muted, #64748B); font-size: 0.85rem; line-height: 1.7;
+}
+#moneyOrders {
+  color: var(--color-muted, #64748B);
+  font-size: 0.9rem; line-height: 1.75;
+}
+#moneyOrders .retry-btn {
+  margin-inline-start: 0.65rem;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--color-primary, #0E7490);
+  border-radius: 8px;
+  background: #fff; color: var(--color-primary, #0E7490);
+  font: inherit; font-size: 0.78rem; font-weight: 700;
+  cursor: pointer;
+}
+.money-orders table { width: 100%; border-collapse: collapse; }
+.money-orders th,
+.money-orders td {
+  text-align: end; padding: 0.75rem 0.65rem;
+  border-bottom: 1px solid #E4ECEF; font-size: 0.85rem;
+}
+.money-orders th {
+  color: var(--color-muted, #64748B); font-weight: 700;
+  font-size: 0.78rem; background: var(--color-surface-2, #F8FAFC);
+}
+.money-orders td { color: var(--color-ink, #0F172A); }
+.money-orders tbody tr:hover td { background: var(--color-surface-2, #F8FAFC); }
+
+/* Noscript */
+.noscript-notice {
+  padding: 0.95rem 1.1rem; border-radius: 12px;
+  background: #FFFBEB; border: 1px solid #FDE68A;
+  color: #92400E; font-size: 0.9rem; line-height: 1.8;
+  margin-bottom: 1rem;
+}
+.noscript-notice strong { display: block; margin-bottom: 0.35rem; }
+
+@media (max-width: 600px) {
+  .money-orders { overflow-x: auto; }
+  .money-orders table { min-width: 480px; }
+}
+
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  .money-card, .money-orders {
+    background: #111B2A; border-color: #334155;
+  }
+  .money-card h2, .money-orders h2, .money-orders td { color: #E2E8F0; }
+  .money-card > p, .money-card ul li { color: #B6C2D2; }
+  .money-price { color: #67E8F9; }
+  .money-tag { background: #083344; color: #67E8F9; }
+  .money-card ul li::before { background: #083344; color: #67E8F9; }
+  .money-note {
+    background: linear-gradient(135deg, #2E2208, #1C1917);
+    border-color: #92400E; color: #E2E8F0;
+  }
+  .money-note strong { color: #FBBF24; }
+  .money-orders th {
+    background: #17243A; color: #B6C2D2; border-bottom-color: #334155;
+  }
+  .money-orders td { border-bottom-color: #334155; }
+  .seller-subnav a {
+    background: #111B2A; border-color: #334155; color: #B6C2D2;
+  }
+  .seller-subnav a[aria-current="page"] {
+    background: linear-gradient(180deg, #0891B2, #0E7490);
+    color: #fff; border-color: transparent;
+  }
+  #moneyOrders .retry-btn {
+    background: #111B2A; color: #67E8F9; border-color: #22D3EE;
+  }
+  .noscript-notice {
+    background: #2E2208; border-color: #92400E; color: #FBBF24;
+  }
+}
