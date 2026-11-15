@@ -116,7 +116,7 @@ def test_dedicated_marketplace_pages_render(monkeypatch, tmp_path):
 
     cases = [
         ("/search", "جست‌وجوی کالا"),
-        ("/stores", "ویترین فروشگاه‌ها"),
+        ("/stores", "فروشگاه‌های شهر"),
         ("/seller", "پنل مدیریت فروشگاه"),
         ("/account", "حساب کاربری"),
         ("/saved", "محصولات ذخیره‌شده"),
@@ -190,7 +190,7 @@ def test_seller_dashboard_has_storefront_first_layout_and_product_actions(monkey
     assert 'data-store-edit-actions' in html
     assert "عملکرد فروشگاه" in html
     assert "عملکرد ویترین" not in html
-    assert "ویترین کالاها و خدمات" in html
+    assert "محصولات و خدمات فروشگاه" in html
     assert "اطلاعات فروشگاه" in html
     assert "ویترینت را بساز؛ مشتری منتظر است" not in html
     # The current console uses a dialog-based product form and large tap targets.
@@ -224,8 +224,8 @@ def test_homepage_city_privacy_and_compact_category_controls(monkeypatch, tmp_pa
     assert 'id="findMyLocationButton"' in html
     assert html.index('class="home-location-bar"') < html.index('class="home-intro"')
     assert "بازار شهر خودت را پیدا کن" in html
-    assert "ویترینت رو به دلِ خونه‌ها بفرست." in html
-    assert 'href="/seller">ویترینم رو بساز' in html
+    assert "مشتری‌های شهرت راحت‌تر پیدات می‌کنن." in html
+    assert 'href="/seller">فروشگاهم رو آنلاین می‌کنم' in html
     assert 'id="citySelect"' in html
     assert 'value="تهران"' in html
     assert 'id="marketListingsTitle">بازار تهران</h2>' in html
@@ -318,11 +318,11 @@ def test_homepage_uses_seller_focused_hero_and_image_promo_carousel(monkeypatch,
     html = response.get_data(as_text=True)
 
     assert response.status_code == 200
-    assert "کی‌داره آمده تا بازارهای شهر را رونق بدهد" in html
-    assert "در چند دقیقه ویترین فروشگاهت را آنلاین کن" in html
-    assert "منتظر نمون تا مشتری بیاد!" in html
-    assert "ویترینت رو به دلِ خونه‌ها بفرست." in html
-    assert 'href="/seller">ویترینم رو بساز' in html
+    assert "اگر مغازه یا فروشگاه فیزیکی داری" in html
+    assert "در چند دقیقه فروشگاهت را در کی‌داره آنلاین کن" in html
+    assert "فروشگاه فیزیکی‌ات رو آنلاین کن!" in html
+    assert "مشتری‌های شهرت راحت‌تر پیدات می‌کنن." in html
+    assert 'href="/seller">فروشگاهم رو آنلاین می‌کنم' in html
     assert 'id="homeRotatingMessage"' not in html
     assert 'id="homeMessageAction"' not in html
     assert 'class="market-ticker"' not in html

@@ -188,9 +188,9 @@ def test_home_has_single_primary_cta_above_the_fold():
     hero_start = html.index('<section class="home-intro"')
     hero_end = html.index('<section class="listings-section"', hero_start)
     hero = html[hero_start:hero_end]
-    assert "منتظر نمون تا مشتری بیاد!" in hero
-    assert "ویترینت رو به دلِ خونه‌ها بفرست." in hero
-    assert 'href="/seller">ویترینم رو بساز' in hero
+    assert "فروشگاه فیزیکی‌ات رو آنلاین کن!" in hero
+    assert "مشتری‌های شهرت راحت‌تر پیدات می‌کنن." in hero
+    assert 'href="/seller">فروشگاهم رو آنلاین می‌کنم' in hero
     assert 'id="homeRotatingMessage"' not in hero
     assert 'id="homeMessageAction"' not in hero
     assert hero.count("button-primary") == 1
@@ -406,7 +406,7 @@ def test_user_facing_messages_avoid_generic_error_copy():
         text = read(name)
         assert "خطایی رخ داد" not in text, name
         assert '"خطا در دریافت کالاها"' not in text, name
-    assert "کالا ثبت شد؛ ویترینت آمادهٔ معرفی است" in read("static/js/seller.js")
+    assert "کالا ثبت شد؛ فروشگاهت آمادهٔ معرفی است" in read("static/js/seller.js")
 
 
 def test_header_navigation_is_deduplicated_and_auth_actions_have_feedback(client):
@@ -448,7 +448,7 @@ def test_legal_links_are_hidden_until_auth_state_is_confirmed_and_store_label_is
     assert 'setVisible(legalLinks, signedIn)' in auth_script
     assert 'id="headerSellerLink"' in home and "مدیریت فروشگاه" in home
     assert 'id="mobileSellerLink"' in home and "مدیریت فروشگاه" in home
-    assert "مدیریت فروشگاه و ویترین آنلاین" in home
+    assert "مدیریت فروشگاه آنلاین" in home
 
 
 def test_seller_dashboard_redirects_guests_to_registration_and_serves_signed_in_users(client, app):
@@ -660,7 +660,7 @@ def test_first_product_form_is_minimal_and_uses_store_defaults():
     assert 'productForm.elements.city.value = store.city || ""' in script
     assert 'categorySelect.value = store.category' in script
     assert 'ثبت اولین کالا' in script
-    assert 'مشاهده ویترین عمومی' in script
+    assert 'مشاهده فروشگاه' in script
 
 
 def test_registration_collects_only_core_seller_details_and_optional_coordinates(client):

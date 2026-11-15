@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ meta_title or 'ویترین فروشگاه' }} | کی‌داره{% endblock %}
+{% block title %}{{ meta_title or 'فروشگاه' }} | کی‌داره{% endblock %}
 
 {% block head %}
 <style>
@@ -276,9 +276,9 @@
 
   <section class="store-hero page-heading">
     <a class="back-link" href="/stores">← بازگشت به فروشگاه‌ها</a>
-    <span class="section-kicker"><span aria-hidden="true">🏪</span> ویترین فروشنده</span>
+    <span class="section-kicker"><span aria-hidden="true">🏪</span> فروشگاه محلی</span>
     {#
-      The h1 is a static fallback ("ویترین فروشگاه"), not "loading…".
+      The h1 is a static fallback ("فروشگاه"), not "loading…".
       If `pages.js` fails to load — network glitch, ad blocker — a persistent
       "loading…" h1 is misleading for sighted users and search engines.
       `pages.js::initStoreDetail` overwrites this text once the fetch
@@ -286,7 +286,7 @@
       MutationObserver at the bottom of this template so the animation does
       not keep running after the content arrives.
     #}
-    <h1 id="storeTitle" class="is-loading" data-store-id="{{ store_id }}">ویترین فروشگاه</h1>
+    <h1 id="storeTitle" class="is-loading" data-store-id="{{ store_id }}">فروشگاه</h1>
     <p id="storeDescription">محصولات و اطلاعات این فروشگاه</p>
 
     <div class="store-detail-meta" id="storeMeta"></div>
@@ -303,16 +303,16 @@
   <noscript>
     <div class="noscript-notice">
       <strong>⚠ جاوااسکریپت لازم است</strong>
-      برای مشاهدهٔ کالاها و اطلاعات کامل این ویترین، لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
+      برای مشاهدهٔ کالاها و اطلاعات کامل این فروشگاه، لطفاً جاوااسکریپت را در مرورگر خود فعال کنید.
       یا از <a href="/stores">فهرست فروشگاه‌ها</a> و <a href="/search">جست‌وجوی کالا</a> دیدن کنید.
     </div>
   </noscript>
 
   <div class="store-growth-prompt">
     <div>
-      <strong>این ویترین را به مشتری‌هایت معرفی کن</strong>
+      <strong>فروشگاهت را به مشتری‌ها معرفی کن</strong>
       <p>
-        پیوند ویترینت را در پروفایل واتساپ، وضعیت واتساپ و استوری شبکه‌های اجتماعی بگذار
+        پیوند فروشگاهت را در پروفایل واتساپ، وضعیت واتساپ و استوری شبکه‌های اجتماعی بگذار
         تا مشتری‌ها مستقیم کالاهایت را ببینند.
       </p>
     </div>
@@ -323,7 +323,7 @@
       data-share-url=""
       data-share-title=""
     >
-      ↗ معرفی ویترین در شبکه‌های اجتماعی
+      ↗ معرفی فروشگاه در شبکه‌های اجتماعی
     </button>
   </div>
 
@@ -337,7 +337,7 @@
 
   <section class="page-panel store-products-panel">
     <div class="page-results-head">
-      <h2>کالاهای این ویترین</h2>
+      <h2>محصولات این فروشگاه</h2>
       <span id="pageResultsCount" role="status" aria-live="polite"></span>
     </div>
     {#
@@ -414,7 +414,7 @@
       fallback.style.gridColumn = "1 / -1";
       fallback.setAttribute("role", "alert");
       fallback.innerHTML =
-        "<strong>دریافت اطلاعات این ویترین بیش از حد معمول طول کشید.</strong>" +
+        "<strong>دریافت اطلاعات این فروشگاه بیش از حد معمول طول کشید.</strong>" +
         "<p>ممکن است اتصال شبکه یا سرور کند باشد.</p>";
       const retry = document.createElement("button");
       retry.type = "button";

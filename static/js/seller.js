@@ -31,7 +31,7 @@
   function setAddProductAvailability(canAdd, reason) {
     document.querySelectorAll("[data-open-add-product]").forEach((btn) => {
       btn.disabled = !canAdd;
-      btn.title = canAdd ? "" : (reason || "ابتدا ویترین بساز");
+      btn.title = canAdd ? "" : (reason || "ابتدا فروشگاهت را بساز");
     });
   }
 
@@ -45,7 +45,7 @@
   async function loadSellerListings(storeId) {
     const target = document.querySelector("#pageListings");
     if (!target || !storeId) return;
-    target.innerHTML = '<div class="loading-card">در حال دریافت کالاهای ویترین…</div>';
+    target.innerHTML = '<div class="loading-card">در حال دریافت محصولات فروشگاه…</div>';
     try {
       const data = await api("/api/stores/" + storeId);
       const items = data.items || [];
@@ -97,7 +97,7 @@
               );
             })
             .join("")
-        : '<div class="empty-page-state"><span aria-hidden="true">＋</span><h3>یک قدم تا آنلاین‌شدن فروشگاهت</h3><p>اولین کالا را ثبت کن تا ویترینت برای مشتری‌ها قابل مشاهده شود. عکس و توضیحات ضروری نیستند.</p><button class="button button-primary" type="button" data-open-add-product>ثبت اولین کالا</button></div>';
+        : '<div class="empty-page-state"><span aria-hidden="true">＋</span><h3>یک قدم تا آنلاین‌شدن فروشگاهت</h3><p>اولین کالا را ثبت کن تا فروشگاهت برای مشتری‌ها کامل و قابل مشاهده شود. عکس و توضیحات ضروری نیستند.</p><button class="button button-primary" type="button" data-open-add-product>ثبت اولین کالا</button></div>';
       const count = document.querySelector("#pageResultsCount");
       if (count) count.textContent = fmt.format(items.length) + " کالا";
       const productMetric = document.querySelector("#sellerProductMetric");
@@ -130,7 +130,7 @@
         if (nextMetric) nextMetric.textContent = "ورود به حساب";
         if (status)
           status.innerHTML =
-            'برای مدیریت ویترین باید <a href="/login">وارد حساب</a> شوی یا <a href="/register">ثبت‌نام</a> کنی.';
+            'برای مدیریت فروشگاه باید <a href="/login">وارد حساب</a> شوی یا <a href="/register">ثبت‌نام</a> کنی.';
         if (createForm) createForm.hidden = true;
         setAddProductAvailability(false, "ابتدا وارد حساب شوید");
         setStoreEditVisibility(false);
@@ -146,7 +146,7 @@
         if (nextMetric) nextMetric.textContent = "فعال‌سازی فروشندگی";
         if (status) {
           status.innerHTML =
-            "حساب فعلی شما خریدار است. برای ساخت ویترین و ثبت کالا، حساب را به فروشنده تبدیل کنید." +
+            "حساب فعلی شما خریدار است. برای آنلاین‌کردن فروشگاه و ثبت کالا، حساب را به فروشنده تبدیل کنید." +
             ' <button type="button" class="button button-primary" id="becomeSellerButton">تبدیل حساب به فروشنده</button>';
         }
         if (createForm) createForm.hidden = true;
@@ -187,7 +187,7 @@
               longitude: createForm.longitude?.value || null,
             }),
           });
-          notify("ویترین ساخته شد.");
+          notify("فروشگاه ساخته شد.");
           location.reload();
         } catch (err) {
           notify(err.message);
@@ -208,9 +208,9 @@
           status.innerHTML =
             "<strong>سلام " +
             escapeHTML(me.user.name) +
-            "</strong><br>هنوز ویترین نساخته‌ای. فرم زیر را پر کن.";
+            "</strong><br>هنوز فروشگاه نساخته‌ای. فرم زیر را پر کن.";
         if (createForm) createForm.hidden = false;
-        setAddProductAvailability(false, "ابتدا ویترین بساز");
+        setAddProductAvailability(false, "ابتدا فروشگاهت را بساز");
         setStoreEditVisibility(false);
         return;
       }
@@ -230,7 +230,7 @@
       if (welcomeDescription) {
         welcomeDescription.textContent = store.city
           ? "فروشگاه در " + store.city
-          : "کالاها و خدمات ویترین فروشگاهت را مدیریت کن.";
+          : "محصولات و خدمات فروشگاهت را مدیریت کن.";
       }
 
       // Populate the edit dialog form (hidden until user clicks "ویرایش")
@@ -264,7 +264,7 @@
           escapeHTML(store.city) +
           '<br><a href="/store/' +
           encodeURIComponent(store.id) +
-          '" class="text-link">مشاهده ویترین عمومی ←</a>';
+          '" class="text-link">مشاهده فروشگاه ←</a>';
 
       if (createForm) createForm.hidden = true;
       setAddProductAvailability(true);
@@ -299,7 +299,7 @@
               longitude: editForm.longitude?.value || null,
             }),
           });
-          notify("اطلاعات ویترین ذخیره شد.");
+          notify("اطلاعات فروشگاه ذخیره شد.");
           location.reload();
         } catch (err) {
           notify(err.message || "ذخیرهٔ اطلاعات فروشگاه انجام نشد.");
@@ -314,7 +314,7 @@
       productForm?.addEventListener("submit", async (e) => {
         e.preventDefault();
         if (!storeId) {
-          notify("ابتدا ویترین بساز.");
+          notify("ابتدا فروشگاهت را بساز.");
           return;
         }
 
@@ -339,7 +339,7 @@
           const data = await response.json().catch(() => ({}));
           if (!response.ok)
             throw new Error(data.message || data.error || "ثبت کالا انجام نشد.");
-          notify("کالا ثبت شد؛ ویترینت آمادهٔ معرفی است 🎉");
+          notify("کالا ثبت شد؛ فروشگاهت آمادهٔ معرفی است 🎉");
           productForm.reset();
           if (productForm.elements.city) productForm.elements.city.value = store?.city || "";
           const categorySelect = productForm.elements.category;

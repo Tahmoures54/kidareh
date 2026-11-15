@@ -23,7 +23,7 @@
         <div class="seller-store-avatar" id="sellerStoreAvatar" aria-hidden="true">ف</div>
         <div class="seller-identity-copy">
           <h1 id="sellerWelcomeTitle">فروشگاه من</h1>
-          <p id="sellerWelcomeDescription">کالاها و خدمات ویترینت را ثبت کن و اطلاعات فروشگاهت را از همین‌جا مدیریت کن.</p>
+          <p id="sellerWelcomeDescription">کالاها و خدمات فروشگاهت را ثبت کن و اطلاعات آن را از همین‌جا مدیریت کن.</p>
         </div>
       </div>
     </div>
@@ -45,7 +45,7 @@
     <article class="seller-metric">
       <span class="seller-metric-icon" aria-hidden="true">▦</span>
       <div class="seller-metric-copy">
-        <small>کالاهای ویترین</small>
+        <small>محصولات فروشگاه</small>
         <strong id="sellerProductMetric">—</strong>
       </div>
     </article>
@@ -53,7 +53,7 @@
       <span class="seller-metric-icon" aria-hidden="true">↗</span>
       <div class="seller-metric-copy">
         <small>گام بعدی</small>
-        <strong id="sellerNextStepMetric">ساخت ویترین</strong>
+        <strong id="sellerNextStepMetric">آنلاین‌کردن فروشگاه</strong>
       </div>
     </article>
   </section>
@@ -103,7 +103,7 @@
       {# ── Create form — inline, only shown when no store exists yet ── #}
       <form id="storeCreateForm" class="stack-form" hidden>
         <div class="seller-empty-hint">
-          فقط نام فروشگاه و شهر را وارد کن؛ بعد از ساخت فروشگاه می‌توانی کالاها و خدماتت را در ویترین ثبت کنی.
+          فقط نام فروشگاه و شهر را وارد کن؛ بعد از ساخت فروشگاه می‌توانی کالاها و خدماتت را در آن ثبت کنی.
         </div>
         <label>نام فروشگاه
           <input name="name" required maxlength="80" placeholder="مثلاً خانه‌چین">
@@ -161,13 +161,13 @@
   <section class="page-panel seller-products-panel" id="myProductsPanel">
     <div class="page-results-head">
       <div>
-        <h2>ویترین کالاها و خدمات</h2>
-        <p class="muted-copy">این همان ویترینی است که مشتری می‌بیند؛ کالاها و خدماتت را اینجا ثبت و مدیریت کن.</p>
+        <h2>محصولات و خدمات فروشگاه</h2>
+        <p class="muted-copy">این همان فروشگاهی است که مشتری می‌بیند؛ محصولات و خدماتت را اینجا ثبت و مدیریت کن.</p>
       </div>
       <span id="pageResultsCount" role="status" aria-live="polite">— کالا</span>
     </div>
     <div id="pageListings" class="page-card-grid" aria-busy="true">
-      <div class="loading-card">در حال دریافت کالاهای ویترین…</div>
+      <div class="loading-card">در حال دریافت محصولات فروشگاه…</div>
     </div>
   </section>
 
@@ -278,7 +278,7 @@
 <div class="seller-mobile-cta" aria-label="اقدام سریع">
   <button class="button button-primary" type="button"
           data-open-add-product disabled title="در حال آماده‌سازی…">＋ کالا</button>
-  <a class="button button-outline" href="#storePanel">ویترین</a>
+  <a class="button button-outline" href="#storePanel">فروشگاه</a>
 </div>
 {% endblock %}
 
