@@ -42,8 +42,10 @@ def _clean_sms_env(monkeypatch):
         "KAVENEGAR_API_KEY",
         "KAVENEGAR_TEMPLATE",
         "KAVENEGAR_VERIFY_TEMPLATE",
+        "SMS_ENABLED",
     ):
         monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("SMS_ENABLED", "1")
     yield
 
 
@@ -94,6 +96,20 @@ def test_kidareh_template_variable_has_precedence(monkeypatch):
     monkeypatch.setenv("KAVENEGAR_VERIFY_TEMPLATE", "kidareh-otp")
     monkeypatch.setenv("KAVENEGAR_TEMPLATE", "smartmechanicregister")
     assert sms.get_template() == "kidareh-otp"
+
+
+def test_sms_disabled_does_not_call_gateway(monkeypatch):
+    monkeypatch.setenv("SMS_ENABLED", "false")
+    monkeypatch.setenv("KAVENEGAR_API_KEY", "test-key")
+    _forbid_urlopen(
+        monkeypatch,
+        "urlopen must not be called when SMS_ENABLED is false",
+    )
+
+    with pytest.raises(sms.SMSDeliveryError) as error:
+        sms.send_otp("09123456789", "123456")
+
+    assert error.value.reason == "sms_disabled"
 
 
 def test_sms_fails_closed_without_api_key(monkeypatch):
