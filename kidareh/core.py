@@ -66,6 +66,10 @@ def _resolve_database_path() -> Path:
 
 
 def _resolve_upload_folder() -> Path:
+    # Vercel's deployment filesystem is read-only. Never honor a repository-
+    # relative UPLOAD_FOLDER such as static/uploads on that platform.
+    if os.environ.get("VERCEL"):
+        return Path("/tmp/uploads")
     value = os.environ.get("UPLOAD_FOLDER", "").strip()
     if value:
         return Path(value).expanduser()
@@ -203,7 +207,12 @@ def store_uploaded_image(binary: bytes, extension: str) -> str:
     if extension not in {".jpg", ".png", ".webp"}:
         raise ValueError("unsupported_image_extension")
     filename = f"{uuid.uuid4().hex}{extension}"
-    if os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip():
+    blob_token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
+    if os.environ.get("VERCEL") and not blob_token:
+        raise RuntimeError(
+            "Vercel uploads require BLOB_READ_WRITE_TOKEN; ephemeral local storage is disabled."
+        )
+    if blob_token:
         from .infrastructure.storage.object_storage import upload_image
 
         content_types = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
