@@ -105,7 +105,8 @@ def _check_otp_rate_limit(phone):
     }
 
     with get_connection() as connection:
-        if connection.dialect_name == "postgresql":
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name == "postgresql":
             # Ensure both keys exist before locking them. The fixed phone-then-IP
             # order prevents lock-order inversions across concurrent requests.
             for scope, key_hash in keys.items():
@@ -132,7 +133,7 @@ def _check_otp_rate_limit(phone):
                 SELECT last_sent_at, window_started_at, request_count
                 FROM otp_rate_limits
                 WHERE scope = ? AND key_hash = ?
-                """ + (" FOR UPDATE" if connection.dialect_name == "postgresql" else ""),
+                """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
                 (scope, key_hash),
             ).fetchone()
 
@@ -434,7 +435,8 @@ def verify_otp():
     with get_connection() as connection:
         # Serialize attempts and consumption to prevent OTP reuse. PostgreSQL
         # locks the challenge row; SQLite takes its database write lock.
-        if connection.dialect_name != "postgresql":
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name != "postgresql":
             connection.execute("BEGIN IMMEDIATE")
 
         challenge = connection.execute(
@@ -448,7 +450,7 @@ def verify_otp():
                 terms_accepted_at
             FROM otp_challenges
             WHERE id = ? AND consumed_at IS NULL
-            """ + (" FOR UPDATE" if connection.dialect_name == "postgresql" else ""),
+            """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
             (challenge_id,),
         ).fetchone()
 
