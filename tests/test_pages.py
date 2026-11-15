@@ -284,10 +284,14 @@ def test_city_combobox_uses_full_location_api_and_starts_with_popular_cities(mon
     assert 'id="citySelect" list=' not in html
 
     register_html = client.get("/register").get_data(as_text=True)
-    assert 'id="buyerCity"' in register_html and 'name="city"' in register_html
-    assert 'list="iranCityOptions"' in register_html
-    assert 'id="buyerCity"' in register_html
-    assert "data-iran-location" in register_html
+    assert 'id="registerPhone"' in register_html
+    assert 'id="registerPhoneForm"' in register_html
+    with client.session_transaction() as browser_session:
+        browser_session["auth_flow_id"] = "pending-profile-flow"
+    profile_html = client.get("/register/profile").get_data(as_text=True)
+    assert 'id="profileCity"' in profile_html and 'name="city"' in profile_html
+    assert 'list="iranCityOptions"' in profile_html
+    assert "data-iran-location" in profile_html
     seller_template = _read_project_file("templates", "pages", "seller", "dashboard.html")
     assert 'name="city"' in seller_template
     assert 'list="iranCityOptions"' in seller_template
