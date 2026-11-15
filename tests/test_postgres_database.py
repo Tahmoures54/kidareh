@@ -314,6 +314,7 @@ def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatc
         "DATABASE_PATH": str(tmp_path / "unused.sqlite3"),
         "UPLOAD_FOLDER": str(tmp_path / "uploads"),
         "REDIS_URL": "",
+        "TESTING_OTP_CODE": True,
     })
     with app.app_context():
         initialize_database()
@@ -339,4 +340,53 @@ def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatc
     search_response = client.get("/api/listings?q=کالای آزمایشی")
     assert search_response.status_code == 200
     assert any(item["id"] == listing_id for item in search_response.get_json()["items"])
+
+    # Exercise the actual multi-step SMS registration and persistent session
+    # against PostgreSQL, with the external SMS provider safely stubbed.
+    from kidareh.routes import auth as auth_routes
+    import re
+
+    monkeypatch.setattr(auth_routes, "send_otp", lambda phone, code: True)
+    with client.session_transaction() as browser_session:
+        browser_session["csrf_token"] = "postgres-integration-csrf"
+    challenge = client.get("/api/auth/challenge").get_json()
+    match = re.search(r"(\d+)\s*\+\s*(\d+)", challenge["question"])
+    assert match is not None
+    captcha_answer = str(int(match.group(1)) + int(match.group(2)))
+
+    otp_response = client.post(
+        "/api/auth/request-otp",
+        json={
+            "phone": "09120000000",
+            "role": "seller",
+            "terms_accepted": True,
+            "captcha_answer": captcha_answer,
+        },
+        headers={"X-CSRF-Token": "postgres-integration-csrf"},
+    )
+    assert otp_response.status_code == 200
+    otp_payload = otp_response.get_json()
+    assert otp_payload["ok"] is True
+    assert "test_code" in otp_payload
+
+    verify_response = client.post(
+        "/api/auth/verify-otp",
+        json={"code": otp_payload["test_code"]},
+        headers={"X-CSRF-Token": "postgres-integration-csrf"},
+    )
+    assert verify_response.status_code == 200
+    assert verify_response.get_json()["existing_user"] is False
+
+    profile_response = client.post(
+        "/api/auth/complete-profile",
+        json={"name": "فروشنده آزمایشی", "role": "seller"},
+        headers={"X-CSRF-Token": "postgres-integration-csrf"},
+    )
+    assert profile_response.status_code == 200
+    assert profile_response.get_json()["user"]["role"] == "seller"
+
+    me_response = client.get("/api/auth/me")
+    assert me_response.status_code == 200
+    assert me_response.get_json()["user"]["phone"] == "09120000000"
+    assert me_response.get_json()["user"]["role"] == "seller"
     app.extensions["kidareh_db"].dispose()
