@@ -618,9 +618,6 @@ def complete_profile():
             "message": "نوع حساب معتبر نیست.",
         }), 400
 
-    store = None
-    values = {}
-
     raw_city = payload.get("city", "")
     profile_city = normalize_location_name(
         raw_city if isinstance(raw_city, str) else ""
