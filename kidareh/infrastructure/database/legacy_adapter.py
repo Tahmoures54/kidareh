@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any, Iterable
 
 from sqlalchemy.engine import Connection, CursorResult
+from .postgres_compat import qmark_to_format
 
 
 class CompatibleRow(dict):
@@ -73,6 +74,8 @@ class SQLAlchemyConnectionAdapter:
                 not parameters or not isinstance(parameters[0], (tuple, dict))
             ):
                 parameters = tuple(parameters)
+            if self._connection.dialect.name == "postgresql":
+                statement, parameters = qmark_to_format(statement, parameters or ())
             result = self._connection.exec_driver_sql(statement, parameters or ())
         return CompatibleResult(result)
 
