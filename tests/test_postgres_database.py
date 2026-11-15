@@ -293,11 +293,14 @@ def test_postgres_otp_rate_limit_serializes_concurrent_requests(tmp_path):
         app.extensions["kidareh_db"].dispose()
 
 
-def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path):
+def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatch):
     """Run the real PostgreSQL startup path, schema migration, and health route."""
     url = os.environ.get("KIDAREH_TEST_POSTGRES_URL")
     if not url:
         pytest.skip("KIDAREH_TEST_POSTGRES_URL is not configured")
+
+    monkeypatch.setenv("DATABASE_BACKEND", "postgresql")
+    monkeypatch.setenv("DATABASE_URL", url)
 
     from kidareh import create_app
     from kidareh.core import initialize_database
