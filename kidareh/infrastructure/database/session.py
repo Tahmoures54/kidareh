@@ -57,6 +57,10 @@ def create_database_engine(database_path: str | Path, url: str | None = None) ->
     options = {"pool_pre_ping": True, "future": True}
     if target_url.startswith("sqlite:"):
         options["connect_args"] = {"check_same_thread": False, "timeout": 30}
+    elif target_url.startswith("postgresql+psycopg://"):
+        # Disable psycopg automatic server-side prepared statements for
+        # compatibility with Neon/PgBouncer transaction-pooling endpoints.
+        options["connect_args"] = {"prepare_threshold": None}
     engine = create_engine(target_url, **options)
 
     if target_url.startswith("sqlite:"):
