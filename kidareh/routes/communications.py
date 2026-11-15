@@ -164,11 +164,12 @@ def send_conversation_message(conversation_id):
         thread = db.execute("SELECT * FROM conversations WHERE id=? AND (buyer_id=? OR seller_id=?)", (conversation_id, user["id"], user["id"])).fetchone()
         if not thread:
             return jsonify({"error": "conversation_not_found"}), 404
-        cursor = db.execute("INSERT INTO conversation_messages(conversation_id,sender_id,body) VALUES(?,?,?)", (conversation_id, user["id"], body.strip()))
+        cursor = db.execute("INSERT INTO conversation_messages(conversation_id,sender_id,body) VALUES(?,?,?) RETURNING id", (conversation_id, user["id"], body.strip()))
+        message_id = cursor.fetchone()["id"]
         db.execute("UPDATE conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=?", (conversation_id,))
         recipient_id = thread["seller_id"] if user["id"] == thread["buyer_id"] else thread["buyer_id"]
         create_notification(db, recipient_id, "new_message", "پیام جدید", body.strip()[:140], "/messages")
-        row = db.execute("SELECT id,sender_id,body,created_at,read_at FROM conversation_messages WHERE id=?", (cursor.lastrowid,)).fetchone()
+        row = db.execute("SELECT id,sender_id,body,created_at,read_at FROM conversation_messages WHERE id=?", (message_id,)).fetchone()
     return jsonify({"item": dict(row)}), 201
 
 
@@ -206,9 +207,10 @@ def support_create():
     except rate_limits.RateLimitExceeded as error:
         return rate_limits.error_response(error, "سقف ثبت تیکت روزانه پر شده است.")
     with get_connection() as db:
-        cursor = db.execute("INSERT INTO support_tickets(user_id,title,category) VALUES(?,?,?)", (user["id"], title.strip(), category))
-        db.execute("INSERT INTO support_messages(ticket_id,sender_id,body,is_admin_reply) VALUES(?,?,?,0)", (cursor.lastrowid, user["id"], body.strip()))
-    return jsonify({"ok": True, "id": cursor.lastrowid}), 201
+        cursor = db.execute("INSERT INTO support_tickets(user_id,title,category) VALUES(?,?,?) RETURNING id", (user["id"], title.strip(), category))
+        ticket_id = cursor.fetchone()["id"]
+        db.execute("INSERT INTO support_messages(ticket_id,sender_id,body,is_admin_reply) VALUES(?,?,?,0)", (ticket_id, user["id"], body.strip()))
+    return jsonify({"ok": True, "id": ticket_id}), 201
 
 
 @bp.get("/api/support/tickets/<int:ticket_id>")
