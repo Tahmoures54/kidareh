@@ -11,6 +11,7 @@ or user rows. The migration is intentionally one-time and non-destructive.
 """
 from __future__ import annotations
 
+import os
 import tempfile
 from pathlib import Path
 
@@ -46,17 +47,28 @@ def upgrade() -> None:
 
     with tempfile.TemporaryDirectory(prefix="kidareh-pg-schema-") as directory:
         root = Path(directory)
-        app = create_app(
-            {
-                "TESTING": True,
-                "SECRET_KEY": "schema-bootstrap-only-not-a-production-secret",
-                "DATABASE_BACKEND": "sqlite",
-                "DATABASE_URL": "",
-                "DATABASE_PATH": str(root / "schema.sqlite3"),
-                "UPLOAD_FOLDER": str(root / "uploads"),
-                "REDIS_URL": "",
-            }
-        )
+        # The migration may be invoked with DATABASE_BACKEND=postgresql.
+        # Force only this isolated schema-source app to SQLite, then restore
+        # the caller's environment immediately after the factory returns.
+        previous_backend = os.environ.get("DATABASE_BACKEND")
+        os.environ["DATABASE_BACKEND"] = "sqlite"
+        try:
+            app = create_app(
+                {
+                    "TESTING": True,
+                    "SECRET_KEY": "schema-bootstrap-only-not-a-production-secret",
+                    "DATABASE_BACKEND": "sqlite",
+                    "DATABASE_URL": "",
+                    "DATABASE_PATH": str(root / "schema.sqlite3"),
+                    "UPLOAD_FOLDER": str(root / "uploads"),
+                    "REDIS_URL": "",
+                }
+            )
+        finally:
+            if previous_backend is None:
+                os.environ.pop("DATABASE_BACKEND", None)
+            else:
+                os.environ["DATABASE_BACKEND"] = previous_backend
         with app.app_context():
             try:
                 # Build every current domain table using the authoritative,
