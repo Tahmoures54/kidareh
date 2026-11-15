@@ -25,6 +25,8 @@ def _is_production(env: dict[str, str]) -> bool:
         env.get("FLASK_ENV", "").lower() == "production",
         env.get("ENV", "").lower() == "production",
         bool(env.get("LIARA_APP_ID")),
+        # Vercel injects VERCEL=1 even when FLASK_ENV is left as "development".
+        bool(env.get("VERCEL")),
     ))
 
 
