@@ -272,9 +272,9 @@ def admin_dashboard():
             "listings": db.execute("SELECT COUNT(*) FROM listings").fetchone()[0],
             "stores": db.execute("SELECT COUNT(*) FROM stores").fetchone()[0],
             "open_tickets": db.execute("SELECT COUNT(*) FROM support_tickets WHERE status IN ('open','in_progress')").fetchone()[0],
-            "open_reports": db.execute("SELECT COUNT(*) FROM content_reports WHERE status='open'").fetchone()[0] if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='content_reports'").fetchone() else 0,
+            "open_reports": db.execute("SELECT COUNT(*) FROM content_reports WHERE status='open'").fetchone()[0] if db.table_exists("content_reports") else 0,
         }
-        order_table = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='monetization_orders'").fetchone()
+        order_table = db.table_exists("monetization_orders")
         revenue = db.execute("SELECT COALESCE(SUM(amount_toman),0) FROM monetization_orders WHERE status IN ('paid','success','completed')").fetchone()[0] if order_table else 0
         users = db.execute("SELECT id,name,phone,role,is_banned,created_at FROM users ORDER BY id DESC LIMIT 100").fetchall()
         activity = db.execute("""SELECT 'listing' AS type, title AS label, created_at FROM listings
@@ -386,11 +386,11 @@ def seller_stats():
             (user["id"], user["id"]),
         ).fetchall()
         listing_count = len(listings)
-        tables = {row["name"] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        tables = db.table_names()
         views = 0
         sales = 0
         if "listing_views" in tables:
-            cols = {row["name"] for row in db.execute("PRAGMA table_info(listing_views)")}
+            cols = db.column_names("listing_views")
             if "listing_id" in cols:
                 views = db.execute(
                     "SELECT COUNT(*) FROM listing_views WHERE listing_id IN "
@@ -398,7 +398,7 @@ def seller_stats():
                     (user["id"], user["id"]),
                 ).fetchone()[0]
         if "orders" in tables:
-            cols = {row["name"] for row in db.execute("PRAGMA table_info(orders)")}
+            cols = db.column_names("orders")
             if "listing_id" in cols:
                 sales = db.execute(
                     "SELECT COUNT(*) FROM orders WHERE listing_id IN "
