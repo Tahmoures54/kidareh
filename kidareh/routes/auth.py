@@ -387,6 +387,25 @@ def request_otp():
 
     flow_id = uuid.uuid4().hex
     with get_connection() as connection:
+        previous_flow_id = session.get("auth_flow_id")
+        if isinstance(previous_flow_id, str) and previous_flow_id:
+            previous = connection.execute(
+                "SELECT challenge_id FROM auth_flows WHERE id = ?",
+                (previous_flow_id,),
+            ).fetchone()
+            if previous:
+                connection.execute(
+                    "UPDATE otp_challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL",
+                    (now, previous["challenge_id"]),
+                )
+                connection.execute(
+                    "UPDATE auth_flows SET state = 'superseded', updated_at = ? WHERE id = ?",
+                    (now, previous_flow_id),
+                )
+        connection.execute(
+            "DELETE FROM auth_flows WHERE expires_at < ? OR (state IN ('completed', 'expired', 'locked', 'blocked', 'superseded') AND updated_at < ?)",
+            (now, now - 86400),
+        )
         connection.execute(
             """
             INSERT INTO auth_flows (
