@@ -105,7 +105,19 @@ def _check_otp_rate_limit(phone):
     }
 
     with get_connection() as connection:
-        connection.execute("BEGIN IMMEDIATE")
+        if connection.dialect_name == "postgresql":
+            # Ensure both keys exist before locking them. The fixed phone-then-IP
+            # order prevents lock-order inversions across concurrent requests.
+            for scope, key_hash in keys.items():
+                connection.execute(
+                    """INSERT INTO otp_rate_limits
+                       (scope, key_hash, last_sent_at, window_started_at, request_count)
+                       VALUES (?, ?, 0, ?, 0)
+                       ON CONFLICT(scope, key_hash) DO NOTHING""",
+                    (scope, key_hash, now),
+                )
+        else:
+            connection.execute("BEGIN IMMEDIATE")
 
         # Rows older than two hours cannot affect the active one-hour window.
         connection.execute(
@@ -120,7 +132,7 @@ def _check_otp_rate_limit(phone):
                 SELECT last_sent_at, window_started_at, request_count
                 FROM otp_rate_limits
                 WHERE scope = ? AND key_hash = ?
-                """,
+                """ + (" FOR UPDATE" if connection.dialect_name == "postgresql" else ""),
                 (scope, key_hash),
             ).fetchone()
 
@@ -420,8 +432,10 @@ def verify_otp():
     accepted_at = None
 
     with get_connection() as connection:
-        # Serialize attempts and consumption to prevent OTP reuse.
-        connection.execute("BEGIN IMMEDIATE")
+        # Serialize attempts and consumption to prevent OTP reuse. PostgreSQL
+        # locks the challenge row; SQLite takes its database write lock.
+        if connection.dialect_name != "postgresql":
+            connection.execute("BEGIN IMMEDIATE")
 
         challenge = connection.execute(
             """
@@ -434,7 +448,7 @@ def verify_otp():
                 terms_accepted_at
             FROM otp_challenges
             WHERE id = ? AND consumed_at IS NULL
-            """,
+            """ + (" FOR UPDATE" if connection.dialect_name == "postgresql" else ""),
             (challenge_id,),
         ).fetchone()
 
