@@ -189,8 +189,8 @@ def test_home_has_single_primary_cta_above_the_fold():
     hero_end = html.index('<section class="listings-section"', hero_start)
     hero = html[hero_start:hero_end]
     assert "منتظر نمون تا مشتری بیاد!" in hero
-    assert "ویترینت رو به دلِ خونه‌ها بفرست." in hero
-    assert 'href="/seller">ویترینم رو بساز' in hero
+    assert "مشتری‌های شهرت راحت‌تر پیدات می‌کنن." in hero
+    assert 'href="/seller">فروشگاهم رو آنلاین می‌کنم' in hero
     assert 'id="homeRotatingMessage"' not in hero
     assert 'id="homeMessageAction"' not in hero
     assert hero.count("button-primary") == 1
@@ -448,7 +448,7 @@ def test_legal_links_are_hidden_until_auth_state_is_confirmed_and_store_label_is
     assert 'setVisible(legalLinks, signedIn)' in auth_script
     assert 'id="headerSellerLink"' in home and "مدیریت فروشگاه" in home
     assert 'id="mobileSellerLink"' in home and "مدیریت فروشگاه" in home
-    assert "مدیریت فروشگاه و ویترین آنلاین" in home
+    assert "مدیریت فروشگاه آنلاین" in home
 
 
 def test_seller_dashboard_redirects_guests_to_registration_and_serves_signed_in_users(client, app):
