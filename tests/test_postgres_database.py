@@ -392,3 +392,36 @@ def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatc
     dashboard_response = client.get("/seller")
     assert dashboard_response.status_code == 200
     app.extensions["kidareh_db"].dispose()
+
+
+def test_database_url_alone_does_not_switch_runtime_from_sqlite(tmp_path, monkeypatch):
+    """A provisioned platform URL must not silently change the live backend."""
+    from kidareh import create_app
+
+    monkeypatch.delenv("DATABASE_BACKEND", raising=False)
+    monkeypatch.setenv(
+        "DATABASE_URL",
+        "postgresql+psycopg://not-used:never-connect@localhost/unused",
+    )
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "database-backend-gate-test-only",
+        "DATABASE_PATH": str(tmp_path / "default.sqlite3"),
+        "UPLOAD_FOLDER": str(tmp_path / "uploads"),
+    })
+    try:
+        assert app.config["DATABASE_BACKEND"] == "sqlite"
+        assert app.extensions["kidareh_db"].engine.dialect.name == "sqlite"
+        assert app.config["DATABASE_URL"] == ""
+    finally:
+        app.extensions["kidareh_db"].dispose()
+
+
+def test_postgresql_backend_requires_an_explicit_database_url(monkeypatch):
+    import pytest
+    from kidareh import create_app
+
+    monkeypatch.setenv("DATABASE_BACKEND", "postgresql")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    with pytest.raises(RuntimeError, match="DATABASE_URL is required"):
+        create_app({"TESTING": True, "SECRET_KEY": "database-backend-gate-test-only"})
