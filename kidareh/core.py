@@ -485,22 +485,17 @@ def _remove_legacy_demo_data() -> None:
         if not target_ids:
             return
         placeholders = ", ".join("?" for _ in target_ids)
-        tables = connection.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'table' "
-            "AND name NOT LIKE 'sqlite_%'"
-        ).fetchall()
-        for table_row in tables:
-            table_name = str(table_row["name"])
+        for table_name in connection.table_names():
             if table_name == target_table:
                 continue
             quoted_table = '"' + table_name.replace('"', '""') + '"'
-            foreign_keys = connection.execute(
-                f"PRAGMA foreign_key_list({quoted_table})"
-            ).fetchall()
-            for foreign_key in foreign_keys:
-                if foreign_key["table"] != target_table:
+            for foreign_key in connection.foreign_keys(table_name):
+                if foreign_key.get("referred_table") != target_table:
                     continue
-                child_column = '"' + str(foreign_key["from"]).replace('"', '""') + '"'
+                child_columns = foreign_key.get("constrained_columns") or []
+                if len(child_columns) != 1:
+                    continue
+                child_column = '"' + str(child_columns[0]).replace('"', '""') + '"'
                 connection.execute(
                     f"DELETE FROM {quoted_table} WHERE {child_column} IN ({placeholders})",
                     tuple(target_ids),
