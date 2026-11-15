@@ -364,7 +364,7 @@
           document.querySelector("#copyStoreAddress")?.addEventListener("click", async () => { try { await navigator.clipboard.writeText(s.address); notify("آدرس کپی شد."); } catch { notify("کپی پشتیبانی نشد."); } });
         } else navHost.innerHTML = "";
       }
-      const shareStore=document.querySelector("#shareStore");if(shareStore){shareStore.dataset.shareUrl="/store/"+s.id;shareStore.dataset.shareTitle="ویترین "+s.name;}
+      const shareStore=document.querySelector("#shareStore");if(shareStore){shareStore.dataset.shareUrl="/store/"+s.id;shareStore.dataset.shareTitle="فروشگاه "+s.name;}
       const follow=document.querySelector("#followStore");follow.textContent=data.following?"✓ دنبال می‌کنی":"♡ دنبال‌کردن فروشگاه";
       follow.addEventListener("click",async()=>{try{const me=await api("/api/auth/me");if(!me.user){notify("برای دنبال‌کردن فروشگاه ابتدا وارد حساب شو.");location.href="/login";return;}const result=await api("/api/stores/"+page.storeId+"/follow",{method:"POST"});follow.textContent=result.following?"✓ دنبال می‌کنی":"♡ دنبال‌کردن فروشگاه";document.querySelector("#storeMeta").textContent=s.city+" · "+fmt.format(s.product_count||0)+" کالا · "+fmt.format(result.follower_count||0)+" دنبال‌کننده";notify(result.following?"فروشگاه به دنبال‌شده‌ها اضافه شد.":"فروشگاه از دنبال‌شده‌ها برداشته شد.");}catch(e){notify(e.message)}});
       const target=document.querySelector("#pageListings");target.innerHTML=(data.items||[]).length?data.items.map(productCard).join(""):'<div class="empty-page-state">این فروشگاه هنوز محصولی ثبت نکرده است.</div>';
