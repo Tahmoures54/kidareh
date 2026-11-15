@@ -610,7 +610,9 @@ def test_registration_form_uses_vertical_layout_and_mobile_sizing(client):
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert '@media (max-width: 520px)' in css
     assert 'id="continueRoleButton"' in html
-    continue_button = re.search(r'<button\\b(?=[^>]*\\bid="continueRoleButton")[^>]*>', html)\n    assert continue_button, "continue button element missing"\n    assert re.search(r'\\bdisabled(?:\\s|>)', continue_button.group(0))
+    continue_button = re.search(r'<button\b(?=[^>]*\bid="continueRoleButton")[^>]*>', html)
+    assert continue_button, "continue button element missing"
+    assert re.search(r'\bdisabled(?:\s|>)', continue_button.group(0))
     auth_script = read("static/js/auth-pages.js")
     assert 'radio.addEventListener("change"' in auth_script
     assert 'syncRoleContinueButton();' in auth_script
