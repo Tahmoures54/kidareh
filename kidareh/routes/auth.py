@@ -125,7 +125,30 @@ def _check_otp_rate_limit(phone):
     }
 
     with get_connection() as connection:
-        connection.execute("BEGIN IMMEDIATE")
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name == "postgresql":
+            lock_keys = sorted(
+                int.from_bytes(
+                    hashlib.sha256(
+                        f"kidareh-otp:{scope}:{key_hash}".encode("utf-8")
+                    ).digest()[:8],
+                    "big",
+                    signed=True,
+                )
+                for scope, key_hash in keys.items()
+            )
+            for lock_key in lock_keys:
+                connection.execute("SELECT pg_advisory_xact_lock(?)", (lock_key,))
+            for scope, key_hash in keys.items():
+                connection.execute(
+                    """INSERT INTO otp_rate_limits
+                       (scope, key_hash, last_sent_at, window_started_at, request_count)
+                       VALUES (?, ?, 0, ?, 0)
+                       ON CONFLICT(scope, key_hash) DO NOTHING""",
+                    (scope, key_hash, now),
+                )
+        else:
+            connection.execute("BEGIN IMMEDIATE")
 
         # Rows older than two hours cannot affect the active one-hour window.
         connection.execute(
@@ -140,7 +163,7 @@ def _check_otp_rate_limit(phone):
                 SELECT last_sent_at, window_started_at, request_count
                 FROM otp_rate_limits
                 WHERE scope = ? AND key_hash = ?
-                """,
+                """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
                 (scope, key_hash),
             ).fetchone()
 
@@ -574,12 +597,14 @@ def verify_otp():
     now = time.time()
     user = None
     with get_connection() as connection:
-        connection.execute("BEGIN IMMEDIATE")
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name != "postgresql":
+            connection.execute("BEGIN IMMEDIATE")
         flow = connection.execute(
             """
             SELECT phone, state, challenge_id, terms_accepted_at, expires_at
             FROM auth_flows WHERE id = ?
-            """,
+            """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
             (flow_id,),
         ).fetchone()
 
@@ -604,7 +629,7 @@ def verify_otp():
             SELECT id, otp_hash, expires_at, attempts
             FROM otp_challenges
             WHERE id = ? AND consumed_at IS NULL
-            """,
+            """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
             (flow["challenge_id"],),
         ).fetchone()
 
@@ -772,12 +797,14 @@ def complete_profile():
     now = time.time()
     try:
         with get_connection() as connection:
-            connection.execute("BEGIN IMMEDIATE")
+            dialect_name = getattr(connection, "dialect_name", "sqlite")
+            if dialect_name != "postgresql":
+                connection.execute("BEGIN IMMEDIATE")
             flow = connection.execute(
                 """
                 SELECT phone, terms_accepted_at, state, expires_at
                 FROM auth_flows WHERE id = ?
-                """,
+                """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
                 (flow_id,),
             ).fetchone()
             if (
@@ -798,6 +825,7 @@ def complete_profile():
                     terms_accepted_at, city
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
                 """,
                 (
                     name.strip(),
@@ -809,7 +837,7 @@ def complete_profile():
                     profile_city if role == "buyer" else "",
                 ),
             )
-            user_id = cursor.lastrowid
+            user_id = cursor.fetchone()["id"]
             connection.execute(
                 "UPDATE auth_flows SET state = 'completed', updated_at = ? WHERE id = ?",
                 (now, flow_id),
