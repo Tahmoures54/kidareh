@@ -192,7 +192,7 @@ def test_seller_dashboard_has_storefront_first_layout_and_product_actions(monkey
     assert "عملکرد ویترین" not in html
     assert "محصولات و خدمات فروشگاه" in html
     assert "اطلاعات فروشگاه" in html
-    assert "ویترینت را بساز؛ مشتری منتظر است" not in html
+    assert "فروشگاهت را بساز؛ مشتری منتظر است" not in html
     # The current console uses a dialog-based product form and large tap targets.
     dashboard_css = _read_project_file("static", "css", "seller-dashboard.css")
     compact = dashboard_css.replace(" ", "").replace("\n", "").replace("\t", "")
