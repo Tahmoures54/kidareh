@@ -184,6 +184,12 @@ def create_app(test_config=None):
     @app.after_request
     def security_headers(response):
         """Send baseline hardening headers with every response."""
+        # Authentication and OTP responses contain account/session state and
+        # must never be stored by browsers or shared intermediaries.
+        if request.path.startswith("/api/auth/"):
+            response.headers["Cache-Control"] = "private, no-store, max-age=0"
+            response.headers["Pragma"] = "no-cache"
+            response.headers["Vary"] = "Cookie"
         # CSP with a per-request nonce. Toggle with CSP_ENABLED=0 in .env if a
         # legacy template trips it.
         if app.config.get("CSP_ENABLED", os.environ.get("CSP_ENABLED", "1") == "1"):
