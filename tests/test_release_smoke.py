@@ -324,16 +324,7 @@ def test_new_signup_collects_profile_before_creating_account(
         assert session["verified_phone"] == "09123456789"
 
     profile = {"name": expected_name, "role": role}
-    if role == "seller":
-        profile.update({
-            "store_name": "ویترین تازه",
-            "store_category": "لوازم خانه",
-            "store_city": "تهران",
-            "store_address": "تهران، خیابان نمونه",
-            "store_hours": "۹ تا ۱۸",
-            "in_person": True,
-        })
-    else:
+    if role == "buyer":
         profile["city"] = "تهران"
 
     created = client.post(
@@ -349,6 +340,25 @@ def test_new_signup_collects_profile_before_creating_account(
     with client.session_transaction() as session:
         assert session["user_id"] == created_payload["user"]["id"]
 
+    if role == "seller":
+        assert created_payload["store"] is None
+        assert created_payload["onboarding_required"] is True
+        store_response = client.post(
+            "/api/stores",
+            json={
+                "name": "ویترین تازه",
+                "category": "لوازم خانه",
+                "city": "تهران",
+                "description": "",
+            },
+            headers={"X-CSRF-Token": created_payload["csrf_token"]},
+        )
+        assert store_response.status_code == 201, store_response.get_json()
+        assert store_response.get_json()["item"]["name"] == "ویترین تازه"
+        assert client.get("/seller").status_code == 200
+    else:
+        assert created_payload["onboarding_required"] is False
+
     with app.app_context():
         with get_connection() as connection:
             store_row = connection.execute(
@@ -356,9 +366,4 @@ def test_new_signup_collects_profile_before_creating_account(
                 (created_payload["user"]["id"],),
             ).fetchone()
 
-    if role == "seller":
-        assert client.get("/seller").status_code == 200
-        assert created_payload["store"]["name"] == "ویترین تازه"
-        assert store_row is not None
-    else:
-        assert store_row is None
+    assert (store_row is not None) is (role == "seller")
