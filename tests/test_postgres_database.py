@@ -93,3 +93,40 @@ def test_initialized_sqlite_schema_can_be_rehearsed_on_postgres(tmp_path):
         finally:
             target_engine.dispose()
             get_database().dispose()
+
+
+def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
+    """Verify Alembic honors the explicit PostgreSQL migration URL.
+
+    The current baseline is intentionally empty: this checks connection and
+    version-table handling only, not creation of the application's domain
+    schema.
+    """
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    url = os.environ.get("KIDAREH_TEST_POSTGRES_URL")
+    if not url:
+        pytest.skip("KIDAREH_TEST_POSTGRES_URL is not configured")
+
+    root = Path(__file__).resolve().parents[1]
+    environment = dict(os.environ)
+    environment["MIGRATION_DATABASE_URL"] = url
+    environment.pop("DATABASE_PATH", None)
+    environment.pop("DB_PATH", None)
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"],
+        cwd=root,
+        env=environment,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    from sqlalchemy import inspect
+    engine = create_database_engine("unused.sqlite3", url=url)
+    try:
+        assert inspect(engine).has_table("alembic_version")
+    finally:
+        engine.dispose()
