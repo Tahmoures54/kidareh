@@ -685,7 +685,8 @@ def complete_profile():
                 profile_city if role == "buyer" else ""
             ),
         },
-        "store": store,
+        "store": None,
+        "onboarding_required": role == "seller",
         "csrf_token": session["csrf_token"],
     })
 
