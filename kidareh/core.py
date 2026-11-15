@@ -870,19 +870,16 @@ def _schema_migration_lock(database_path: Path) -> Iterator[None]:
             deadline = time.monotonic() + MIGRATION_LOCK_TIMEOUT_SECONDS
             with get_connection() as connection:
                 while not connection.execute(
-                    "SELECT pg_try_advisory_lock(?)", (lock_key,)
+                    "SELECT pg_try_advisory_xact_lock(?)", (lock_key,)
                 ).fetchone()[0]:
                     if time.monotonic() >= deadline:
                         raise RuntimeError(
                             "Timed out waiting for the PostgreSQL schema advisory lock."
                         )
                     time.sleep(0.1)
-                try:
-                    yield
-                finally:
-                    connection.execute(
-                        "SELECT pg_advisory_unlock(?)", (lock_key,)
-                    )
+                # Transaction-level advisory locks also work with Neon
+                # PgBouncer transaction pooling and release on commit/rollback.
+                yield
             return
 
     lock_path = database_path.parent / MIGRATION_LOCK_FILENAME
