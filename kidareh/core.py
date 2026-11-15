@@ -949,7 +949,11 @@ def initialize_database() -> None:
                 from alembic import command
                 from alembic.config import Config
 
-                migration_url = str(current_app.config.get("DATABASE_URL") or "").strip()
+                migration_url = str(
+                    os.environ.get("MIGRATION_DATABASE_URL")
+                    or current_app.config.get("DATABASE_URL")
+                    or ""
+                ).strip()
                 if not migration_url:
                     raise RuntimeError(
                         "DATABASE_URL is required for PostgreSQL schema initialization."
