@@ -240,7 +240,22 @@ def request_otp():
 
     payload = _json_payload()
 
-    phone = _normalize_phone(payload.get("phone"))
+    raw_phone = payload.get("phone")
+    phone = _normalize_phone(raw_phone) if raw_phone not in (None, "") else None
+    if raw_phone in (None, ""):
+        # Resend requests reuse the phone bound to the active server-side flow.
+        flow_id = session.get("auth_flow_id")
+        if isinstance(flow_id, str) and flow_id:
+            with get_connection() as connection:
+                active_flow = connection.execute(
+                    """
+                    SELECT phone FROM auth_flows
+                    WHERE id = ? AND state = 'otp_pending' AND expires_at >= ?
+                    """,
+                    (flow_id, time.time()),
+                ).fetchone()
+            if active_flow:
+                phone = active_flow["phone"]
     requested_role = payload.get("role", "buyer")
 
     if not isinstance(requested_role, str) or requested_role not in {
@@ -403,7 +418,7 @@ def request_otp():
                     (now, previous_flow_id),
                 )
         connection.execute(
-            "DELETE FROM auth_flows WHERE expires_at < ? OR (state IN ('completed', 'expired', 'locked', 'blocked', 'superseded') AND updated_at < ?)",
+            "DELETE FROM auth_flows WHERE expires_at < ? OR (state IN ('completed', 'expired', 'locked', 'blocked', 'superseded', 'cancelled') AND updated_at < ?)",
             (now, now - 86400),
         )
         connection.execute(
@@ -488,11 +503,44 @@ def auth_flow_state():
     masked = f"{phone[:2]}•••••{phone[-4:]}" if len(phone) == 11 else ""
     return jsonify({
         "state": flow["state"],
-        "phone": phone,
         "masked_phone": masked,
         "expires_in": max(0, int(flow["expires_at"] - now)),
         "resend_after": max(0, 60 - int(now - flow["created_at"])),
     })
+
+
+@bp.post("/cancel-flow")
+def cancel_auth_flow():
+    """Invalidate the current OTP flow when the user chooses to change phone."""
+    if not csrf_valid():
+        return jsonify({
+            "error": "csrf_failed",
+            "message": "صفحه را تازه‌سازی کنید و دوباره تلاش کنید.",
+        }), 400
+
+    flow_id = session.get("auth_flow_id")
+    if isinstance(flow_id, str) and flow_id:
+        now = time.time()
+        with get_connection() as connection:
+            flow = connection.execute(
+                "SELECT challenge_id FROM auth_flows WHERE id = ?",
+                (flow_id,),
+            ).fetchone()
+            if flow:
+                connection.execute(
+                    "UPDATE otp_challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL",
+                    (now, flow["challenge_id"]),
+                )
+                connection.execute(
+                    "UPDATE auth_flows SET state = 'cancelled', updated_at = ? WHERE id = ?",
+                    (now, flow_id),
+                )
+
+    session.pop("auth_flow_id", None)
+    session.pop("otp_challenge_id", None)
+    session.pop("math_challenge_answer", None)
+    session.pop("math_challenge_at", None)
+    return jsonify({"ok": True})
 
 
 @bp.post("/verify-otp")
