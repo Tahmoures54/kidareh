@@ -44,12 +44,7 @@ def health():
     try:
         with get_connection() as connection:
             connection.execute("SELECT 1").fetchone()
-            existing_tables = {
-                row["name"]
-                for row in connection.execute(
-                    "SELECT name FROM sqlite_master WHERE type = 'table'"
-                )
-            }
+            existing_tables = connection.table_names()
         missing_tables = _REQUIRED_TABLES - existing_tables
         database_status = "schema_incomplete" if missing_tables else "ok"
     except (SQLAlchemyError, OSError, RuntimeError):
