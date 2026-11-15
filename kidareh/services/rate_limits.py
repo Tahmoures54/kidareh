@@ -103,7 +103,7 @@ def consume(scope: str, key: str, limit: int, window_seconds: int, cooldown_seco
         # two workers read the same count and both decide they are under budget.
         # Skipped when the caller already opened a transaction (that one is
         # equivalent, and nesting BEGIN raises).
-        if not connection.in_transaction:
+        if not connection.in_transaction():
             connection.execute("BEGIN IMMEDIATE")
         _prune(connection, now)
         row = connection.execute(
