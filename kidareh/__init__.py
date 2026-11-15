@@ -40,6 +40,13 @@ def create_app(test_config=None):
         or os.environ.get("VERCEL")
     )
 
+    database_backend = os.environ.get("DATABASE_BACKEND", "sqlite").strip().lower()
+    if database_backend not in {"sqlite", "postgresql"}:
+        raise RuntimeError("DATABASE_BACKEND must be either sqlite or postgresql.")
+    database_url = os.environ.get("DATABASE_URL", "").strip()
+    if database_backend == "postgresql" and not database_url:
+        raise RuntimeError("DATABASE_URL is required when DATABASE_BACKEND=postgresql.")
+
     # Resolve the signing key from the environment first, then from an explicit
     # test configuration, and only then fall back to a generated value.
     secret_key = (os.environ.get("SECRET_KEY") or "").strip()
@@ -74,6 +81,8 @@ def create_app(test_config=None):
         MAX_IMAGE_BYTES=max_image_bytes,
         MAX_CONTENT_LENGTH=max_image_bytes + 256 * 1024,
         DATABASE_PATH=str(DATABASE_PATH),
+        DATABASE_BACKEND=database_backend,
+        DATABASE_URL=(database_url if database_backend == "postgresql" else ""),
         UPLOAD_FOLDER=str(UPLOAD_FOLDER),
         SESSION_COOKIE_NAME=os.environ.get("SESSION_COOKIE_NAME", "session"),
         SESSION_COOKIE_HTTPONLY=(bool(is_production) or os.environ.get("SESSION_COOKIE_HTTPONLY", "1") == "1"),
