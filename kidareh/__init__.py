@@ -37,6 +37,7 @@ def create_app(test_config=None):
         os.environ.get("FLASK_ENV", "").lower() == "production"
         or os.environ.get("ENV", "").lower() == "production"
         or os.environ.get("LIARA_APP_ID")
+        or os.environ.get("VERCEL")
     )
 
     # Resolve the signing key from the environment first, then from an explicit
@@ -81,7 +82,7 @@ def create_app(test_config=None):
         PERMANENT_SESSION_LIFETIME=int(os.environ.get("PERMANENT_SESSION_LIFETIME", "1209600")),
         PREFERRED_URL_SCHEME="https" if is_production else "http",
         CSP_ENABLED=os.environ.get("CSP_ENABLED", "1") == "1",
-        HSTS_ENABLED=os.environ.get("HSTS_ENABLED", "1") == "1",
+        HSTS_ENABLED=(bool(is_production) or os.environ.get("HSTS_ENABLED", "1") == "1"),
         REDIS_URL=os.environ.get("REDIS_URL", "").strip(),
         CACHE_PREFIX=os.environ.get("CACHE_PREFIX", "kidareh:"),
         CACHE_DEFAULT_TTL=int(os.environ.get("CACHE_DEFAULT_TTL", "300")),
