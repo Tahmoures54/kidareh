@@ -618,6 +618,11 @@ def test_registration_form_uses_vertical_layout_and_mobile_sizing(client):
     assert 'syncRoleContinueButton();' in auth_script
     assert 'continueRoleButton?.addEventListener("click"' in auth_script
     assert 'const selected = form.querySelector(\'input[name="role"]:checked\')' in auth_script
+    assert 'label.textContent = selected?.value === "seller"' in auth_script
+    assert '"ادامه به‌عنوان فروشگاه‌دار"' in auth_script
+    assert '"ادامه به‌عنوان خریدار"' in auth_script
+    assert 'data-role-continue-label' in html
+    assert "ابتدا نوع حساب را انتخاب کنید" in html
     assert 'showStep("phone");' in auth_script
     assert 'id="authPhoneStep"' in html
     assert 'id="authProfileStep"' in html
