@@ -327,7 +327,7 @@ def test_become_seller_prompts_store_creation_when_missing(monkeypatch, tmp_path
     assert data["user"]["role"] == "seller"
     assert data["has_store"] is False
     assert data["next"] == "/api/stores"
-    assert "ویترین" in data["message"]
+    assert "فروشگاه" in data["message"]
 
 
 # ---------------------------------------------------------------------------
