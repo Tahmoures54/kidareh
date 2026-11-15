@@ -68,9 +68,9 @@ def store_page(store_id: int):
         store = connection.execute(
             "SELECT name, city, description, address FROM stores WHERE id = ?", (store_id,)
         ).fetchone()
-    meta_title = f"{store['name']} | ویترین کی‌داره" if store else "ویترین فروشگاه | کی‌داره"
+    meta_title = f"{store['name']} | فروشگاه کی‌داره" if store else "فروشگاه محلی | کی‌داره"
     meta_description = (
-        f"ویترین {store['name']} در {store['city']}؛ {store['description']}".strip("؛ ")
+        f"فروشگاه {store['name']} در {store['city']}؛ {store['description']}".strip("؛ ")
         if store
         else "کالاهای فروشگاه‌ها را در کی‌داره ببینید."
     )
