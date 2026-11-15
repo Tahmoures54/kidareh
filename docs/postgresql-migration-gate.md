@@ -26,7 +26,11 @@ health checks, search implementation, and integration tests have been ported.
    the full Flask suite against both SQLite (compatibility) and PostgreSQL.
 7. Verify Neon schema, role privileges, SSL, pooler/direct endpoint choice,
    connection limits, and backups before a controlled production cutover.
-8. Only after all gates pass, enable the PostgreSQL URL in the runtime config.
+8. Run Alembic with an explicit `MIGRATION_DATABASE_URL` (or `DATABASE_URL`)
+   only after reviewing the target. This controls migration commands, not Flask
+   runtime traffic. The current baseline revision is empty and does not create
+   domain tables.
+9. Only after all gates pass, enable the PostgreSQL URL in the runtime config.
    Keep the old deployment rollback path available until smoke tests pass.
 
 ## Safety
