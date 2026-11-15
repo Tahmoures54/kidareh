@@ -520,10 +520,11 @@ def create_listing():
             """
             INSERT INTO listings (title, category, city, price, description, emoji, featured, image_path, seller_phone, owner_id, store_id, latitude, longitude, availability_status, price_updated_at)
             VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)
+            RETURNING id
             """,
             (title.strip(), category, city.strip(), price, description.strip(), "🛍️", image_path, seller_phone, user["id"], store["id"], latitude, longitude, availability_status, price_updated_at),
         )
-        listing_id = cursor.lastrowid
+        listing_id = cursor.fetchone()["id"]
         row = connection.execute(
             "SELECT * FROM listings WHERE id = ?", (listing_id,)
         ).fetchone()
