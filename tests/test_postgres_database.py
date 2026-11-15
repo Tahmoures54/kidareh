@@ -191,3 +191,46 @@ def test_postgres_schema_lock_is_shared_across_connections(tmp_path):
             assert acquired is True
             connection.execute("SELECT pg_advisory_unlock(?)", (lock_key,))
         app.extensions["kidareh_db"].dispose()
+
+
+def test_postgres_rate_limit_is_atomic_across_connections(tmp_path):
+    """Concurrent first-use requests must never exceed the shared budget."""
+    import concurrent.futures
+
+    url = os.environ.get("KIDAREH_TEST_POSTGRES_URL")
+    if not url:
+        pytest.skip("KIDAREH_TEST_POSTGRES_URL is not configured")
+
+    from kidareh import create_app
+    from kidareh.services import rate_limits
+
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "postgres-rate-limit-rehearsal-only",
+        "DATABASE_PATH": str(tmp_path / "unused.sqlite3"),
+        "DATABASE_URL": url,
+        "UPLOAD_FOLDER": str(tmp_path / "uploads"),
+    })
+    with app.app_context():
+        rate_limits.ensure_tables()
+
+    def attempt():
+        with app.app_context():
+            try:
+                rate_limits.consume(
+                    "postgres_concurrency_test",
+                    "one-shared-identity",
+                    limit=3,
+                    window_seconds=3600,
+                )
+                return True
+            except rate_limits.RateLimitExceeded:
+                return False
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=12) as pool:
+            outcomes = list(pool.map(lambda _: attempt(), range(12)))
+        assert sum(outcomes) == 3
+        assert sum(not outcome for outcome in outcomes) == 9
+    finally:
+        app.extensions["kidareh_db"].dispose()
