@@ -285,10 +285,13 @@ def test_city_combobox_uses_full_location_api_and_starts_with_popular_cities(mon
 
     register_html = client.get("/register").get_data(as_text=True)
     assert 'id="buyerCity"' in register_html and 'name="city"' in register_html
-    assert 'id="storeCity"' in register_html and 'name="store_city"' in register_html
     assert 'list="iranCityOptions"' in register_html
     assert 'id="buyerCity"' in register_html
     assert "data-iran-location" in register_html
+    seller_template = _read_project_file("templates", "pages", "seller", "dashboard.html")
+    assert 'name="city"' in seller_template
+    assert 'list="iranCityOptions"' in seller_template
+    assert "data-iran-location" in seller_template
 
 
 def test_category_options_are_shared_across_search_seller_and_registration(monkeypatch, tmp_path):
@@ -298,7 +301,6 @@ def test_category_options_are_shared_across_search_seller_and_registration(monke
     pages = {
         "/search": ('id="pageCategory"', "مواد غذایی، خواربار و خشکبار", "everyday_goods"),
         "/seller": ('name="category"', "مواد غذایی، خواربار و خشکبار", "everyday_goods"),
-        "/register": ('id="storeCategory"', "مواد غذایی، خواربار و خشکبار", "everyday_goods"),
     }
     home = client.get("/").get_data(as_text=True)
     assert 'id="categorySelect"' not in home
