@@ -190,7 +190,7 @@ def test_seller_dashboard_has_storefront_first_layout_and_product_actions(monkey
     assert 'data-store-edit-actions' in html
     assert "عملکرد فروشگاه" in html
     assert "عملکرد ویترین" not in html
-    assert "ویترین کالاها و خدمات" in html
+    assert "محصولات و خدمات فروشگاه" in html
     assert "اطلاعات فروشگاه" in html
     assert "ویترینت را بساز؛ مشتری منتظر است" not in html
     # The current console uses a dialog-based product form and large tap targets.
@@ -318,9 +318,9 @@ def test_homepage_uses_seller_focused_hero_and_image_promo_carousel(monkeypatch,
     html = response.get_data(as_text=True)
 
     assert response.status_code == 200
-    assert "کی‌داره آمده تا بازارهای شهر را رونق بدهد" in html
+    assert "اگر مغازه یا فروشگاه فیزیکی داری" in html
     assert "در چند دقیقه فروشگاهت را در کی‌داره آنلاین کن" in html
-    assert "منتظر نمون تا مشتری بیاد!" in html
+    assert "فروشگاه فیزیکی‌ات رو آنلاین کن!" in html
     assert "مشتری‌های شهرت راحت‌تر پیدات می‌کنن." in html
     assert 'href="/seller">فروشگاهم رو آنلاین می‌کنم' in html
     assert 'id="homeRotatingMessage"' not in html
