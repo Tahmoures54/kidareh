@@ -63,10 +63,17 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
+    configured_url = config.get_main_option("sqlalchemy.url")
+    connect_args = (
+        {"prepare_threshold": None}
+        if configured_url.startswith("postgresql+psycopg://")
+        else {}
+    )
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
+        connect_args=connect_args,
     )
     try:
         target_metadata.reflect(
