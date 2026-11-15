@@ -725,9 +725,6 @@ def verify_otp():
     return jsonify({
         "existing_user": False,
         "phone_verified": True,
-        # Kept for older login clients; this is returned only to the same
-        # browser session and is never placed in a URL or browser storage.
-        "phone": flow["phone"],
     })
 
 
