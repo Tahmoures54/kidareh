@@ -366,6 +366,25 @@ def _ensure_listings_fts(connection) -> None:
     MemoryError) must surface instead of being swallowed and silently
     triggering a multi-minute rebuild on every start-up.
     """
+    if connection.dialect_name == "postgresql":
+        # PostgreSQL uses a GIN expression index instead of SQLite FTS5
+        # virtual tables and triggers. The indexed expression is intentionally
+        # repeated verbatim in the listing search query.
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_listings_search_vector
+            ON listings USING GIN (
+                to_tsvector(
+                    'simple',
+                    coalesce(title, '') || ' ' ||
+                    coalesce(description, '') || ' ' ||
+                    coalesce(city, '')
+                )
+            )
+            """
+        )
+        return
+
     connection.execute(
         """
         CREATE VIRTUAL TABLE IF NOT EXISTS listings_fts USING fts5(
