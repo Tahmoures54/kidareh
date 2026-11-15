@@ -1,11 +1,10 @@
 
 {% extends "base.html" %}
-{% from "macros/category_options.html" import category_options %}
 
 {% block title %}ثبت‌نام | کی‌داره{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261114">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261115-auth-flow">
 {% endblock %}
 
 {% block content %}
@@ -153,8 +152,8 @@
           </h2>
 
           <p class="auth-step-help">
-            یک کد ۶ رقمی برای تأیید شماره
-            به این موبایل ارسال می‌شود.
+            شماره همراه برای تأیید مالکیت شماره و ورود به حساب استفاده می‌شود.
+            کد یک‌بارمصرف را فقط خودتان وارد کنید و در اختیار دیگران نگذارید.
           </p>
 
           <label class="auth-label" for="regPhone">
@@ -283,6 +282,18 @@
             کد تا ۵ دقیقه معتبر است.
           </p>
 
+          <p class="auth-hint" id="otpResendCountdown" role="status" aria-live="polite">
+            امکان درخواست دوباره تا ۶۰ ثانیه دیگر
+          </p>
+          <button
+            class="button button-outline"
+            type="button"
+            id="resendOtpButton"
+            disabled
+          >
+            ارسال دوباره کد
+          </button>
+
           <div class="auth-actions-row">
             <button
               class="button button-outline"
@@ -356,126 +367,16 @@
             </p>
           </div>
 
-          <!-- اطلاعات فروشنده -->
+          <!-- فروشگاه پس از ساخت حساب، در پنل فروشنده راه‌اندازی می‌شود. -->
           <div id="sellerDetails" hidden>
             <div class="auth-divider">
-              <span>اطلاعات فروشگاه</span>
+              <span>قدم بعدی</span>
             </div>
-
-            <label class="auth-label" for="storeName">
-              نام فروشگاه
-            </label>
-
-            <input
-              class="auth-input"
-              type="text"
-              id="storeName"
-              name="store_name"
-              maxlength="80"
-              placeholder="مثلاً گالری نور"
-            >
-
-            <div class="auth-field-row">
-              <div>
-                <label class="auth-label" for="storeCity">
-                  شهر
-                </label>
-
-                <input
-                  class="auth-input"
-                  type="text"
-                  id="storeCity"
-                  name="store_city"
-                  maxlength="60"
-                  placeholder="نام شهر را جست‌وجو کنید"
-                  list="iranCityOptions"
-                  data-iran-location
-                  autocomplete="off"
-                >
-              </div>
-
-              <div>
-                <label class="auth-label" for="storeCategory">
-                  صنف فروشگاه
-                </label>
-
-                <select
-                  class="auth-input"
-                  id="storeCategory"
-                  name="store_category"
-                  aria-label="صنف فروشگاه"
-                >
-                  {{
-                    category_options(
-                      category_tree,
-                      include_empty=true,
-                      empty_label="انتخاب صنف (اختیاری)"
-                    )
-                  }}
-                </select>
-              </div>
-            </div>
-
-            <!-- موقعیت مکانی فروشگاه اختیاری است -->
-            <div class="seller-location-tools">
-              <p class="auth-hint">
-                موقعیت فروشگاه برای مسیریابی مشتری‌ها استفاده می‌شود؛
-                نیازی به نوشتن آدرس نیست.
-              </p>
-
-              <button
-                class="button button-outline"
-                type="button"
-                id="registerStoreLocationButton"
-              >
-                📍 دریافت موقعیت فروشگاه
-              </button>
-
-              <p
-                class="auth-hint"
-                id="registerStoreLocationStatus"
-                role="status"
-                aria-live="polite"
-              >
-                اختیاری؛ می‌توانید بعداً هم موقعیت را ثبت کنید.
-              </p>
-
-              <div class="seller-coordinate-fields">
-                <label
-                  class="auth-label"
-                  for="registerStoreLatitude"
-                >
-                  عرض جغرافیایی
-
-                  <input
-                    class="auth-input"
-                    type="text"
-                    id="registerStoreLatitude"
-                    name="store_latitude"
-                    inputmode="decimal"
-                    readonly
-                    aria-label="عرض جغرافیایی فروشگاه"
-                  >
-                </label>
-
-                <label
-                  class="auth-label"
-                  for="registerStoreLongitude"
-                >
-                  طول جغرافیایی
-
-                  <input
-                    class="auth-input"
-                    type="text"
-                    id="registerStoreLongitude"
-                    name="store_longitude"
-                    inputmode="decimal"
-                    readonly
-                    aria-label="طول جغرافیایی فروشگاه"
-                  >
-                </label>
-              </div>
-            </div>
+            <p class="auth-hint">
+              لازم نیست اکنون اطلاعات فروشگاه را وارد کنید.
+              بعد از ساخت حساب، نام فروشگاه و شهر را در چند لحظه ثبت می‌کنید؛
+              نشانی و جزئیات تکمیلی را هم می‌توانید بعداً اضافه کنید.
+            </p>
           </div>
 
           <button

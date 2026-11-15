@@ -663,21 +663,31 @@ def test_first_product_form_is_minimal_and_uses_store_defaults():
     assert 'مشاهده فروشگاه' in script
 
 
-def test_registration_collects_only_core_seller_details_and_optional_coordinates(client):
+def test_registration_defers_store_details_to_seller_onboarding(client):
     html = client.get("/register").get_data(as_text=True)
     script = read("static/js/auth-pages.js")
-    assert 'id="registerStoreLocationButton"' in html
-    assert 'name="store_latitude"' in html
-    assert 'name="store_longitude"' in html
-    assert 'navigator.geolocation.getCurrentPosition' in script
-    compact_script = re.sub(r"\s+", "", script)
-    assert 'form.elements.store_latitude?.value' in compact_script
-    assert 'form.elements.store_longitude?.value' in compact_script
-    assert "||null" in compact_script
-    assert 'name="contact_name"' not in html
-    assert 'name="store_address"' not in html
-    assert 'name="store_hours"' not in html
-    assert 'name="store_description"' not in html
+
+    # Seller signup asks only for account identity; store setup lives in /seller.
+    assert 'id="sellerDetails"' in html
+    assert "لازم نیست اکنون اطلاعات فروشگاه را وارد کنید" in html
+    assert 'name="store_name"' not in html
+    assert 'name="store_city"' not in html
+    assert 'name="store_latitude"' not in html
+    assert 'name="store_longitude"' not in html
+    assert 'id="registerStoreLocationButton"' not in html
+    assert "navigator.geolocation.getCurrentPosition" not in script
+
+    # Buyer location remains available and validated in the profile step.
+    assert 'id="buyerCity"' in html
+    assert 'name="city"' in html
+    assert 'data-iran-location' in html
+
+    # OTP retry is visible, cooldown-controlled, and does not auto-send SMS.
+    assert 'id="resendOtpButton"' in html
+    assert 'id="otpResendCountdown"' in html
+    assert "startOtpResendCountdown(60)" in script
+    assert 'autocomplete="one-time-code"' in html
+
 
 # ---------- Homepage discovery, sharing and storefront conversion ----------
 def test_homepage_category_stories_are_backed_by_the_real_category_catalog(client):

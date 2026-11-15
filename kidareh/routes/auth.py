@@ -618,9 +618,6 @@ def complete_profile():
             "message": "نوع حساب معتبر نیست.",
         }), 400
 
-    store = None
-    values = {}
-
     raw_city = payload.get("city", "")
     profile_city = normalize_location_name(
         raw_city if isinstance(raw_city, str) else ""
@@ -634,89 +631,8 @@ def complete_profile():
             ),
         }), 400
 
-    if role == "seller":
-        store_name = payload.get("store_name", "")
-        store_category = payload.get("store_category", "")
-        store_city = payload.get("store_city", "")
-        contact_name = payload.get("contact_name", name.strip())
-
-        values = {
-            "name": store_name,
-            "category": store_category,
-            "city": normalize_location_name(
-                store_city if isinstance(store_city, str) else ""
-            ),
-            "contact_name": contact_name,
-        }
-
-        if (
-            not isinstance(values["name"], str)
-            or not values["name"].strip()
-            or len(values["name"].strip()) > 80
-        ):
-            return jsonify({
-                "error": "invalid_store_name",
-                "message": "نام فروشگاه را وارد کنید.",
-            }), 400
-
-        if (
-            not values["city"]
-            or len(values["city"]) > 60
-            or not is_city_name(values["city"])
-        ):
-            return jsonify({
-                "error": "invalid_store_city",
-                "message": (
-                    "شهر فروشگاه را از فهرست شهرهای معتبر انتخاب کنید."
-                ),
-            }), 400
-
-        if (
-            not isinstance(values["category"], str)
-            or len(values["category"].strip()) > 80
-        ):
-            return jsonify({
-                "error": "invalid_store_details",
-                "message": "صنف فروشگاه معتبر نیست.",
-            }), 400
-
-        if (
-            not isinstance(values["contact_name"], str)
-            or not values["contact_name"].strip()
-            or len(values["contact_name"].strip()) > 80
-        ):
-            return jsonify({
-                "error": "invalid_contact_name",
-                "message": "نام مسئول فروشگاه معتبر نیست.",
-            }), 400
-
-        raw_lat = payload.get("latitude")
-        raw_lng = payload.get("longitude")
-
-        try:
-            if raw_lat in (None, "") and raw_lng in (None, ""):
-                values["latitude"] = None
-                values["longitude"] = None
-            elif raw_lat in (None, "") or raw_lng in (None, ""):
-                raise ValueError("both coordinates are required")
-            else:
-                values["latitude"] = float(raw_lat)
-                values["longitude"] = float(raw_lng)
-
-                if not (
-                    -90 <= values["latitude"] <= 90
-                    and -180 <= values["longitude"] <= 180
-                ):
-                    raise ValueError("coordinates out of range")
-
-        except (TypeError, ValueError):
-            return jsonify({
-                "error": "invalid_coordinates",
-                "message": (
-                    "مختصات فروشگاه معتبر نیست؛ "
-                    "دوباره موقعیت را دریافت کنید."
-                ),
-            }), 400
+    # Seller accounts are created independently from their store.
+    # Store details are collected progressively in the seller dashboard.
 
     try:
         with get_connection() as connection:
@@ -740,47 +656,11 @@ def complete_profile():
                     role,
                     datetime.now(timezone.utc).isoformat(),
                     accepted_at,
-                    profile_city if role == "buyer" else values["city"],
+                    profile_city if role == "buyer" else "",
                 ),
             )
 
             user_id = cursor.lastrowid
-
-            if role == "seller":
-                store_cursor = connection.execute(
-                    """
-                    INSERT INTO stores (
-                        owner_id,
-                        name,
-                        city,
-                        description,
-                        category,
-                        contact_name,
-                        address,
-                        hours,
-                        in_person,
-                        latitude,
-                        longitude
-                    )
-                    VALUES (?, ?, ?, '', ?, ?, '', '', 1, ?, ?)
-                    """,
-                    (
-                        user_id,
-                        values["name"].strip(),
-                        values["city"].strip(),
-                        values["category"].strip(),
-                        values["contact_name"].strip(),
-                        values["latitude"],
-                        values["longitude"],
-                    ),
-                )
-
-                store_row = connection.execute(
-                    "SELECT * FROM stores WHERE id = ?",
-                    (store_cursor.lastrowid,),
-                ).fetchone()
-
-                store = dict(store_row) if store_row else None
 
     except IntegrityError:
         return jsonify({
@@ -802,10 +682,11 @@ def complete_profile():
             "phone": phone,
             "role": role,
             "city": (
-                profile_city if role == "buyer" else values["city"]
+                profile_city if role == "buyer" else ""
             ),
         },
-        "store": store,
+        "store": None,
+        "onboarding_required": role == "seller",
         "csrf_token": session["csrf_token"],
     })
 

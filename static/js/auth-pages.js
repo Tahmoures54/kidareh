@@ -39,7 +39,6 @@
   const captchaQuestion = document.querySelector("#captchaQuestion");
   const feedback = document.querySelector("#authFeedback");
   const tokenMeta = document.querySelector('meta[name="csrf-token"]');
-  const sellerDetails = document.querySelector("#sellerDetails");
   const buyerDetails = document.querySelector("#buyerDetails");
 
   const stepsIndicator = document.querySelector(
@@ -49,12 +48,20 @@
   let busy = false;
   let currentStep = isRegister ? "role" : "phone";
   let otpAbortController = null;
+  let resendTimer = null;
 
   const digits = (value) =>
     String(value || "").replace(/[۰-۹٠-٩]/g, (character) => {
       const index = "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩".indexOf(character);
       return index >= 0 ? String(index % 10) : character;
     });
+
+  function maskPhone(value) {
+    const normalized = digits(value).replace(/\D/g, "");
+    return normalized.length === 11
+      ? `${normalized.slice(0, 2)}•••••${normalized.slice(-4)}`
+      : normalized;
+  }
 
   function message(text, isError = false) {
     if (!feedback) return;
@@ -140,26 +147,22 @@
   }
 
   function syncSellerDetails() {
-    if (!sellerDetails) return;
-
     const isSeller = selectedRole() === "seller";
-
-    sellerDetails.hidden = !isSeller;
 
     if (buyerDetails) {
       buyerDetails.hidden = isSeller;
     }
 
     const buyerCity = form.elements.city;
-
     if (buyerCity) {
       buyerCity.required = !isSeller;
+      buyerCity.disabled = isSeller;
     }
 
-    ["store_name", "store_city"].forEach((name) => {
-      const element = form.elements[name];
-      if (element) element.required = isSeller;
-    });
+    const sellerDetails = document.querySelector("#sellerDetails");
+    if (sellerDetails) {
+      sellerDetails.hidden = !isSeller;
+    }
   }
 
   function stopWebOtp() {
@@ -201,11 +204,41 @@
       });
   }
 
+  function startOtpResendCountdown(seconds = 60) {
+    const button = document.querySelector("#resendOtpButton");
+    const label = document.querySelector("#otpResendCountdown");
+    if (resendTimer) window.clearInterval(resendTimer);
+
+    let remaining = seconds;
+    if (button) button.disabled = true;
+
+    const render = () => {
+      if (label) {
+        label.textContent = remaining > 0
+          ? `برای درخواست دوباره ${remaining.toLocaleString("fa-IR")} ثانیه صبر کنید.`
+          : "اگر کد را دریافت نکردید، می‌توانید دوباره درخواست کنید.";
+      }
+      if (button) button.disabled = remaining > 0;
+    };
+
+    render();
+    resendTimer = window.setInterval(() => {
+      remaining = Math.max(0, remaining - 1);
+      render();
+      if (remaining === 0) {
+        window.clearInterval(resendTimer);
+        resendTimer = null;
+      }
+    }, 1000);
+  }
+
   function showStep(step) {
     currentStep = step;
 
     if (step !== "code") {
       stopWebOtp();
+      if (resendTimer) window.clearInterval(resendTimer);
+      resendTimer = null;
     }
 
     if (roleStep) roleStep.hidden = step !== "role";
@@ -220,6 +253,7 @@
       loadChallenge();
     } else if (step === "code") {
       form.elements.otp?.focus();
+      startOtpResendCountdown(60);
       startWebOtp();
     } else if (step === "profile") {
       syncSellerDetails();
@@ -227,84 +261,21 @@
     }
   }
 
-  // Optional store location: registration must work without GPS permission.
-  const storeLocationButton = document.querySelector(
-    "#registerStoreLocationButton"
-  );
-
-  storeLocationButton?.addEventListener("click", () => {
-    const status = document.querySelector(
-      "#registerStoreLocationStatus"
-    );
-
-    const latitude = form.elements.store_latitude;
-    const longitude = form.elements.store_longitude;
-
-    if (!navigator.geolocation) {
-      if (status) {
-        status.textContent =
-          "این مرورگر موقعیت مکانی را پشتیبانی نمی‌کند؛ " +
-          "می‌توانید بعداً از پنل فروشنده ثبت کنید.";
-      }
-      return;
-    }
-
-    storeLocationButton.disabled = true;
-    storeLocationButton.textContent = "در حال دریافت موقعیت…";
-
-    if (status) {
-      status.textContent =
-        "اجازهٔ دسترسی به موقعیت مکانی را تأیید کنید.";
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (latitude) {
-          latitude.value = position.coords.latitude.toFixed(6);
-        }
-
-        if (longitude) {
-          longitude.value = position.coords.longitude.toFixed(6);
-        }
-
-        if (status) {
-          status.textContent = "موقعیت فروشگاه ثبت شد.";
-        }
-
-        storeLocationButton.textContent =
-          "📍 دریافت دوبارهٔ موقعیت";
-        storeLocationButton.disabled = false;
-      },
-      (error) => {
-        const errorMessages = {
-          1: "اجازهٔ مکان‌یابی داده نشد؛ می‌توانید بعداً از پنل فروشنده اقدام کنید.",
-          2: "موقعیت فعلاً در دسترس نیست؛ GPS دستگاه را بررسی کنید.",
-          3: "دریافت موقعیت طول کشید؛ دوباره تلاش کنید.",
-        };
-
-        if (status) {
-          status.textContent =
-            errorMessages[error.code] ||
-            "دریافت موقعیت ناموفق بود؛ بعداً دوباره تلاش کنید.";
-        }
-
-        storeLocationButton.textContent =
-          "📍 تلاش دوباره برای دریافت موقعیت";
-        storeLocationButton.disabled = false;
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 60000,
-      }
-    );
-  });
-
   document
     .querySelector("#backToRoleButton")
     ?.addEventListener("click", () => {
       message("");
       showStep("role");
+    });
+
+  document
+    .querySelector("#resendOtpButton")
+    ?.addEventListener("click", () => {
+      if (busy) return;
+      message("برای دریافت کد تازه، شماره را بررسی و محاسبه امنیتی را دوباره وارد کنید.");
+      if (form.elements.otp) form.elements.otp.value = "";
+      if (form.elements.captcha) form.elements.captcha.value = "";
+      showStep("phone");
     });
 
   document
@@ -381,7 +352,7 @@
 
         if (phoneLabel) {
           phoneLabel.textContent =
-            form.elements.phone?.value.trim() || phone;
+            maskPhone(form.elements.phone?.value || phone);
         }
 
         showStep("code");
@@ -442,23 +413,9 @@
         const payload = {
           name: (form.elements.name?.value || "").trim(),
           role,
-          city: (form.elements.city?.value || "").trim(),
-          store_name: (
-            form.elements.store_name?.value || ""
-          ).trim(),
-          store_category: (
-            form.elements.store_category?.value || ""
-          ).trim(),
-          store_city: (
-            form.elements.store_city?.value || ""
-          ).trim(),
-          latitude: (
-            form.elements.store_latitude?.value || ""
-          ).trim() || null,
-          longitude: (
-            form.elements.store_longitude?.value || ""
-          ).trim() || null,
-          in_person: true,
+          city: role === "buyer"
+            ? (form.elements.city?.value || "").trim()
+            : "",
         };
 
         const data = await api("complete-profile", payload);
