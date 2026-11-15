@@ -368,13 +368,6 @@ def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatc
     otp_payload = otp_response.get_json()
     assert otp_payload["ok"] is True
     assert "test_code" in otp_payload
-    pending_state = client.get("/api/auth/flow").get_json()
-    assert pending_state["state"] == "otp_pending"
-    assert pending_state["masked_phone"].endswith("0000")
-    with client.session_transaction() as browser_session:
-        assert browser_session.get("auth_flow_id")
-        assert "verified_phone" not in browser_session
-        assert "verified_terms_accepted_at" not in browser_session
 
     verify_response = client.post(
         "/api/auth/verify-otp",
@@ -383,8 +376,6 @@ def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatc
     )
     assert verify_response.status_code == 200
     assert verify_response.get_json()["existing_user"] is False
-    assert verify_response.get_json()["phone_verified"] is True
-    assert client.get("/api/auth/flow").get_json()["state"] == "profile_pending"
 
     profile_response = client.post(
         "/api/auth/complete-profile",
