@@ -1269,7 +1269,8 @@ def test_multipage_registration_keeps_verified_state_server_side_and_creates_sto
     flow_state = client.get("/api/auth/flow")
     assert flow_state.status_code == 200
     assert flow_state.get_json()["state"] == "otp_pending"
-    assert flow_state.get_json()["phone"] == "09124445566"
+    assert flow_state.get_json()["masked_phone"] == "09•••••5566"
+    assert "phone" not in flow_state.get_json()
     assert client.get("/register/verify").status_code == 200
 
     verified = client.post(
