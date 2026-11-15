@@ -32,7 +32,13 @@ class CompatibleResult:
 
     def __init__(self, result: CursorResult):
         self._result = result
-        self.lastrowid = result.lastrowid
+        # psycopg cursors do not expose DB-API lastrowid. PostgreSQL
+        # callers must use INSERT ... RETURNING <primary_key> and fetch
+        # the returned row; silently fabricating an ID would be unsafe.
+        try:
+            self.lastrowid = result.lastrowid
+        except (AttributeError, NotImplementedError):
+            self.lastrowid = None
         self.rowcount = result.rowcount
         self._keys = tuple(result.keys()) if result.returns_rows else ()
 
