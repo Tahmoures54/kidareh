@@ -29,21 +29,21 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
 
   {# ── SEO & Social ── #}
-  <title>{% block title %}ببین کی داره؟ حضوری بگیر!{% endblock %}</title>
-  <meta name="description" content="{{ meta_description or 'ببین کی‌داره؟ حضوری بگیر! کالای دلخواهت را پیدا کن و از فروشگاه محلی حضوری تحویل بگیر.' }}">
+  <title>{% block title %}فروشگاه فیزیکی‌ات رو آنلاین کن | کی‌داره{% endblock %}</title>
+  <meta name="description" content="{{ meta_description or 'فروشگاه فیزیکی‌ات رو آنلاین کن؛ محصولاتت رو به مشتری‌های شهر معرفی کن. از مغازه محلت تا بازار آنلاین شهر!' }}">
 
   <meta property="og:site_name" content="کی‌داره">
   <meta property="og:locale" content="fa_IR">
   <meta property="og:type" content="{{ meta_type or 'website' }}">
-  <meta property="og:title" content="{{ meta_title or 'ببین کی داره؟ حضوری بگیر!' }}">
-  <meta property="og:description" content="{{ meta_description or 'کالاهای نزدیکت را پیدا کن و حضوری تحویل بگیر.' }}">
+  <meta property="og:title" content="{{ meta_title or 'فروشگاه فیزیکی‌ات رو آنلاین کن | کی‌داره' }}">
+  <meta property="og:description" content="{{ meta_description or 'فروشگاه‌های محلی و محصولاتشان را در شهر پیدا کن و مستقیم با فروشنده ارتباط بگیر.' }}">
   <link rel="canonical" href="{{ request.url_root.rstrip('/') ~ request.path }}">
   <meta property="og:url" content="{{ request.url_root.rstrip('/') ~ request.path }}">
   <meta property="og:image" content="{{ meta_image or (request.url_root.rstrip('/') ~ url_for('static', filename='icons/icon-512.png')) }}">
   <meta property="og:image:alt" content="لوگوی کی‌داره">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="{{ meta_title or 'ببین کی داره؟ حضوری بگیر!' }}">
-  <meta name="twitter:description" content="{{ meta_description or 'کالاها و فروشگاه‌های محلی کی‌داره را ببین.' }}">
+  <meta name="twitter:title" content="{{ meta_title or 'فروشگاه فیزیکی‌ات رو آنلاین کن | کی‌داره' }}">
+  <meta name="twitter:description" content="{{ meta_description or 'فروشگاه‌های محلی شهر و محصولاتشان را در کی‌داره کشف کن.' }}">
 
   {# ── Resource hints ── #}
   <link rel="preconnect" href="{{ request.url_root.rstrip('/') }}" crossorigin>
