@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable
 
+from sqlalchemy import inspect
 from sqlalchemy.engine import Connection, CursorResult
 from .postgres_compat import qmark_to_format
 
@@ -84,6 +85,21 @@ class SQLAlchemyConnectionAdapter:
                 statement, parameters = qmark_to_format(statement, parameters or ())
             result = self._connection.exec_driver_sql(statement, parameters or ())
         return CompatibleResult(result)
+
+    def table_names(self) -> set[str]:
+        """Return user table names through SQLAlchemy's dialect inspector."""
+        return set(inspect(self._connection).get_table_names())
+
+    def table_exists(self, table_name: str) -> bool:
+        """Check a table without querying SQLite-only catalog tables."""
+        return table_name in self.table_names()
+
+    def column_names(self, table_name: str) -> set[str]:
+        """Return column names using the active database dialect."""
+        return {
+            column["name"]
+            for column in inspect(self._connection).get_columns(table_name)
+        }
 
     def executemany(
         self, statement: str, parameters: Iterable[Iterable[Any]]
