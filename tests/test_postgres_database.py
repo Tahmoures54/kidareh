@@ -268,3 +268,35 @@ def test_postgres_otp_rate_limit_serializes_concurrent_requests(tmp_path):
         assert sum(not outcome for outcome in outcomes) == 9
     finally:
         app.extensions["kidareh_db"].dispose()
+
+
+def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path):
+    """Run the real PostgreSQL startup path, schema migration, and health route."""
+    url = os.environ.get("KIDAREH_TEST_POSTGRES_URL")
+    if not url:
+        pytest.skip("KIDAREH_TEST_POSTGRES_URL is not configured")
+
+    from kidareh import create_app
+    from kidareh.core import initialize_database
+    from kidareh.infrastructure.database.session import get_database
+
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "postgres-full-app-rehearsal-only",
+        "DATABASE_BACKEND": "postgresql",
+        "DATABASE_URL": url,
+        "DATABASE_PATH": str(tmp_path / "unused.sqlite3"),
+        "UPLOAD_FOLDER": str(tmp_path / "uploads"),
+        "REDIS_URL": "",
+    })
+    with app.app_context():
+        initialize_database()
+        database = get_database()
+        assert {"users", "stores", "listings", "otp_challenges", "rate_limits"}.issubset(
+            database.models
+        )
+
+    response = app.test_client().get("/api/health")
+    assert response.status_code == 200
+    assert response.get_json()["database"] == "ok"
+    app.extensions["kidareh_db"].dispose()
