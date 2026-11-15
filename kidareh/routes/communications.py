@@ -125,7 +125,7 @@ def start_conversation():
             return jsonify({"error": "seller_unavailable", "message": "برای این کالای قدیمی هنوز حساب فروشنده متصل نیست."}), 409
         if seller_id == user["id"]:
             return jsonify({"error": "own_listing", "message": "برای کالای خودتان نمی‌توانید گفت‌وگو شروع کنید."}), 400
-        db.execute("INSERT OR IGNORE INTO conversations(listing_id,buyer_id,seller_id) VALUES(?,?,?)", (listing_id, user["id"], seller_id))
+        db.execute("INSERT INTO conversations(listing_id,buyer_id,seller_id) VALUES(?,?,?) ON CONFLICT(listing_id,buyer_id) DO NOTHING", (listing_id, user["id"], seller_id))
         thread = db.execute("SELECT id FROM conversations WHERE listing_id=? AND buyer_id=?", (listing_id, user["id"])).fetchone()
     return jsonify({"id": thread["id"], "listing_title": listing["title"]}), 201
 
