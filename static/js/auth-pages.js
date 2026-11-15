@@ -48,6 +48,7 @@
   let busy = false;
   let currentStep = isRegister ? "role" : "phone";
   let otpAbortController = null;
+  let resendTimer = null;
 
   const digits = (value) =>
     String(value || "").replace(/[۰-۹٠-٩]/g, (character) => {
@@ -203,11 +204,41 @@
       });
   }
 
+  function startOtpResendCountdown(seconds = 60) {
+    const button = document.querySelector("#resendOtpButton");
+    const label = document.querySelector("#otpResendCountdown");
+    if (resendTimer) window.clearInterval(resendTimer);
+
+    let remaining = seconds;
+    if (button) button.disabled = true;
+
+    const render = () => {
+      if (label) {
+        label.textContent = remaining > 0
+          ? `برای درخواست دوباره ${remaining.toLocaleString("fa-IR")} ثانیه صبر کنید.`
+          : "اگر کد را دریافت نکردید، می‌توانید دوباره درخواست کنید.";
+      }
+      if (button) button.disabled = remaining > 0;
+    };
+
+    render();
+    resendTimer = window.setInterval(() => {
+      remaining = Math.max(0, remaining - 1);
+      render();
+      if (remaining === 0) {
+        window.clearInterval(resendTimer);
+        resendTimer = null;
+      }
+    }, 1000);
+  }
+
   function showStep(step) {
     currentStep = step;
 
     if (step !== "code") {
       stopWebOtp();
+      if (resendTimer) window.clearInterval(resendTimer);
+      resendTimer = null;
     }
 
     if (roleStep) roleStep.hidden = step !== "role";
@@ -222,6 +253,7 @@
       loadChallenge();
     } else if (step === "code") {
       form.elements.otp?.focus();
+      startOtpResendCountdown(60);
       startWebOtp();
     } else if (step === "profile") {
       syncSellerDetails();
@@ -234,6 +266,16 @@
     ?.addEventListener("click", () => {
       message("");
       showStep("role");
+    });
+
+  document
+    .querySelector("#resendOtpButton")
+    ?.addEventListener("click", () => {
+      if (busy) return;
+      message("برای دریافت کد تازه، شماره را بررسی و محاسبه امنیتی را دوباره وارد کنید.");
+      if (form.elements.otp) form.elements.otp.value = "";
+      if (form.elements.captcha) form.elements.captcha.value = "";
+      showStep("phone");
     });
 
   document
