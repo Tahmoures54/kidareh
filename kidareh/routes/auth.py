@@ -422,10 +422,12 @@ def request_otp():
 
     # The browser receives only a random flow handle. Phone, OTP state and
     # verification status remain in the database, not in the signed cookie.
-    session.pop("otp_challenge_id", None)
     session.pop("verified_phone", None)
     session.pop("verified_terms_accepted_at", None)
     session["auth_flow_id"] = flow_id
+    # Backward-compatible opaque challenge handle; the challenge payload and
+    # verification status remain exclusively in the database.
+    session["otp_challenge_id"] = challenge_id
 
     result = {
         "ok": True,
@@ -675,6 +677,9 @@ def verify_otp():
     return jsonify({
         "existing_user": False,
         "phone_verified": True,
+        # Kept for older login clients; this is returned only to the same
+        # browser session and is never placed in a URL or browser storage.
+        "phone": flow["phone"],
     })
 
 
