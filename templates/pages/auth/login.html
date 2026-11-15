@@ -2,7 +2,7 @@
 {% block title %}ورود | کی‌داره{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261011-login-v1">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261115-auth-flow">
 <style>
   /* Login polish on top of auth-pages.css */
   .auth-kicker {
@@ -205,6 +205,13 @@
             aria-describedby="otpHint"
           >
           <p class="auth-hint" id="otpHint">کد تا ۵ دقیقه معتبر است.</p>
+
+          <p class="auth-hint" id="otpResendCountdown" role="status" aria-live="polite">
+            امکان درخواست دوباره تا ۶۰ ثانیه دیگر
+          </p>
+          <button class="button button-outline" type="button" id="resendOtpButton" disabled>
+            ارسال دوباره کد
+          </button>
           <div class="auth-actions-row">
             <button class="button button-outline" type="button" id="backToPhoneButton">
               تغییر شماره
