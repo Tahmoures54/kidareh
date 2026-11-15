@@ -634,7 +634,10 @@ def complete_profile():
             ),
         }), 400
 
-    # Seller accounts are created independently from their store.\n    # Store details are collected progressively in the seller dashboard.\n\n    try:
+    # Seller accounts are created independently from their store.
+    # Store details are collected progressively in the seller dashboard.
+
+    try:
         with get_connection() as connection:
             cursor = connection.execute(
                 """
