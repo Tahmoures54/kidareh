@@ -35,10 +35,10 @@ class CompatibleResult:
         # psycopg cursors do not expose DB-API lastrowid. PostgreSQL
         # callers must use INSERT ... RETURNING <primary_key> and fetch
         # the returned row; silently fabricating an ID would be unsafe.
-        try:
-            self.lastrowid = result.lastrowid
-        except (AttributeError, NotImplementedError):
+        if result.context.dialect.name == "postgresql":
             self.lastrowid = None
+        else:
+            self.lastrowid = result.lastrowid
         self.rowcount = result.rowcount
         self._keys = tuple(result.keys()) if result.returns_rows else ()
 
