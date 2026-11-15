@@ -234,3 +234,37 @@ def test_postgres_rate_limit_is_atomic_across_connections(tmp_path):
         assert sum(not outcome for outcome in outcomes) == 9
     finally:
         app.extensions["kidareh_db"].dispose()
+
+
+def test_postgres_otp_rate_limit_serializes_concurrent_requests(tmp_path):
+    """Concurrent OTP requests for one phone/IP cannot bypass the cooldown."""
+    import concurrent.futures
+
+    url = os.environ.get("KIDAREH_TEST_POSTGRES_URL")
+    if not url:
+        pytest.skip("KIDAREH_TEST_POSTGRES_URL is not configured")
+
+    from kidareh import create_app
+    from kidareh.routes.auth import _check_otp_rate_limit, ensure_tables
+
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "postgres-otp-rehearsal-only",
+        "DATABASE_PATH": str(tmp_path / "unused.sqlite3"),
+        "DATABASE_URL": url,
+        "UPLOAD_FOLDER": str(tmp_path / "uploads"),
+    })
+    with app.app_context():
+        ensure_tables()
+
+    def attempt():
+        with app.test_request_context("/", environ_base={"REMOTE_ADDR": "192.0.2.10"}):
+            return _check_otp_rate_limit("09123456789")[0]
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as pool:
+            outcomes = list(pool.map(lambda _: attempt(), range(10)))
+        assert sum(outcomes) == 1
+        assert sum(not outcome for outcome in outcomes) == 9
+    finally:
+        app.extensions["kidareh_db"].dispose()
