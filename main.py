@@ -81,8 +81,9 @@ def _env_int(key: str, default: int) -> int:
 # Startup summary in the terminal
 _secret = (os.environ.get("SECRET_KEY") or "").strip()
 print(f"[BOOT] SECRET_KEY: {'set (' + str(len(_secret)) + ' chars)' if _secret else 'MISSING - using ephemeral key'}")
-print(f"[BOOT] Database backend: {app.config.get('DATABASE_BACKEND', 'sqlite')}")
-if app.config.get("DATABASE_BACKEND", "sqlite") == "sqlite":
+_database_backend = os.environ.get("DATABASE_BACKEND", "sqlite").strip().lower()
+print(f"[BOOT] Database backend: {_database_backend}")
+if _database_backend != "postgresql":
     print(f"[BOOT] Database path: {DATABASE_PATH}")
 print(f"[BOOT] Upload folder: {UPLOAD_FOLDER}")
 print(f"[BOOT] Log level: {os.environ.get('LOG_LEVEL', 'INFO').upper()}")
