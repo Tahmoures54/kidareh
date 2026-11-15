@@ -450,7 +450,7 @@ def auth_flow_state():
     with get_connection() as connection:
         flow = connection.execute(
             """
-            SELECT phone, state, expires_at
+            SELECT phone, state, expires_at, created_at
             FROM auth_flows
             WHERE id = ?
             """,
@@ -467,8 +467,10 @@ def auth_flow_state():
     masked = f"{phone[:2]}•••••{phone[-4:]}" if len(phone) == 11 else ""
     return jsonify({
         "state": flow["state"],
-        "phone": masked,
+        "phone": phone,
+        "masked_phone": masked,
         "expires_in": max(0, int(flow["expires_at"] - now)),
+        "resend_after": max(0, 60 - int(now - flow["created_at"])),
     })
 
 
