@@ -38,7 +38,7 @@ def ensure_tables():
             gateway_ref TEXT NOT NULL DEFAULT '', gateway_code TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, paid_at TEXT NOT NULL DEFAULT ''
             )""")
-        order_columns = {r["name"] for r in db.execute("PRAGMA table_info(monetization_orders)")}
+        order_columns = db.column_names("monetization_orders")
         if "listing_id" not in order_columns:
             db.execute("ALTER TABLE monetization_orders ADD COLUMN listing_id INTEGER")
         db.execute("""CREATE TABLE IF NOT EXISTS listing_tags (
@@ -53,10 +53,10 @@ def ensure_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
             package_id TEXT NOT NULL, starts_at TEXT NOT NULL, ends_at TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)""")
-        columns = {r["name"] for r in db.execute("PRAGMA table_info(stores)")}
+        columns = db.column_names("stores")
         if "badge_until" not in columns:
             db.execute("ALTER TABLE stores ADD COLUMN badge_until TEXT NOT NULL DEFAULT ''")
-        listing_columns = {r["name"] for r in db.execute("PRAGMA table_info(listings)")}
+        listing_columns = db.column_names("listings")
         if "featured_until" not in listing_columns:
             db.execute("ALTER TABLE listings ADD COLUMN featured_until TEXT NOT NULL DEFAULT ''")
         now = datetime.now(timezone.utc).isoformat()
