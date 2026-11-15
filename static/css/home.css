@@ -752,3 +752,42 @@
   .home-intro[data-home-carousel] .home-promo-slide,
   .home-intro[data-home-carousel] .home-promo-dot { transition: none; }
 }
+
+
+/* Live indicator for the storefront listings section. */
+.listings-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: .48rem;
+}
+.storefront-live-dot {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #16A34A;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, .13);
+  animation: storefront-live-pulse 1.45s ease-in-out infinite;
+}
+.storefront-live-dot::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border: 1px solid rgba(22, 163, 74, .55);
+  border-radius: 50%;
+  animation: storefront-live-ripple 1.45s ease-out infinite;
+}
+@keyframes storefront-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .48; transform: scale(.78); }
+}
+@keyframes storefront-live-ripple {
+  0% { opacity: .7; transform: scale(.65); }
+  100% { opacity: 0; transform: scale(1.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .storefront-live-dot,
+  .storefront-live-dot::after { animation: none; }
+}
