@@ -940,6 +940,53 @@ def initialize_database() -> None:
 
     logger.info("Initializing database at %s", database_path)
 
+    if has_app_context():
+        from .infrastructure.database.session import get_database
+
+        database = get_database()
+        if database.engine.dialect.name == "postgresql":
+            # The Alembic bootstrap provisions PostgreSQL domain tables from a
+            # disposable SQLite schema factory. The advisory lock coordinates
+            # this one-time migration across Vercel/Liara instances.
+            with _schema_migration_lock(database_path):
+                from alembic import command
+                from alembic.config import Config
+
+                migration_url = str(current_app.config.get("DATABASE_URL") or "").strip()
+                if not migration_url:
+                    raise RuntimeError(
+                        "DATABASE_URL is required for PostgreSQL schema initialization."
+                    )
+                previous_migration_url = os.environ.get("MIGRATION_DATABASE_URL")
+                os.environ["MIGRATION_DATABASE_URL"] = migration_url
+                try:
+                    alembic_config = Config(str(BASE_DIR / "alembic.ini"))
+                    command.upgrade(alembic_config, "head")
+                finally:
+                    if previous_migration_url is None:
+                        os.environ.pop("MIGRATION_DATABASE_URL", None)
+                    else:
+                        os.environ["MIGRATION_DATABASE_URL"] = previous_migration_url
+
+            if _is_production_environment():
+                _remove_legacy_demo_data()
+            with get_connection() as connection:
+                _ensure_performance_indexes(connection)
+                _ensure_listings_fts(connection)
+            database.reflect()
+            required_tables = {"users", "stores", "listings"}
+            missing_tables = required_tables - set(database.models)
+            if missing_tables:
+                raise RuntimeError(
+                    "PostgreSQL schema is incomplete; missing tables: "
+                    + ", ".join(sorted(missing_tables))
+                )
+            logger.info(
+                "PostgreSQL database ready; mapped %d domain tables",
+                len(database.models),
+            )
+            return
+
     with _schema_migration_lock(database_path):
         with get_connection() as connection:
             connection.execute(
