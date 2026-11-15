@@ -163,7 +163,7 @@ def test_monetization_page_renders_every_purchasable_package(client, app):
 # ---------------------------------------------------------------------------
 # Seller registration journey
 # ---------------------------------------------------------------------------
-def test_seller_signup_uses_the_details_entered_in_the_profile_step(
+def test_seller_signup_defers_store_creation_to_onboarding(
     app, client, monkeypatch
 ):
     code = _request_otp(
@@ -183,27 +183,35 @@ def test_seller_signup_uses_the_details_entered_in_the_profile_step(
     created = client.post(
         "/api/auth/complete-profile",
         headers={"X-CSRF-Token": CSRF},
-        json={
-            "name": "سارا احمدی",
-            "role": "seller",
-            "store_name": "ویترین سارا",
-            "store_category": "لوازم خانه",
-            "store_city": "تهران",
-            "store_address": "تهران، خیابان نمونه",
-            "store_hours": "۹ تا ۱۸",
-            "in_person": True,
-        },
+        json={"name": "سارا احمدی", "role": "seller"},
     )
     assert created.status_code == 200, created.get_json()
-    user = created.get_json()["user"]
-    store = created.get_json()["store"]
+    result = created.get_json()
+    user = result["user"]
 
     assert user["name"] == "سارا احمدی"
     assert user["role"] == "seller"
+    assert user["city"] == ""
+    assert result["store"] is None
+    assert result["onboarding_required"] is True
+
+    # Store creation is a separate, resumable step in the seller dashboard.
+    csrf = result["csrf_token"]
+    store_response = client.post(
+        "/api/stores",
+        headers={"X-CSRF-Token": csrf},
+        json={
+            "name": "ویترین سارا",
+            "category": "لوازم خانه",
+            "city": "تهران",
+            "description": "",
+        },
+    )
+    assert store_response.status_code == 201, store_response.get_json()
+    store = store_response.get_json()["item"]
     assert store["name"] == "ویترین سارا"
 
-    # The seller can immediately publish a product into the store they created.
-    csrf = created.get_json()["csrf_token"]
+    # The seller can publish a product after completing the store step.
     product = client.post(
         "/api/listings",
         headers={"X-CSRF-Token": csrf},
