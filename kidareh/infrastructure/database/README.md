@@ -77,13 +77,15 @@ The initial source audit found these concrete SQLite dependencies:
 - [ ] Implement a dialect-aware connection/result layer or migrate route
       operations to SQLAlchemy Core/ORM. Do not use global string replacement
       for placeholders or SQL syntax.
-- [ ] Replace FTS5 with PostgreSQL full-text search and validate Persian queries,
-      ranking, filtering, pagination, and index maintenance against fixtures.
-- [ ] Redesign OTP and rate-limit atomicity for PostgreSQL and test concurrent
-      requests across independent connections.
-- [ ] Run the full test suite against both SQLite and a disposable PostgreSQL
-      database; add migration upgrade, rollback, schema parity, and data-integrity
-      checks.
+- [x] Add a PostgreSQL GIN expression index and a Persian full-text query path;
+      a disposable PostgreSQL fixture verifies Persian term matching. Ranking,
+      filtering, pagination, and large-catalog performance still need parity tests.
+- [x] Use PostgreSQL row-level locks for generic rate limits and OTP request
+      cooldowns; concurrency tests verify limits across independent connections.
+      Full end-to-end OTP challenge consumption and abuse-case tests remain.
+- [ ] Run the full Flask route suite against PostgreSQL; current full application
+      tests still run on SQLite. Add migration upgrade/rollback and broader
+      schema/data-integrity checks.
 - [ ] Back up the live SQLite database and uploaded-image inventory. Copy data
       with row counts, key checks, and checksums; verify a reversible cutover
       plan before changing the production connection string.
@@ -112,7 +114,10 @@ search fixture.
 
 This does **not** mean the Flask application is PostgreSQL-ready. Runtime
 configuration intentionally does not select `DATABASE_URL`; application
-startup still runs the SQLite schema bootstrap, and route SQL still contains
-SQLite-only metadata, DDL, FTS5, and transaction operations. The PostgreSQL
-service tests are deliberately narrow and do not boot the full app against
-PostgreSQL.
+startup still runs SQLite-specific schema bootstrap DDL (including
+`AUTOINCREMENT` and `PRAGMA`) and the Alembic baseline still creates no domain
+tables. Some route-level metadata checks, generated-ID inserts, full-text
+search, OTP rate limiting, and generic rate limits now have PostgreSQL-aware
+paths. The PostgreSQL service tests cover those isolated foundations and a
+schema-creation rehearsal, but they do not boot the full Flask application
+against PostgreSQL.
