@@ -318,4 +318,44 @@ def login_page():
 @bp.get("/register")
 @bp.get("/signup")
 def register_page():
-    return render_marketplace_page("pages/auth/register.html")
+    user = current_user()
+    if user:
+        return redirect("/seller" if user.get("role") == "seller" else "/account")
+    return render_marketplace_page("pages/auth/register_phone.html")
+
+
+@bp.get("/register/verify")
+def register_verify_page():
+    if current_user():
+        user = current_user()
+        return redirect("/seller" if user.get("role") == "seller" else "/account")
+    if not session.get("auth_flow_id"):
+        return redirect("/register")
+    return render_marketplace_page("pages/auth/verify_otp.html")
+
+
+@bp.get("/register/profile")
+def register_profile_page():
+    if current_user():
+        user = current_user()
+        return redirect("/seller" if user.get("role") == "seller" else "/account")
+    if not session.get("auth_flow_id"):
+        return redirect("/register")
+    return render_marketplace_page("pages/auth/complete_profile.html")
+
+
+@bp.get("/register/store")
+def register_store_page():
+    user = current_user()
+    if not user:
+        return redirect("/register")
+    if user.get("role") != "seller":
+        abort(403)
+    with get_connection() as connection:
+        existing_store = connection.execute(
+            "SELECT id FROM stores WHERE owner_id = ?",
+            (user["id"],),
+        ).fetchone()
+    if existing_store:
+        return redirect("/seller")
+    return render_marketplace_page("pages/auth/create_store.html")
