@@ -189,8 +189,44 @@ def listings():
 
     parameters: list[Any] = []
     fts_match = _fts_match_query(query) if query else None
+    database = current_app.extensions.get("kidareh_db")
+    is_postgres = bool(database and database.engine.dialect.name == "postgresql")
 
-    if fts_match and use_nearby:
+    if fts_match and use_nearby and is_postgres:
+        # PostgreSQL uses the matching GIN expression index created by
+        # _ensure_listings_fts(); "simple" keeps Persian terms unstemmed.
+        search_vector = (
+            "to_tsvector('simple', coalesce(nearby_listing.title, '') || ' ' || "
+            "coalesce(nearby_listing.description, '') || ' ' || coalesce(nearby_listing.city, ''))"
+        )
+        sql = f"""
+            SELECT listings.*,
+                   (SELECT stores.name FROM stores WHERE stores.id = listings.store_id) AS store_name
+            FROM listings
+            INNER JOIN (
+                SELECT nearby_listing.id AS candidate_id
+                FROM listings AS nearby_listing
+                WHERE {search_vector} @@ plainto_tsquery('simple', ?)
+                  AND nearby_listing.latitude IS NOT NULL
+                  AND nearby_listing.longitude IS NOT NULL
+                  AND nearby_listing.latitude BETWEEN ? AND ?
+                  AND nearby_listing.longitude BETWEEN ? AND ?
+                ORDER BY (
+                    (nearby_listing.latitude - ?) * (nearby_listing.latitude - ?) +
+                    (nearby_listing.longitude - ?) * (nearby_listing.longitude - ?) * ?
+                ), nearby_listing.id DESC
+                LIMIT ?
+            ) candidates ON candidates.candidate_id = listings.id
+            WHERE 1=1
+        """
+        parameters.extend([
+            query,
+            near_lat - delta_lat, near_lat + delta_lat,
+            near_lon - delta_lon, near_lon + delta_lon,
+            near_lat, near_lat, near_lon, near_lon, cos_lat * cos_lat,
+            FTS_SEARCH_WINDOW,
+        ])
+    elif fts_match and use_nearby:
         # For nearby searches, apply the geographic window before limiting FTS
         # candidates. Otherwise the newest global matches can consume the
         # candidate budget and hide older listings at the user's location.
@@ -226,6 +262,25 @@ def listings():
             near_lat, near_lat, near_lon, near_lon, cos_lat * cos_lat,
             FTS_SEARCH_WINDOW,
         ])
+    elif fts_match and is_postgres:
+        search_vector = (
+            "to_tsvector('simple', coalesce(listings.title, '') || ' ' || "
+            "coalesce(listings.description, '') || ' ' || coalesce(listings.city, ''))"
+        )
+        sql = f"""
+            SELECT listings.*,
+                   (SELECT stores.name FROM stores WHERE stores.id = listings.store_id) AS store_name
+            FROM listings
+            INNER JOIN (
+                SELECT listings.id AS candidate_id
+                FROM listings
+                WHERE {search_vector} @@ plainto_tsquery('simple', ?)
+                ORDER BY listings.id DESC
+                LIMIT ?
+            ) candidates ON candidates.candidate_id = listings.id
+            WHERE 1=1
+        """
+        parameters.extend([query, FTS_SEARCH_WINDOW])
     elif fts_match:
         # The candidate window is bounded on purpose. A popular term can match
         # hundreds of thousands of rows, and joining every match back onto the
