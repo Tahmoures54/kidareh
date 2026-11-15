@@ -98,7 +98,8 @@ def consume(scope: str, key: str, limit: int, window_seconds: int, cooldown_seco
     now = time.time()
     key_hash = _hash(key)
     with get_connection() as connection:
-        if connection.dialect_name == "postgresql":
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name == "postgresql":
             # Create the key row first so concurrent first requests serialize
             # on the unique (scope, key_hash) constraint. The following
             # SELECT FOR UPDATE then locks that row across independent workers.
