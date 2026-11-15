@@ -327,6 +327,29 @@ def _ensure_performance_indexes(connection) -> None:
     row to learn whether it is featured before it can sort); with it, the same
     query costs 0.15 ms.
     """
+    if connection.dialect_name == "postgresql":
+        # PostgreSQL catalog access is provided by SQLAlchemy's inspector;
+        # schema changes themselves should ultimately move to Alembic.
+        existing = set()
+        for table_name in connection.table_names():
+            existing.update(connection.index_names(table_name))
+        for name in SUPERSEDED_INDEXES:
+            connection.execute(f"DROP INDEX IF EXISTS {name}")
+        created = 0
+        for name, statement in PERFORMANCE_INDEXES.items():
+            if name in existing:
+                continue
+            postgres_statement = statement.replace(
+                "CREATE INDEX ", "CREATE INDEX IF NOT EXISTS ", 1
+            )
+            connection.execute(postgres_statement)
+            created += 1
+        logger.info(
+            "PostgreSQL performance indexes: %d created, %d already present",
+            created, len(existing),
+        )
+        return
+
     for name in SUPERSEDED_INDEXES:
         connection.execute(f"DROP INDEX IF EXISTS {name}")
         logger.debug("Dropped superseded index %s", name)
