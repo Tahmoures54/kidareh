@@ -99,15 +99,15 @@ def my_store():
 def create_store():
     user = current_user()
     if not user:
-        return jsonify({"error": "authentication_required", "message": "برای ساخت ویترین وارد حساب شوید."}), 401
+        return jsonify({"error": "authentication_required", "message": "برای معرفی فروشگاه وارد حساب شوید."}), 401
     if user.get("role") != "seller":
-        return jsonify({"error": "seller_account_required", "message": "برای ساخت ویترین با نوع حساب فروشنده وارد شوید."}), 403
+        return jsonify({"error": "seller_account_required", "message": "برای معرفی فروشگاه با نوع حساب فروشنده وارد شوید."}), 403
     if not csrf_valid():
         return jsonify({"error": "csrf_failed"}), 400
     try:
         rate_limits.enforce("store_create", user, limit=5, window_seconds=3600)
     except rate_limits.RateLimitExceeded as error:
-        return rate_limits.error_response(error, "ساخت ویترین موقتاً محدود شده است؛ کمی بعد دوباره تلاش کنید.")
+        return rate_limits.error_response(error, "ثبت فروشگاه موقتاً محدود شده است؛ کمی بعد دوباره تلاش کنید.")
     payload = request.get_json(silent=True) or {}
     name, city, description = payload.get("name", ""), normalize_location_name(payload.get("city", "")), payload.get("description", "")
     category = payload.get("category", "")
@@ -138,7 +138,7 @@ def create_store():
             )
             row = connection.execute("SELECT * FROM stores WHERE id = ?", (cursor.lastrowid,)).fetchone()
     except IntegrityError:
-        return jsonify({"error": "store_exists", "message": "برای این حساب قبلاً ویترین ساخته شده است."}), 409
+        return jsonify({"error": "store_exists", "message": "برای این حساب قبلاً فروشگاه ثبت شده است."}), 409
     return jsonify({"item": _store_payload(row)}), 201
 
 @bp.patch("/api/stores/<int:store_id>")
@@ -161,7 +161,7 @@ def update_store(store_id: int):
         if user.get("role") != "seller":
             return jsonify({
                 "error": "seller_account_required",
-                "message": "مدیریت ویترین فقط برای حساب فروشنده در دسترس است.",
+                "message": "مدیریت فروشگاه فقط برای حساب فروشنده در دسترس است.",
             }), 403
         name = payload.get("name", store["name"])
         city = payload.get("city", store["city"])
