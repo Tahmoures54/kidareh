@@ -157,3 +157,37 @@ def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
         assert inspect(engine).has_table("alembic_version")
     finally:
         engine.dispose()
+
+
+def test_postgres_schema_lock_is_shared_across_connections(tmp_path):
+    """A second connection cannot acquire the app's advisory lock while held."""
+    url = os.environ.get("KIDAREH_TEST_POSTGRES_URL")
+    if not url:
+        pytest.skip("KIDAREH_TEST_POSTGRES_URL is not configured")
+
+    from kidareh import create_app
+    from kidareh.core import _schema_migration_lock
+    from kidareh.core import get_connection
+
+    app = create_app({
+        "TESTING": True,
+        "SECRET_KEY": "postgres-lock-rehearsal-only",
+        "DATABASE_PATH": str(tmp_path / "unused.sqlite3"),
+        "DATABASE_URL": url,
+        "UPLOAD_FOLDER": str(tmp_path / "uploads"),
+    })
+    lock_key = 0x4B494441524548
+    with app.app_context():
+        with _schema_migration_lock(tmp_path / "unused.sqlite3"):
+            with get_connection() as second_connection:
+                acquired = second_connection.execute(
+                    "SELECT pg_try_advisory_lock(?)", (lock_key,)
+                ).fetchone()[0]
+                assert acquired is False
+        with get_connection() as connection:
+            acquired = connection.execute(
+                "SELECT pg_try_advisory_lock(?)", (lock_key,)
+            ).fetchone()[0]
+            assert acquired is True
+            connection.execute("SELECT pg_advisory_unlock(?)", (lock_key,))
+        app.extensions["kidareh_db"].dispose()
