@@ -648,6 +648,7 @@ def complete_profile():
                     city
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
                 """,
                 (
                     name.strip(),
@@ -660,7 +661,7 @@ def complete_profile():
                 ),
             )
 
-            user_id = cursor.lastrowid
+            user_id = cursor.fetchone()["id"]
 
     except IntegrityError:
         return jsonify({
