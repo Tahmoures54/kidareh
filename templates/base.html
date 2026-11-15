@@ -43,7 +43,7 @@
   <meta property="og:image:alt" content="لوگوی کی‌داره">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="{{ meta_title or 'ببین کی داره؟ حضوری بگیر!' }}">
-  <meta name="twitter:description" content="{{ meta_description or 'کالاها و ویترین‌های کی‌داره را ببین.' }}">
+  <meta name="twitter:description" content="{{ meta_description or 'کالاها و فروشگاه‌های محلی کی‌داره را ببین.' }}">
 
   {# ── Resource hints ── #}
   <link rel="preconnect" href="{{ request.url_root.rstrip('/') }}" crossorigin>
@@ -93,7 +93,7 @@
       <nav class="desktop-nav" aria-label="ناوبری اصلی">
         <a href="/search" {% if request.path.startswith('/search') %}aria-current="page"{% endif %}>جست‌وجوی کالا</a>
         <a href="/stores" {% if request.path.startswith('/stores') or request.path.startswith('/store/') %}aria-current="page"{% endif %}>فروشگاه‌ها</a>
-        <a id="headerSellerLink" href="/seller" title="مدیریت فروشگاه و ویترین آنلاین" aria-label="مدیریت فروشگاه و ویترین آنلاین"
+        <a id="headerSellerLink" href="/seller" title="مدیریت فروشگاه آنلاین" aria-label="مدیریت فروشگاه آنلاین"
            {% if request.path.startswith('/seller') %}aria-current="page"{% endif %}>مدیریت فروشگاه</a>
         <a href="/messages" {% if request.path.startswith('/messages') %}aria-current="page"{% endif %}>گفت‌وگوها</a>
         <a href="/support" {% if request.path.startswith('/support') %}aria-current="page"{% endif %}>پشتیبانی</a>
