@@ -126,6 +126,41 @@ def test_health_endpoint(monkeypatch, tmp_path):
     assert response.get_json()["cache"]["status"] == "ok"
 
 
+
+
+def test_vercel_health_requires_blob_storage(monkeypatch, tmp_path):
+    client = setup_empty_database(monkeypatch, tmp_path)
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.delenv("BLOB_READ_WRITE_TOKEN", raising=False)
+
+    response = client.get("/api/health")
+    assert response.status_code == 503
+    assert response.get_json()["uploads"] == "blob_not_configured"
+
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-blob-token")
+    response = client.get("/api/health")
+    assert response.status_code == 200
+    assert response.get_json()["uploads"] == "blob_configured"
+
+
+def test_vercel_does_not_write_listing_images_to_ephemeral_disk(monkeypatch):
+    import pytest
+    from kidareh.core import store_uploaded_image
+
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.delenv("BLOB_READ_WRITE_TOKEN", raising=False)
+    with pytest.raises(RuntimeError, match="BLOB_READ_WRITE_TOKEN"):
+        store_uploaded_image(b"not-a-real-image", ".png")
+
+
+def test_vercel_upload_path_ignores_read_only_project_folder(monkeypatch):
+    from kidareh.core import _resolve_upload_folder
+
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("UPLOAD_FOLDER", "static/uploads")
+    assert _resolve_upload_folder().as_posix() == "/tmp/uploads"
+
+
 def test_listing_api_returns_seed_data(monkeypatch, tmp_path):
     client = setup_test_database(monkeypatch, tmp_path)
     response = client.get("/api/listings")
