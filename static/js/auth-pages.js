@@ -261,6 +261,28 @@
     }
   }
 
+  const continueRoleButton = document.querySelector("#continueRoleButton");
+
+  function syncRoleContinueButton() {
+    if (!continueRoleButton) return;
+    const hasSelection = Boolean(form.querySelector('input[name="role"]:checked'));
+    continueRoleButton.disabled = !hasSelection || busy;
+    continueRoleButton.setAttribute("aria-disabled", String(!hasSelection || busy));
+  }
+
+  continueRoleButton?.addEventListener("click", () => {
+    if (busy) return;
+    const selected = form.querySelector('input[name="role"]:checked');
+    if (!selected) {
+      message("برای ادامه، ابتدا نوع حساب را انتخاب کنید.", true);
+      return;
+    }
+    message("");
+    showStep("phone");
+  });
+
+  syncRoleContinueButton();
+
   document
     .querySelector("#backToRoleButton")
     ?.addEventListener("click", () => {
@@ -300,7 +322,7 @@
       radio.addEventListener("change", () => {
         if (currentStep === "role") {
           message("");
-          showStep("phone");
+          syncRoleContinueButton();
           return;
         }
 
