@@ -34,7 +34,7 @@
       flow = await Auth.api("/api/auth/flow");
       if (flow.state === "profile_pending") { window.location.replace(Auth.nextUrl("/register/profile")); return false; }
       if (flow.state === "authenticated") { await Auth.redirectForUser(flow.user); return false; }
-      if (flow.state !== "otp_pending" || !flow.phone) { window.location.replace("/register"); return false; }
+      if (flow.state !== "otp_pending" || !flow.masked_phone) { window.location.replace("/register"); return false; }
       phoneLabel.textContent = flow.masked_phone || "شماره همراه شما";
       startCountdown(flow.resend_after);
       return true;
@@ -61,6 +61,19 @@
       if (error.code === "otp_expired" || error.code === "otp_locked") window.setTimeout(() => window.location.assign("/register"), 900);
     } finally { busy = false; button.disabled = false; }
   });
+  document.querySelector("#changePhoneLink")?.addEventListener("click", async (event) => {
+    event.preventDefault();
+    if (busy) return;
+    busy = true;
+    try {
+      await Auth.api("cancel-flow", {});
+      window.location.assign(Auth.nextUrl("/register"));
+    } catch (error) {
+      Auth.feedback(feedback, error.message, true);
+      busy = false;
+    }
+  });
+
   resendButton.addEventListener("click", async () => {
     if (resendButton.disabled || !flow) return;
     try {
@@ -75,7 +88,7 @@
     if (!answer) { Auth.feedback(feedback, "پاسخ محاسبه امنیتی را وارد کنید.", true); return; }
     busy = true; confirmResend.disabled = true;
     try {
-      await Auth.api("request-otp", { phone: flow.phone, captcha_answer: answer, terms_accepted: true });
+      await Auth.api("request-otp", { captcha_answer: answer, terms_accepted: true });
       Auth.feedback(feedback, "کد تازه ارسال شد.");
       window.location.replace(Auth.nextUrl("/register/verify"));
     } catch (error) {
