@@ -98,6 +98,9 @@ def test_initialized_sqlite_schema_can_be_rehearsed_on_postgres(tmp_path):
 
             with target_engine.connect() as raw_connection:
                 adapter = SQLAlchemyConnectionAdapter(raw_connection)
+                assert adapter.dialect_name == "postgresql"
+                assert "listings" in adapter.table_names()
+                assert {"title", "category", "city"}.issubset(adapter.column_names("listings"))
                 _ensure_listings_fts(adapter)
                 adapter.execute(
                     "INSERT INTO listings (title, category, city) VALUES (?, ?, ?)",
