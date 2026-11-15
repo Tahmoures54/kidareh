@@ -75,6 +75,26 @@ def ensure_tables() -> None:
             ON otp_challenges(phone, created_at)
             """
         )
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS auth_flows (
+                id TEXT PRIMARY KEY,
+                phone TEXT NOT NULL,
+                state TEXT NOT NULL,
+                challenge_id TEXT NOT NULL,
+                terms_accepted_at TEXT NOT NULL,
+                expires_at REAL NOT NULL,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            )
+            """
+        )
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_auth_flows_state_expiry
+            ON auth_flows(state, expires_at)
+            """
+        )
 
 
 def _normalize_phone(value):
@@ -107,9 +127,6 @@ def _check_otp_rate_limit(phone):
     with get_connection() as connection:
         dialect_name = getattr(connection, "dialect_name", "sqlite")
         if dialect_name == "postgresql":
-            # Acquire transaction-scoped advisory locks for both identities in
-            # a deterministic order. This protects first-use races as well as
-            # existing rows, and is compatible with PgBouncer transaction mode.
             lock_keys = sorted(
                 int.from_bytes(
                     hashlib.sha256(
@@ -121,11 +138,7 @@ def _check_otp_rate_limit(phone):
                 for scope, key_hash in keys.items()
             )
             for lock_key in lock_keys:
-                connection.execute(
-                    "SELECT pg_advisory_xact_lock(?)", (lock_key,)
-                )
-
-            # Ensure both keys exist before selecting and updating their rows.
+                connection.execute("SELECT pg_advisory_xact_lock(?)", (lock_key,))
             for scope, key_hash in keys.items():
                 connection.execute(
                     """INSERT INTO otp_rate_limits
@@ -250,7 +263,22 @@ def request_otp():
 
     payload = _json_payload()
 
-    phone = _normalize_phone(payload.get("phone"))
+    raw_phone = payload.get("phone")
+    phone = _normalize_phone(raw_phone) if raw_phone not in (None, "") else None
+    if raw_phone in (None, ""):
+        # Resend requests reuse the phone bound to the active server-side flow.
+        flow_id = session.get("auth_flow_id")
+        if isinstance(flow_id, str) and flow_id:
+            with get_connection() as connection:
+                active_flow = connection.execute(
+                    """
+                    SELECT phone FROM auth_flows
+                    WHERE id = ? AND state = 'otp_pending' AND expires_at >= ?
+                    """,
+                    (flow_id, time.time()),
+                ).fetchone()
+            if active_flow:
+                phone = active_flow["phone"]
     requested_role = payload.get("role", "buyer")
 
     if not isinstance(requested_role, str) or requested_role not in {
@@ -395,23 +423,147 @@ def request_otp():
             ),
         )
 
-    # Only the opaque challenge ID is kept in the browser session.
-    session.pop("otp_phone", None)
-    session.pop("otp_hash", None)
-    session.pop("otp_expires_at", None)
-    session.pop("otp_attempts", None)
+    flow_id = uuid.uuid4().hex
+    with get_connection() as connection:
+        previous_flow_id = session.get("auth_flow_id")
+        if isinstance(previous_flow_id, str) and previous_flow_id:
+            previous = connection.execute(
+                "SELECT challenge_id FROM auth_flows WHERE id = ?",
+                (previous_flow_id,),
+            ).fetchone()
+            if previous:
+                connection.execute(
+                    "UPDATE otp_challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL",
+                    (now, previous["challenge_id"]),
+                )
+                connection.execute(
+                    "UPDATE auth_flows SET state = 'superseded', updated_at = ? WHERE id = ?",
+                    (now, previous_flow_id),
+                )
+        connection.execute(
+            "DELETE FROM auth_flows WHERE expires_at < ? OR (state IN ('completed', 'expired', 'locked', 'blocked', 'superseded', 'cancelled') AND updated_at < ?)",
+            (now, now - 86400),
+        )
+        connection.execute(
+            """
+            INSERT INTO auth_flows (
+                id, phone, state, challenge_id, terms_accepted_at,
+                expires_at, created_at, updated_at
+            )
+            VALUES (?, ?, 'otp_pending', ?, ?, ?, ?, ?)
+            """,
+            (
+                flow_id, phone, challenge_id, accepted_at,
+                now + 1800, now, now,
+            ),
+        )
+
+    # The browser receives only a random flow handle. Phone, OTP state and
+    # verification status remain in the database, not in the signed cookie.
+    session.pop("verified_phone", None)
+    session.pop("verified_terms_accepted_at", None)
+    session["auth_flow_id"] = flow_id
+    # Backward-compatible opaque challenge handle; the challenge payload and
+    # verification status remain exclusively in the database.
     session["otp_challenge_id"] = challenge_id
 
     result = {
         "ok": True,
         "message": "کد تأیید ارسال شد.",
         "expires_in": 300,
+        "resend_after": 60,
     }
 
     if current_app.testing and current_app.config.get("TESTING_OTP_CODE"):
         result["test_code"] = code
 
     return jsonify(result)
+
+
+@bp.get("/flow")
+def auth_flow_state():
+    """Return the current server-side registration state without exposing OTP data."""
+    user = current_user()
+    if user:
+        with get_connection() as connection:
+            has_store = connection.execute(
+                "SELECT 1 FROM stores WHERE owner_id = ?",
+                (user["id"],),
+            ).fetchone() is not None
+        return jsonify({
+            "state": "authenticated",
+            "user": {
+                "id": user["id"],
+                "name": user["name"],
+                "phone": user["phone"],
+                "role": user["role"],
+            },
+            "has_store": has_store,
+        })
+
+    flow_id = session.get("auth_flow_id")
+    if not isinstance(flow_id, str) or not flow_id:
+        return jsonify({"state": "none"})
+
+    now = time.time()
+    with get_connection() as connection:
+        flow = connection.execute(
+            """
+            SELECT phone, state, expires_at, created_at
+            FROM auth_flows
+            WHERE id = ?
+            """,
+            (flow_id,),
+        ).fetchone()
+
+    if not flow or now > flow["expires_at"] or flow["state"] not in {
+        "otp_pending", "profile_pending"
+    }:
+        session.pop("auth_flow_id", None)
+        return jsonify({"state": "none"})
+
+    phone = flow["phone"]
+    masked = f"{phone[:2]}•••••{phone[-4:]}" if len(phone) == 11 else ""
+    return jsonify({
+        "state": flow["state"],
+        "masked_phone": masked,
+        "expires_in": max(0, int(flow["expires_at"] - now)),
+        "resend_after": max(0, 60 - int(now - flow["created_at"])),
+    })
+
+
+@bp.post("/cancel-flow")
+def cancel_auth_flow():
+    """Invalidate the current OTP flow when the user chooses to change phone."""
+    if not csrf_valid():
+        return jsonify({
+            "error": "csrf_failed",
+            "message": "صفحه را تازه‌سازی کنید و دوباره تلاش کنید.",
+        }), 400
+
+    flow_id = session.get("auth_flow_id")
+    if isinstance(flow_id, str) and flow_id:
+        now = time.time()
+        with get_connection() as connection:
+            flow = connection.execute(
+                "SELECT challenge_id FROM auth_flows WHERE id = ?",
+                (flow_id,),
+            ).fetchone()
+            if flow:
+                connection.execute(
+                    "UPDATE otp_challenges SET consumed_at = ? WHERE id = ? AND consumed_at IS NULL",
+                    (now, flow["challenge_id"]),
+                )
+                connection.execute(
+                    "UPDATE auth_flows SET state = 'cancelled', updated_at = ? WHERE id = ?",
+                    (now, flow_id),
+                )
+
+    session.pop("auth_flow_id", None)
+    session.pop("otp_challenge_id", None)
+    session.pop("math_challenge_answer", None)
+    session.pop("math_challenge_at", None)
+    return jsonify({"ok": True})
 
 
 @bp.post("/verify-otp")
@@ -424,11 +576,10 @@ def verify_otp():
 
     payload = _json_payload()
     raw_code = payload.get("code", "")
-
-    if not isinstance(raw_code, str):
-        raw_code = ""
-
-    code = raw_code.translate(PHONE_TRANSLATION).strip()
+    code = (
+        raw_code.translate(PHONE_TRANSLATION).strip()
+        if isinstance(raw_code, str) else ""
+    )
 
     if not re.fullmatch(r"\d{6}", code):
         return jsonify({
@@ -436,9 +587,8 @@ def verify_otp():
             "message": "کد تأیید باید شش رقم باشد.",
         }), 400
 
-    challenge_id = session.get("otp_challenge_id")
-
-    if not isinstance(challenge_id, str) or not challenge_id:
+    flow_id = session.get("auth_flow_id")
+    if not isinstance(flow_id, str) or not flow_id:
         return jsonify({
             "error": "otp_expired",
             "message": "کد منقضی شده است؛ دوباره درخواست کد کنید.",
@@ -446,42 +596,49 @@ def verify_otp():
 
     now = time.time()
     user = None
-    phone = None
-    accepted_at = None
-
     with get_connection() as connection:
-        # Serialize attempts and consumption to prevent OTP reuse. PostgreSQL
-        # locks the challenge row; SQLite takes its database write lock.
         dialect_name = getattr(connection, "dialect_name", "sqlite")
         if dialect_name != "postgresql":
             connection.execute("BEGIN IMMEDIATE")
+        flow = connection.execute(
+            """
+            SELECT phone, state, challenge_id, terms_accepted_at, expires_at
+            FROM auth_flows WHERE id = ?
+            """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
+            (flow_id,),
+        ).fetchone()
+
+        if (
+            not flow
+            or flow["state"] != "otp_pending"
+            or now > flow["expires_at"]
+        ):
+            if flow:
+                connection.execute(
+                    "UPDATE auth_flows SET state = 'expired', updated_at = ? WHERE id = ?",
+                    (now, flow_id),
+                )
+            session.pop("auth_flow_id", None)
+            return jsonify({
+                "error": "otp_expired",
+                "message": "کد منقضی شده است؛ دوباره درخواست کد کنید.",
+            }), 400
 
         challenge = connection.execute(
             """
-            SELECT
-                id,
-                phone,
-                otp_hash,
-                expires_at,
-                attempts,
-                terms_accepted_at
+            SELECT id, otp_hash, expires_at, attempts
             FROM otp_challenges
             WHERE id = ? AND consumed_at IS NULL
             """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
-            (challenge_id,),
+            (flow["challenge_id"],),
         ).fetchone()
 
         if not challenge or now > challenge["expires_at"]:
             connection.execute(
-                """
-                UPDATE otp_challenges
-                SET consumed_at = ?
-                WHERE id = ? AND consumed_at IS NULL
-                """,
-                (now, challenge_id),
+                "UPDATE auth_flows SET state = 'expired', updated_at = ? WHERE id = ?",
+                (now, flow_id),
             )
-            session.pop("otp_challenge_id", None)
-
+            session.pop("auth_flow_id", None)
             return jsonify({
                 "error": "otp_expired",
                 "message": "کد منقضی شده است؛ دوباره درخواست کد کنید.",
@@ -489,15 +646,14 @@ def verify_otp():
 
         if challenge["attempts"] >= 5:
             connection.execute(
-                """
-                UPDATE otp_challenges
-                SET consumed_at = ?
-                WHERE id = ?
-                """,
-                (now, challenge_id),
+                "UPDATE otp_challenges SET consumed_at = ? WHERE id = ?",
+                (now, challenge["id"]),
             )
-            session.pop("otp_challenge_id", None)
-
+            connection.execute(
+                "UPDATE auth_flows SET state = 'locked', updated_at = ? WHERE id = ?",
+                (now, flow_id),
+            )
+            session.pop("auth_flow_id", None)
             return jsonify({
                 "error": "otp_locked",
                 "message": "تعداد تلاش‌ها تمام شد؛ کد تازه درخواست کنید.",
@@ -505,59 +661,43 @@ def verify_otp():
 
         if not check_password_hash(challenge["otp_hash"], code):
             attempts = challenge["attempts"] + 1
-
             connection.execute(
-                """
-                UPDATE otp_challenges
-                SET attempts = ?, consumed_at = ?
-                WHERE id = ?
-                """,
-                (
-                    attempts,
-                    now if attempts >= 5 else None,
-                    challenge_id,
-                ),
+                "UPDATE otp_challenges SET attempts = ?, consumed_at = ? WHERE id = ?",
+                (attempts, now if attempts >= 5 else None, challenge["id"]),
             )
-
             if attempts >= 5:
-                session.pop("otp_challenge_id", None)
-
+                connection.execute(
+                    "UPDATE auth_flows SET state = 'locked', updated_at = ? WHERE id = ?",
+                    (now, flow_id),
+                )
+                session.pop("auth_flow_id", None)
                 return jsonify({
                     "error": "otp_locked",
-                    "message": (
-                        "تعداد تلاش‌ها تمام شد؛ کد تازه درخواست کنید."
-                    ),
+                    "message": "تعداد تلاش‌ها تمام شد؛ کد تازه درخواست کنید.",
                 }), 429
-
             return jsonify({
                 "error": "otp_invalid",
                 "message": "کد تأیید نادرست است.",
             }), 400
 
-        phone = challenge["phone"]
-        accepted_at = challenge["terms_accepted_at"]
-
         connection.execute(
-            """
-            UPDATE otp_challenges
-            SET consumed_at = ?
-            WHERE id = ? AND consumed_at IS NULL
-            """,
-            (now, challenge_id),
+            "UPDATE otp_challenges SET consumed_at = ? WHERE id = ?",
+            (now, challenge["id"]),
         )
-
         user = connection.execute(
             """
             SELECT id, name, phone, role, is_banned
-            FROM users
-            WHERE phone = ?
+            FROM users WHERE phone = ?
             """,
-            (phone,),
+            (flow["phone"],),
         ).fetchone()
 
         if user and user["is_banned"]:
-            session.pop("otp_challenge_id", None)
-
+            connection.execute(
+                "UPDATE auth_flows SET state = 'blocked', updated_at = ? WHERE id = ?",
+                (now, flow_id),
+            )
+            session.pop("auth_flow_id", None)
             return jsonify({
                 "error": "account_banned",
                 "message": "حساب کاربری شما مسدود شده است.",
@@ -566,32 +706,36 @@ def verify_otp():
         if user:
             connection.execute(
                 """
-                UPDATE users
-                SET
-                    phone_verified_at = COALESCE(
-                        NULLIF(phone_verified_at, ''),
-                        ?
-                    ),
-                    terms_accepted_at = COALESCE(
-                        NULLIF(terms_accepted_at, ''),
-                        ?
-                    )
+                UPDATE users SET
+                    phone_verified_at = COALESCE(NULLIF(phone_verified_at, ''), ?),
+                    terms_accepted_at = COALESCE(NULLIF(terms_accepted_at, ''), ?)
                 WHERE id = ?
                 """,
                 (
                     datetime.now(timezone.utc).isoformat(),
-                    accepted_at or "",
+                    flow["terms_accepted_at"] or "",
                     user["id"],
                 ),
             )
-
-    session.pop("otp_challenge_id", None)
+            connection.execute(
+                "UPDATE auth_flows SET state = 'completed', updated_at = ? WHERE id = ?",
+                (now, flow_id),
+            )
+        else:
+            # Verification state and verified phone stay server-side.
+            connection.execute(
+                """
+                UPDATE auth_flows
+                SET state = 'profile_pending', expires_at = ?, updated_at = ?
+                WHERE id = ?
+                """,
+                (now + 1800, now, flow_id),
+            )
 
     if user:
         session.clear()
         session["user_id"] = user["id"]
         session["csrf_token"] = uuid.uuid4().hex
-
         return jsonify({
             "existing_user": True,
             "user": {
@@ -603,13 +747,9 @@ def verify_otp():
             "csrf_token": session["csrf_token"],
         })
 
-    # Unknown numbers are not registered until profile completion.
-    session["verified_phone"] = phone
-    session["verified_terms_accepted_at"] = accepted_at
-
     return jsonify({
         "existing_user": False,
-        "phone": phone,
+        "phone_verified": True,
     })
 
 
@@ -621,25 +761,18 @@ def complete_profile():
             "message": "صفحه را تازه‌سازی کنید و دوباره تلاش کنید.",
         }), 400
 
-    phone = session.get("verified_phone")
-    accepted_at = session.get("verified_terms_accepted_at")
-
-    if not phone or not accepted_at:
+    flow_id = session.get("auth_flow_id")
+    if not isinstance(flow_id, str) or not flow_id:
         return jsonify({
             "error": "phone_verification_required",
             "message": "ابتدا شماره همراه را تأیید کنید.",
         }), 401
 
     payload = _json_payload()
-
     name = payload.get("name", "")
     role = payload.get("role", "buyer")
 
-    if (
-        not isinstance(name, str)
-        or not name.strip()
-        or len(name.strip()) > 80
-    ):
+    if not isinstance(name, str) or not name.strip() or len(name.strip()) > 80:
         return jsonify({
             "error": "invalid_name",
             "message": "نام و نام خانوادگی را وارد کنید.",
@@ -655,56 +788,70 @@ def complete_profile():
     profile_city = normalize_location_name(
         raw_city if isinstance(raw_city, str) else ""
     )
-
     if role == "buyer" and not is_city_name(profile_city):
         return jsonify({
             "error": "invalid_city",
-            "message": (
-                "شهر محل سکونت را از فهرست شهرهای معتبر انتخاب کنید."
-            ),
+            "message": "شهر محل سکونت را از فهرست شهرهای معتبر انتخاب کنید.",
         }), 400
 
-    # Seller accounts are created independently from their store.
-    # Store details are collected progressively in the seller dashboard.
-
+    now = time.time()
     try:
         with get_connection() as connection:
+            dialect_name = getattr(connection, "dialect_name", "sqlite")
+            if dialect_name != "postgresql":
+                connection.execute("BEGIN IMMEDIATE")
+            flow = connection.execute(
+                """
+                SELECT phone, terms_accepted_at, state, expires_at
+                FROM auth_flows WHERE id = ?
+                """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
+                (flow_id,),
+            ).fetchone()
+            if (
+                not flow
+                or flow["state"] != "profile_pending"
+                or now > flow["expires_at"]
+            ):
+                session.pop("auth_flow_id", None)
+                return jsonify({
+                    "error": "phone_verification_required",
+                    "message": "اعتبار تأیید شماره پایان یافته است؛ دوباره کد بگیرید.",
+                }), 401
+
             cursor = connection.execute(
                 """
                 INSERT INTO users (
-                    name,
-                    phone,
-                    password_hash,
-                    role,
-                    phone_verified_at,
-                    terms_accepted_at,
-                    city
+                    name, phone, password_hash, role, phone_verified_at,
+                    terms_accepted_at, city
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 RETURNING id
                 """,
                 (
                     name.strip(),
-                    phone,
+                    flow["phone"],
                     generate_password_hash(secrets.token_urlsafe(32)),
                     role,
                     datetime.now(timezone.utc).isoformat(),
-                    accepted_at,
+                    flow["terms_accepted_at"],
                     profile_city if role == "buyer" else "",
                 ),
             )
-
             user_id = cursor.fetchone()["id"]
-
+            connection.execute(
+                "UPDATE auth_flows SET state = 'completed', updated_at = ? WHERE id = ?",
+                (now, flow_id),
+            )
     except IntegrityError:
         return jsonify({
             "error": "phone_exists",
             "message": (
                 "این شماره قبلاً ثبت شده است؛ "
-                "کد ورود را دوباره درخواست کنید."
+                "برای ورود، کد پیامکی را دوباره درخواست کنید."
             ),
         }), 409
 
+    phone = flow["phone"]
     session.clear()
     session["user_id"] = user_id
     session["csrf_token"] = uuid.uuid4().hex
@@ -715,9 +862,7 @@ def complete_profile():
             "name": name.strip(),
             "phone": phone,
             "role": role,
-            "city": (
-                profile_city if role == "buyer" else ""
-            ),
+            "city": profile_city if role == "buyer" else "",
         },
         "store": None,
         "onboarding_required": role == "seller",
