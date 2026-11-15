@@ -105,6 +105,14 @@ class SQLAlchemyConnectionAdapter:
         """Return normalized foreign-key metadata for a table."""
         return inspect(self._connection).get_foreign_keys(table_name)
 
+    def index_names(self, table_name: str) -> set[str]:
+        """Return index names for a table using the active dialect."""
+        return {
+            index["name"]
+            for index in inspect(self._connection).get_indexes(table_name)
+            if index.get("name")
+        }
+
     @property
     def dialect_name(self) -> str:
         return self._connection.dialect.name
