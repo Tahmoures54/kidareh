@@ -122,6 +122,25 @@ def test_initialized_sqlite_schema_can_be_rehearsed_on_postgres(tmp_path):
             get_database().dispose()
 
 
+
+def _reset_local_postgres_test_schema(url):
+    """Reset only the explicitly named local CI database, never a remote DB."""
+    from sqlalchemy.engine import make_url
+
+    parsed = make_url(url)
+    if parsed.host not in {"localhost", "127.0.0.1"} or parsed.database != "kidareh_test":
+        raise RuntimeError(
+            "Refusing destructive reset: PostgreSQL tests require localhost/kidareh_test."
+        )
+    engine = create_database_engine("unused.sqlite3", url=url)
+    try:
+        with engine.begin() as connection:
+            connection.exec_driver_sql("DROP SCHEMA IF EXISTS public CASCADE")
+            connection.exec_driver_sql("CREATE SCHEMA public")
+    finally:
+        engine.dispose()
+
+
 def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
     """Verify Alembic honors the explicit PostgreSQL migration URL.
 
@@ -137,6 +156,7 @@ def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
     if not url:
         pytest.skip("KIDAREH_TEST_POSTGRES_URL is not configured")
 
+    _reset_local_postgres_test_schema(url)
     root = Path(__file__).resolve().parents[1]
     environment = dict(os.environ)
     environment["MIGRATION_DATABASE_URL"] = url
@@ -154,7 +174,11 @@ def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
     from sqlalchemy import inspect
     engine = create_database_engine("unused.sqlite3", url=url)
     try:
-        assert inspect(engine).has_table("alembic_version")
+        inspector = inspect(engine)
+        assert inspector.has_table("alembic_version")
+        assert {"users", "stores", "listings", "otp_challenges", "rate_limits"}.issubset(
+            set(inspector.get_table_names())
+        )
     finally:
         engine.dispose()
 
