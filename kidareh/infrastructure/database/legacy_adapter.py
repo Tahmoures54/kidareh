@@ -95,6 +95,8 @@ class SQLAlchemyConnectionAdapter:
             # Match sqlite3.executemany: an empty parameter sequence is a no-op.
             result = self._connection.exec_driver_sql("SELECT 1 WHERE 0")
         else:
+            if self._connection.dialect.name == "postgresql":
+                statement, _ = qmark_to_format(statement, parameter_sets[0])
             result = self._connection.exec_driver_sql(statement, parameter_sets)
         return CompatibleResult(result)
 
