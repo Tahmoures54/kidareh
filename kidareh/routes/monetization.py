@@ -16,11 +16,11 @@ PACKAGES = [
     {"id": "trial_boost_3d", "name": "شروع دیده‌شدن", "price": 9000, "days": 3, "icon": "✨", "tag": "شروع کم‌هزینه", "description": "اولویت موقت نمایش کالاها در نتایج مرتبط.", "features": ["اولویت نمایش کالاها", "مناسب برای آزمودن تبلیغ"]},
     {"id": "search_boost_7d", "name": "نشان ویژه جست‌وجو", "price": 49000, "days": 7, "icon": "🚀", "tag": "پیشنهاد محبوب", "description": "نمایش برجسته‌تر کالاهای فروشگاه در بازه هفت‌روزه.", "features": ["اولویت نمایش کالاها", "مدت ۷ روز"]},
     {"id": "search_boost_30d", "name": "نشان ویژه جست‌وجو", "price": 149000, "days": 30, "icon": "📈", "tag": "یک‌ماهه", "description": "یک ماه فرصت بیشتر برای دیده‌شدن کالاها.", "features": ["اولویت نمایش کالاها", "مدت ۳۰ روز"]},
-    {"id": "market_story_1d", "name": "استوری بازار", "price": 19000, "days": 1, "icon": "📣", "tag": "۲۴ ساعته", "description": "معرفی ویترین در جایگاه استوری بازار شهر.", "features": ["جایگاه معرفی محلی", "مدت ۲۴ ساعت"]},
-    {"id": "market_story_7d", "name": "استوری بازار", "price": 89000, "days": 7, "icon": "📣", "tag": "۷ روزه", "description": "معرفی ویترین در جایگاه استوری بازار شهر.", "features": ["جایگاه معرفی محلی", "مدت ۷ روز"]},
+    {"id": "market_story_1d", "name": "استوری بازار", "price": 19000, "days": 1, "icon": "📣", "tag": "۲۴ ساعته", "description": "معرفی فروشگاه در جایگاه استوری بازار شهر.", "features": ["جایگاه معرفی محلی", "مدت ۲۴ ساعت"]},
+    {"id": "market_story_7d", "name": "استوری بازار", "price": 89000, "days": 7, "icon": "📣", "tag": "۷ روزه", "description": "معرفی فروشگاه در جایگاه استوری بازار شهر.", "features": ["جایگاه معرفی محلی", "مدت ۷ روز"]},
     {"id": "homepage_banner_7d", "name": "بنر فروشگاه", "price": 99000, "days": 7, "icon": "🖼️", "tag": "تبلیغ محلی", "description": "درخواست حضور فروشگاه در جایگاه بنر شهر؛ با برچسب تبلیغ.", "features": ["جایگاه بنر تبلیغاتی", "مدت ۷ روز"]},
     {"id": "visibility_bundle_7d", "name": "بسته دیده‌شدن", "price": 149000, "days": 7, "icon": "🌟", "tag": "بسته ترکیبی", "description": "ترکیبی از اولویت جست‌وجو و جایگاه‌های معرفی محلی.", "features": ["اولویت نمایش کالاها", "استوری و بنر محلی", "مدت ۷ روز"]},
-    {"id": "blue_tick_30d", "name": "تیک آبی فروشگاه", "price": 79000, "days": 30, "icon": "☑️", "tag": "اعتماد بیشتر", "description": "نشان زمان‌دار فروشگاه. این نشان به‌تنهایی به معنی ضمانت کی‌داره نیست.", "features": ["نمایش نشان کنار ویترین", "مدت ۳۰ روز"]},
+    {"id": "blue_tick_30d", "name": "تیک آبی فروشگاه", "price": 79000, "days": 30, "icon": "☑️", "tag": "اعتماد بیشتر", "description": "نشان زمان‌دار فروشگاه. این نشان به‌تنهایی به معنی ضمانت کی‌داره نیست.", "features": ["نمایش نشان کنار نام فروشگاه", "مدت ۳۰ روز"]},
 ]
 
 TAG_PACKAGES = [
@@ -149,7 +149,7 @@ def create_order():
     with get_connection() as db:
         store = db.execute("SELECT id FROM stores WHERE owner_id=?", (user["id"],)).fetchone()
         if not store:
-            return jsonify({"error": "store_required", "message": "ابتدا از بخش ویترین من، فروشگاه خود را بسازید."}), 409
+            return jsonify({"error": "store_required", "message": "ابتدا از بخش فروشگاه من، فروشگاه خود را بسازید."}), 409
         if is_listing_tag:
             try:
                 listing_id = int(listing_id)
@@ -159,7 +159,7 @@ def create_order():
             if not listing:
                 return jsonify({"error": "listing_forbidden", "message": "فقط می‌توانید برای کالای خودتان تگ بخرید."}), 403
             if not listing["store_id"]:
-                return jsonify({"error": "store_required", "message": "کالا باید به ویترین فروشگاه شما متصل باشد."}), 409
+                return jsonify({"error": "store_required", "message": "کالا باید به فروشگاه شما متصل باشد."}), 409
             store_id = listing["store_id"]
         else:
             listing_id = None
