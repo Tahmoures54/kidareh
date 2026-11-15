@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}راه‌اندازی فروشگاه | کی‌داره{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261115-multipage-auth">
+{% endblock %}
+{% block content %}
+<section class="auth-page" data-auth-page="create-store">
+  <div class="auth-shell">
+    <aside class="auth-visual auth-visual-register" aria-hidden="true">
+      <div class="auth-visual-inner">
+        <div class="auth-brand-mark">ک</div>
+        <h2>فروشگاهت را آنلاین کن</h2>
+        <p>مشتری‌ها باید بدانند فروشگاه شما کجاست و چه چیزهایی عرضه می‌کنید.</p>
+        <ul class="auth-benefits"><li><span class="benefit-icon">✓</span> نمایش فروشگاه در شهر</li><li><span class="benefit-icon">✓</span> افزودن کالا پس از راه‌اندازی</li></ul>
+      </div>
+      <div class="auth-visual-glow"></div>
+    </aside>
+    <div class="auth-panel">
+      <div class="auth-panel-header">
+        <span class="auth-kicker">گام ۴ از ۴ · راه‌اندازی فروشگاه</span>
+        <h1 class="auth-step-title">فروشگاه خود را معرفی کنید</h1>
+        <p class="auth-subtitle">اطلاعات ضروری را وارد کنید؛ نشانی و ساعت کاری را بعداً هم می‌توانید ویرایش کنید.</p>
+      </div>
+      <form id="createStoreForm" class="auth-form" novalidate>
+        <label class="auth-label" for="storeName">نام فروشگاه</label>
+        <input class="auth-input" id="storeName" name="name" maxlength="80" required placeholder="مثلاً فروشگاه مرکزی">
+        <label class="auth-label" for="storeCategory">دسته‌بندی</label>
+        <input class="auth-input" id="storeCategory" name="category" maxlength="80" required placeholder="مثلاً پوشاک، لوازم خانه، دیجیتال">
+        <label class="auth-label" for="storeCity">شهر</label>
+        <input class="auth-input" id="storeCity" name="city" maxlength="60" list="iranCityOptions" data-iran-location autocomplete="off" required placeholder="نام شهر">
+        <label class="auth-label" for="storeAddress">نشانی (اختیاری)</label>
+        <input class="auth-input" id="storeAddress" name="address" maxlength="300" placeholder="خیابان، محله و پلاک">
+        <label class="auth-label" for="storeDescription">توضیح کوتاه (اختیاری)</label>
+        <textarea class="auth-input" id="storeDescription" name="description" maxlength="500" rows="3" placeholder="چه کالاها یا خدماتی ارائه می‌کنید؟"></textarea>
+        <button class="button button-primary auth-submit" type="submit" id="createStoreButton">ساخت فروشگاه و ورود به پنل</button>
+        <p class="auth-feedback" id="createStoreFeedback" role="status" aria-live="polite"></p>
+      </form>
+      <div class="auth-footer-links"><p>فروشگاه از حساب کاربری شما جدا نیست و فقط یک فروشگاه برای هر حساب ساخته می‌شود.</p></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth/auth-common.js') }}?v=1" defer></script>
+<script src="{{ url_for('static', filename='js/auth/create-store.js') }}?v=1" defer></script>
+{% endblock %}
