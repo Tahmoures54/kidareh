@@ -181,15 +181,14 @@ def test_postgres_schema_lock_is_shared_across_connections(tmp_path):
         with _schema_migration_lock(tmp_path / "unused.sqlite3"):
             with get_connection() as second_connection:
                 acquired = second_connection.execute(
-                    "SELECT pg_try_advisory_lock(?)", (lock_key,)
+                    "SELECT pg_try_advisory_xact_lock(?)", (lock_key,)
                 ).fetchone()[0]
                 assert acquired is False
         with get_connection() as connection:
             acquired = connection.execute(
-                "SELECT pg_try_advisory_lock(?)", (lock_key,)
+                "SELECT pg_try_advisory_xact_lock(?)", (lock_key,)
             ).fetchone()[0]
             assert acquired is True
-            connection.execute("SELECT pg_advisory_unlock(?)", (lock_key,))
         app.extensions["kidareh_db"].dispose()
 
 
