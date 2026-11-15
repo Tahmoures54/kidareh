@@ -117,6 +117,13 @@ def _extract_api_status(payload):
 def send_otp(phone: str, code: str) -> bool:
     """Send a six-digit OTP using Kavenegar Verify Lookup API."""
 
+    enabled = os.environ.get("SMS_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+    if not enabled:
+        raise SMSDeliveryError(
+            "SMS delivery is disabled by configuration",
+            reason="sms_disabled",
+        )
+
     _validate_otp_inputs(phone, code)
 
     api_key = (
