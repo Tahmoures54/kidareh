@@ -1101,3 +1101,20 @@
   /* ----- Seller location tools ----- */
   .seller-location-tools .auth-hint { color: #94A3B8; }
 }
+
+/* Explicit confirmation after choosing an account type. */
+.auth-role-actions {
+  margin-top: 0.25rem;
+}
+
+.auth-role-actions .auth-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.auth-role-hint {
+  margin: 0.65rem 0 0;
+  text-align: center;
+}
