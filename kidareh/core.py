@@ -5,6 +5,7 @@ import hmac
 import logging
 import os
 import sqlite3
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Iterator
@@ -858,6 +859,32 @@ def _schema_migration_lock(database_path: Path) -> Iterator[None]:
     automatically if a worker is killed mid-migration, so there is no stale
     lock left behind to clean up.
     """
+    # PostgreSQL advisory locks coordinate schema work across all
+    # serverless instances. A local lock file cannot provide that guarantee.
+    if has_app_context():
+        from .infrastructure.database.session import get_database
+
+        database = get_database()
+        if database.engine.dialect.name == "postgresql":
+            lock_key = 0x4B494441524548  # stable application-specific 64-bit key
+            deadline = time.monotonic() + MIGRATION_LOCK_TIMEOUT_SECONDS
+            with get_connection() as connection:
+                while not connection.execute(
+                    "SELECT pg_try_advisory_lock(?)", (lock_key,)
+                ).fetchone()[0]:
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError(
+                            "Timed out waiting for the PostgreSQL schema advisory lock."
+                        )
+                    time.sleep(0.1)
+                try:
+                    yield
+                finally:
+                    connection.execute(
+                        "SELECT pg_advisory_unlock(?)", (lock_key,)
+                    )
+            return
+
     lock_path = database_path.parent / MIGRATION_LOCK_FILENAME
     try:
         connection = sqlite3.connect(
