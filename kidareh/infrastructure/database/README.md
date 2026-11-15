@@ -42,11 +42,11 @@ The initial source audit found these concrete SQLite dependencies:
 
 1. **Connection and placeholder contract.** `kidareh/core.py` still owns the
    request-scoped compatibility connection. Route and feature code issues
-   driver-level SQL using SQLite positional `?` placeholders. The
-   `SQLAlchemyConnectionAdapter` calls `exec_driver_sql`, which forwards this
-   SQL to the active DB-API driver; PostgreSQL drivers do not accept SQLite's
-   placeholder syntax. The adapter also exposes SQLite-oriented result behavior
-   such as `lastrowid`.
+   driver-level SQL using SQLite positional `?` placeholders. The adapter now
+   translates positional binds to psycopg's `%s` format for PostgreSQL and has
+   a disposable-PostgreSQL smoke test for single and batch statements. This is
+   only a parameter adaptation: it does not convert SQLite DDL, metadata
+   queries, conflict syntax, transaction commands, or `lastrowid` assumptions.
 2. **Schema discovery and startup DDL.** `core.py` and route initializers use
    `sqlite_master`, `PRAGMA table_info`, `PRAGMA foreign_key_list`, and
    `PRAGMA journal_mode`. These are not PostgreSQL catalog/DDL operations.
@@ -96,3 +96,19 @@ selector, do not run schema bootstrap against Neon, and do not migrate or delete
 live records until the PostgreSQL schema, adapter, tests, backup, and rollback
 plan are reviewed and verified. The current empty Alembic baseline must not be
 mistaken for a completed migration.
+
+
+### PostgreSQL foundation work (PR #32)
+
+The foundation branch adds the psycopg 3 driver, explicit PostgreSQL URL
+normalization, and PostgreSQL-aware positional-bind conversion in the legacy
+adapter. GitHub Actions now starts an isolated PostgreSQL 16 service and runs
+adapter smoke tests against temporary tables. These tests validate connection,
+parameter binding, `RETURNING`, row mapping, and batch inserts.
+
+This does **not** mean the Flask application is PostgreSQL-ready. Runtime
+configuration intentionally does not select `DATABASE_URL`; application
+startup still runs the SQLite schema bootstrap, and route SQL still contains
+SQLite-only metadata, DDL, FTS5, and transaction operations. The PostgreSQL
+service tests are deliberately narrow and do not boot the full app against
+PostgreSQL.
