@@ -1252,6 +1252,9 @@ def test_multipage_registration_keeps_verified_state_server_side_and_creates_sto
 ):
     """The browser keeps only an opaque flow id; verification state stays in DB."""
     client = setup_empty_database(monkeypatch, tmp_path)
+    with client.session_transaction() as browser_session:
+        browser_session["csrf_token"] = CSRF_TOKEN
+    client.environ_base["HTTP_X_CSRF_TOKEN"] = CSRF_TOKEN
     code = _request_test_otp(client, "09124445566", monkeypatch)
 
     with client.session_transaction() as browser_session:
@@ -1323,6 +1326,9 @@ def test_existing_user_otp_from_registration_route_logs_in_without_duplicate_acc
     monkeypatch, tmp_path
 ):
     client = setup_empty_database(monkeypatch, tmp_path)
+    with client.session_transaction() as browser_session:
+        browser_session["csrf_token"] = CSRF_TOKEN
+    client.environ_base["HTTP_X_CSRF_TOKEN"] = CSRF_TOKEN
     with app_module.get_connection() as connection:
         user_id = _seed_user(connection, "09125556677", role="buyer")
         connection.commit()
