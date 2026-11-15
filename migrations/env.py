@@ -17,6 +17,20 @@ if config.config_file_name:
 
 
 def _database_url() -> str:
+    # Alembic uses an explicit migration URL when supplied. This is separate
+    # from the Flask runtime selector: merely defining DATABASE_URL must not
+    # switch application traffic while the SQLite route layer is still active.
+    configured_url = (
+        os.environ.get("MIGRATION_DATABASE_URL", "").strip()
+        or os.environ.get("DATABASE_URL", "").strip()
+    )
+    if configured_url:
+        if configured_url.startswith("postgres://"):
+            return "postgresql+psycopg://" + configured_url[len("postgres://"):]
+        if configured_url.startswith("postgresql://"):
+            return "postgresql+psycopg://" + configured_url[len("postgresql://"):]
+        return configured_url
+
     configured = os.environ.get("DATABASE_PATH") or os.environ.get("DB_PATH")
     if configured:
         path = Path(configured).expanduser().resolve()
