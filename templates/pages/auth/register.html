@@ -4,7 +4,7 @@
 {% block title %}ثبت‌نام | کی‌داره{% endblock %}
 
 {% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261115-auth-flow">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261115-auth-flow-continue">
 {% endblock %}
 
 {% block content %}
@@ -137,6 +137,20 @@
                 </span>
               </div>
             </label>
+          </div>
+
+          <div class="auth-role-actions">
+            <button
+              class="button button-primary auth-submit"
+              type="button"
+              id="continueRoleButton"
+              disabled
+              aria-disabled="true"
+            >
+              ادامه ثبت‌نام
+              <span aria-hidden="true">←</span>
+            </button>
+            <p class="auth-hint auth-role-hint">ابتدا نوع حساب خود را انتخاب کنید.</p>
           </div>
         </div>
 
@@ -409,7 +423,7 @@
 
 {% block scripts %}
 <script
-  src="{{ url_for('static', filename='js/auth-pages.js') }}?v=20261114"
+  src="{{ url_for('static', filename='js/auth-pages.js') }}?v=20261115-role-continue"
   defer
 ></script>
 {% endblock %}
