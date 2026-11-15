@@ -389,4 +389,6 @@ def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatc
     assert me_response.status_code == 200
     assert me_response.get_json()["user"]["phone"] == "09120000000"
     assert me_response.get_json()["user"]["role"] == "seller"
+    dashboard_response = client.get("/seller")
+    assert dashboard_response.status_code == 200
     app.extensions["kidareh_db"].dispose()
