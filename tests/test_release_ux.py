@@ -609,10 +609,16 @@ def test_registration_form_uses_vertical_layout_and_mobile_sizing(client):
     assert '.auth-page[data-auth-mode="register"] .auth-field-row' in css
     assert "grid-template-columns: minmax(0, 1fr);" in css
     assert '@media (max-width: 520px)' in css
-    assert 'id="continueRoleButton"' not in html
-    assert 'radio.addEventListener("change"' in read("static/js/auth-pages.js")
-    assert 'if (currentStep === "role")' in read("static/js/auth-pages.js")
-    assert 'showStep("phone");' in read("static/js/auth-pages.js")
+    assert 'id="continueRoleButton"' in html
+    continue_button = re.search(r'<button\b(?=[^>]*\bid="continueRoleButton")[^>]*>', html)
+    assert continue_button, "continue button element missing"
+    assert re.search(r'\bdisabled(?:\s|>)', continue_button.group(0))
+    auth_script = read("static/js/auth-pages.js")
+    assert 'radio.addEventListener("change"' in auth_script
+    assert 'syncRoleContinueButton();' in auth_script
+    assert 'continueRoleButton?.addEventListener("click"' in auth_script
+    assert 'const selected = form.querySelector(\'input[name="role"]:checked\')' in auth_script
+    assert 'showStep("phone");' in auth_script
     assert 'id="authPhoneStep"' in html
     assert 'id="authProfileStep"' in html
     assert 'name="terms_accepted"' not in html
