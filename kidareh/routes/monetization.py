@@ -165,10 +165,10 @@ def create_order():
             listing_id = None
             store_id = store["id"]
         cursor = db.execute(
-            "INSERT INTO monetization_orders (user_id, store_id, package_id, listing_id, amount_toman, status) VALUES (?, ?, ?, ?, ?, 'pending')",
+            "INSERT INTO monetization_orders (user_id, store_id, package_id, listing_id, amount_toman, status) VALUES (?, ?, ?, ?, ?, 'pending') RETURNING id",
             (user["id"], store_id, package["id"], listing_id, package["price"]),
         )
-        order_id = cursor.lastrowid
+        order_id = cursor.fetchone()["id"]
     callback_url = url_for("monetization.payment_callback", order_id=order_id, _external=True)
     try:
         result = zibal_request(ZIBAL_REQUEST_URL, {
