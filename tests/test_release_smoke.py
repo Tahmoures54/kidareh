@@ -321,7 +321,8 @@ def test_new_signup_collects_profile_before_creating_account(
 
     with client.session_transaction() as session:
         assert "user_id" not in session
-        assert session["verified_phone"] == "09123456789"
+        assert session.get("auth_flow_id")
+        assert "verified_phone" not in session
 
     profile = {"name": expected_name, "role": role}
     if role == "buyer":
