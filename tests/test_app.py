@@ -1260,7 +1260,9 @@ def test_multipage_registration_keeps_verified_state_server_side_and_creates_sto
     with client.session_transaction() as browser_session:
         flow_id = browser_session.get("auth_flow_id")
         assert flow_id
-        assert "otp_challenge_id" not in browser_session
+        assert browser_session.get("otp_challenge_id")  # opaque random handle only
+        assert "otp_hash" not in browser_session
+        assert "otp_phone" not in browser_session
         assert "verified_phone" not in browser_session
         assert "verified_terms_accepted_at" not in browser_session
 
