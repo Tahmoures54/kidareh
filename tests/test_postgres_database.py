@@ -274,9 +274,11 @@ def test_postgres_otp_rate_limit_serializes_concurrent_requests(tmp_path):
         "TESTING": True,
         "SECRET_KEY": "postgres-otp-rehearsal-only",
         "DATABASE_PATH": str(tmp_path / "unused.sqlite3"),
+        "DATABASE_BACKEND": "postgresql",
         "DATABASE_URL": url,
         "UPLOAD_FOLDER": str(tmp_path / "uploads"),
     })
+    assert app.extensions["kidareh_db"].engine.dialect.name == "postgresql"
     with app.app_context():
         ensure_tables()
 
