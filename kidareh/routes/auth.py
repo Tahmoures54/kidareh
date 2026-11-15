@@ -110,20 +110,14 @@ def _check_otp_rate_limit(phone):
             # Acquire transaction-scoped advisory locks for both identities in
             # a deterministic order. This protects first-use races as well as
             # existing rows, and is compatible with PgBouncer transaction mode.
-            lock_keys = sorted(
-                int.from_bytes(
-                    hashlib.sha256(
-                        f"kidareh-otp:{scope}:{key_hash}".encode("utf-8")
-                    ).digest()[:8],
-                    "big",
-                    signed=True,
-                )
-                for scope, key_hash in keys.items()
-            )
-            for lock_key in lock_keys:
+            # Use PostgreSQL's two-int advisory-lock namespace explicitly.
+            # Sorting the (scope, key) pairs gives every request the same lock
+            # order and prevents deadlocks when phone and IP limits overlap.
+            for scope, key_hash in sorted(keys.items()):
                 connection.execute(
-                    "SELECT pg_advisory_xact_lock(?)", (lock_key,)
-                )
+                    "SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))",
+                    (f"kidareh-otp:{scope}", key_hash),
+                ).fetchone()
 
             # Ensure both keys exist before selecting and updating their rows.
             for scope, key_hash in keys.items():
