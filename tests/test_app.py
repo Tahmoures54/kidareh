@@ -1358,3 +1358,47 @@ def test_existing_user_otp_from_registration_route_logs_in_without_duplicate_acc
             ("09125556677",),
         ).fetchone()[0]
     assert count == 1
+
+
+def test_changing_phone_cancels_previous_server_side_otp_flow(
+    monkeypatch, tmp_path
+):
+    client = setup_empty_database(monkeypatch, tmp_path)
+    with client.session_transaction() as browser_session:
+        browser_session["csrf_token"] = CSRF_TOKEN
+    client.environ_base["HTTP_X_CSRF_TOKEN"] = CSRF_TOKEN
+
+    _request_test_otp(client, "09126667788", monkeypatch)
+    with client.session_transaction() as browser_session:
+        old_flow_id = browser_session["auth_flow_id"]
+        old_challenge_id = browser_session["otp_challenge_id"]
+
+    cancelled = client.post(
+        "/api/auth/cancel-flow",
+        headers={"X-CSRF-Token": CSRF_TOKEN},
+        json={},
+    )
+    assert cancelled.status_code == 200
+    assert cancelled.get_json()["ok"] is True
+    assert client.get("/api/auth/flow").get_json()["state"] == "none"
+
+    with client.session_transaction() as browser_session:
+        assert "auth_flow_id" not in browser_session
+        assert "otp_challenge_id" not in browser_session
+
+    with app_module.get_connection() as connection:
+        old_flow = connection.execute(
+            "SELECT state FROM auth_flows WHERE id = ?", (old_flow_id,)
+        ).fetchone()
+        old_challenge = connection.execute(
+            "SELECT consumed_at FROM otp_challenges WHERE id = ?",
+            (old_challenge_id,),
+        ).fetchone()
+    assert old_flow["state"] == "cancelled"
+    assert old_challenge["consumed_at"] is not None
+
+    # The user can now enter a different phone number and start a clean flow.
+    _request_test_otp(client, "09127778899", monkeypatch)
+    state = client.get("/api/auth/flow").get_json()
+    assert state["state"] == "otp_pending"
+    assert state["masked_phone"] == "09•••••8899"
