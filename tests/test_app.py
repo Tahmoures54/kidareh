@@ -635,7 +635,7 @@ def test_phone_first_signup_records_terms_and_verifies_phone(monkeypatch, tmp_pa
     assert row["terms_accepted_at"]
 
 
-def test_phone_first_seller_signup_creates_store_and_full_journey(monkeypatch, tmp_path):
+def test_phone_first_seller_signup_defers_store_creation_and_completes_journey(monkeypatch, tmp_path):
     client = setup_test_database(monkeypatch, tmp_path)
     code = _request_test_otp(client, "09123334444", monkeypatch)
     verified = client.post(
@@ -645,26 +645,28 @@ def test_phone_first_seller_signup_creates_store_and_full_journey(monkeypatch, t
     created = client.post(
         "/api/auth/complete-profile",
         headers={"X-CSRF-Token": CSRF_TOKEN},
-        json={
-            "name": "فروشنده آزمایشی",
-            "role": "seller",
-            "store_name": "فروشگاه آزمون",
-            "store_category": "لوازم خانه",
-            "store_city": "تبریز",
-            "contact_name": "مسئول آزمون",
-            "store_address": "تبریز، خیابان نمونه",
-            "store_hours": "۹ تا ۱۸",
-            "social_url": "@kidareh_test",
-            "store_description": "فروشگاه تست مسیر کامل",
-            "in_person": True,
-        },
+        json={"name": "فروشنده آزمایشی", "role": "seller"},
     )
     assert created.status_code == 200, created.get_json()
-    store = created.get_json()["store"]
-    assert store["name"] == "فروشگاه آزمون"
-    assert store["address"] == "" and store["hours"] == ""
-    new_csrf = created.get_json()["csrf_token"]
+    created_payload = created.get_json()
+    assert created_payload["store"] is None
+    assert created_payload["onboarding_required"] is True
+    new_csrf = created_payload["csrf_token"]
     client.environ_base["HTTP_X_CSRF_TOKEN"] = new_csrf
+
+    store_response = client.post(
+        "/api/stores",
+        headers={"X-CSRF-Token": new_csrf},
+        json={
+            "name": "فروشگاه آزمون",
+            "category": "لوازم خانه",
+            "city": "تبریز",
+            "description": "فروشگاه تست مسیر کامل",
+        },
+    )
+    assert store_response.status_code == 201, store_response.get_json()
+    store = store_response.get_json()["item"]
+    assert store["name"] == "فروشگاه آزمون"
     product = client.post(
         "/api/listings",
         headers={"X-CSRF-Token": new_csrf},
