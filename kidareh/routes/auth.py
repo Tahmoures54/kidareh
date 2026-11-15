@@ -107,8 +107,25 @@ def _check_otp_rate_limit(phone):
     with get_connection() as connection:
         dialect_name = getattr(connection, "dialect_name", "sqlite")
         if dialect_name == "postgresql":
-            # Ensure both keys exist before locking them. The fixed phone-then-IP
-            # order prevents lock-order inversions across concurrent requests.
+            # Acquire transaction-scoped advisory locks for both identities in
+            # a deterministic order. This protects first-use races as well as
+            # existing rows, and is compatible with PgBouncer transaction mode.
+            lock_keys = sorted(
+                int.from_bytes(
+                    hashlib.sha256(
+                        f"kidareh-otp:{scope}:{key_hash}".encode("utf-8")
+                    ).digest()[:8],
+                    "big",
+                    signed=True,
+                )
+                for scope, key_hash in keys.items()
+            )
+            for lock_key in lock_keys:
+                connection.execute(
+                    "SELECT pg_advisory_xact_lock(?)", (lock_key,)
+                )
+
+            # Ensure both keys exist before selecting and updating their rows.
             for scope, key_hash in keys.items():
                 connection.execute(
                     """INSERT INTO otp_rate_limits
