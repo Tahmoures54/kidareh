@@ -101,10 +101,14 @@ mistaken for a completed migration.
 ### PostgreSQL foundation work (PR #32)
 
 The foundation branch adds the psycopg 3 driver, explicit PostgreSQL URL
-normalization, and PostgreSQL-aware positional-bind conversion in the legacy
-adapter. GitHub Actions now starts an isolated PostgreSQL 16 service and runs
-adapter smoke tests against temporary tables. These tests validate connection,
-parameter binding, `RETURNING`, row mapping, and batch inserts.
+normalization, PostgreSQL-aware positional-bind conversion, dialect-neutral
+table/column/foreign-key inspection, and explicit `RETURNING` usage for route
+inserts that need generated IDs. Listing search has a PostgreSQL GIN expression
+index and a `plainto_tsquery('simple', ...)` query path for Persian text.
+GitHub Actions starts an isolated PostgreSQL 16 service and tests adapter
+connection, parameter binding, `RETURNING`, row mapping, batch inserts,
+Alembic URL selection, reflected schema creation, and a Persian full-text
+search fixture.
 
 This does **not** mean the Flask application is PostgreSQL-ready. Runtime
 configuration intentionally does not select `DATABASE_URL`; application
