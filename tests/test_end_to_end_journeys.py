@@ -186,7 +186,8 @@ def test_seller_signup_defers_store_creation_to_onboarding(
     assert verified.status_code == 200
     payload = verified.get_json()
     assert payload["existing_user"] is False
-    assert payload["phone"] == "09121110000"
+    assert payload["phone_verified"] is True
+    assert "phone" not in payload
 
     created = client.post(
         "/api/auth/complete-profile",
