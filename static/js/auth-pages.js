@@ -265,7 +265,19 @@
 
   function syncRoleContinueButton() {
     if (!continueRoleButton) return;
-    const hasSelection = Boolean(form.querySelector('input[name="role"]:checked'));
+
+    const selected = form.querySelector('input[name="role"]:checked');
+    const hasSelection = Boolean(selected);
+    const label = continueRoleButton.querySelector("[data-role-continue-label]");
+
+    if (label) {
+      label.textContent = selected?.value === "seller"
+        ? "ادامه به‌عنوان فروشگاه‌دار"
+        : selected?.value === "buyer"
+          ? "ادامه به‌عنوان خریدار"
+          : "ابتدا نوع حساب را انتخاب کنید";
+    }
+
     continueRoleButton.disabled = !hasSelection || busy;
     continueRoleButton.setAttribute("aria-disabled", String(!hasSelection || busy));
   }

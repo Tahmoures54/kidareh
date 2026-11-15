@@ -147,10 +147,10 @@
               disabled
               aria-disabled="true"
             >
-              ادامه ثبت‌نام
+              <span data-role-continue-label>ابتدا نوع حساب را انتخاب کنید</span>
               <span aria-hidden="true">←</span>
             </button>
-            <p class="auth-hint auth-role-hint">ابتدا نوع حساب خود را انتخاب کنید.</p>
+            <p class="auth-hint auth-role-hint">پس از انتخاب نوع حساب، برای رفتن به مرحله بعد دکمه را بزنید.</p>
           </div>
         </div>
 
@@ -423,7 +423,7 @@
 
 {% block scripts %}
 <script
-  src="{{ url_for('static', filename='js/auth-pages.js') }}?v=20261115-role-continue"
+  src="{{ url_for('static', filename='js/auth-pages.js') }}?v=20261115-role-dynamic-caption"
   defer
 ></script>
 {% endblock %}
