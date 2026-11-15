@@ -101,6 +101,14 @@ class SQLAlchemyConnectionAdapter:
             for column in inspect(self._connection).get_columns(table_name)
         }
 
+    def foreign_keys(self, table_name: str) -> list[dict[str, Any]]:
+        """Return normalized foreign-key metadata for a table."""
+        return inspect(self._connection).get_foreign_keys(table_name)
+
+    @property
+    def dialect_name(self) -> str:
+        return self._connection.dialect.name
+
     def executemany(
         self, statement: str, parameters: Iterable[Iterable[Any]]
     ) -> CompatibleResult:
