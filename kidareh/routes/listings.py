@@ -515,7 +515,7 @@ def create_listing():
     with get_connection() as connection:
         store = connection.execute("SELECT id FROM stores WHERE owner_id = ?", (user["id"],)).fetchone()
         if store is None:
-            return jsonify({"error": "store_required", "message": "برای افزودن کالا، ابتدا ویترین فروشگاه خود را بسازید."}), 409
+            return jsonify({"error": "store_required", "message": "برای افزودن کالا، ابتدا فروشگاه خود را بسازید."}), 409
         cursor = connection.execute(
             """
             INSERT INTO listings (title, category, city, price, description, emoji, featured, image_path, seller_phone, owner_id, store_id, latitude, longitude, availability_status, price_updated_at)
