@@ -160,6 +160,14 @@ def test_monetization_page_renders_every_purchasable_package(client, app):
         assert f'data-package="{package["id"]}"' in body, package["id"]
 
 
+def test_auth_endpoints_are_never_cached(client):
+    response = client.get("/api/auth/challenge")
+    assert response.status_code == 200
+    assert response.headers["Cache-Control"] == "private, no-store, max-age=0"
+    assert response.headers["Pragma"] == "no-cache"
+    assert "Cookie" in response.headers["Vary"]
+
+
 # ---------------------------------------------------------------------------
 # Seller registration journey
 # ---------------------------------------------------------------------------
