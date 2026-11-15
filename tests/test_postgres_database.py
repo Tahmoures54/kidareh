@@ -322,7 +322,21 @@ def test_full_flask_app_boots_and_health_checks_on_postgres(tmp_path, monkeypatc
             database.models
         )
 
-    response = app.test_client().get("/api/health")
+    with app.app_context():
+        with get_database().engine.begin() as connection:
+            inserted = connection.exec_driver_sql(
+                """INSERT INTO listings (title, category, city, description)
+                   VALUES (%s, %s, %s, %s) RETURNING id""",
+                ("کالای آزمایشی PostgreSQL", "home", "تهران", "آزمون جست‌وجوی فارسی"),
+            ).fetchone()
+            listing_id = inserted[0]
+
+    client = app.test_client()
+    response = client.get("/api/health")
     assert response.status_code == 200
     assert response.get_json()["database"] == "ok"
+
+    search_response = client.get("/api/listings?q=کالای آزمایشی")
+    assert search_response.status_code == 200
+    assert any(item["id"] == listing_id for item in search_response.get_json()["items"])
     app.extensions["kidareh_db"].dispose()
