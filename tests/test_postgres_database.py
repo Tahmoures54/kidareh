@@ -90,6 +90,30 @@ def test_initialized_sqlite_schema_can_be_rehearsed_on_postgres(tmp_path):
             Base.metadata.create_all(target_engine)
             target_tables = set(inspect(target_engine).get_table_names())
             assert source_tables.issubset(target_tables)
+
+            # The PostgreSQL FTS path is a GIN expression index, maintained
+            # automatically by PostgreSQL on insert/update/delete.
+            from kidareh.core import _ensure_listings_fts
+            from kidareh.infrastructure.database.legacy_adapter import SQLAlchemyConnectionAdapter
+
+            with target_engine.connect() as raw_connection:
+                adapter = SQLAlchemyConnectionAdapter(raw_connection)
+                _ensure_listings_fts(adapter)
+                adapter.execute(
+                    "INSERT INTO listings (title, category, city) VALUES (?, ?, ?)",
+                    ("کالای نمونه برای جست‌وجو", "home", "تهران"),
+                )
+                matches = adapter.execute(
+                    """SELECT id FROM listings
+                       WHERE to_tsvector(
+                           'simple',
+                           coalesce(title, '') || ' ' ||
+                           coalesce(description, '') || ' ' ||
+                           coalesce(city, '')
+                       ) @@ plainto_tsquery('simple', ?)""",
+                    ("کالای نمونه",),
+                ).fetchall()
+                assert len(matches) == 1
         finally:
             target_engine.dispose()
             get_database().dispose()
