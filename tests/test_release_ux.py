@@ -601,11 +601,11 @@ def test_admin_dashboard_exposes_real_ticket_reply_action():
 def test_registration_form_uses_vertical_layout_and_mobile_sizing(client):
     html = client.get("/register").get_data(as_text=True)
     css = read("static/css/auth-pages.css")
-    assert re.search(r"auth-pages\\.css\\?v=[\\w.-]+", html)
-    assert "id=\\"registerPhoneForm\\"" in html
-    assert "id=\\"registerPhone\\"" in html
-    assert "id=\\"registerCaptchaQuestion\\"" in html
-    assert "id=\\"registerTerms\\"" in html
+    assert re.search(r"auth-pages\.css\?v=[\w.-]+", html)
+    assert 'id="registerPhoneForm"' in html
+    assert 'id="registerPhone"' in html
+    assert 'id="registerCaptchaQuestion"' in html
+    assert 'id="registerTerms"' in html
     assert "js/auth/auth-common.js" in html
     assert "js/auth/register-phone.js" in html
     assert "@media (max-width: 520px)" in css
