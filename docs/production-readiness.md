@@ -22,10 +22,10 @@ For a separate direct/unpooled migration endpoint, optionally set `MIGRATION_DAT
 On PostgreSQL startup, the app:
 1. Acquires a transaction-scoped PostgreSQL advisory lock (compatible with PgBouncer transaction pooling).
 2. Runs Alembic to head.
-3. Uses revision `0002_postgresql_bootstrap` to build a temporary empty SQLite schema with the application's current schema factory, reflect the domain tables/indexes, and create them additively on PostgreSQL.
+3. Applies revision `0002_postgresql_bootstrap`, which runs the repository's PostgreSQL-native schema migration modules.
 4. Ensures PostgreSQL performance and Persian full-text GIN indexes, reflects the schema, and checks the core tables.
 
-The bootstrap does not copy business rows, drop existing tables, or reconcile incompatible pre-existing columns. It is intended for an empty/new PostgreSQL schema. If the Neon target already contains tables, inspect its schema first; `create_all` skips existing tables rather than rewriting them. The migration downgrade is deliberately blocked to prevent accidental data loss.
+The bootstrap is additive and is intended for a compatible empty/new PostgreSQL schema. It does not copy business rows or drop existing tables. Existing tables and incompatible pre-existing columns must be inspected and reconciled explicitly before enabling PostgreSQL. Do not assume an automated downgrade is a safe rollback; review the exact revision behavior and take a verified backup first.
 
 ## Preflight commands
 
@@ -40,11 +40,11 @@ The runtime check is read-only with respect to business data. It currently perfo
 
 ## Current release boundary
 
-The PostgreSQL path is implemented as an opt-in branch and has disposable PostgreSQL integration coverage, including schema bootstrap, full Flask startup, health checks, Persian full-text search, rate-limit concurrency, OTP cooldown concurrency, and advisory-lock coordination. The existing SQLite path remains the default and its full suite continues to run separately.
+The PostgreSQL path is implemented as an opt-in backend and has disposable PostgreSQL integration coverage, including schema bootstrap, full Flask startup, health checks, Persian full-text search, rate-limit concurrency, OTP cooldown concurrency, and advisory-lock coordination. The existing SQLite path remains the default and its full suite continues to run separately.
 
-This is not yet authorization to switch the live Vercel project. Before changing Production:
+This is not yet authorization to switch the live Vercel or Liara project. Before changing Production:
 - Verify the exact Neon project/branch/database and its existing schema.
-- Run the same full startup and authenticated end-to-end flows on a Vercel Preview using the PostgreSQL backend.
+- Run the same full startup and authenticated end-to-end flows on a Preview using the PostgreSQL backend.
 - Verify registration, OTP verification, session persistence, seller dashboard access, listing create/edit/search, image upload, and rate limiting across cold starts/instances.
 - Verify Neon connection limits, SSL, pooler/direct URLs, backups, and a rollback plan.
 - Keep the current SQLite deployment and any uploaded-image inventory untouched until the rollback window closes.
@@ -55,4 +55,4 @@ All acceptance tests are enabled in `pytest.ini`. A legacy OTP test was updated 
 
 ## Verification available in this build environment
 
-GitHub Actions is the source of truth for verification. It runs the complete SQLite/application suite and a separate PostgreSQL 16 service suite. Do not treat a successful isolated adapter test as proof that the live Neon database or Vercel deployment has been verified.
+GitHub Actions is the source of truth for verification. It runs the complete SQLite/application suite and a separate PostgreSQL 16 service suite. Do not treat a successful isolated adapter test as proof that the live Neon database or hosted deployment has been verified.
