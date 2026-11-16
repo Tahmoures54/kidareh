@@ -416,7 +416,7 @@
           return;
         }
 
-        if (data.phone) {
+        if (data.phone || data.phone_verified) {
           if (!isRegister) {
             message(
               "حسابی با این شماره یافت نشد. در حال انتقال به ثبت‌نام…"

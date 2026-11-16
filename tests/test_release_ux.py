@@ -601,35 +601,17 @@ def test_admin_dashboard_exposes_real_ticket_reply_action():
 def test_registration_form_uses_vertical_layout_and_mobile_sizing(client):
     html = client.get("/register").get_data(as_text=True)
     css = read("static/css/auth-pages.css")
+    assert re.search(r"auth-pages\.css\?v=[\w.-]+", html)
+    assert 'id="registerPhoneForm"' in html
+    assert 'id="registerPhone"' in html
+    assert 'id="registerCaptchaQuestion"' in html
+    assert 'id="registerTerms"' in html
+    assert "js/auth/auth-common.js" in html
+    assert "js/auth/register-phone.js" in html
+    assert "@media (max-width: 520px)" in css
 
-    # Version-agnostic cache-busting query string.
-    assert re.search(r"auth-pages\.css\?v=[\w.-]+", html), "auth-pages.css missing"
-
-    assert '.auth-page[data-auth-mode="register"] .auth-role-grid' in css
-    assert '.auth-page[data-auth-mode="register"] .auth-field-row' in css
-    assert "grid-template-columns: minmax(0, 1fr);" in css
-    assert '@media (max-width: 520px)' in css
-    assert 'id="continueRoleButton"' in html
-    continue_button = re.search(r'<button\b(?=[^>]*\bid="continueRoleButton")[^>]*>', html)
-    assert continue_button, "continue button element missing"
-    assert re.search(r'\bdisabled(?:\s|>)', continue_button.group(0))
-    auth_script = read("static/js/auth-pages.js")
-    assert 'radio.addEventListener("change"' in auth_script
-    assert 'syncRoleContinueButton();' in auth_script
-    assert 'continueRoleButton?.addEventListener("click"' in auth_script
-    assert 'const selected = form.querySelector(\'input[name="role"]:checked\')' in auth_script
-    assert 'label.textContent = selected?.value === "seller"' in auth_script
-    assert '"ادامه به‌عنوان فروشگاه‌دار"' in auth_script
-    assert '"ادامه به‌عنوان خریدار"' in auth_script
-    assert 'data-role-continue-label' in html
-    assert "ابتدا نوع حساب را انتخاب کنید" in html
-    assert 'showStep("phone");' in auth_script
-    assert 'id="authPhoneStep"' in html
-    assert 'id="authProfileStep"' in html
-    assert 'name="terms_accepted"' not in html
-    assert 'name="role" value="seller" checked' not in html
-    assert "با وارد کردن شماره موبایل و ادامه فرایند ثبت‌نام" in html
-    assert "auth-legal-note" in html
+    verify = client.get("/register/verify")
+    assert verify.status_code == 302  # no active server-side flow
 
 
 def test_store_directory_exposes_city_filter_and_routing_fallback():
@@ -675,29 +657,33 @@ def test_first_product_form_is_minimal_and_uses_store_defaults():
 
 
 def test_registration_defers_store_details_to_seller_onboarding(client):
-    html = client.get("/register").get_data(as_text=True)
-    script = read("static/js/auth-pages.js")
+    phone = client.get("/register").get_data(as_text=True)
+    assert 'id="registerPhone"' in phone
+    assert 'name="store_name"' not in phone
+    assert 'name="store_city"' not in phone
+    assert 'id="resendOtpButton"' not in phone
 
-    # Seller signup asks only for account identity; store setup lives in /seller.
-    assert 'id="sellerDetails"' in html
-    assert "لازم نیست اکنون اطلاعات فروشگاه را وارد کنید" in html
-    assert 'name="store_name"' not in html
-    assert 'name="store_city"' not in html
-    assert 'name="store_latitude"' not in html
-    assert 'name="store_longitude"' not in html
-    assert 'id="registerStoreLocationButton"' not in html
-    assert "navigator.geolocation.getCurrentPosition" not in script
+    # Each subsequent stage owns its own form and script.
+    verify_template = read("templates/pages/auth/verify_otp.html")
+    verify_script = read("static/js/auth/verify-otp.js")
+    assert 'id="verifyOtpCode"' in verify_template
+    assert 'id="resendOtpButton"' in verify_template
+    assert 'id="otpResendCountdown"' in verify_template
+    assert 'autocomplete="one-time-code"' in verify_template
+    assert "resend_after" in verify_script
+    assert 'window.location.assign(Auth.nextUrl("/register/profile"))' in verify_script
 
-    # Buyer location remains available and validated in the profile step.
-    assert 'id="buyerCity"' in html
-    assert 'name="city"' in html
-    assert 'data-iran-location' in html
+    profile_template = read("templates/pages/auth/complete_profile.html")
+    assert 'id="profileCity"' in profile_template
+    assert 'name="role"' in profile_template
+    assert 'data-iran-location' in profile_template
 
-    # OTP retry is visible, cooldown-controlled, and does not auto-send SMS.
-    assert 'id="resendOtpButton"' in html
-    assert 'id="otpResendCountdown"' in html
-    assert "startOtpResendCountdown(60)" in script
-    assert 'autocomplete="one-time-code"' in html
+    store_template = read("templates/pages/auth/create_store.html")
+    assert 'id="createStoreForm"' in store_template
+    assert 'id="storeName"' in store_template
+    assert 'id="storeCategory"' in store_template
+    assert 'id="storeCity"' in store_template
+    assert 'id="createStoreButton"' in store_template
 
 
 # ---------- Homepage discovery, sharing and storefront conversion ----------

@@ -126,8 +126,6 @@ def test_health_endpoint(monkeypatch, tmp_path):
     assert response.get_json()["cache"]["status"] == "ok"
 
 
-
-
 def test_vercel_health_requires_blob_storage(monkeypatch, tmp_path):
     client = setup_empty_database(monkeypatch, tmp_path)
     monkeypatch.setenv("VERCEL", "1")
@@ -1280,3 +1278,160 @@ def test_auth_me_response_is_private_and_never_cached(monkeypatch, tmp_path):
     assert "no-store" in response.headers.get("Cache-Control", "")
     assert "private" in response.headers.get("Cache-Control", "")
     assert "Cookie" in response.headers.get("Vary", "")
+
+
+def test_multipage_registration_keeps_verified_state_server_side_and_creates_store(
+    monkeypatch, tmp_path
+):
+    """The browser keeps only an opaque flow id; verification state stays in DB."""
+    client = setup_empty_database(monkeypatch, tmp_path)
+    with client.session_transaction() as browser_session:
+        browser_session["csrf_token"] = CSRF_TOKEN
+    client.environ_base["HTTP_X_CSRF_TOKEN"] = CSRF_TOKEN
+    code = _request_test_otp(client, "09124445566", monkeypatch)
+
+    with client.session_transaction() as browser_session:
+        flow_id = browser_session.get("auth_flow_id")
+        assert flow_id
+        assert browser_session.get("otp_challenge_id")  # opaque random handle only
+        assert "otp_hash" not in browser_session
+        assert "otp_phone" not in browser_session
+        assert "verified_phone" not in browser_session
+        assert "verified_terms_accepted_at" not in browser_session
+
+    flow_state = client.get("/api/auth/flow")
+    assert flow_state.status_code == 200
+    assert flow_state.get_json()["state"] == "otp_pending"
+    assert flow_state.get_json()["masked_phone"] == "09•••••5566"
+    assert "phone" not in flow_state.get_json()
+    assert client.get("/register/verify").status_code == 200
+
+    verified = client.post(
+        "/api/auth/verify-otp",
+        headers={"X-CSRF-Token": CSRF_TOKEN},
+        json={"code": code},
+    )
+    assert verified.status_code == 200, verified.get_json()
+    assert verified.get_json()["phone_verified"] is True
+
+    with client.session_transaction() as browser_session:
+        assert browser_session.get("auth_flow_id") == flow_id
+        assert "verified_phone" not in browser_session
+
+    state = client.get("/api/auth/flow").get_json()
+    assert state["state"] == "profile_pending"
+    assert client.get("/register/profile").status_code == 200
+
+    created = client.post(
+        "/api/auth/complete-profile",
+        headers={"X-CSRF-Token": CSRF_TOKEN},
+        json={"name": "فروشنده چندمرحله‌ای", "role": "seller"},
+    )
+    assert created.status_code == 200, created.get_json()
+    assert created.get_json()["onboarding_required"] is True
+
+    with client.session_transaction() as browser_session:
+        assert browser_session.get("user_id") == created.get_json()["user"]["id"]
+        assert "auth_flow_id" not in browser_session
+
+    # A separate authenticated request must see the same identity.
+    me = client.get("/api/auth/me")
+    assert me.status_code == 200
+    assert me.get_json()["user"]["id"] == created.get_json()["user"]["id"]
+    assert client.get("/register/store").status_code == 200
+
+    csrf = me.get_json()["csrf_token"]
+    store = client.post(
+        "/api/stores",
+        headers={"X-CSRF-Token": csrf},
+        json={
+            "name": "فروشگاه مسیر چندمرحله‌ای",
+            "category": "لوازم خانه",
+            "city": "تبریز",
+            "description": "ساخته‌شده از مسیر مستقل ثبت‌نام",
+        },
+    )
+    assert store.status_code == 201, store.get_json()
+    assert client.get("/api/my/store").get_json()["item"]["name"] == (
+        "فروشگاه مسیر چندمرحله‌ای"
+    )
+    assert client.get("/api/seller/stats").status_code == 200
+
+
+def test_existing_user_otp_from_registration_route_logs_in_without_duplicate_account(
+    monkeypatch, tmp_path
+):
+    client = setup_empty_database(monkeypatch, tmp_path)
+    with client.session_transaction() as browser_session:
+        browser_session["csrf_token"] = CSRF_TOKEN
+    client.environ_base["HTTP_X_CSRF_TOKEN"] = CSRF_TOKEN
+    with app_module.get_connection() as connection:
+        user_id = _seed_user(connection, "09125556677", role="buyer")
+        connection.commit()
+
+    code = _request_test_otp(client, "09125556677", monkeypatch)
+    verified = client.post(
+        "/api/auth/verify-otp",
+        headers={"X-CSRF-Token": CSRF_TOKEN},
+        json={"code": code},
+    )
+    assert verified.status_code == 200
+    assert verified.get_json()["existing_user"] is True
+    assert verified.get_json()["user"]["id"] == user_id
+
+    with client.session_transaction() as browser_session:
+        assert browser_session.get("user_id") == user_id
+        assert "auth_flow_id" not in browser_session
+
+    assert client.get("/api/auth/flow").get_json()["state"] == "authenticated"
+    assert client.get("/api/auth/me").get_json()["user"]["id"] == user_id
+    with app_module.get_connection() as connection:
+        count = connection.execute(
+            "SELECT COUNT(*) FROM users WHERE phone = ?",
+            ("09125556677",),
+        ).fetchone()[0]
+    assert count == 1
+
+
+def test_changing_phone_cancels_previous_server_side_otp_flow(
+    monkeypatch, tmp_path
+):
+    client = setup_empty_database(monkeypatch, tmp_path)
+    with client.session_transaction() as browser_session:
+        browser_session["csrf_token"] = CSRF_TOKEN
+    client.environ_base["HTTP_X_CSRF_TOKEN"] = CSRF_TOKEN
+
+    _request_test_otp(client, "09126667788", monkeypatch)
+    with client.session_transaction() as browser_session:
+        old_flow_id = browser_session["auth_flow_id"]
+        old_challenge_id = browser_session["otp_challenge_id"]
+
+    cancelled = client.post(
+        "/api/auth/cancel-flow",
+        headers={"X-CSRF-Token": CSRF_TOKEN},
+        json={},
+    )
+    assert cancelled.status_code == 200
+    assert cancelled.get_json()["ok"] is True
+    assert client.get("/api/auth/flow").get_json()["state"] == "none"
+
+    with client.session_transaction() as browser_session:
+        assert "auth_flow_id" not in browser_session
+        assert "otp_challenge_id" not in browser_session
+
+    with app_module.get_connection() as connection:
+        old_flow = connection.execute(
+            "SELECT state FROM auth_flows WHERE id = ?", (old_flow_id,)
+        ).fetchone()
+        old_challenge = connection.execute(
+            "SELECT consumed_at FROM otp_challenges WHERE id = ?",
+            (old_challenge_id,),
+        ).fetchone()
+    assert old_flow["state"] == "cancelled"
+    assert old_challenge["consumed_at"] is not None
+
+    # The user can now enter a different phone number and start a clean flow.
+    _request_test_otp(client, "09127778899", monkeypatch)
+    state = client.get("/api/auth/flow").get_json()
+    assert state["state"] == "otp_pending"
+    assert state["masked_phone"] == "09•••••8899"

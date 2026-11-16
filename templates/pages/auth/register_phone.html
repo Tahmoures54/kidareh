@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}ثبت‌نام | کی‌داره{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261115-multipage-auth">
+{% endblock %}
+{% block content %}
+<section class="auth-page" data-auth-page="register-phone">
+  <div class="auth-shell">
+    <aside class="auth-visual auth-visual-register" aria-hidden="true">
+      <div class="auth-visual-inner">
+        <div class="auth-brand-mark">ک</div>
+        <h2>به کی‌داره خوش آمدید</h2>
+        <p>فروشگاه محلی‌تان را آنلاین کنید یا کالاهای شهر خود را پیدا کنید.</p>
+        <ul class="auth-benefits">
+          <li><span class="benefit-icon">✓</span> ثبت‌نام ساده با شماره موبایل</li>
+          <li><span class="benefit-icon">✓</span> ورود امن بدون رمز عبور</li>
+          <li><span class="benefit-icon">✓</span> راه‌اندازی فروشگاه در چند گام</li>
+        </ul>
+      </div>
+      <div class="auth-visual-glow"></div>
+    </aside>
+    <div class="auth-panel">
+      <div class="auth-panel-header">
+        <span class="auth-kicker">گام ۱ از ۴ · شماره همراه</span>
+        <h1 class="auth-step-title">شماره موبایل خود را وارد کنید</h1>
+        <p class="auth-subtitle">برای تأیید مالکیت شماره، یک کد یک‌بارمصرف پیامک می‌کنیم.</p>
+      </div>
+      <noscript><p class="auth-noscript">برای ادامه ثبت‌نام، جاوااسکریپت مرورگر را فعال کنید.</p></noscript>
+      <form id="registerPhoneForm" class="auth-form" novalidate>
+        <label class="auth-label" for="registerPhone">شماره همراه</label>
+        <input class="auth-input" id="registerPhone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="11" placeholder="۰۹۱۲۳۴۵۶۷۸۹" dir="ltr" required>
+        <p class="auth-hint">شماره همراه را بدون فاصله وارد کنید.</p>
+        <label class="auth-label" for="registerCaptchaAnswer">پاسخ محاسبه امنیتی</label>
+        <div class="auth-captcha-row">
+          <span class="auth-captcha-question" id="registerCaptchaQuestion" aria-live="polite">در حال دریافت…</span>
+          <input class="auth-input auth-captcha-input" id="registerCaptchaAnswer" name="captcha_answer" type="text" inputmode="numeric" autocomplete="off" placeholder="پاسخ" dir="ltr" required>
+        </div>
+        <label class="auth-legal-note" style="display:flex;align-items:flex-start;gap:.55rem">
+          <input id="registerTerms" type="checkbox" required style="margin-top:.35rem">
+          <span>با ادامه، <a href="/terms" target="_blank" rel="noopener noreferrer">قوانین و شرایط استفاده</a> و <a href="/privacy" target="_blank" rel="noopener noreferrer">حریم خصوصی</a> کی‌داره را می‌پذیرم.</span>
+        </label>
+        <button class="button button-primary auth-submit" id="requestOtpButton" type="submit">دریافت کد تأیید</button>
+        <p class="auth-feedback" id="registerPhoneFeedback" role="status" aria-live="polite"></p>
+      </form>
+      <div class="auth-footer-links">
+        <p>قبلاً حساب ساخته‌اید؟ <a href="/login">وارد شوید</a></p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth/auth-common.js') }}?v=1" defer></script>
+<script src="{{ url_for('static', filename='js/auth/register-phone.js') }}?v=1" defer></script>
+{% endblock %}

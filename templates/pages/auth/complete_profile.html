@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}تکمیل اطلاعات حساب | کی‌داره{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth-pages.css') }}?v=20261115-multipage-auth">
+{% endblock %}
+{% block content %}
+<section class="auth-page" data-auth-page="complete-profile">
+  <div class="auth-shell">
+    <aside class="auth-visual auth-visual-register" aria-hidden="true">
+      <div class="auth-visual-inner">
+        <div class="auth-brand-mark">ک</div>
+        <h2>حساب شما آماده است</h2>
+        <p>فقط چند اطلاعات ضروری باقی مانده تا تجربه کی‌داره را شروع کنید.</p>
+      </div>
+      <div class="auth-visual-glow"></div>
+    </aside>
+    <div class="auth-panel">
+      <div class="auth-panel-header">
+        <span class="auth-kicker">گام ۳ از ۴ · اطلاعات حساب</span>
+        <h1 class="auth-step-title">اطلاعات حساب را کامل کنید</h1>
+        <p class="auth-subtitle">شماره همراه شما تأیید شده است. نوع حساب را انتخاب کنید.</p>
+      </div>
+      <form id="completeProfileForm" class="auth-form" novalidate>
+        <label class="auth-label" for="profileName">نام و نام خانوادگی</label>
+        <input class="auth-input" id="profileName" name="name" type="text" maxlength="80" autocomplete="name" placeholder="مثلاً علی رضایی" required>
+        <fieldset style="border:0;padding:0;margin:1rem 0">
+          <legend class="auth-label">نوع حساب</legend>
+          <div class="auth-role-grid">
+            <label class="auth-role-card">
+              <input type="radio" name="role" value="seller" checked>
+              <div class="role-card-inner"><span class="role-icon" aria-hidden="true">🏪</span><strong>فروشگاه‌دار</strong><span>فروشگاه فیزیکی‌تان را در کی‌داره آنلاین کنید.</span></div>
+            </label>
+            <label class="auth-role-card">
+              <input type="radio" name="role" value="buyer">
+              <div class="role-card-inner"><span class="role-icon" aria-hidden="true">🛍️</span><strong>خریدار</strong><span>فروشگاه‌ها و کالاهای شهر را پیدا کنید.</span></div>
+            </label>
+          </div>
+        </fieldset>
+        <div id="buyerCityPanel" hidden>
+          <label class="auth-label" for="profileCity">شهر محل سکونت</label>
+          <input class="auth-input" id="profileCity" name="city" type="text" maxlength="60" placeholder="نام شهر" list="iranCityOptions" data-iran-location autocomplete="off">
+        </div>
+        <button class="button button-primary auth-submit" type="submit" id="completeProfileButton">ساخت حساب</button>
+        <p class="auth-feedback" id="completeProfileFeedback" role="status" aria-live="polite"></p>
+      </form>
+      <div class="auth-footer-links"><p>اطلاعات شما فقط برای ارائه خدمات کی‌داره استفاده می‌شود.</p></div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth/auth-common.js') }}?v=1" defer></script>
+<script src="{{ url_for('static', filename='js/auth/complete-profile.js') }}?v=1" defer></script>
+{% endblock %}

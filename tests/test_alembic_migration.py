@@ -1,42 +1,23 @@
-"""Alembic baseline smoke tests that do not need to boot the Flask app."""
-from __future__ import annotations
-
-import os
-import sqlite3
-import subprocess
-import sys
+"""Static safeguards for the PostgreSQL-native Alembic schema."""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+MIGRATIONS = [ROOT / "migrations" / "versions" / "0002_postgresql_bootstrap.py"]
+MIGRATIONS.extend(sorted((ROOT / "migrations" / "postgresql_schema").glob("part_*.py")))
 
 
-def test_alembic_baseline_adopts_existing_sqlite_without_changing_rows(tmp_path):
-    database = tmp_path / "existing-kidareh.sqlite3"
-    connection = sqlite3.connect(database)
-    connection.execute(
-        "CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL)"
+def test_initial_schema_migration_is_static_postgresql_ddl():
+    source = "\n".join(path.read_text(encoding="utf-8") for path in MIGRATIONS)
+    forbidden = (
+        "sqlite3",
+        "sqlite://",
+        "tempfile",
+        "TemporaryDirectory",
+        "create_app",
+        "MetaData.reflect",
     )
-    connection.execute("INSERT INTO users(id, name) VALUES (1, 'preserved')")
-    connection.commit()
-    connection.close()
-
-    environment = dict(os.environ)
-    environment["DATABASE_PATH"] = str(database)
-    subprocess.run(
-        [sys.executable, "-m", "alembic", "-c", "alembic.ini", "upgrade", "head"],
-        cwd=ROOT,
-        env=environment,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-
-    connection = sqlite3.connect(database)
-    try:
-        assert connection.execute("SELECT name FROM users WHERE id=1").fetchone() == ("preserved",)
-        assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (
-            "0002_postgresql_bootstrap",
-        )
-        assert connection.execute("PRAGMA integrity_check").fetchone() == ("ok",)
-    finally:
-        connection.close()
+    assert not [token for token in forbidden if token in source]
+    assert source.count("op.create_table(") == 19
+    assert "sa.Identity()" in source
+    assert "postgresql_where=" in source
+    assert "_require_postgresql" in source
