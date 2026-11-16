@@ -81,7 +81,10 @@ def _env_int(key: str, default: int) -> int:
 # Startup summary in the terminal
 _secret = (os.environ.get("SECRET_KEY") or "").strip()
 print(f"[BOOT] SECRET_KEY: {'set (' + str(len(_secret)) + ' chars)' if _secret else 'MISSING - using ephemeral key'}")
-print(f"[BOOT] Database: {DATABASE_PATH}")
+_database_backend = os.environ.get("DATABASE_BACKEND", "sqlite").strip().lower()
+print(f"[BOOT] Database backend: {_database_backend}")
+if _database_backend != "postgresql":
+    print(f"[BOOT] Database path: {DATABASE_PATH}")
 print(f"[BOOT] Upload folder: {UPLOAD_FOLDER}")
 print(f"[BOOT] Log level: {os.environ.get('LOG_LEVEL', 'INFO').upper()}")
 
@@ -114,7 +117,11 @@ def initialize_database():
             if engine_database:
                 engine_path = Path(engine_database).expanduser().resolve()
 
-        if current is not None and engine_path != configured_path:
+        if (
+            current is not None
+            and current.engine.dialect.name == "sqlite"
+            and engine_path != configured_path
+        ):
             current.dispose()
             app.extensions.pop("kidareh_db", None)
 

@@ -42,11 +42,11 @@ The initial source audit found these concrete SQLite dependencies:
 
 1. **Connection and placeholder contract.** `kidareh/core.py` still owns the
    request-scoped compatibility connection. Route and feature code issues
-   driver-level SQL using SQLite positional `?` placeholders. The
-   `SQLAlchemyConnectionAdapter` calls `exec_driver_sql`, which forwards this
-   SQL to the active DB-API driver; PostgreSQL drivers do not accept SQLite's
-   placeholder syntax. The adapter also exposes SQLite-oriented result behavior
-   such as `lastrowid`.
+   driver-level SQL using SQLite positional `?` placeholders. The adapter now
+   translates positional binds to psycopg's `%s` format for PostgreSQL and has
+   a disposable-PostgreSQL smoke test for single and batch statements. This is
+   only a parameter adaptation: it does not convert SQLite DDL, metadata
+   queries, conflict syntax, transaction commands, or `lastrowid` assumptions.
 2. **Schema discovery and startup DDL.** `core.py` and route initializers use
    `sqlite_master`, `PRAGMA table_info`, `PRAGMA foreign_key_list`, and
    `PRAGMA journal_mode`. These are not PostgreSQL catalog/DDL operations.
@@ -77,13 +77,15 @@ The initial source audit found these concrete SQLite dependencies:
 - [ ] Implement a dialect-aware connection/result layer or migrate route
       operations to SQLAlchemy Core/ORM. Do not use global string replacement
       for placeholders or SQL syntax.
-- [ ] Replace FTS5 with PostgreSQL full-text search and validate Persian queries,
-      ranking, filtering, pagination, and index maintenance against fixtures.
-- [ ] Redesign OTP and rate-limit atomicity for PostgreSQL and test concurrent
-      requests across independent connections.
-- [ ] Run the full test suite against both SQLite and a disposable PostgreSQL
-      database; add migration upgrade, rollback, schema parity, and data-integrity
-      checks.
+- [x] Add a PostgreSQL GIN expression index and a Persian full-text query path;
+      a disposable PostgreSQL fixture verifies Persian term matching. Ranking,
+      filtering, pagination, and large-catalog performance still need parity tests.
+- [x] Use PostgreSQL row-level locks for generic rate limits and OTP request
+      cooldowns; concurrency tests verify limits across independent connections.
+      Full end-to-end OTP challenge consumption and abuse-case tests remain.
+- [ ] Run the full Flask route suite against PostgreSQL; current full application
+      tests still run on SQLite. Add migration upgrade/rollback and broader
+      schema/data-integrity checks.
 - [ ] Back up the live SQLite database and uploaded-image inventory. Copy data
       with row counts, key checks, and checksums; verify a reversible cutover
       plan before changing the production connection string.
@@ -96,3 +98,26 @@ selector, do not run schema bootstrap against Neon, and do not migrate or delete
 live records until the PostgreSQL schema, adapter, tests, backup, and rollback
 plan are reviewed and verified. The current empty Alembic baseline must not be
 mistaken for a completed migration.
+
+
+### PostgreSQL foundation work (PR #32)
+
+The foundation branch adds the psycopg 3 driver, explicit PostgreSQL URL
+normalization, PostgreSQL-aware positional-bind conversion, dialect-neutral
+table/column/foreign-key inspection, and explicit `RETURNING` usage for route
+inserts that need generated IDs. Listing search has a PostgreSQL GIN expression
+index and a `plainto_tsquery('simple', ...)` query path for Persian text.
+GitHub Actions starts an isolated PostgreSQL 16 service and tests adapter
+connection, parameter binding, `RETURNING`, row mapping, batch inserts,
+Alembic URL selection, reflected schema creation, and a Persian full-text
+search fixture.
+
+This does **not** mean the Flask application is PostgreSQL-ready. Runtime
+configuration intentionally does not select `DATABASE_URL`; application
+startup still runs SQLite-specific schema bootstrap DDL (including
+`AUTOINCREMENT` and `PRAGMA`) and the Alembic baseline still creates no domain
+tables. Some route-level metadata checks, generated-ID inserts, full-text
+search, OTP rate limiting, and generic rate limits now have PostgreSQL-aware
+paths. The PostgreSQL service tests cover those isolated foundations and a
+schema-creation rehearsal, but they do not boot the full Flask application
+against PostgreSQL.

@@ -125,7 +125,7 @@ def start_conversation():
             return jsonify({"error": "seller_unavailable", "message": "برای این کالای قدیمی هنوز حساب فروشنده متصل نیست."}), 409
         if seller_id == user["id"]:
             return jsonify({"error": "own_listing", "message": "برای کالای خودتان نمی‌توانید گفت‌وگو شروع کنید."}), 400
-        db.execute("INSERT OR IGNORE INTO conversations(listing_id,buyer_id,seller_id) VALUES(?,?,?)", (listing_id, user["id"], seller_id))
+        db.execute("INSERT INTO conversations(listing_id,buyer_id,seller_id) VALUES(?,?,?) ON CONFLICT(listing_id,buyer_id) DO NOTHING", (listing_id, user["id"], seller_id))
         thread = db.execute("SELECT id FROM conversations WHERE listing_id=? AND buyer_id=?", (listing_id, user["id"])).fetchone()
     return jsonify({"id": thread["id"], "listing_title": listing["title"]}), 201
 
@@ -164,11 +164,12 @@ def send_conversation_message(conversation_id):
         thread = db.execute("SELECT * FROM conversations WHERE id=? AND (buyer_id=? OR seller_id=?)", (conversation_id, user["id"], user["id"])).fetchone()
         if not thread:
             return jsonify({"error": "conversation_not_found"}), 404
-        cursor = db.execute("INSERT INTO conversation_messages(conversation_id,sender_id,body) VALUES(?,?,?)", (conversation_id, user["id"], body.strip()))
+        cursor = db.execute("INSERT INTO conversation_messages(conversation_id,sender_id,body) VALUES(?,?,?) RETURNING id", (conversation_id, user["id"], body.strip()))
+        message_id = cursor.fetchone()["id"]
         db.execute("UPDATE conversations SET updated_at=CURRENT_TIMESTAMP WHERE id=?", (conversation_id,))
         recipient_id = thread["seller_id"] if user["id"] == thread["buyer_id"] else thread["buyer_id"]
         create_notification(db, recipient_id, "new_message", "پیام جدید", body.strip()[:140], "/messages")
-        row = db.execute("SELECT id,sender_id,body,created_at,read_at FROM conversation_messages WHERE id=?", (cursor.lastrowid,)).fetchone()
+        row = db.execute("SELECT id,sender_id,body,created_at,read_at FROM conversation_messages WHERE id=?", (message_id,)).fetchone()
     return jsonify({"item": dict(row)}), 201
 
 
@@ -206,9 +207,10 @@ def support_create():
     except rate_limits.RateLimitExceeded as error:
         return rate_limits.error_response(error, "سقف ثبت تیکت روزانه پر شده است.")
     with get_connection() as db:
-        cursor = db.execute("INSERT INTO support_tickets(user_id,title,category) VALUES(?,?,?)", (user["id"], title.strip(), category))
-        db.execute("INSERT INTO support_messages(ticket_id,sender_id,body,is_admin_reply) VALUES(?,?,?,0)", (cursor.lastrowid, user["id"], body.strip()))
-    return jsonify({"ok": True, "id": cursor.lastrowid}), 201
+        cursor = db.execute("INSERT INTO support_tickets(user_id,title,category) VALUES(?,?,?) RETURNING id", (user["id"], title.strip(), category))
+        ticket_id = cursor.fetchone()["id"]
+        db.execute("INSERT INTO support_messages(ticket_id,sender_id,body,is_admin_reply) VALUES(?,?,?,0)", (ticket_id, user["id"], body.strip()))
+    return jsonify({"ok": True, "id": ticket_id}), 201
 
 
 @bp.get("/api/support/tickets/<int:ticket_id>")
@@ -270,9 +272,9 @@ def admin_dashboard():
             "listings": db.execute("SELECT COUNT(*) FROM listings").fetchone()[0],
             "stores": db.execute("SELECT COUNT(*) FROM stores").fetchone()[0],
             "open_tickets": db.execute("SELECT COUNT(*) FROM support_tickets WHERE status IN ('open','in_progress')").fetchone()[0],
-            "open_reports": db.execute("SELECT COUNT(*) FROM content_reports WHERE status='open'").fetchone()[0] if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='content_reports'").fetchone() else 0,
+            "open_reports": db.execute("SELECT COUNT(*) FROM content_reports WHERE status='open'").fetchone()[0] if db.table_exists("content_reports") else 0,
         }
-        order_table = db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='monetization_orders'").fetchone()
+        order_table = db.table_exists("monetization_orders")
         revenue = db.execute("SELECT COALESCE(SUM(amount_toman),0) FROM monetization_orders WHERE status IN ('paid','success','completed')").fetchone()[0] if order_table else 0
         users = db.execute("SELECT id,name,phone,role,is_banned,created_at FROM users ORDER BY id DESC LIMIT 100").fetchall()
         activity = db.execute("""SELECT 'listing' AS type, title AS label, created_at FROM listings
@@ -384,11 +386,11 @@ def seller_stats():
             (user["id"], user["id"]),
         ).fetchall()
         listing_count = len(listings)
-        tables = {row["name"] for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        tables = db.table_names()
         views = 0
         sales = 0
         if "listing_views" in tables:
-            cols = {row["name"] for row in db.execute("PRAGMA table_info(listing_views)")}
+            cols = db.column_names("listing_views")
             if "listing_id" in cols:
                 views = db.execute(
                     "SELECT COUNT(*) FROM listing_views WHERE listing_id IN "
@@ -396,7 +398,7 @@ def seller_stats():
                     (user["id"], user["id"]),
                 ).fetchone()[0]
         if "orders" in tables:
-            cols = {row["name"] for row in db.execute("PRAGMA table_info(orders)")}
+            cols = db.column_names("orders")
             if "listing_id" in cols:
                 sales = db.execute(
                     "SELECT COUNT(*) FROM orders WHERE listing_id IN "

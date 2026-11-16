@@ -98,19 +98,34 @@ def consume(scope: str, key: str, limit: int, window_seconds: int, cooldown_seco
     now = time.time()
     key_hash = _hash(key)
     with get_connection() as connection:
-        # BEGIN IMMEDIATE takes the write lock up front, which is what makes the
-        # read-modify-write atomic across workers: starting deferred would let
-        # two workers read the same count and both decide they are under budget.
-        # Skipped when the caller already opened a transaction (that one is
-        # equivalent, and nesting BEGIN raises).
-        if not connection.in_transaction():
-            connection.execute("BEGIN IMMEDIATE")
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name == "postgresql":
+            # Create the key row first so concurrent first requests serialize
+            # on the unique (scope, key_hash) constraint. The following
+            # SELECT FOR UPDATE then locks that row across independent workers.
+            connection.execute(
+                """INSERT INTO rate_limits
+                   (scope, key_hash, last_request_at, window_started_at, request_count)
+                   VALUES (?, ?, 0, ?, 0)
+                   ON CONFLICT(scope, key_hash) DO NOTHING""",
+                (scope, key_hash, now),
+            )
+            row = connection.execute(
+                "SELECT last_request_at, window_started_at, request_count FROM rate_limits"
+                " WHERE scope=? AND key_hash=? FOR UPDATE",
+                (scope, key_hash),
+            ).fetchone()
+        else:
+            # BEGIN IMMEDIATE takes the SQLite write lock up front, preventing
+            # two workers from reading the same count before either updates it.
+            if not connection.in_transaction():
+                connection.execute("BEGIN IMMEDIATE")
+            row = connection.execute(
+                "SELECT last_request_at, window_started_at, request_count FROM rate_limits"
+                " WHERE scope=? AND key_hash=?",
+                (scope, key_hash),
+            ).fetchone()
         _prune(connection, now)
-        row = connection.execute(
-            "SELECT last_request_at, window_started_at, request_count FROM rate_limits"
-            " WHERE scope=? AND key_hash=?",
-            (scope, key_hash),
-        ).fetchone()
         last_request_at = row["last_request_at"] if row else 0.0
         window_started_at = row["window_started_at"] if row else now
         request_count = row["request_count"] if row else 0

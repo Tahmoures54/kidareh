@@ -24,6 +24,10 @@ def _upload_probe_ok() -> bool:
     full filesystem. A tiny write-and-unlink probe is the definitive test and
     costs almost nothing on a health check that fires every few seconds.
     """
+    # Vercel's filesystem is ephemeral/read-only. Listing images must use
+    # Vercel Blob; a configured token is required before health can be green.
+    if os.environ.get("VERCEL"):
+        return bool(os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip())
     try:
         upload_folder = Path(current_app.config["UPLOAD_FOLDER"])
         upload_folder.mkdir(parents=True, exist_ok=True)
@@ -44,12 +48,7 @@ def health():
     try:
         with get_connection() as connection:
             connection.execute("SELECT 1").fetchone()
-            existing_tables = {
-                row["name"]
-                for row in connection.execute(
-                    "SELECT name FROM sqlite_master WHERE type = 'table'"
-                )
-            }
+            existing_tables = connection.table_names()
         missing_tables = _REQUIRED_TABLES - existing_tables
         database_status = "schema_incomplete" if missing_tables else "ok"
     except (SQLAlchemyError, OSError, RuntimeError):
@@ -65,6 +64,10 @@ def health():
         "ok": ok,
         "service": "kidareh-pf",
         "database": database_status,
-        "uploads": "writable" if uploads_ok else "unavailable",
+        "uploads": (
+            "blob_configured" if os.environ.get("VERCEL") and uploads_ok
+            else "blob_not_configured" if os.environ.get("VERCEL")
+            else "writable" if uploads_ok else "unavailable"
+        ),
         "cache": cache_status,
     }), (200 if ok else 503)

@@ -20,6 +20,25 @@ _EXCLUDED_TABLES = {
 }
 
 
+def normalize_database_url(value: str) -> str:
+    """Normalize PostgreSQL URLs to SQLAlchemy's psycopg 3 driver.
+
+    Neon and many hosting dashboards expose `postgres://` or
+    `postgresql://` URLs. SQLAlchemy otherwise defaults to psycopg2 for
+    these schemes, while this project standardizes on psycopg 3.
+    """
+    normalized = (value or "").strip()
+    if not normalized:
+        raise ValueError("DATABASE_URL must not be empty")
+    if normalized.startswith("postgres://"):
+        return "postgresql+psycopg://" + normalized[len("postgres://"):]
+    if normalized.startswith("postgresql://"):
+        return "postgresql+psycopg://" + normalized[len("postgresql://"):]
+    if normalized.startswith("postgresql+psycopg://"):
+        return normalized
+    raise ValueError("DATABASE_URL must use postgres:// or postgresql://")
+
+
 def database_url(database_path: str | Path) -> str:
     """Build a safe SQLAlchemy URL for the configured SQLite file."""
     # DATABASE_URL is intentionally not activated yet: the legacy route layer
@@ -30,10 +49,18 @@ def database_url(database_path: str | Path) -> str:
 
 
 def create_database_engine(database_path: str | Path, url: str | None = None) -> Engine:
-    target_url = url or database_url(database_path)
+    target_url = (
+        normalize_database_url(url)
+        if url and url.startswith(("postgres://", "postgresql://", "postgresql+psycopg://"))
+        else (url or database_url(database_path))
+    )
     options = {"pool_pre_ping": True, "future": True}
     if target_url.startswith("sqlite:"):
         options["connect_args"] = {"check_same_thread": False, "timeout": 30}
+    elif target_url.startswith("postgresql+psycopg://"):
+        # Disable psycopg automatic server-side prepared statements for
+        # compatibility with Neon/PgBouncer transaction-pooling endpoints.
+        options["connect_args"] = {"prepare_threshold": None}
     engine = create_engine(target_url, **options)
 
     if target_url.startswith("sqlite:"):

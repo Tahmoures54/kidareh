@@ -35,7 +35,7 @@ def test_alembic_baseline_adopts_existing_sqlite_without_changing_rows(tmp_path)
     try:
         assert connection.execute("SELECT name FROM users WHERE id=1").fetchone() == ("preserved",)
         assert connection.execute("SELECT version_num FROM alembic_version").fetchone() == (
-            "0001_adopt_existing_schema",
+            "0002_postgresql_bootstrap",
         )
         assert connection.execute("PRAGMA integrity_check").fetchone() == ("ok",)
     finally:

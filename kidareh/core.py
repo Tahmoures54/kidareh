@@ -5,6 +5,7 @@ import hmac
 import logging
 import os
 import sqlite3
+import time
 import uuid
 from pathlib import Path
 from typing import Any, Iterator
@@ -65,6 +66,10 @@ def _resolve_database_path() -> Path:
 
 
 def _resolve_upload_folder() -> Path:
+    # Vercel's deployment filesystem is read-only. Never honor a repository-
+    # relative UPLOAD_FOLDER such as static/uploads on that platform.
+    if os.environ.get("VERCEL"):
+        return Path("/tmp/uploads")
     value = os.environ.get("UPLOAD_FOLDER", "").strip()
     if value:
         return Path(value).expanduser()
@@ -202,7 +207,12 @@ def store_uploaded_image(binary: bytes, extension: str) -> str:
     if extension not in {".jpg", ".png", ".webp"}:
         raise ValueError("unsupported_image_extension")
     filename = f"{uuid.uuid4().hex}{extension}"
-    if os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip():
+    blob_token = os.environ.get("BLOB_READ_WRITE_TOKEN", "").strip()
+    if os.environ.get("VERCEL") and not blob_token:
+        raise RuntimeError(
+            "Vercel uploads require BLOB_READ_WRITE_TOKEN; ephemeral local storage is disabled."
+        )
+    if blob_token:
         from .infrastructure.storage.object_storage import upload_image
 
         content_types = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
@@ -327,6 +337,29 @@ def _ensure_performance_indexes(connection) -> None:
     row to learn whether it is featured before it can sort); with it, the same
     query costs 0.15 ms.
     """
+    if connection.dialect_name == "postgresql":
+        # PostgreSQL catalog access is provided by SQLAlchemy's inspector;
+        # schema changes themselves should ultimately move to Alembic.
+        existing = set()
+        for table_name in connection.table_names():
+            existing.update(connection.index_names(table_name))
+        for name in SUPERSEDED_INDEXES:
+            connection.execute(f"DROP INDEX IF EXISTS {name}")
+        created = 0
+        for name, statement in PERFORMANCE_INDEXES.items():
+            if name in existing:
+                continue
+            postgres_statement = statement.replace(
+                "CREATE INDEX ", "CREATE INDEX IF NOT EXISTS ", 1
+            )
+            connection.execute(postgres_statement)
+            created += 1
+        logger.info(
+            "PostgreSQL performance indexes: %d created, %d already present",
+            created, len(existing),
+        )
+        return
+
     for name in SUPERSEDED_INDEXES:
         connection.execute(f"DROP INDEX IF EXISTS {name}")
         logger.debug("Dropped superseded index %s", name)
@@ -366,6 +399,25 @@ def _ensure_listings_fts(connection) -> None:
     MemoryError) must surface instead of being swallowed and silently
     triggering a multi-minute rebuild on every start-up.
     """
+    if connection.dialect_name == "postgresql":
+        # PostgreSQL uses a GIN expression index instead of SQLite FTS5
+        # virtual tables and triggers. The indexed expression is intentionally
+        # repeated verbatim in the listing search query.
+        connection.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_listings_search_vector
+            ON listings USING GIN (
+                to_tsvector(
+                    'simple',
+                    coalesce(title, '') || ' ' ||
+                    coalesce(description, '') || ' ' ||
+                    coalesce(city, '')
+                )
+            )
+            """
+        )
+        return
+
     connection.execute(
         """
         CREATE VIRTUAL TABLE IF NOT EXISTS listings_fts USING fts5(
@@ -485,22 +537,17 @@ def _remove_legacy_demo_data() -> None:
         if not target_ids:
             return
         placeholders = ", ".join("?" for _ in target_ids)
-        tables = connection.execute(
-            "SELECT name FROM sqlite_master WHERE type = 'table' "
-            "AND name NOT LIKE 'sqlite_%'"
-        ).fetchall()
-        for table_row in tables:
-            table_name = str(table_row["name"])
+        for table_name in connection.table_names():
             if table_name == target_table:
                 continue
             quoted_table = '"' + table_name.replace('"', '""') + '"'
-            foreign_keys = connection.execute(
-                f"PRAGMA foreign_key_list({quoted_table})"
-            ).fetchall()
-            for foreign_key in foreign_keys:
-                if foreign_key["table"] != target_table:
+            for foreign_key in connection.foreign_keys(table_name):
+                if foreign_key.get("referred_table") != target_table:
                     continue
-                child_column = '"' + str(foreign_key["from"]).replace('"', '""') + '"'
+                child_columns = foreign_key.get("constrained_columns") or []
+                if len(child_columns) != 1:
+                    continue
+                child_column = '"' + str(child_columns[0]).replace('"', '""') + '"'
                 connection.execute(
                     f"DELETE FROM {quoted_table} WHERE {child_column} IN ({placeholders})",
                     tuple(target_ids),
@@ -821,6 +868,29 @@ def _schema_migration_lock(database_path: Path) -> Iterator[None]:
     automatically if a worker is killed mid-migration, so there is no stale
     lock left behind to clean up.
     """
+    # PostgreSQL advisory locks coordinate schema work across all
+    # serverless instances. A local lock file cannot provide that guarantee.
+    if has_app_context():
+        from .infrastructure.database.session import get_database
+
+        database = get_database()
+        if database.engine.dialect.name == "postgresql":
+            lock_key = 0x4B494441524548  # stable application-specific 64-bit key
+            deadline = time.monotonic() + MIGRATION_LOCK_TIMEOUT_SECONDS
+            with get_connection() as connection:
+                while not connection.execute(
+                    "SELECT pg_try_advisory_xact_lock(?)", (lock_key,)
+                ).fetchone()[0]:
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError(
+                            "Timed out waiting for the PostgreSQL schema advisory lock."
+                        )
+                    time.sleep(0.1)
+                # Transaction-level advisory locks also work with Neon
+                # PgBouncer transaction pooling and release on commit/rollback.
+                yield
+            return
+
     lock_path = database_path.parent / MIGRATION_LOCK_FILENAME
     try:
         connection = sqlite3.connect(
@@ -875,6 +945,57 @@ def initialize_database() -> None:
     database_path.parent.mkdir(parents=True, exist_ok=True)
 
     logger.info("Initializing database at %s", database_path)
+
+    if has_app_context():
+        from .infrastructure.database.session import get_database
+
+        database = get_database()
+        if database.engine.dialect.name == "postgresql":
+            # The Alembic bootstrap provisions PostgreSQL domain tables from a
+            # disposable SQLite schema factory. The advisory lock coordinates
+            # this one-time migration across Vercel/Liara instances.
+            with _schema_migration_lock(database_path):
+                from alembic import command
+                from alembic.config import Config
+
+                migration_url = str(
+                    os.environ.get("MIGRATION_DATABASE_URL")
+                    or current_app.config.get("DATABASE_URL")
+                    or ""
+                ).strip()
+                if not migration_url:
+                    raise RuntimeError(
+                        "DATABASE_URL is required for PostgreSQL schema initialization."
+                    )
+                previous_migration_url = os.environ.get("MIGRATION_DATABASE_URL")
+                os.environ["MIGRATION_DATABASE_URL"] = migration_url
+                try:
+                    alembic_config = Config(str(BASE_DIR / "alembic.ini"))
+                    command.upgrade(alembic_config, "head")
+                finally:
+                    if previous_migration_url is None:
+                        os.environ.pop("MIGRATION_DATABASE_URL", None)
+                    else:
+                        os.environ["MIGRATION_DATABASE_URL"] = previous_migration_url
+
+            if _is_production_environment():
+                _remove_legacy_demo_data()
+            with get_connection() as connection:
+                _ensure_performance_indexes(connection)
+                _ensure_listings_fts(connection)
+            database.reflect()
+            required_tables = {"users", "stores", "listings"}
+            missing_tables = required_tables - set(database.models)
+            if missing_tables:
+                raise RuntimeError(
+                    "PostgreSQL schema is incomplete; missing tables: "
+                    + ", ".join(sorted(missing_tables))
+                )
+            logger.info(
+                "PostgreSQL database ready; mapped %d domain tables",
+                len(database.models),
+            )
+            return
 
     with _schema_migration_lock(database_path):
         with get_connection() as connection:

@@ -105,7 +105,31 @@ def _check_otp_rate_limit(phone):
     }
 
     with get_connection() as connection:
-        connection.execute("BEGIN IMMEDIATE")
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name == "postgresql":
+            # Acquire transaction-scoped advisory locks for both identities in
+            # a deterministic order. This protects first-use races as well as
+            # existing rows, and is compatible with PgBouncer transaction mode.
+            # Use PostgreSQL's two-int advisory-lock namespace explicitly.
+            # Sorting the (scope, key) pairs gives every request the same lock
+            # order and prevents deadlocks when phone and IP limits overlap.
+            for scope, key_hash in sorted(keys.items()):
+                connection.execute(
+                    "SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))",
+                    (f"kidareh-otp:{scope}", key_hash),
+                ).fetchone()
+
+            # Ensure both keys exist before selecting and updating their rows.
+            for scope, key_hash in keys.items():
+                connection.execute(
+                    """INSERT INTO otp_rate_limits
+                       (scope, key_hash, last_sent_at, window_started_at, request_count)
+                       VALUES (?, ?, 0, ?, 0)
+                       ON CONFLICT(scope, key_hash) DO NOTHING""",
+                    (scope, key_hash, now),
+                )
+        else:
+            connection.execute("BEGIN IMMEDIATE")
 
         # Rows older than two hours cannot affect the active one-hour window.
         connection.execute(
@@ -120,7 +144,7 @@ def _check_otp_rate_limit(phone):
                 SELECT last_sent_at, window_started_at, request_count
                 FROM otp_rate_limits
                 WHERE scope = ? AND key_hash = ?
-                """,
+                """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
                 (scope, key_hash),
             ).fetchone()
 
@@ -420,8 +444,11 @@ def verify_otp():
     accepted_at = None
 
     with get_connection() as connection:
-        # Serialize attempts and consumption to prevent OTP reuse.
-        connection.execute("BEGIN IMMEDIATE")
+        # Serialize attempts and consumption to prevent OTP reuse. PostgreSQL
+        # locks the challenge row; SQLite takes its database write lock.
+        dialect_name = getattr(connection, "dialect_name", "sqlite")
+        if dialect_name != "postgresql":
+            connection.execute("BEGIN IMMEDIATE")
 
         challenge = connection.execute(
             """
@@ -434,7 +461,7 @@ def verify_otp():
                 terms_accepted_at
             FROM otp_challenges
             WHERE id = ? AND consumed_at IS NULL
-            """,
+            """ + (" FOR UPDATE" if dialect_name == "postgresql" else ""),
             (challenge_id,),
         ).fetchone()
 
@@ -648,6 +675,7 @@ def complete_profile():
                     city
                 )
                 VALUES (?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
                 """,
                 (
                     name.strip(),
@@ -660,7 +688,7 @@ def complete_profile():
                 ),
             )
 
-            user_id = cursor.lastrowid
+            user_id = cursor.fetchone()["id"]
 
     except IntegrityError:
         return jsonify({

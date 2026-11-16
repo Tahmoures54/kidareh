@@ -132,11 +132,13 @@ def create_store():
         with get_connection() as connection:
             cursor = connection.execute(
                 """INSERT INTO stores (owner_id, name, city, description, category, contact_name, address, hours, in_person, latitude, longitude)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                RETURNING id""",
                 (user["id"], name.strip(), city.strip(), description.strip(), category.strip(), contact_name.strip(),
                  address.strip(), hours.strip(), in_person, latitude, longitude),
             )
-            row = connection.execute("SELECT * FROM stores WHERE id = ?", (cursor.lastrowid,)).fetchone()
+            store_id = cursor.fetchone()["id"]
+            row = connection.execute("SELECT * FROM stores WHERE id = ?", (store_id,)).fetchone()
     except IntegrityError:
         return jsonify({"error": "store_exists", "message": "برای این حساب قبلاً فروشگاه ثبت شده است."}), 409
     return jsonify({"item": _store_payload(row)}), 201

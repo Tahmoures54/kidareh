@@ -19,7 +19,21 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kidareh_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kidareh_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Check out repository
@@ -64,11 +78,16 @@ jobs:
             echo "::warning::No static/ directory found — skipping JS check"
           fi
 
-      - name: Run tests
+      - name: Run SQLite and application tests
         run: python -m pytest -q --tb=short
         env:
           SECRET_KEY: test-secret-key-not-for-production
           FLASK_ENV: testing
+
+      - name: Run PostgreSQL adapter integration tests
+        run: python -m pytest -q --tb=short tests/test_postgres_database.py
+        env:
+          KIDAREH_TEST_POSTGRES_URL: postgresql+psycopg://postgres:postgres@localhost:5432/kidareh_test
 
       - name: Upload test results on failure
         if: failure()

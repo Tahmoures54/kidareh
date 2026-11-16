@@ -38,7 +38,7 @@ def ensure_tables():
             gateway_ref TEXT NOT NULL DEFAULT '', gateway_code TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, paid_at TEXT NOT NULL DEFAULT ''
             )""")
-        order_columns = {r["name"] for r in db.execute("PRAGMA table_info(monetization_orders)")}
+        order_columns = db.column_names("monetization_orders")
         if "listing_id" not in order_columns:
             db.execute("ALTER TABLE monetization_orders ADD COLUMN listing_id INTEGER")
         db.execute("""CREATE TABLE IF NOT EXISTS listing_tags (
@@ -53,10 +53,10 @@ def ensure_tables():
             id INTEGER PRIMARY KEY AUTOINCREMENT, store_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
             package_id TEXT NOT NULL, starts_at TEXT NOT NULL, ends_at TEXT NOT NULL,
             status TEXT NOT NULL DEFAULT 'active', created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)""")
-        columns = {r["name"] for r in db.execute("PRAGMA table_info(stores)")}
+        columns = db.column_names("stores")
         if "badge_until" not in columns:
             db.execute("ALTER TABLE stores ADD COLUMN badge_until TEXT NOT NULL DEFAULT ''")
-        listing_columns = {r["name"] for r in db.execute("PRAGMA table_info(listings)")}
+        listing_columns = db.column_names("listings")
         if "featured_until" not in listing_columns:
             db.execute("ALTER TABLE listings ADD COLUMN featured_until TEXT NOT NULL DEFAULT ''")
         now = datetime.now(timezone.utc).isoformat()
@@ -165,10 +165,10 @@ def create_order():
             listing_id = None
             store_id = store["id"]
         cursor = db.execute(
-            "INSERT INTO monetization_orders (user_id, store_id, package_id, listing_id, amount_toman, status) VALUES (?, ?, ?, ?, ?, 'pending')",
+            "INSERT INTO monetization_orders (user_id, store_id, package_id, listing_id, amount_toman, status) VALUES (?, ?, ?, ?, ?, 'pending') RETURNING id",
             (user["id"], store_id, package["id"], listing_id, package["price"]),
         )
-        order_id = cursor.lastrowid
+        order_id = cursor.fetchone()["id"]
     callback_url = url_for("monetization.payment_callback", order_id=order_id, _external=True)
     try:
         result = zibal_request(ZIBAL_REQUEST_URL, {

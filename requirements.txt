@@ -24,3 +24,5 @@ redis>=5.0,<7.0
 # Official Vercel Blob Python SDK (synchronous API for Flask routes)
 vercel-blob>=0.6.0,<0.7.0
 
+# PostgreSQL driver (Neon and other PostgreSQL providers)
+psycopg[binary]>=3.2,<4.0
