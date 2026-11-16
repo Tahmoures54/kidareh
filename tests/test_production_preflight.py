@@ -63,3 +63,24 @@ def test_env_production_rejects_insecure_session_cookie(tmp_path):
     env = {"ENV": "production", "SECRET_KEY": "x" * 48, "SESSION_COOKIE_SECURE": "0"}
     errors = preflight(env)
     assert any("SESSION_COOKIE_SECURE" in error for error in errors)
+
+
+def test_vercel_is_treated_as_production_for_preflight():
+    env = {
+        "VERCEL": "1",
+        "FLASK_ENV": "development",
+        "SECRET_KEY": "x" * 48,
+        "SESSION_COOKIE_SECURE": "0",
+    }
+    errors = preflight(env)
+    assert any("SESSION_COOKIE_SECURE" in error for error in errors)
+
+
+def test_vercel_requires_a_strong_secret_even_with_development_flask_env():
+    env = {
+        "VERCEL": "1",
+        "FLASK_ENV": "development",
+        "SECRET_KEY": "short",
+    }
+    errors = preflight(env)
+    assert any("SECRET_KEY" in error for error in errors)
