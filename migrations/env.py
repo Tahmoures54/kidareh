@@ -1,12 +1,6 @@
-"""Alembic environment for Kidareh's SQLite schema.
-
-This module deliberately does not import the Flask application package. Alembic
-must be able to inspect and migrate a database in a maintenance process without
-booting the web app or requiring Flask to be imported as a side effect.
-"""
+"""PostgreSQL-only Alembic environment for Kidareh."""
 from logging.config import fileConfig
 import os
-from pathlib import Path
 
 from alembic import context
 from sqlalchemy import MetaData, engine_from_config, pool
@@ -17,32 +11,24 @@ if config.config_file_name:
 
 
 def _database_url() -> str:
-    # Alembic uses an explicit migration URL when supplied. This is separate
-    # from the Flask runtime selector: merely defining DATABASE_URL must not
-    # switch application traffic while the SQLite route layer is still active.
     configured_url = (
         os.environ.get("MIGRATION_DATABASE_URL", "").strip()
         or os.environ.get("DATABASE_URL", "").strip()
     )
-    if configured_url:
-        if configured_url.startswith("postgres://"):
-            return "postgresql+psycopg://" + configured_url[len("postgres://"):]
-        if configured_url.startswith("postgresql://"):
-            return "postgresql+psycopg://" + configured_url[len("postgresql://"):]
+    if not configured_url:
+        raise RuntimeError(
+            "DATABASE_URL is required for Alembic. SQLite migrations are unsupported."
+        )
+    if configured_url.startswith("postgres://"):
+        return "postgresql+psycopg://" + configured_url[len("postgres://"):]
+    if configured_url.startswith("postgresql://"):
+        return "postgresql+psycopg://" + configured_url[len("postgresql://"):]
+    if configured_url.startswith("postgresql+psycopg://"):
         return configured_url
-
-    configured = os.environ.get("DATABASE_PATH") or os.environ.get("DB_PATH")
-    if configured:
-        path = Path(configured).expanduser().resolve()
-    else:
-        path = Path("instance/kidareh.sqlite3").resolve()
-    return f"sqlite:///{path.as_posix()}"
+    raise RuntimeError("DATABASE_URL must be a PostgreSQL URL using psycopg 3.")
 
 
 config.set_main_option("sqlalchemy.url", _database_url().replace("%", "%%"))
-# Runtime ORM mappings are reflected after the application-owned bootstrap.
-# Alembic reflects the same physical domain schema directly, without importing
-# kidareh.__init__ (which would require Flask and create the application).
 target_metadata = MetaData()
 _EXCLUDED_TABLES = {
     "listings_fts", "listings_fts_config", "listings_fts_data",
@@ -63,17 +49,11 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    configured_url = config.get_main_option("sqlalchemy.url")
-    connect_args = (
-        {"prepare_threshold": None}
-        if configured_url.startswith("postgresql+psycopg://")
-        else {}
-    )
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        connect_args=connect_args,
+        connect_args={"prepare_threshold": None},
     )
     try:
         target_metadata.reflect(
@@ -81,11 +61,13 @@ def run_migrations_online() -> None:
             only=lambda table_name, _metadata: table_name not in _EXCLUDED_TABLES,
         )
         with connectable.connect() as connection:
+            if connection.dialect.name != "postgresql":
+                raise RuntimeError("Kidareh migrations require PostgreSQL.")
             context.configure(
                 connection=connection,
                 target_metadata=target_metadata,
                 compare_type=True,
-                render_as_batch=connection.dialect.name == "sqlite",
+                render_as_batch=False,
             )
             with context.begin_transaction():
                 context.run_migrations()
