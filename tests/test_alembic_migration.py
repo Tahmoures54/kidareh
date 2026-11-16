@@ -2,11 +2,12 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MIGRATION = ROOT / "migrations" / "versions" / "0002_postgresql_bootstrap.py"
+MIGRATIONS = [ROOT / "migrations" / "versions" / "0002_postgresql_bootstrap.py"]
+MIGRATIONS.extend(sorted((ROOT / "migrations" / "postgresql_schema").glob("part_*.py")))
 
 
 def test_initial_schema_migration_is_static_postgresql_ddl():
-    source = MIGRATION.read_text(encoding="utf-8")
+    source = "\n".join(path.read_text(encoding="utf-8") for path in MIGRATIONS)
     forbidden = (
         "sqlite3",
         "sqlite://",
@@ -19,4 +20,4 @@ def test_initial_schema_migration_is_static_postgresql_ddl():
     assert source.count("op.create_table(") == 19
     assert "sa.Identity()" in source
     assert "postgresql_where=" in source
-    assert "bind.dialect.name != \"postgresql\"" in source
+    assert "_require_postgresql" in source
