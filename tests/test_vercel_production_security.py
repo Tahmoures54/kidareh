@@ -59,3 +59,46 @@ def test_vercel_health_does_not_report_ephemeral_sqlite_as_healthy(
         assert payload["uploads"] == "blob_configured"
     finally:
         app.extensions["kidareh_db"].dispose()
+
+
+def test_vercel_health_accepts_postgresql_and_blob_configuration(
+    monkeypatch, tmp_path
+):
+    from contextlib import contextmanager
+    import kidareh.routes.system as system_routes
+
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-blob-token")
+    monkeypatch.delenv("LIARA_APP_ID", raising=False)
+    monkeypatch.delenv("ENV", raising=False)
+
+    class HealthyConnection:
+        def execute(self, _statement):
+            return self
+
+        def fetchone(self):
+            return (1,)
+
+        def table_names(self):
+            return {"users", "stores", "listings"}
+
+    @contextmanager
+    def fake_connection():
+        yield HealthyConnection()
+
+    monkeypatch.setattr(system_routes, "get_connection", fake_connection)
+    app = create_app({
+        "SECRET_KEY": "test-vercel-production-secret-" + ("x" * 40),
+        "DATABASE_BACKEND": "postgresql",
+        "DATABASE_URL": "postgresql+psycopg://user:password@127.0.0.1:5432/kidareh",
+        "TESTING": True,
+    })
+    try:
+        response = app.test_client().get("/api/health")
+        assert response.status_code == 200
+        payload = response.get_json()
+        assert payload["ok"] is True
+        assert payload["database"] == "ok"
+        assert payload["uploads"] == "blob_configured"
+    finally:
+        app.extensions["kidareh_db"].dispose()
