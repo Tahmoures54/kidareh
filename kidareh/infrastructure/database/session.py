@@ -43,7 +43,7 @@ def normalize_database_url(value: str) -> str:
 def create_database_engine(database_path: str | Path | None = None, url: str | None = None, *, allow_sqlite: bool = False) -> Engine:
     """Create PostgreSQL engine; a test factory may explicitly opt into SQLite."""
     raw_url = (url or "").strip()
-    test_mode = allow_sqlite and (os.environ.get("FLASK_ENV", "").strip().lower() == "testing" or os.environ.get("KIDAREH_ALLOW_SQLITE_TESTS") == "1")
+    test_mode = bool(allow_sqlite)
     if raw_url.startswith(("postgres://", "postgresql://", "postgresql+psycopg://")):
         target_url = normalize_database_url(raw_url)
     elif raw_url.startswith("sqlite:") and test_mode:
