@@ -84,3 +84,17 @@ def test_leaves_native_postgresql_identity_ddl_unchanged():
 
     statement = "CREATE TABLE t (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY)"
     assert sqlite_ddl_to_postgresql(statement) == statement
+
+
+def test_translates_sqlite_real_to_postgresql_double_precision():
+    from kidareh.infrastructure.database.postgres_compat import sqlite_ddl_to_postgresql
+
+    source = (
+        "CREATE TABLE otp_rate_limits (last_sent_at REAL NOT NULL, "
+        "window_started_at real NOT NULL)"
+    )
+    expected = (
+        "CREATE TABLE otp_rate_limits (last_sent_at DOUBLE PRECISION NOT NULL, "
+        "window_started_at DOUBLE PRECISION NOT NULL)"
+    )
+    assert sqlite_ddl_to_postgresql(source) == expected
