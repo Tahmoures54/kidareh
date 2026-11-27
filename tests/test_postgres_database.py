@@ -176,9 +176,21 @@ def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
     try:
         inspector = inspect(engine)
         assert inspector.has_table("alembic_version")
-        assert {"users", "stores", "listings", "otp_challenges", "rate_limits"}.issubset(
+        assert {"users", "stores", "listings", "otp_challenges", "otp_rate_limits", "rate_limits"}.issubset(
             set(inspector.get_table_names())
         )
+        otp_columns = {
+            column["name"]: str(column["type"]).upper()
+            for column in inspector.get_columns("otp_rate_limits")
+        }
+        assert otp_columns["last_sent_at"] == "DOUBLE PRECISION"
+        assert otp_columns["window_started_at"] == "DOUBLE PRECISION"
+        rate_columns = {
+            column["name"]: str(column["type"]).upper()
+            for column in inspector.get_columns("rate_limits")
+        }
+        assert rate_columns["last_request_at"] == "DOUBLE PRECISION"
+        assert rate_columns["window_started_at"] == "DOUBLE PRECISION"
     finally:
         engine.dispose()
 
@@ -434,11 +446,14 @@ def test_postgres_adapter_translates_legacy_autoincrement_ddl(postgres_adapter):
     """Legacy feature schema helpers still emit SQLite identity syntax."""
     postgres_adapter.execute(
         "CREATE TEMP TABLE adapter_identity ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL)"
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL, sampled_at REAL NOT NULL)"
     )
     row = postgres_adapter.execute(
-        "INSERT INTO adapter_identity(label) VALUES (?) RETURNING id",
-        ("identity-ok",),
+        "INSERT INTO adapter_identity(label, sampled_at) VALUES (?, ?) RETURNING id",
+        ("identity-ok", 1795796000.123456),
     ).fetchone()
     assert row["id"] > 0
     postgres_adapter.commit()
+    from sqlalchemy import inspect
+    columns = {column["name"]: column["type"] for column in inspect(postgres_adapter._connection).get_columns("adapter_identity")}
+    assert str(columns["sampled_at"]).upper() == "DOUBLE PRECISION"
