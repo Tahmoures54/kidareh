@@ -84,3 +84,29 @@ def test_vercel_requires_a_strong_secret_even_with_development_flask_env():
     }
     errors = preflight(env)
     assert any("SECRET_KEY" in error for error in errors)
+
+
+
+def test_vercel_requires_durable_database_and_image_storage():
+    env = {
+        "VERCEL": "1",
+        "SECRET_KEY": "x" * 48,
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_BACKEND": "sqlite",
+    }
+    errors = preflight(env)
+    assert any("DATABASE_BACKEND=postgresql" in error for error in errors)
+    assert any("DATABASE_URL" in error for error in errors)
+    assert any("BLOB_READ_WRITE_TOKEN" in error for error in errors)
+
+
+def test_vercel_accepts_explicit_postgresql_and_blob_configuration():
+    env = {
+        "VERCEL": "1",
+        "SECRET_KEY": "x" * 48,
+        "SESSION_COOKIE_SECURE": "1",
+        "DATABASE_BACKEND": "postgresql",
+        "DATABASE_URL": "postgresql+psycopg://user:password@db.example/kidareh",
+        "BLOB_READ_WRITE_TOKEN": "test-token",
+    }
+    assert preflight(env) == []

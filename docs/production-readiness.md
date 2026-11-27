@@ -4,7 +4,8 @@
 
 - Python 3.12 runtime (kept in sync with GitHub Actions).
 - A production `SECRET_KEY` containing at least 32 random bytes. Platform-injected environment variables take precedence over `.env` values.
-- On Liara, a persistent disk mounted at `/app/data` and `KIDAREH_DATA_DIR=/app/data` set in the app's runtime environment. The app intentionally refuses to boot on Liara without a persistent-data path.
+- On Liara with SQLite, a persistent disk mounted at `/app/data` and `KIDAREH_DATA_DIR=/app/data` set in the app's runtime environment. The app intentionally refuses to boot on Liara without a persistent-data path.
+- On Vercel, use `DATABASE_BACKEND=postgresql` with a persistent PostgreSQL `DATABASE_URL`, and connect Vercel Blob so `BLOB_READ_WRITE_TOKEN` is injected. Vercel's writable `/tmp` is ephemeral and must never be treated as durable application storage.
 - `DATABASE_PATH` and `UPLOAD_FOLDER`, when explicitly set, must point inside the persistent mount on Liara when using SQLite.
 - Configure SMS and payment credentials only when their respective feature flags are enabled.
 - Configure trusted proxy hops only for the actual reverse-proxy topology. The default is one hop in production.
@@ -36,7 +37,7 @@ python main.py
 python scripts/check_production.py --runtime
 ```
 
-The runtime check is read-only with respect to business data. It currently performs SQLite-specific integrity checks; do not use that command as a PostgreSQL integrity check.
+The runtime check is read-only with respect to business data. For SQLite it performs integrity, required-table, and WAL checks. For PostgreSQL it verifies connectivity and the required core tables; it does not replace a backup/restore rehearsal or a full schema audit.
 
 ## Current release boundary
 
@@ -44,6 +45,7 @@ The PostgreSQL path is implemented as an opt-in backend and has disposable Postg
 
 This is not yet authorization to switch the live Vercel or Liara project. Before changing Production:
 - Verify the exact Neon project/branch/database and its existing schema.
+- Run `python scripts/check_production.py` with the exact Vercel Production environment variables before promotion; it rejects ephemeral SQLite and missing Blob configuration.
 - Run the same full startup and authenticated end-to-end flows on a Preview using the PostgreSQL backend.
 - Verify registration, OTP verification, session persistence, seller dashboard access, listing create/edit/search, image upload, and rate limiting across cold starts/instances.
 - Verify Neon connection limits, SSL, pooler/direct URLs, backups, and a rollback plan.
