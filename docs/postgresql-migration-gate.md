@@ -25,7 +25,7 @@ Preview, SMS provider, or image storage has been exercised end to end.
 
 ## Numeric precision compatibility
 
-PostgreSQL revision `0004_double_precision_epoch_columns` converts columns that
+PostgreSQL revision `0004_double_precision` converts columns that
 were declared as SQLite `REAL` to PostgreSQL `DOUBLE PRECISION`. PostgreSQL
 `REAL` is a 32-bit float and cannot preserve sub-minute precision for Unix
 epoch timestamps; this affects OTP cooldowns and shared rate limits. The
