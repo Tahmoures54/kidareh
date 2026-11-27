@@ -64,11 +64,11 @@ def preflight(env: dict[str, str]) -> list[str]:
         errors.append("SECRET_KEY must contain at least 32 random bytes in production.")
 
     database, uploads, data_dir = resolve_paths(env)
-    backend = env.get("DATABASE_BACKEND", "sqlite").strip().lower()
-    if backend not in {"sqlite", "postgresql"}:
-        errors.append("DATABASE_BACKEND must be either sqlite or postgresql.")
-    if backend == "postgresql" and not env.get("DATABASE_URL", "").strip():
-        errors.append("DATABASE_BACKEND=postgresql requires DATABASE_URL.")
+    backend = env.get("DATABASE_BACKEND", "postgresql").strip().lower()
+    if backend != "postgresql":
+        errors.append("Kidareh supports PostgreSQL only; SQLite is disabled.")
+    if not env.get("DATABASE_URL", "").strip():
+        errors.append("DATABASE_URL is required for PostgreSQL.")
     if env.get("VERCEL"):
         if backend != "postgresql":
             errors.append(
@@ -80,19 +80,12 @@ def preflight(env: dict[str, str]) -> list[str]:
         if not env.get("BLOB_READ_WRITE_TOKEN", "").strip():
             errors.append("Vercel production requires BLOB_READ_WRITE_TOKEN for persistent listing images.")
 
-    if env.get("LIARA_APP_ID") and data_dir is None:
-        errors.append("KIDAREH_DATA_DIR must point to a mounted persistent Liara disk (for example /app/data).")
-    if env.get("LIARA_APP_ID") and data_dir is not None:
-        for label, path in (("DATABASE_PATH", database), ("UPLOAD_FOLDER", uploads)):
-            try:
-                path.relative_to(data_dir)
-            except ValueError:
-                errors.append(f"{label} must be located inside KIDAREH_DATA_DIR on Liara.")
+    
 
     # Vercel's writable /tmp is temporary, not durable storage. Do not treat
     # a successful filesystem probe there as evidence of database or media
     # persistence; those services are validated through their configured URLs.
-    if not env.get("VERCEL") and backend == "sqlite":
+    if False:
         try:
             _write_probe(database.parent)
         except OSError as exc:
@@ -173,23 +166,15 @@ def main(argv: list[str] | None = None) -> int:
     database, _uploads, _data_dir = resolve_paths(env)
     backend = env.get("DATABASE_BACKEND", "sqlite").strip().lower()
     if args.runtime:
-        if backend == "postgresql":
-            errors.extend(runtime_postgresql_check(env.get("DATABASE_URL", "")))
-        else:
-            errors.extend(runtime_database_check(database))
+        errors.extend(runtime_postgresql_check(env.get("DATABASE_URL", "")))
     if errors:
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
         return 1
     print("Kidareh production preflight: OK")
-    if backend == "postgresql":
-        print("Database backend: PostgreSQL")
-        if args.runtime:
-            print("PostgreSQL connectivity and required tables: OK")
-    else:
-        print(f"Database path: {database}")
-        if args.runtime:
-            print("SQLite integrity and required tables: OK")
+    print("Database backend: PostgreSQL")
+    if args.runtime:
+        print("PostgreSQL connectivity and required tables: OK")
     if env.get("VERCEL"):
         print("Upload storage: Vercel Blob configured")
     else:
