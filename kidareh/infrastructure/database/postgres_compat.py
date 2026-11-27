@@ -142,7 +142,13 @@ def sqlite_ddl_to_postgresql(sql: str) -> str:
     )
     # SQLite REAL is IEEE-754 binary64. PostgreSQL REAL is binary32 and loses
     # sub-minute precision for Unix epoch values around 1.8 billion seconds.
-    translated = re.sub(r"\bREAL\b", "DOUBLE PRECISION", translated, flags=re.IGNORECASE)
+    # Restrict the type rewrite to table DDL so SQL string literals are untouched.
+    if re.match(
+        r"\s*(?:CREATE\s+(?:TEMP(?:ORARY)?\s+)?TABLE|ALTER\s+TABLE)\b",
+        translated,
+        flags=re.IGNORECASE,
+    ):
+        translated = re.sub(r"\bREAL\b", "DOUBLE PRECISION", translated, flags=re.IGNORECASE)
     if re.search(r"\bAUTOINCREMENT\b", translated, flags=re.IGNORECASE):
         raise ValueError(
             "Unsupported SQLite AUTOINCREMENT declaration; "
