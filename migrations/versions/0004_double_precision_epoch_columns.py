@@ -1,6 +1,6 @@
 """Preserve SQLite binary64 precision in PostgreSQL numeric columns.
 
-Revision ID: 0004_double_precision_epoch_columns
+Revision ID: 0004_double_precision
 Revises: 0003_listings_search_vector
 
 PostgreSQL REAL is binary32. Unix epoch timestamps stored in REAL lose enough
