@@ -40,12 +40,21 @@ def create_app(test_config=None):
         or os.environ.get("VERCEL")
     )
 
-    database_backend = os.environ.get("DATABASE_BACKEND", "sqlite").strip().lower()
-    if database_backend not in {"sqlite", "postgresql"}:
-        raise RuntimeError("DATABASE_BACKEND must be either sqlite or postgresql.")
-    database_url = os.environ.get("DATABASE_URL", "").strip()
+    # PostgreSQL/Neon is the only supported application database.
+    # SQLite is retained solely as a temporary test fixture backend while the
+    # legacy test suite is being ported; it is never selected by a deployment.
+    test_mode = bool((test_config or {}).get("TESTING")) or (
+        os.environ.get("FLASK_ENV", "").strip().lower() == "testing"
+    )
+    requested_backend = str((test_config or {}).get("DATABASE_BACKEND") or os.environ.get("DATABASE_BACKEND") or "postgresql").strip().lower()
+    if requested_backend == "sqlite" and not test_mode:
+        raise RuntimeError("SQLite is disabled. Configure DATABASE_URL for PostgreSQL.")
+    if requested_backend not in ({"postgresql", "sqlite"} if test_mode else {"postgresql"}):
+        raise RuntimeError("Kidareh requires PostgreSQL.")
+    database_backend = requested_backend
+    database_url = str((test_config or {}).get("DATABASE_URL") or os.environ.get("DATABASE_URL") or "").strip()
     if database_backend == "postgresql" and not database_url:
-        raise RuntimeError("DATABASE_URL is required when DATABASE_BACKEND=postgresql.")
+        raise RuntimeError("DATABASE_URL is required. Kidareh runs on PostgreSQL only.")
 
     # Resolve the signing key from the environment first, then from an explicit
     # test configuration, and only then fall back to a generated value.
