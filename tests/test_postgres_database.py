@@ -454,6 +454,9 @@ def test_postgres_adapter_translates_legacy_autoincrement_ddl(postgres_adapter):
     ).fetchone()
     assert row["id"] > 0
     postgres_adapter.commit()
-    from sqlalchemy import inspect
-    columns = {column["name"]: column["type"] for column in inspect(postgres_adapter._connection).get_columns("adapter_identity")}
-    assert str(columns["sampled_at"]).upper() == "DOUBLE PRECISION"
+    precision = postgres_adapter.execute(
+        """SELECT data_type FROM information_schema.columns
+           WHERE table_name = ? AND column_name = ?""",
+        ("adapter_identity", "sampled_at"),
+    ).fetchone()
+    assert precision["data_type"] == "double precision"
