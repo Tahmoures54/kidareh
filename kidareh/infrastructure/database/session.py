@@ -39,21 +39,19 @@ def normalize_database_url(value: str) -> str:
     raise ValueError("DATABASE_URL must use postgres:// or postgresql://")
 
 
-def database_url(database_path: str | Path) -> str:
-    """Build a safe SQLAlchemy URL for the configured SQLite file."""
-    # DATABASE_URL is intentionally not activated yet: the legacy route layer
-    # still uses the DATABASE_PATH/DB_PATH SQLite connection. Reading a second
-    # URL here could split ORM and legacy writes across two different databases.
-    path = Path(database_path).expanduser().resolve()
-    return f"sqlite:///{path.as_posix()}"
-
-
-def create_database_engine(database_path: str | Path, url: str | None = None) -> Engine:
-    target_url = (
-        normalize_database_url(url)
-        if url and url.startswith(("postgres://", "postgresql://", "postgresql+psycopg://"))
-        else (url or database_url(database_path))
-    )
+def create_database_engine(database_path: str | Path | None = None, url: str | None = None) -> Engine:
+    """Create the PostgreSQL engine; SQLite is permitted only in test mode."""
+    raw_url = (url or "").strip()
+    test_mode = os.environ.get("FLASK_ENV", "").strip().lower() == "testing" or os.environ.get("KIDAREH_ALLOW_SQLITE_TESTS") == "1"
+    if raw_url.startswith(("postgres://", "postgresql://", "postgresql+psycopg://")):
+        target_url = normalize_database_url(raw_url)
+    elif raw_url.startswith("sqlite:") and test_mode:
+        target_url = raw_url
+    elif not raw_url and test_mode and database_path is not None:
+        path = Path(database_path).expanduser().resolve()
+        target_url = f"sqlite:///{path.as_posix()}"
+    else:
+        raise RuntimeError("DATABASE_URL must be configured with a PostgreSQL connection string.")
     options = {"pool_pre_ping": True, "future": True}
     if target_url.startswith("sqlite:"):
         options["connect_args"] = {"check_same_thread": False, "timeout": 30}
