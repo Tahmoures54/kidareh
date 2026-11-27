@@ -12,11 +12,11 @@
 
 ## Database backend selection
 
-SQLite remains the default. A configured `DATABASE_URL` by itself does not change the runtime database.
-
-To opt into PostgreSQL, set both:
+PostgreSQL is mandatory. Set:
 - `DATABASE_BACKEND=postgresql`
-- `DATABASE_URL` to the secret PostgreSQL connection URL.
+- `DATABASE_URL` to the secret Neon/PostgreSQL connection URL.
+
+The application refuses to start if a deployment selects SQLite or omits `DATABASE_URL`.
 
 For a separate direct/unpooled migration endpoint, optionally set `MIGRATION_DATABASE_URL` to the same database. It must target the same Neon database as `DATABASE_URL`; do not point the two variables at different branches or databases.
 
@@ -26,7 +26,7 @@ On PostgreSQL startup, the app:
 3. Applies revision `0002_postgresql_bootstrap`, which runs the repository's PostgreSQL-native schema migration modules.
 4. Ensures PostgreSQL performance and Persian full-text GIN indexes, reflects the schema, and checks the core tables.
 
-The bootstrap is additive and is intended for a compatible empty/new PostgreSQL schema. It does not copy business rows or drop existing tables. Existing tables and incompatible pre-existing columns must be inspected and reconciled explicitly before enabling PostgreSQL. Do not assume an automated downgrade is a safe rollback; review the exact revision behavior and take a verified backup first.
+The bootstrap is intended for a fresh empty PostgreSQL schema. No business rows are transferred from SQLite because the project currently has no data. Existing tables and incompatible pre-existing columns must still be inspected before applying revisions. Do not assume an automated downgrade is a safe rollback.
 
 ## Preflight commands
 
@@ -57,4 +57,4 @@ All acceptance tests are enabled in `pytest.ini`. A legacy OTP test was updated 
 
 ## Verification available in this build environment
 
-GitHub Actions is the source of truth for verification. It runs the application suite (legacy tests still use a temporary SQLite fixture) and a separate PostgreSQL 16 integration suite. Do not treat a successful isolated adapter test as proof that the live Neon database or hosted deployment has been verified.
+GitHub Actions is the source of truth for verification. It runs the application suite (a few legacy tests still use a temporary SQLite fixture) and a separate PostgreSQL 16 integration suite. Do not treat a successful isolated adapter test as proof that the live Neon database or hosted deployment has been verified.
