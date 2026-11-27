@@ -19,8 +19,8 @@ def test_runtime_rejects_sqlite_backend():
     assert any("PostgreSQL only" in error for error in errors)
 
 
-def test_postgresql_url_is_required():
-    errors = preflight({"DATABASE_BACKEND": "postgresql"})
+def test_postgresql_url_is_required_for_production():
+    errors = preflight({"ENV": "production", "SECRET_KEY": "x" * 48, "DATABASE_BACKEND": "postgresql"})
     assert any("DATABASE_URL" in error for error in errors)
 
 
