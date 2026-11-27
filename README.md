@@ -180,13 +180,13 @@ python main.py
 |---|---|---|
 | `SECRET_KEY` | کلید امضای نشست Flask | در production اجباری؛ در توسعه اگر نباشد یک کلید تصادفی موقت ساخته می‌شود (نشست‌ها با ری‌استارت پاک می‌شوند) |
 | `DATABASE_URL` | نشانی اتصال PostgreSQL/Neon | اجباری |
-| `DATABASE_URL` | نشانی اتصال PostgreSQL/Neon | اجباری |
+| `KIDAREH_DATA_DIR` | مسیر دیسک پایدار برای فایل‌های آپلودی محلی در Liara | اختیاری؛ دیتابیس در آن ذخیره نمی‌شود |
 | `PORT` | درگاه وب‌سرور | `8000` در اجرای محلی؛ `3000` در Procfile/Gunicorn روی Liara |
 | `KAVENEGAR_API_KEY` | کلید پیامک کاوه‌نگار | تنظیم‌نشده |
 | `KAVENEGAR_VERIFY_TEMPLATE` | الگوی تأیید OTP | `verify` |
 | `KAVENEGAR_TEMPLATE` | نام جایگزین الگو | `verify` |
 | `KAVENEGAR_TIMEOUT_SECONDS` | مهلت پاسخ پیامک (۲–۲۰) | `10` |
-| `UPLOAD_FOLDER` | مسیر تصاویر (در صورت تنظیم، بر KIDAREH_DATA_DIR اولویت دارد) | `static/uploads` |
+| `UPLOAD_FOLDER` | مسیر تصاویر (در صورت تنظیم، بر مسیر پیش‌فرض اولویت دارد) | `static/uploads` |
 | `ZIBAL_MERCHANT` / `ZIBAL_MERCHANT_ID` | درگاه پرداخت زیبال | بدون آن پرداخت غیرفعال |
 | `ADMIN_PHONE` | شماره مدیر | تنظیم‌نشده |
 
