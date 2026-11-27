@@ -149,7 +149,11 @@ def get_connection():
     else:
         # CLI scripts and low-level tests may use get_connection() without a
         # Flask context. Give them the same SQLAlchemy execution path.
-        standalone_engine = create_database_engine(database_path)
+        standalone_engine = create_database_engine(
+            database_path,
+            url=os.environ.get("DATABASE_URL", "").strip() or None,
+            allow_sqlite=os.environ.get("FLASK_ENV", "").strip().lower() == "testing",
+        )
         engine = standalone_engine
 
     if request_scoped:
