@@ -98,3 +98,10 @@ def test_translates_sqlite_real_to_postgresql_double_precision():
         "window_started_at DOUBLE PRECISION NOT NULL)"
     )
     assert sqlite_ddl_to_postgresql(source) == expected
+
+
+def test_does_not_rewrite_real_inside_sql_literals():
+    from kidareh.infrastructure.database.postgres_compat import sqlite_ddl_to_postgresql
+
+    statement = "SELECT 'REAL' AS declared_type"
+    assert sqlite_ddl_to_postgresql(statement) == statement
