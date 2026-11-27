@@ -95,7 +95,6 @@ def consume(scope: str, key: str, limit: int, window_seconds: int, cooldown_seco
     if not isinstance(window_seconds, int) or window_seconds < 1:
         raise ValueError("rate-limit window_seconds must be a positive integer")
 
-    now = time.time()
     key_hash = _hash(key)
     with get_connection() as connection:
         dialect_name = getattr(connection, "dialect_name", "sqlite")
@@ -106,9 +105,9 @@ def consume(scope: str, key: str, limit: int, window_seconds: int, cooldown_seco
             connection.execute(
                 """INSERT INTO rate_limits
                    (scope, key_hash, last_request_at, window_started_at, request_count)
-                   VALUES (?, ?, 0, ?, 0)
+                   VALUES (?, ?, 0, 0, 0)
                    ON CONFLICT(scope, key_hash) DO NOTHING""",
-                (scope, key_hash, now),
+                (scope, key_hash),
             )
             row = connection.execute(
                 "SELECT last_request_at, window_started_at, request_count FROM rate_limits"
@@ -125,6 +124,9 @@ def consume(scope: str, key: str, limit: int, window_seconds: int, cooldown_seco
                 " WHERE scope=? AND key_hash=?",
                 (scope, key_hash),
             ).fetchone()
+        # Evaluate cooldowns and windows using a fresh timestamp after the
+        # row/advisory lock has serialized this decision.
+        now = time.time()
         _prune(connection, now)
         last_request_at = row["last_request_at"] if row else 0.0
         window_started_at = row["window_started_at"] if row else now
