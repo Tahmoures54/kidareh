@@ -137,8 +137,11 @@ def test_vercel_health_requires_blob_storage(monkeypatch, tmp_path):
 
     monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-blob-token")
     response = client.get("/api/health")
-    assert response.status_code == 200
+    # Blob configuration fixes media durability, but SQLite on Vercel is
+    # still ephemeral; health must remain red until PostgreSQL is selected.
+    assert response.status_code == 503
     assert response.get_json()["uploads"] == "blob_configured"
+    assert response.get_json()["database"] == "ephemeral_backend"
 
 
 def test_vercel_does_not_write_listing_images_to_ephemeral_disk(monkeypatch):

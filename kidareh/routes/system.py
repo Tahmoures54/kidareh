@@ -54,6 +54,16 @@ def health():
     except (SQLAlchemyError, OSError, RuntimeError):
         database_status = "unavailable"
 
+    # A successful query against Vercel's /tmp SQLite file is not a healthy
+    # production data path: that filesystem is discarded between instances.
+    # Keep the application serving requests, but make the health endpoint fail
+    # closed until the persistent PostgreSQL backend is explicitly selected.
+    if (
+        os.environ.get("VERCEL")
+        and current_app.config.get("DATABASE_BACKEND", "sqlite") != "postgresql"
+    ):
+        database_status = "ephemeral_backend"
+
     uploads_ok = _upload_probe_ok()
     cache = current_app.extensions.get("kidareh_cache")
     cache_status = cache.health() if cache else {"backend": "none", "status": "unavailable"}

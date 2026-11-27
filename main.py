@@ -81,10 +81,14 @@ def _env_int(key: str, default: int) -> int:
 # Startup summary in the terminal
 _secret = (os.environ.get("SECRET_KEY") or "").strip()
 print(f"[BOOT] SECRET_KEY: {'set (' + str(len(_secret)) + ' chars)' if _secret else 'MISSING - using ephemeral key'}")
-_database_backend = os.environ.get("DATABASE_BACKEND", "sqlite").strip().lower()
+_database_backend = os.environ.get("DATABASE_BACKEND", "sqlite" if os.environ.get("FLASK_ENV", "").strip().lower() == "testing" else "postgresql").strip().lower()
 print(f"[BOOT] Database backend: {_database_backend}")
-if _database_backend != "postgresql":
-    print(f"[BOOT] Database path: {DATABASE_PATH}")
+if _database_backend == "postgresql":
+    print("[BOOT] Database: PostgreSQL")
+elif os.environ.get("FLASK_ENV", "").strip().lower() == "testing":
+    print("[BOOT] Database: isolated SQLite test fixture")
+else:
+    raise RuntimeError("SQLite is disabled for application startup. Configure DATABASE_URL.")
 print(f"[BOOT] Upload folder: {UPLOAD_FOLDER}")
 print(f"[BOOT] Log level: {os.environ.get('LOG_LEVEL', 'INFO').upper()}")
 

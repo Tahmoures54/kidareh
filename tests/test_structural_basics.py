@@ -172,6 +172,7 @@ def test_production_rejects_default_secret_key(monkeypatch):
 def test_production_enables_secure_session_cookie(monkeypatch, tmp_path):
     monkeypatch.setenv("FLASK_ENV", "production")
     monkeypatch.setenv("SECRET_KEY", "production-test-secret-key")
+    monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://user:pass@127.0.0.1:5432/kidareh_test")
 
     # Use testing=False: TESTING=True would mask the production cookie
     # detection if the factory chooses between "test" and "production" modes

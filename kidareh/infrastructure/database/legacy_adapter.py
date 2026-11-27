@@ -12,7 +12,7 @@ from typing import Any, Iterable
 
 from sqlalchemy import inspect
 from sqlalchemy.engine import Connection, CursorResult
-from .postgres_compat import qmark_to_format
+from .postgres_compat import qmark_to_format, sqlite_ddl_to_postgresql
 
 
 class CompatibleRow(dict):
@@ -82,6 +82,7 @@ class SQLAlchemyConnectionAdapter:
             ):
                 parameters = tuple(parameters)
             if self._connection.dialect.name == "postgresql":
+                statement = sqlite_ddl_to_postgresql(statement)
                 statement, parameters = qmark_to_format(statement, parameters or ())
             result = self._connection.exec_driver_sql(statement, parameters or ())
         return CompatibleResult(result)
@@ -134,6 +135,7 @@ class SQLAlchemyConnectionAdapter:
             result = self._connection.exec_driver_sql("SELECT 1 WHERE 0")
         else:
             if self._connection.dialect.name == "postgresql":
+                statement = sqlite_ddl_to_postgresql(statement)
                 statement, _ = qmark_to_format(statement, parameter_sets[0])
             result = self._connection.exec_driver_sql(statement, parameter_sets)
         return CompatibleResult(result)

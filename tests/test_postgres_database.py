@@ -1,7 +1,8 @@
 """Disposable PostgreSQL integration checks for the SQLAlchemy adapter.
 
 These tests are enabled only in CI (or when KIDAREH_TEST_POSTGRES_URL is set).
-They use temporary tables and never touch application or production schemas.
+Schema-reset coverage is guarded to the local kidareh_test database only; no
+production or remote database is eligible for destructive test setup.
 """
 import os
 
@@ -142,11 +143,10 @@ def _reset_local_postgres_test_schema(url):
 
 
 def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
-    """Verify Alembic honors the explicit PostgreSQL migration URL.
+    """Run the complete PostgreSQL migration chain on the disposable CI DB.
 
-    The current baseline is intentionally empty: this checks connection and
-    version-table handling only, not creation of the application's domain
-    schema.
+    This verifies the bootstrap schema and precision migration, not merely
+    Alembic connectivity or version-table creation.
     """
     import subprocess
     import sys
@@ -176,9 +176,21 @@ def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
     try:
         inspector = inspect(engine)
         assert inspector.has_table("alembic_version")
-        assert {"users", "stores", "listings", "otp_challenges", "rate_limits"}.issubset(
+        assert {"users", "stores", "listings", "otp_challenges", "otp_rate_limits", "rate_limits"}.issubset(
             set(inspector.get_table_names())
         )
+        otp_columns = {
+            column["name"]: str(column["type"]).upper()
+            for column in inspector.get_columns("otp_rate_limits")
+        }
+        assert otp_columns["last_sent_at"] == "DOUBLE PRECISION"
+        assert otp_columns["window_started_at"] == "DOUBLE PRECISION"
+        rate_columns = {
+            column["name"]: str(column["type"]).upper()
+            for column in inspector.get_columns("rate_limits")
+        }
+        assert rate_columns["last_request_at"] == "DOUBLE PRECISION"
+        assert rate_columns["window_started_at"] == "DOUBLE PRECISION"
     finally:
         engine.dispose()
 
@@ -427,3 +439,24 @@ def test_postgresql_backend_requires_an_explicit_database_url(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(RuntimeError, match="DATABASE_URL is required"):
         create_app({"TESTING": True, "SECRET_KEY": "database-backend-gate-test-only"})
+
+
+
+def test_postgres_adapter_translates_legacy_autoincrement_ddl(postgres_adapter):
+    """Legacy feature schema helpers still emit SQLite identity syntax."""
+    postgres_adapter.execute(
+        "CREATE TEMP TABLE adapter_identity ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL, sampled_at REAL NOT NULL)"
+    )
+    row = postgres_adapter.execute(
+        "INSERT INTO adapter_identity(label, sampled_at) VALUES (?, ?) RETURNING id",
+        ("identity-ok", 1795796000.123456),
+    ).fetchone()
+    assert row["id"] > 0
+    postgres_adapter.commit()
+    precision = postgres_adapter.execute(
+        """SELECT data_type FROM information_schema.columns
+           WHERE table_name = ? AND column_name = ?""",
+        ("adapter_identity", "sampled_at"),
+    ).fetchone()
+    assert precision["data_type"] == "double precision"

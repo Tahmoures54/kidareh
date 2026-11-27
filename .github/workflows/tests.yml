@@ -78,7 +78,7 @@ jobs:
             echo "::warning::No static/ directory found — skipping JS check"
           fi
 
-      - name: Run SQLite and application tests
+      - name: Run application tests with isolated test fixtures
         run: python -m pytest -q --tb=short
         env:
           SECRET_KEY: test-secret-key-not-for-production

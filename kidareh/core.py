@@ -47,22 +47,18 @@ def _persistent_data_dir() -> Path | None:
 
 
 def _resolve_database_path() -> Path:
-    for key in ("DATABASE_PATH", "DB_PATH"):
-        value = os.environ.get(key, "").strip()
-        if value:
-            return Path(value).expanduser()
-    data_dir = _persistent_data_dir()
-    if data_dir is not None:
-        return data_dir / "kidareh.sqlite3"
-    if os.environ.get("LIARA_APP_ID"):
-        raise RuntimeError(
-            "Liara production requires a mounted persistent disk. Set "
-            "KIDAREH_DATA_DIR to its mount path (for example /app/data), "
-            "or set DATABASE_PATH explicitly to a file on that disk."
-        )
-    if os.environ.get("VERCEL"):
-        return Path("/tmp/instance/kidareh.sqlite3")
-    return INSTANCE_DIR / "kidareh.sqlite3"
+    """Return a harmless placeholder; production data lives only in PostgreSQL.
+
+    The file path is consulted solely by the legacy test fixture backend. It is
+    never opened or created by a non-test application process.
+    """
+    if os.environ.get("FLASK_ENV", "").strip().lower() == "testing":
+        for key in ("DATABASE_PATH", "DB_PATH"):
+            value = os.environ.get(key, "").strip()
+            if value:
+                return Path(value).expanduser()
+        return INSTANCE_DIR / "test-fixture.sqlite3"
+    return Path("/tmp/kidareh-postgresql-placeholder")
 
 
 def _resolve_upload_folder() -> Path:
@@ -95,7 +91,7 @@ if os.environ.get("LIARA_APP_ID"):
             "Liara requires KIDAREH_DATA_DIR to reference a mounted persistent disk."
         )
     _liara_data_dir = _liara_data_dir.expanduser().resolve()
-    for _label, _path in (("DATABASE_PATH", DATABASE_PATH), ("UPLOAD_FOLDER", UPLOAD_FOLDER)):
+    for _label, _path in (("UPLOAD_FOLDER", UPLOAD_FOLDER),):
         try:
             Path(_path).expanduser().resolve().relative_to(_liara_data_dir)
         except ValueError as exc:
@@ -153,7 +149,11 @@ def get_connection():
     else:
         # CLI scripts and low-level tests may use get_connection() without a
         # Flask context. Give them the same SQLAlchemy execution path.
-        standalone_engine = create_database_engine(database_path)
+        standalone_engine = create_database_engine(
+            database_path,
+            url=os.environ.get("DATABASE_URL", "").strip() or None,
+            allow_sqlite=os.environ.get("FLASK_ENV", "").strip().lower() == "testing",
+        )
         engine = standalone_engine
 
     if request_scoped:

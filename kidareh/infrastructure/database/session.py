@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import os
 from pathlib import Path
 from typing import Iterator
 
@@ -39,21 +40,19 @@ def normalize_database_url(value: str) -> str:
     raise ValueError("DATABASE_URL must use postgres:// or postgresql://")
 
 
-def database_url(database_path: str | Path) -> str:
-    """Build a safe SQLAlchemy URL for the configured SQLite file."""
-    # DATABASE_URL is intentionally not activated yet: the legacy route layer
-    # still uses the DATABASE_PATH/DB_PATH SQLite connection. Reading a second
-    # URL here could split ORM and legacy writes across two different databases.
-    path = Path(database_path).expanduser().resolve()
-    return f"sqlite:///{path.as_posix()}"
-
-
-def create_database_engine(database_path: str | Path, url: str | None = None) -> Engine:
-    target_url = (
-        normalize_database_url(url)
-        if url and url.startswith(("postgres://", "postgresql://", "postgresql+psycopg://"))
-        else (url or database_url(database_path))
-    )
+def create_database_engine(database_path: str | Path | None = None, url: str | None = None, *, allow_sqlite: bool = False) -> Engine:
+    """Create PostgreSQL engine; a test factory may explicitly opt into SQLite."""
+    raw_url = (url or "").strip()
+    test_mode = bool(allow_sqlite)
+    if raw_url.startswith(("postgres://", "postgresql://", "postgresql+psycopg://")):
+        target_url = normalize_database_url(raw_url)
+    elif raw_url.startswith("sqlite:") and test_mode:
+        target_url = raw_url
+    elif not raw_url and test_mode and database_path is not None:
+        path = Path(database_path).expanduser().resolve()
+        target_url = f"sqlite:///{path.as_posix()}"
+    else:
+        raise RuntimeError("DATABASE_URL must be configured with a PostgreSQL connection string.")
     options = {"pool_pre_ping": True, "future": True}
     if target_url.startswith("sqlite:"):
         options["connect_args"] = {"check_same_thread": False, "timeout": 30}
@@ -83,7 +82,7 @@ def reflect_domain_models(engine: Engine) -> dict[str, type]:
     """Reflect current domain tables and map them using SQLAlchemy's ORM.
 
     Reflection is intentionally performed only after Kidareh's existing schema
-    bootstrap. It preserves the exact deployed SQLite schema and supports
+    bootstrap. It reflects the PostgreSQL schema after Alembic migrations and supports
     incremental conversion of route/service code to ORM repositories.
     """
     metadata = Base.metadata
@@ -146,7 +145,9 @@ def init_app(app) -> Database:
     if existing is not None:
         return existing
     engine = create_database_engine(
-        app.config["DATABASE_PATH"], app.config.get("DATABASE_URL")
+        app.config.get("DATABASE_PATH"),
+        app.config.get("DATABASE_URL"),
+        allow_sqlite=app.config.get("DATABASE_BACKEND") == "sqlite",
     )
     database = Database(engine)
     app.extensions["kidareh_db"] = database

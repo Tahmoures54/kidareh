@@ -115,8 +115,7 @@ def _send_kavenegar_otp(phone, code):
 
 
 def _check_otp_rate_limit(phone):
-    """Enforce shared SQLite rate limits across sessions and app workers."""
-    now = time.time()
+    """Enforce shared rate limits across sessions and app workers."""
     ip = request.remote_addr or "unknown"
 
     keys = {
@@ -130,15 +129,18 @@ def _check_otp_rate_limit(phone):
             # Acquire transaction-scoped advisory locks for both identities in
             # a deterministic order. This protects first-use races as well as
             # existing rows, and is compatible with PgBouncer transaction mode.
-            # Use PostgreSQL's two-int advisory-lock namespace explicitly.
-            # Sorting the (scope, key) pairs gives every request the same lock
-            # order and prevents deadlocks when phone and IP limits overlap.
             for scope, key_hash in sorted(keys.items()):
                 connection.execute(
                     "SELECT pg_advisory_xact_lock(hashtext(?), hashtext(?))",
                     (f"kidareh-otp:{scope}", key_hash),
                 ).fetchone()
+        else:
+            connection.execute("BEGIN IMMEDIATE")
 
+        # Take the timestamp after acquiring the lock. A timestamp captured
+        # before waiting can be stale by the time the serialized decision runs.
+        now = time.time()
+        if dialect_name == "postgresql":
             # Ensure both keys exist before selecting and updating their rows.
             for scope, key_hash in keys.items():
                 connection.execute(
@@ -148,8 +150,6 @@ def _check_otp_rate_limit(phone):
                        ON CONFLICT(scope, key_hash) DO NOTHING""",
                     (scope, key_hash, now),
                 )
-        else:
-            connection.execute("BEGIN IMMEDIATE")
 
         # Rows older than two hours cannot affect the active one-hour window.
         connection.execute(
