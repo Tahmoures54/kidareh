@@ -179,8 +179,8 @@ python main.py
 | متغیر | کاربرد | مقدار پیش‌فرض |
 |---|---|---|
 | `SECRET_KEY` | کلید امضای نشست Flask | در production اجباری؛ در توسعه اگر نباشد یک کلید تصادفی موقت ساخته می‌شود (نشست‌ها با ری‌استارت پاک می‌شوند) |
-| `KIDAREH_DATA_DIR` | ریشه دیسک پایدار برای دیتابیس و تصاویر | در توسعه خالی؛ در Liara مانند `/app/data`؛ در Vercel دیسک پایدار محلی فراهم نیست |
-| `DATABASE_PATH` | مسیر فایل SQLite (در صورت تنظیم، بر KIDAREH_DATA_DIR اولویت دارد) | `instance/kidareh.sqlite3` |
+| `DATABASE_URL` | نشانی اتصال PostgreSQL/Neon | اجباری |
+| `DATABASE_URL` | نشانی اتصال PostgreSQL/Neon | اجباری |
 | `PORT` | درگاه وب‌سرور | `8000` در اجرای محلی؛ `3000` در Procfile/Gunicorn روی Liara |
 | `KAVENEGAR_API_KEY` | کلید پیامک کاوه‌نگار | تنظیم‌نشده |
 | `KAVENEGAR_VERIFY_TEMPLATE` | الگوی تأیید OTP | `verify` |
@@ -332,32 +332,7 @@ python scripts/maintain_db.py --vacuum    # خارج از ساعات شلوغی�
 
 ## 📈 آمادگی برای مقیاس بزرگ
 
-خروجی ثبت‌شدهٔ یک **ریزآزمون محلی (microbenchmark)** با دیتابیس مصنوعی شامل ۱,۰۰۰,۰۰۰ کالا و ۱۰۰,۰۰۰ ویترین است. اعداد زیر اندازه‌گیری HTTP واقعی، آزمون هم‌زمانی، یا ظرفیت تضمین‌شدهٔ Production نیستند؛ اسکریپت از Flask `test_client` استفاده می‌کند و درخواست‌ها را در همان فرایند اجرا می‌کند. برای مقایسه معتبر باید مشخصات CPU/RAM/دیسک، نسخه Python، تعداد تکرار و Commit کد نیز کنار خروجی JSON ثبت شوند.
-
-| مسیر | میانهٔ زمان پاسخ |
-| --- | --- |
-| `GET /` | ۲.۵ میلی‌ثانیه |
-| `GET /api/listings` (صفحهٔ اول) | ۳.۵ میلی‌ثانیه |
-| `GET /api/listings` (صفحهٔ عمیق) | ۲.۸ میلی‌ثانیه |
-| `GET /api/listings?q=…` (جست‌وجوی متنی) | ۵.۹ میلی‌ثانیه |
-| `GET /api/listings?city=…&category=…` | ۲.۸ میلی‌ثانیه |
-| جست‌وجوی نزدیک من | ۲۴.۷ میلی‌ثانیه |
-| `GET /api/stores` | ۱.۷ میلی‌ثانیه |
-| `GET /sitemap.xml` | ۰.۵ میلی‌ثانیه |
-
-بازتولید ریزآزمون (زمان‌ها بسته به ماشین و وضعیت سیستم متفاوت‌اند):
-
-```bash
-python scripts/scale_profiles.py --listings 1000000 --stores 100000
-```
-
-چه چیزی این اعداد را حفظ می‌کند (هنگام تغییر پرس‌وجوها رعایت شود):
-
-- **صفحه‌بندی از نوع keyset است (`before_id`)، نه `OFFSET`.**
-- **ایندکس‌های مرور، ستون‌های مرتب‌سازی را هم دارند:** چون مرتب‌سازی `featured DESC, id DESC` است، ایندکس‌ها به شکل `(category|city, featured DESC, id DESC)` هستند. حذف `featured` از ایندکس هزینهٔ یک پرس‌وجو را در این مقیاس به ۲۵۰ میلی‌ثانیه می‌رساند.
-- **جست‌وجوی متنی پنجره دارد:** یک واژهٔ پرکاربرد می‌تواند صدها هزار ردیف را匹配 کند؛ فقط ۵,۰۰۰ موردِ جدیدتر به جدول کالاها وصل می‌شوند (`FTS_SEARCH_WINDOW`).
-- **شمارنده‌های ویترین با زیرپرس‌وجو محاسبه می‌شوند،** نه `LEFT JOIN` + `GROUP BY`.
-- **هر درخواست یک اتصال دیتابیس دارد** که در تمام پرس‌وجوهای همان درخواست reuse می‌شود.
+Kidareh از PostgreSQL/Neon به‌عنوان دیتابیس اصلی استفاده می‌کند. پیش از ادعای ظرفیت بالا، آزمون بار باید روی یک Neon branch جداگانه با داده مصنوعی، سنجش pool/connection، latency صدک ۹۵ و رفتار جست‌وجو انجام شود. از اجرای benchmark نوشتاری روی دیتابیس Production خودداری کنید.
 
 ### محدودیت نرخ درخواست‌ها
 
@@ -468,9 +443,7 @@ python scripts/scale_profiles.py --listings 1000000 --stores 100000
 
 ## Database architecture
 
-The database layer uses SQLAlchemy 2.x sessions and ORM mappings, with Alembic
-for future schema revisions. Existing SQLite schema initialization remains a
-compatibility bridge while route handlers are migrated incrementally. See
+The database layer uses PostgreSQL, SQLAlchemy 2.x sessions and ORM mappings, with Alembic owning schema revisions. A small SQLite fixture remains only for legacy tests; deployed runtime rejects it. See
 [`kidareh/infrastructure/database/README.md`](kidareh/infrastructure/database/README.md).
 
 
