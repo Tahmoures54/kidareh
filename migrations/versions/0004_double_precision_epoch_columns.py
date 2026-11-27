@@ -10,7 +10,7 @@ binary64, so these columns must be DOUBLE PRECISION in PostgreSQL.
 from alembic import op
 import sqlalchemy as sa
 
-revision = "0004_double_precision_epoch_columns"
+revision = "0004_double_precision"
 down_revision = "0003_listings_search_vector"
 branch_labels = None
 depends_on = None
