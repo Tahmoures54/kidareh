@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import contextlib
 import logging
+import os
 from pathlib import Path
 from typing import Iterator
 
@@ -39,10 +40,10 @@ def normalize_database_url(value: str) -> str:
     raise ValueError("DATABASE_URL must use postgres:// or postgresql://")
 
 
-def create_database_engine(database_path: str | Path | None = None, url: str | None = None) -> Engine:
-    """Create the PostgreSQL engine; SQLite is permitted only in test mode."""
+def create_database_engine(database_path: str | Path | None = None, url: str | None = None, *, allow_sqlite: bool = False) -> Engine:
+    """Create PostgreSQL engine; a test factory may explicitly opt into SQLite."""
     raw_url = (url or "").strip()
-    test_mode = os.environ.get("FLASK_ENV", "").strip().lower() == "testing" or os.environ.get("KIDAREH_ALLOW_SQLITE_TESTS") == "1"
+    test_mode = allow_sqlite and (os.environ.get("FLASK_ENV", "").strip().lower() == "testing" or os.environ.get("KIDAREH_ALLOW_SQLITE_TESTS") == "1")
     if raw_url.startswith(("postgres://", "postgresql://", "postgresql+psycopg://")):
         target_url = normalize_database_url(raw_url)
     elif raw_url.startswith("sqlite:") and test_mode:
@@ -144,7 +145,9 @@ def init_app(app) -> Database:
     if existing is not None:
         return existing
     engine = create_database_engine(
-        app.config["DATABASE_PATH"], app.config.get("DATABASE_URL")
+        app.config.get("DATABASE_PATH"),
+        app.config.get("DATABASE_URL"),
+        allow_sqlite=app.config.get("DATABASE_BACKEND") == "sqlite",
     )
     database = Database(engine)
     app.extensions["kidareh_db"] = database
