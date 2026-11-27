@@ -5,7 +5,7 @@
 - Python 3.12 runtime (kept in sync with GitHub Actions).
 - A production `SECRET_KEY` containing at least 32 random bytes. Platform-injected environment variables take precedence over `.env` values.
 - On Liara with SQLite, a persistent disk mounted at `/app/data` and `KIDAREH_DATA_DIR=/app/data` set in the app's runtime environment. The app intentionally refuses to boot on Liara without a persistent-data path.
-- On Vercel, use `DATABASE_BACKEND=postgresql` with a persistent PostgreSQL `DATABASE_URL`, and connect Vercel Blob so `BLOB_READ_WRITE_TOKEN` is injected. Vercel's writable `/tmp` is ephemeral and must never be treated as durable application storage.
+- On Vercel, use `DATABASE_BACKEND=postgresql` with a persistent PostgreSQL `DATABASE_URL`, and connect Vercel Blob so `BLOB_READ_WRITE_TOKEN` is injected. Vercel's writable `/tmp` is ephemeral and must never be treated as durable application storage. The health endpoint deliberately returns 503 with `database=ephemeral_backend` if Vercel is still using SQLite, even when a temporary SQLite query succeeds.
 - `DATABASE_PATH` and `UPLOAD_FOLDER`, when explicitly set, must point inside the persistent mount on Liara when using SQLite.
 - Configure SMS and payment credentials only when their respective feature flags are enabled.
 - Configure trusted proxy hops only for the actual reverse-proxy topology. The default is one hop in production.

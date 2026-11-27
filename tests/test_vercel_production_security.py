@@ -31,3 +31,31 @@ def test_vercel_runtime_enforces_production_security_even_with_development_flask
         assert isinstance(app.wsgi_app, ProxyFix)
     finally:
         app.extensions["kidareh_db"].dispose()
+
+
+
+def test_vercel_health_does_not_report_ephemeral_sqlite_as_healthy(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setenv("VERCEL", "1")
+    monkeypatch.setenv("FLASK_ENV", "development")
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "test-blob-token")
+    monkeypatch.delenv("LIARA_APP_ID", raising=False)
+    monkeypatch.delenv("ENV", raising=False)
+
+    app = create_app({
+        "SECRET_KEY": "test-vercel-production-secret-" + ("x" * 40),
+        "DATABASE_BACKEND": "sqlite",
+        "DATABASE_PATH": str(tmp_path / "ephemeral.sqlite3"),
+        "UPLOAD_FOLDER": str(tmp_path / "uploads"),
+        "TESTING": True,
+    })
+    try:
+        response = app.test_client().get("/api/health")
+        assert response.status_code == 503
+        payload = response.get_json()
+        assert payload["ok"] is False
+        assert payload["database"] == "ephemeral_backend"
+        assert payload["uploads"] == "blob_configured"
+    finally:
+        app.extensions["kidareh_db"].dispose()
