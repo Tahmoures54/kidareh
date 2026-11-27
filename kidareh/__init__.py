@@ -46,7 +46,7 @@ def create_app(test_config=None):
     test_mode = bool((test_config or {}).get("TESTING")) or (
         os.environ.get("FLASK_ENV", "").strip().lower() == "testing"
     )
-    requested_backend = str((test_config or {}).get("DATABASE_BACKEND") or os.environ.get("DATABASE_BACKEND") or "postgresql").strip().lower()
+    requested_backend = str((test_config or {}).get("DATABASE_BACKEND") or os.environ.get("DATABASE_BACKEND") or ("sqlite" if test_mode else "postgresql")).strip().lower()
     if requested_backend == "sqlite" and not test_mode:
         raise RuntimeError("SQLite is disabled. Configure DATABASE_URL for PostgreSQL.")
     if requested_backend not in ({"postgresql", "sqlite"} if test_mode else {"postgresql"}):
