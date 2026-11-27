@@ -427,3 +427,18 @@ def test_postgresql_backend_requires_an_explicit_database_url(monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     with pytest.raises(RuntimeError, match="DATABASE_URL is required"):
         create_app({"TESTING": True, "SECRET_KEY": "database-backend-gate-test-only"})
+
+
+
+def test_postgres_adapter_translates_legacy_autoincrement_ddl(postgres_adapter):
+    """Legacy feature schema helpers still emit SQLite identity syntax."""
+    postgres_adapter.execute(
+        "CREATE TEMP TABLE adapter_identity ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL)"
+    )
+    row = postgres_adapter.execute(
+        "INSERT INTO adapter_identity(label) VALUES (?) RETURNING id",
+        ("identity-ok",),
+    ).fetchone()
+    assert row["id"] > 0
+    postgres_adapter.commit()
