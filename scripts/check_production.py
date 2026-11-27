@@ -41,8 +41,8 @@ def preflight(env: dict[str, str]) -> list[str]:
     backend = env.get("DATABASE_BACKEND", "postgresql").strip().lower()
     if backend != "postgresql":
         errors.append("Kidareh supports PostgreSQL only; SQLite is disabled.")
-    if not env.get("DATABASE_URL", "").strip():
-        errors.append("DATABASE_URL is required for PostgreSQL.")
+    if production and not env.get("DATABASE_URL", "").strip():
+        errors.append("DATABASE_URL is required for PostgreSQL deployments.")
 
     if env.get("VERCEL") and not env.get("BLOB_READ_WRITE_TOKEN", "").strip():
         errors.append("Vercel production requires BLOB_READ_WRITE_TOKEN for persistent listing images.")
