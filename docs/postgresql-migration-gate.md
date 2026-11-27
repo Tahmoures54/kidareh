@@ -23,6 +23,15 @@ The current registration change also passed the latest PR workflow on the
 merged head. CI success is not evidence that the live Neon project, deployed
 Preview, SMS provider, or image storage has been exercised end to end.
 
+## Numeric precision compatibility
+
+PostgreSQL revision `0004_double_precision_epoch_columns` converts columns that
+were declared as SQLite `REAL` to PostgreSQL `DOUBLE PRECISION`. PostgreSQL
+`REAL` is a 32-bit float and cannot preserve sub-minute precision for Unix
+epoch timestamps; this affects OTP cooldowns and shared rate limits. The
+conversion preserves the existing values while widening precision. Its
+downgrade is intentionally blocked because converting back would be lossy.
+
 ## Required before enabling PostgreSQL on a hosted environment
 
 1. Inspect the exact Neon project, branch, database, role, and existing schema
