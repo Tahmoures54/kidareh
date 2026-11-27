@@ -82,7 +82,7 @@ def reflect_domain_models(engine: Engine) -> dict[str, type]:
     """Reflect current domain tables and map them using SQLAlchemy's ORM.
 
     Reflection is intentionally performed only after Kidareh's existing schema
-    bootstrap. It preserves the exact deployed SQLite schema and supports
+    bootstrap. It reflects the PostgreSQL schema after Alembic migrations and supports
     incremental conversion of route/service code to ORM repositories.
     """
     metadata = Base.metadata
