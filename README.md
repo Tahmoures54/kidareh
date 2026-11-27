@@ -8,7 +8,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-3.x-000000?logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
-[![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Tests](https://github.com/Tahmoures54/kidareh/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/Tahmoures54/kidareh/actions/workflows/tests.yml)
 [![Language](https://img.shields.io/badge/زبان-فارسی-23966F)](#)
 
@@ -112,7 +112,7 @@
 - گزارش تخلف کالا/ویترین و صف مدیریت
 - تیکت پشتیبانی و داشبورد ادمین
 - PWA قابل نصب روی موبایل
-- پشتیبان‌گیری و بازیابی SQLite
+- پایگاه داده PostgreSQL با مهاجرت نسخه‌بندی‌شده Alembic
 - در محیط Production هیچ کالای نمونه‌ای به‌صورت خودکار ساخته نمی‌شود؛ داده‌های نمایشی قدیمیِ شناخته‌شده نیز هنگام راه‌اندازی پاک‌سازی می‌شوند.
 
 ---
@@ -170,7 +170,7 @@ python main.py
 
 **http://127.0.0.1:8000**
 
-در اجرای نخست، پایگاه داده SQLite مقداردهی می‌شود. برای توقف: `Ctrl+C`.
+برای اجرا، ابتدا `DATABASE_URL` را در فایل `.env` به نشانی Neon/PostgreSQL تنظیم کن. در اجرای نخست، Alembic ساختار دیتابیس خالی را ایجاد می‌کند. برای توقف: `Ctrl+C`.
 
 ---
 
@@ -194,7 +194,7 @@ python main.py
 
 ```bash
 export SECRET_KEY="یک-کلید-تصادفی-طولانی-و-منحصر-به-فرد"
-export DATABASE_PATH="/مسیر/پایدار/kidareh.sqlite3"
+export DATABASE_URL="postgresql+psycopg://USER:PASSWORD@HOST/DB?sslmode=require"
 python main.py
 ```
 
@@ -307,16 +307,16 @@ gunicorn main:app
 
 1. `SECRET_KEY` تصادفی و حداقل ۳۲ بایت تنظیم کن؛ مقدار کوتاه باعث توقف امن برنامه می‌شود.
 2. **در Liara:** یک دیسک پایدار بساز و آن را روی `/app/data` mount کن؛ سپس `KIDAREH_DATA_DIR=/app/data` را تنظیم کن. بدون این متغیر، اجرای Liara عمداً متوقف می‌شود تا SQLite و تصاویر روی فایل‌سیستم موقت ذخیره نشوند.
-3. **در Vercel:** فایل‌سیستم محلی از جمله مسیرهایی مانند `/tmp` پایدار نیست و ممکن است با هر cold start، نمونهٔ جدید یا استقرار مجدد از بین برود. نسخهٔ فعلی هستهٔ داده از SQLite محلی استفاده می‌کند؛ بنابراین تا زمان اتصال و تکمیل مهاجرت به پایگاه دادهٔ دائمیِ بیرونی، ثبت اطلاعات واقعی فروشگاه‌ها و کالاها روی Vercel ایمن نیست. تصاویر بارگذاری‌شده نیز به فضای ذخیره‌سازی پایدار خارجی نیاز دارند.
+3. **در Vercel:** فایل‌سیستم محلی از جمله مسیرهایی مانند `/tmp` پایدار نیست و ممکن است با هر cold start، نمونهٔ جدید یا استقرار مجدد از بین برود. هستهٔ داده فقط از PostgreSQL/Neon استفاده می‌کند؛ بدون `DATABASE_URL` برنامه اجرا نمی‌شود. تصاویر بارگذاری‌شده نیز به فضای ذخیره‌سازی پایدار خارجی نیاز دارند.
 4. اگر مسیرها را جداگانه تنظیم می‌کنی، `DATABASE_PATH` و `UPLOAD_FOLDER` باید هر دو روی دیسک پایدار باشند.
-5. پشتیبان منظم با `scripts/backup_sqlite.py` بگیر و بازیابی را با `scripts/restore_sqlite.py` تمرین کن.
+5. از قابلیت backup خود Neon استفاده کن و بازیابی را در یک دیتابیس جداگانه تمرین کن.
 6. `KAVENEGAR_API_KEY`، اطلاعات درگاه و `ADMIN_PHONE` را فقط در تنظیمات امن میزبان وارد کن؛ کلیدها را در GitHub یا `.env` عمومی قرار نده.
 7. پس از استقرار، مسیرهای ثبت‌نام/OTP، ساخت و ویرایش آگهی، بارگذاری تصویر، ویترین، ذخیره، دنبال‌کردن، گزارش تخلف و پرداخت را با حساب آزمایشی انتها‌به‌انتها بررسی کن.
-8. برای اجرای چند worker با SQLite، از دیسک محلی پایدار همان نمونه استفاده کن؛ چند نمونه مستقل که یک فایل SQLite را از طریق شبکه مشترک کنند پیکربندی پشتیبانی‌شده‌ای نیست. برای چند replica یا ترافیک نوشتاری بالا، قبل از افزایش نمونه‌ها باید مهاجرت کامل به PostgreSQL انجام شود.
+8. برای اجرای چند worker با PostgreSQL، از دیسک محلی پایدار همان نمونه استفاده کن؛ چند نمونه مستقل که یک فایل SQLite را از طریق شبکه مشترک کنند پیکربندی پشتیبانی‌شده‌ای نیست. برای چند replica یا ترافیک نوشتاری بالا، قبل از افزایش نمونه‌ها باید مهاجرت کامل به PostgreSQL انجام شود.
 
 همهٔ workerها هنگام بالا آمدن `initialize_database()` را اجرا می‌کنند؛ این کار با یک قفل SQLite (`kidareh-migrations.lock` کنار فایل دیتابیس) سریال می‌شود تا دو worker همزمان مهاجرت نکنند و روی `schema_migrations` برخورد نکنند. جداول ویژگی‌ها (از جمله `content_reports` و `otp_rate_limits`) هم در همین مرحلهٔ آغازین ساخته می‌شوند، نه هنگام پاسخ به درخواست.
 
-**محدودیت فعلی:** هسته عملیاتی هنوز از SQLite و سازگارساز SQL استفاده می‌کند؛ SQLAlchemy 2.x Engine/Session و ORM reflection در دسترس‌اند، اما تمام Routeها به ORM منتقل نشده‌اند و `DATABASE_URL` هنوز منبع اتصال فعال نیست. بنابراین استقرار چندنمونه‌ای و اعلام آمادگی نهایی Production منوط به تکمیل مهاجرت PostgreSQL و تست عملی روی حساب/دیسک واقعی میزبان است.
+**محدودیت فعلی:** هسته عملیاتی هنوز از SQLite و سازگارساز SQL استفاده می‌کند؛ SQLAlchemy 2.x Engine/Session و ORM reflection در دسترس‌اند، اما تمام Routeها به ORM منتقل نشده‌اند و `DATABASE_URL` هنوز منبع اتصال فعال نیست. بنابراین استقرار چندنمونه‌ای و اعلام آمادگی نهایی Production منوط به تکمیل آزمون‌های PostgreSQL و تست عملی روی حساب/دیسک واقعی میزبان است.
 
 ### نگهداری پایگاه داده
 
@@ -326,7 +326,7 @@ python scripts/maintain_db.py             # ANALYZE + PRAGMA optimize + checkpoi
 python scripts/maintain_db.py --vacuum    # خارج از ساعات شلوغی؛ کل فایل بازنویسی می‌شود
 ```
 
-`ANALYZE` را هفتگی و بعد از هر درون‌ریزیِ دسته‌ای اجرا کن؛ برنامه‌ریزِ پرس‌وجوی SQLite بر اساس همین آمار تصمیم می‌گیرد.
+`ANALYZE` را پس از ورود دسته‌ای داده اجرا کن؛ Neon عملیات نگهداری و vacuum را مدیریت می‌کند.
 
 ---
 
@@ -414,7 +414,7 @@ python scripts/scale_profiles.py --listings 1000000 --stores 100000
 
 ## 🗺️ مسیر توسعه پیشنهادی
 
-- [ ] اتصال Vercel به پایگاه دادهٔ دائمی و تکمیل مهاجرت مسیرهای داده از SQLite محلی
+- [ ] اجرای کامل تست‌های مسیرهای قدیمی روی PostgreSQL و حذف fixture موقت SQLite
 - [ ] اتصال فضای ذخیره‌سازی پایدار برای تصاویر کالا و ویترین
 - [ ] آزمایش کامل OTP در محیط واقعی
 - [ ] مسیر ساخت ویترین و مدیریت کالا روی موبایل و دسکتاپ
