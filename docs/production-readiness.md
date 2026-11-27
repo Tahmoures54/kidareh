@@ -5,7 +5,7 @@
 - Python 3.12 runtime (kept in sync with GitHub Actions).
 - A production `SECRET_KEY` containing at least 32 random bytes. Platform-injected environment variables take precedence over `.env` values.
 - A PostgreSQL `DATABASE_URL` is mandatory on every deployment. SQLite is rejected outside the isolated legacy test harness.
-- On Vercel, use `DATABASE_BACKEND=postgresql` with a persistent PostgreSQL `DATABASE_URL`, and connect Vercel Blob so `BLOB_READ_WRITE_TOKEN` is injected. Vercel's writable `/tmp` is ephemeral and must never be treated as durable application storage. The health endpoint deliberately returns 503 with `database=ephemeral_backend` if Vercel is still using SQLite, even when a temporary SQLite query succeeds.
+- On Vercel, use `DATABASE_BACKEND=postgresql` with a persistent PostgreSQL `DATABASE_URL`, and connect Vercel Blob so `BLOB_READ_WRITE_TOKEN` is injected. Vercel's writable `/tmp` is ephemeral and must never be treated as durable application storage. Application startup rejects SQLite; the health endpoint checks the configured PostgreSQL connection.
 - On Vercel, connect Neon and Vercel Blob. Local uploads on other hosts require a durable configured upload path or object storage.
 - Configure SMS and payment credentials only when their respective feature flags are enabled.
 - Configure trusted proxy hops only for the actual reverse-proxy topology. The default is one hop in production.
@@ -49,7 +49,7 @@ Before promoting a new deployment:
 - Run full startup and authenticated end-to-end flows on a Preview using PostgreSQL.
 - Verify registration, OTP verification, session persistence, seller dashboard access, listing create/edit/search, image upload, and rate limiting across cold starts/instances.
 - Verify Neon connection limits, SSL, pooler/direct URLs, backups, and a rollback plan.
-- Keep the current SQLite deployment and any uploaded-image inventory untouched until the rollback window closes.
+- Keep a verified PostgreSQL backup and the prior deployment available until the rollback window closes.
 
 ## Test-suite policy
 
@@ -57,4 +57,4 @@ All acceptance tests are enabled in `pytest.ini`. A legacy OTP test was updated 
 
 ## Verification available in this build environment
 
-GitHub Actions is the source of truth for verification. It runs the complete SQLite/application suite and a separate PostgreSQL 16 service suite. Do not treat a successful isolated adapter test as proof that the live Neon database or hosted deployment has been verified.
+GitHub Actions is the source of truth for verification. It runs the application suite (legacy tests still use a temporary SQLite fixture) and a separate PostgreSQL 16 integration suite. Do not treat a successful isolated adapter test as proof that the live Neon database or hosted deployment has been verified.
