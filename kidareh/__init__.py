@@ -53,8 +53,6 @@ def create_app(test_config=None):
         raise RuntimeError("Kidareh requires PostgreSQL.")
     database_backend = requested_backend
     database_url = str((test_config or {}).get("DATABASE_URL") or os.environ.get("DATABASE_URL") or "").strip()
-    if database_backend == "postgresql" and not database_url:
-        raise RuntimeError("DATABASE_URL is required. Kidareh runs on PostgreSQL only.")
 
     # Resolve the signing key from the environment first, then from an explicit
     # test configuration, and only then fall back to a generated value.
@@ -79,6 +77,9 @@ def create_app(test_config=None):
         raise RuntimeError(
             "SECRET_KEY is too short for production; use at least 32 random bytes."
         )
+
+    if database_backend == "postgresql" and not database_url:
+        raise RuntimeError("DATABASE_URL is required. Kidareh runs on PostgreSQL only.")
 
     max_image_bytes = int(os.environ.get("MAX_IMAGE_BYTES", str(MAX_IMAGE_BYTES)))
     if max_image_bytes < 256 * 1024 or max_image_bytes > 20 * 1024 * 1024:
