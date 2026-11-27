@@ -9,10 +9,10 @@ Kidareh به‌صورت **Modular Monolith** توسعه می‌یابد: یک ب
 - برنامه اجرایی فعلی از `main.py` و Application Factory در `kidareh/__init__.py` استفاده می‌کند.
 - Routeهای فعال فعلاً در `kidareh/routes/` هستند.
 - موتور SQLAlchemy 2.x در Application Factory ساخته می‌شود و پس از اجرای bootstrap فعلی، جدول‌های دامنه را به ORM نگاشت می‌کند.
-- برای حفظ سازگاری، Routeهای موجود هنوز از آداپتور `sqlite3` در `kidareh/core.py` استفاده می‌کنند؛ این مسیر در حال مهاجرت مرحله‌ای به Repository/Session است.
+- تمام queryهای Route از Engine/Connection متعلق به SQLAlchemy عبور می‌کنند؛ PostgreSQL/Neon تنها دیتابیس پشتیبانی‌شده در اجرای برنامه است.
 - Repositoryهای SQLAlchemy برای حساب‌ها، آگهی‌ها و فروشگاه‌ها پیاده‌سازی شده‌اند. تمام queryهای Route از Engine/Connection متعلق به SQLAlchemy عبور می‌کنند؛ adapter سازگاری فعلاً SQLهای قدیمی را با `exec_driver_sql()` اجرا می‌کند تا مهاجرت رفتاری مرحله‌ای و قابل آزمون باشد.
 - قالب‌های فعال در ریشه `templates/` و فایل‌های استاتیک در ریشه `static/` باقی مانده‌اند؛ مسیرهای Flask به این محل‌ها وابسته‌اند.
-- دیتابیس فعلی در `instance/kidareh.sqlite3` حفظ شده است.
+- دیتابیس برنامه PostgreSQL/Neon است و فایل دیتابیس محلی در مخزن یا runtime ایجاد نمی‌شود.
 - `infrastructure/database/` فعال است؛ سایر پوشه‌های `api/`، `web/` و دامنه‌های دیگر تا زمان انتقال منطق و تست، اسکلت معماری محسوب می‌شوند.
 
 ## مرز مسئولیت‌ها
@@ -27,9 +27,7 @@ Kidareh به‌صورت **Modular Monolith** توسعه می‌یابد: یک ب
 
 **وضعیت فعلی:** SQLAlchemy 2.x فعال است: Engine، `DeclarativeBase`، Session factory، نگاشت جداول دامنه، Repositoryهای پایه، و اجرای تمام queryهای Route از طریق اتصال SQLAlchemy. Alembic نیز با یک baseline غیرمخرب راه‌اندازی شده است. تبدیل queryهای متنی موجود به عملیات ORM در سرویس‌های دامنه می‌تواند به‌تدریج انجام شود.
 
-**مرحله سازگاری:** Routeهای موجود هنوز از `sqlite3` استفاده می‌کنند و schema bootstrap فعلی مرجع ایجاد/ارتقای جداول است. این دو مسیر عمداً کنار هم باقی مانده‌اند تا مهاجرت Routeها با تست رگرسیون انجام شود. `DATABASE_URL` هنوز فعال نیست و PostgreSQL پشتیبانی اجرایی ندارد؛ فعال‌کردن آن پیش از حذف وابستگی‌های SQLite باعث دوگانگی دیتابیس می‌شود.
-
-مرحله بعدی انتقال همه queryها و writeها به Repository/Session، سپس انتقال schema مالکیت‌دار به migrationهای Alembic و در نهایت بررسی جداگانه PostgreSQL است.
+**وضعیت فعلی:** PostgreSQL/Neon با `DATABASE_URL` تنها backend مجاز برنامه است. Alembic مالک schema و ارتقای آن است؛ queryهای legacy از adapter مبتنی بر SQLAlchemy اجرا می‌شوند و کد جدید باید از ORM Session و Repository استفاده کند. SQLite فقط در مسیر تست‌های قدیمی به‌صورت موقت باقی مانده و در اجرای برنامه یا Production مجاز نیست.
 
 ## فایل و تصویر
 
