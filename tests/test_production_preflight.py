@@ -130,3 +130,28 @@ def test_runtime_postgresql_check_never_echoes_connection_credentials(monkeypatc
     assert errors
     assert "very-secret" not in errors[0]
     assert "db.example" not in errors[0]
+
+def test_application_factory_rejects_sqlite_outside_test_mode(monkeypatch):
+    import pytest
+    from kidareh import create_app
+
+    monkeypatch.setenv("FLASK_ENV", "production")
+    monkeypatch.delenv("VERCEL", raising=False)
+    monkeypatch.delenv("LIARA_APP_ID", raising=False)
+    with pytest.raises(RuntimeError, match="SQLite is disabled"):
+        create_app({
+            "DATABASE_BACKEND": "sqlite",
+            "SECRET_KEY": "x" * 48,
+        })
+
+
+def test_application_factory_requires_postgresql_url(monkeypatch):
+    import pytest
+    from kidareh import create_app
+
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    with pytest.raises(RuntimeError, match="DATABASE_URL is required"):
+        create_app({
+            "DATABASE_BACKEND": "postgresql",
+            "SECRET_KEY": "x" * 48,
+        })
