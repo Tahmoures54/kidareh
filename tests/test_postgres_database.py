@@ -1,7 +1,8 @@
 """Disposable PostgreSQL integration checks for the SQLAlchemy adapter.
 
 These tests are enabled only in CI (or when KIDAREH_TEST_POSTGRES_URL is set).
-They use temporary tables and never touch application or production schemas.
+Schema-reset coverage is guarded to the local kidareh_test database only; no
+production or remote database is eligible for destructive test setup.
 """
 import os
 
@@ -142,11 +143,10 @@ def _reset_local_postgres_test_schema(url):
 
 
 def test_alembic_can_connect_to_postgres_with_explicit_migration_url():
-    """Verify Alembic honors the explicit PostgreSQL migration URL.
+    """Run the complete PostgreSQL migration chain on the disposable CI DB.
 
-    The current baseline is intentionally empty: this checks connection and
-    version-table handling only, not creation of the application's domain
-    schema.
+    This verifies the bootstrap schema and precision migration, not merely
+    Alembic connectivity or version-table creation.
     """
     import subprocess
     import sys
